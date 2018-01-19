@@ -1,0 +1,5 @@
+*.m~
+examples/figs/
+*.asv
+*.swp
+*.todo
