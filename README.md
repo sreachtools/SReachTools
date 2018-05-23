@@ -1,18 +1,20 @@
-# Stochastic optimal control toolbox (SReach)
+# Stochastic reachability toolbox (SReach)
 
-SReach is a MATLAB toolbox to tackle various problems in stochastic optimal
-control with emphasis on safety.
+SReach is a MATLAB toolbox to tackle various problems in stochastic reachability.
 
 This is an area of active research, and this toolbox will attempt to cater
 certain classes of problems. We aim to support the following problems:
- - [ ] **Stochastic reach-avoid problem** (guaranteeing safety for stochastic
+ - **Stochastic reach-avoid problem** (guaranteeing safety for stochastic
    systems)
-    - [ ] Lagrangian methods-based underapproximation
-    - [ ] Fourier transforms-based underapproximation
+    - Lagrangian methods-based underapproximation
+    - Fourier transforms-based underapproximation
+ - **Forward stochastic reachability** (characterizing the stochasticity of the
+   state at a future time of interest)
 
 ## Installation, documentation, and examples
 
-See the [wiki](https://github.com/abyvinod/SReach/wiki) of this project.
+See the [wiki](https://github.com/abyvinod/SReach/wiki) of this project. See
+`examples/*.pdf` for the PDF version of various examples run using SReach.
 
 ## Contributions
 
@@ -28,4 +30,5 @@ The authors of this toolbox are [Abraham P.
 Vinod](http://www.unm.edu/~abyvinod/) and [Joseph D.
 Gleason](http://www.unm.edu/~gleasonj/). Please cite their [relevant
 papers](https://scholar.google.com/citations?user=yb5Z7AwAAAAJ&hl=en) when using
-the toolbox. The authors are PhD advisees of [Prof. Meeko Oishi](http://www.unm.edu/~oishi/).
+the toolbox. The authors are PhD advisees of [Prof. Meeko
+Oishi](http://www.unm.edu/~oishi/).

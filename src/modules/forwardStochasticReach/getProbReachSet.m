@@ -20,14 +20,17 @@ function prob = getProbReachSet(sys,...
 % prob = getProbReachSet(sys,...
 %                        initial_state,...
 %                        target_set,...
-%                        target_time)
+%                        target_time,...
+%                        desired_accuracy)
 % Inputs:
 % -------
 %   sys              - An object of LtiSystem class 
 %   initial_state    - x_0
 %   target_time      - Time of interest (positive scalar)
 %   target_set       - Target set 
-%   desired_accuracy - Accuracy of the integral evaluation [Use 1e-3 if unsure]
+%   desired_accuracy - Accuracy of the integral evaluation 
+%                      [If unsure, use 1e-8 if sys.state_dimension <= 4
+%                                      1e-3 otherwise]
 %
 % Outputs:
 % --------
@@ -44,8 +47,8 @@ function prob = getProbReachSet(sys,...
 %      https://github.com/abyvinod/SReach/blob/master/LICENSE
 %
 %
-    [mean_x, cov_x] = getFSRPDMeanCovariance(sys,
-                                             initial_state,
+    [mean_x, cov_x] = getFSRPDMeanCovariance(sys,...
+                                             initial_state,...
                                              target_time);
     
     % Construct the concatenated target tube polytope for qscmvnv
@@ -83,5 +86,5 @@ function prob = getProbReachSet(sys,...
     end
     % If temp_probability< desired_accuracy, then set reach_avoid_probability to
     % desired_accuracy
-    reach_avoid_probability = max(temp_probability, desired_accuracy);
+    prob = max(temp_probability, desired_accuracy);
 end

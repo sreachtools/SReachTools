@@ -1,5 +1,5 @@
-function [mean_x, cov_x] = getFSRPDMeanCovariance(sys,
-                                                  initial_state,
+function [mean_x, cov_x] = getFSRPDMeanCovariance(sys,...
+                                                  initial_state,...
                                                   target_time)
 % SReach/forwardStochasticReach/getFSRPDMeanCovariance: Compute the mean and the
 % covariance of the state at a time instant in future
@@ -17,8 +17,8 @@ function [mean_x, cov_x] = getFSRPDMeanCovariance(sys,
 %
 % ============================================================================
 % 
-% [mean_x, cov_x] = getFSRPDMeanCovariance(sys,
-%                                          initial_state,
+% [mean_x, cov_x] = getFSRPDMeanCovariance(sys,...
+%                                          initial_state,...
 %                                          target_time)
 % Inputs:
 % -------
@@ -82,8 +82,8 @@ function [mean_x, cov_x] = getFSRPDMeanCovariance(sys,
     end
     % Computation of mean and covariance of x at target_time by Proposition 1,
     % HSCC 2017
-    mean_x = sys.state_matrix^target_time + flipped_ctrb_mat_disturb *...
-                                                        mean_concat_disturb;
+    mean_x = sys.state_matrix^target_time * initial_state + ...
+                            flipped_ctrb_mat_disturb * mean_concat_disturb;
     cov_x = flipped_ctrb_mat_disturb * cov_concat_disturb *...
                                                       flipped_ctrb_mat_disturb';
 end

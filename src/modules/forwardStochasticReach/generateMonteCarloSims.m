@@ -3,9 +3,9 @@ function concatenated_state_realization = generateMonteCarloSims(...
                                                sys,...
                                                initial_state,...
                                                time_horizon,...
-                                               optimal_input_vector)
-% SReach/stochasticReachAvoid/generateMonteCarloSims: Generate
-% Monte-Carlo simulations for a Gaussian LTI system
+                                               varargin)
+% SReach/stochasticReachAvoid/generateMonteCarloSims: Generate Monte-Carlo
+% simulations for a Gaussian LTI system (controlled or uncontrolled)
 % ============================================================================
 % generateMonteCarloSims produces a required number of trajectories for a
 % Gaussian LTI system.
@@ -13,8 +13,9 @@ function concatenated_state_realization = generateMonteCarloSims(...
 % USAGE: See SReach/stochasticReachAvoid/checkViaMonteCarloSims for usage
 %
 % =============================================================================
-% concatenated_state_realization = generateMonteCarloSims(sys,...
+% concatenated_state_realization = generateMonteCarloSims(
 %                                              no_of_monte_carlo_simulations,...
+%                                              sys,...
 %                                              initial_state,...
 %                                              time_horizon,...
 %                                              optimal_input_vector)
@@ -27,19 +28,17 @@ function concatenated_state_realization = generateMonteCarloSims(...
 %   sys                           - LtiSystem object describing the system to be
 %                                   verified
 %   initial_state                 - Initial state of interest
-%   time_horizon                  - Time horizon of the stochastic reach-avoid
+%   time_horizon                  - Time horizon (N) of the stochastic reach-avoid
 %                                   problem
-%   optimal_input_vector          - Optimal open-loop policy
-%                                   ((sys.input_dimension) *
-%                                   time_horizon)-dimensional vector 
-%                                   U = [u_0; u_1; ...; u_N] (column vector). 
-%                                   If the system is uncontrolled, then the
-%                                   optimal_input_vector has to be [].
+%   optimal_input_vector          - (Optional) Optimal open-loop policy.
+%                                   Required only if the system is controlled
+%
 %
 % Outputs:
 % --------
 %   concatenated_state_realization- Matrix of concatenate state (row) vectors
-%                                   stacked columnwise
+%                                   stacked columnwise. Each row comprises of
+%                                   the state trajectory as [x_1; x_2; ...; x_N]
 %
 % See also checkViaMonteCarloSims
 %
@@ -47,11 +46,12 @@ function concatenated_state_realization = generateMonteCarloSims(...
 % ------
 % * MATLAB DEPENDENCY: Uses MATLAB's Statistics and Machine Learning Toolbox
 %   (mvnrnd)
-% * INPUT HANDLING: Delegates part of input handling to
-%   @LtiSystem/getConcatMats
+% * INPUT HANDLING: Delegates part of input handling to @LtiSystem/getConcatMats
 % * Assumes IID Gaussian disturbance for the LTI system. 
-% * For uncontrolled system, the optimal_input_vector needs to be empty.
-% * For controlled system, an open-loop controller needs to be provided.
+% * For uncontrolled system, the optimal_input_vector NEED NOT be provided
+% * For controlled system, an open-loop controller NEEDS to be provided. The
+%   optimal_input_vector should be a ((sys.input_dimension) *
+%   time_horizon)-dimensional vector U = [u_0; u_1; ...; u_N] (column vector).
 % 
 % ============================================================================
 % 
@@ -90,6 +90,7 @@ function concatenated_state_realization = generateMonteCarloSims(...
     % Input handling of optimal_input_vector and creation of
     % concatenated_optimal_input_vector
     if sys.input_dimension > 0
+        optimal_input_vector = varargin{1};
         % Ensure optimal_input_vector is a valid open loop controller
         assert(isvector(optimal_input_vector) &&...
                length(optimal_input_vector) ==...
@@ -100,11 +101,6 @@ function concatenated_state_realization = generateMonteCarloSims(...
         concatenated_optimal_input_vector = ...
                   repmat(optimal_input_vector,1, no_of_monte_carlo_simulations);
     else
-        % TODO: To be tested
-        % optimal_input_vector is empty
-        assert(isempty(optimal_input_vector),...
-               'SReach:invalidArgs',...
-               'Expected empty optimal_input_vector for uncontrolled system');
         concatenated_optimal_input_vector =...
                 zeros(1, no_of_monte_carlo_simulations);
     end
