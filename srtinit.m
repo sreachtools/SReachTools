@@ -124,14 +124,8 @@ function varargout = srtinit(varargin)
 end
 
 function test_results = srttest()
-
     % get the parent dir of this function
-    script_path = mfilename('fullpath');
-
-    % trick - mfile name will output /path/to/the/file/srtinit, so as a hack can
-    % simply remove the /srtinit (11 chars) to get the path
-    % if MATLAB changes the way mfilename works then this hack will not work
-    script_path = script_path(1:end-11);
+    script_path = fileparts(mfilename('fullpath'));
     
     current_dir = pwd;
     
