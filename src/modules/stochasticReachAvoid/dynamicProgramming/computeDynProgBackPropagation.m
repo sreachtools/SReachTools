@@ -1,5 +1,5 @@
 function grid_probability = computeDynProgBackPropagation(sys, ...
-    state_grid, input_grid, grid_probability, initial_set, options)
+    state_grid, input_grid, grid_probability, initial_set)
 % SReachTools/stochasticReachAvoid/computeDynProgBackPropagation Compute the
 % dynamic programming back propagation
 % ============================================================================
@@ -17,7 +17,7 @@ function grid_probability = computeDynProgBackPropagation(sys, ...
 % ============================================================================
 %
 % grid_probability = computeDynProgBackPropagation(sys, ...
-%     state_grid, input_grid, grid_probability, initial_set, options)
+%     state_grid, input_grid, grid_probability, initial_set)
 % 
 % Inputs:
 % -------
@@ -57,24 +57,7 @@ function grid_probability = computeDynProgBackPropagation(sys, ...
         use_fast_gaussian = false;
     end
     
-    if options.status.show
-        options.status.current_grid_index = 0;
-        options.status.total_grid_points = n_state_grid_points;
-        if strcmpi(options.status.timer.Running, 'off')
-            options.status.timer.TimerFcn = {@displayStatus, options};
-            start(options.status.timer)
-        end
-    end
     for ix = 1:n_state_grid_points
-        options.status.current_grid_index = ix;
-        options.status.timer.TimerFcn = {@displayStatus, options};
-        if options.verbose
-            fprintf('    Computing probability for grid point %d/%d', ...
-                ix, n_state_grid_points)
-            fprintf(' - simulation time %f seconds', toc(options.timer))
-            fprintf('\n')
-        end
-            
         state_vec = state_grid.grid(ix, :)';
         if ~initial_set.contains(state_vec)
             % since not in the initial set can immediately set probability to 
@@ -473,48 +456,4 @@ function box_points = get3dBoxPointsFromGridPoint(point, dx)
     box_points(6, :) = point + [-1, 1, -1] .* dx;
     box_points(7, :) = point + [-1, -1, 1] .* dx;
     box_points(8, :) = point + [-1, -1, -1] .* dx;
-end
-
-function displayStatus(obj, event, options)
-% SReachTools/computeDynProgBackPropagation/displayStatus
-% Display current status of computation
-% ============================================================================
-%
-% Display the current status of the back propagation computation
-%
-% Usage: Nested function
-% 
-% ============================================================================
-%
-% displayStatus(obj, event, options)
-% 
-% Inputs:
-% -------
-%   obj     - ???
-%   event   - ???
-%   options - ???
-%
-% Outputs: None
-% 
-% Notes:
-% ------
-%   * Under construction, check back soon...
-%
-% ============================================================================
-% 
-%   This function is part of the Stochastic Optimal Control Toolbox.
-%   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
-%
-
-    fprintf('\n')
-    fprintf('Simulation Status:\n\n')
-    fprintf('    Total Simulation Time: %f seconds\n', toc(options.timer))
-    fprintf('    Dynamic Programming Status:\n')
-    fprintf('        Target     : %d/%d\n', options.status.current_target, ...
-        options.status.total_targets-1)
-    fprintf('        Grid Point : %d/%d\n', ...
-        options.status.current_grid_index, options.status.total_grid_points)
-    fprintf('\n')
-
 end

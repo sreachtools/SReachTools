@@ -1,7 +1,7 @@
 function robust_eff_target = getRobustEffTarget(sys, ...
                                                 target_tube, ...
                                                 disturbance, ...
-                                                options)
+                                                varargin)
 % SReachTools/getRobustEffTarget Get robust Effective Target Set
 % =========================================================================
 %
@@ -15,12 +15,19 @@ function robust_eff_target = getRobustEffTarget(sys, ...
 %
 % =========================================================================
 %
+% robust_eff_target = getRobustEffTarget(sys, ...
+%                                        target_tube, ...
+%                                        disturbance, ...
+%                                        Name, Value)
 % Inputs:
 % -------
 %   sys          - LtiSystem object
 %   target_tube  - Cell array of Polyhedron objects 
 %   disturbance  - Polyhedron object (bounded disturbance set)
-%   options      - (optional) Logging options, currently in development
+% 
+%   Name       | Value
+%   ----------------------------------------
+%   style      | 'standard', 'vrep'
 %
 % Outputs:
 % --------
@@ -42,15 +49,17 @@ function robust_eff_target = getRobustEffTarget(sys, ...
 % 
 
     % validate the inputs
-    if nargin < 4
-        options = getDefaultOptions();
-    elseif nargin < 3
-        error('SReachTools:Internal', 'No enough input arguments.');
-    end
-    
-    validateattributes(sys, {'LtiSystem'}, {'nonempty'});
-    validateattributes(target_tube, {'cell'}, {'nonempty'});
-    validateattributes(disturbance, {'Polyhedron', 'cell'}, {'nonempty'});
+    inpar = inputParser();
+    inpar.addRequired('sys', @(x) validateattributes(x, ...
+        {'LtiSystem'}, {'nonempty'}));
+    inpar.addRequired('target_tube', @(x) validateattributes(x, ...
+        {'cell'}, {'nonempty'}));
+    inpar.addRequired('disturbance', @(x) validateattributes(x, ...
+        {'Polyhedron', 'cell'}, {'nonempty'}));
+    inpar.addParameter('style', 'standard', @(x) validatestring(x, ...
+        {'standard', 'vrep'}));
+
+    inpar.parse(sys, target_tube, disturbance, varargin{:});
 
     if sys.state_dimension > 4
         warning(['Because both vertex and facet representation of ', ...
@@ -76,60 +85,44 @@ function robust_eff_target = getRobustEffTarget(sys, ...
     if horizon_length > 1
         if n_disturbances > 1
             if sys.state_dimension > 2
+                % warning(['The convex hull operation may produce ', ...
+                %     'inconsistent or inaccurate results for systems with ', ...
+                %     'dimensions greater than 2. See [[url once note has ', ...
+                %     'been added to the google group]].'])
                 warning(['The convex hull operation may produce ', ...
                     'inconsistent or inaccurate results for systems with ', ...
-                    'dimensions greater than 2. See [[url once note has ', ...
-                    'been added to the google group]].'])
+                    'dimensions greater than 2.'])
             end
             effective_target_tube = target_tube;
             for i = horizon_length-1:-1:1
                 eff_target_stopwatch = tic;
-                if options.verbose == 1
-                   fprintf('Computing effective target for k=%d...\n', i-1)
-                end
 
                 vertices = [];
                 for j = 1: n_disturbances
                     effective_dist = sys.disturbance_matrix * disturbance{j};
                     single_dist_stopwatch = tic;
-                    if options.verbose == 1
-                       fprintf(['    Computing effective target for ', ...
-                           'disturbance %d/%d... '], j, n_disturbances);
-                    end
                     effective_target = performRobustEffectiveTargetRecursion(...
                         effective_target_tube{i+1}, ...
                         effective_target_tube{i}, ...
                         minus_bu, ...
                         inverted_state_matrix, ....
                         effective_dist, ...
-                        options.style);
+                        inpar.Results.style);
                     
                     single_dist_comptime = toc(single_dist_stopwatch);
-                    if options.verbose == 1
-                        fprintf('Computation time: %.3f\n', ...
-                            single_dist_comptime);
-                    end
 
                     vertices = [vertices; effective_target.V];
                 end
                 
                 effective_target_tube{i} = Polyhedron(vertices);
                 
-                eff_target_comptime = toc(eff_target_stopwatch);
-                if options.verbose == 1
-                    fprintf(['Total computation time for diturbances: ', ...
-                        '%.3f\n'], eff_target_comptime);
-                end
-                
+                eff_target_comptime = toc(eff_target_stopwatch);                
             end
             effective_target_temp = effective_target_tube{1};
         else
             effective_dist = sys.disturbance_matrix * disturbance;
             for i = horizon_length-1:-1:1
                 eff_target_stopwatch = tic;
-                if options.verbose == 1
-                   fprintf('Computing effective target for k=%d... ', i-1)
-                end
                 effective_target_temp = ...
                     performRobustEffectiveTargetRecursion(...
                         effective_target_temp, ...
@@ -137,12 +130,9 @@ function robust_eff_target = getRobustEffTarget(sys, ...
                         minus_bu, ...
                         inverted_state_matrix, ...
                         effective_dist, ...
-                        options.style);
+                        inpar.Results.style);
                 
                 eff_target_comptime = toc(eff_target_stopwatch);
-                if options.verbose == 1
-                    fprintf('Computation time: %.3f\n', eff_target_comptime);
-                end
             end 
         end
     end
@@ -262,42 +252,5 @@ function back_recursion_set = performRobustEffectiveTargetRecursion(...
         otherwise
             assert(false, 'Unhandled option')
     end
-
-end
-
-function options = getDefaultOptions()
-% SReachTools/getRobustEffTarget/getDefaultOptions  Get default solver options
-% =========================================================================
-%
-% Nested function to obtain default solver/logging options
-% 
-%   Usage
-%   -----
-%   Nested function
-%
-% =========================================================================
-% 
-% options = GETDEFAULTOPTIONS()
-% 
-% Inputs
-% ------
-% None
-% 
-% Outputs
-% -------
-% options - options struct
-% 
-% =========================================================================
-% 
-%   This function is part of the Stochastic Optimal Control Toolbox.
-%   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
-% 
-% 
-
-options = struct();
-options.verbose = 0;
-options.style = 'standard';
-options.suppress_warning = false;
 
 end

@@ -1,5 +1,5 @@
 function grid_probability = getDynProgSolForTargetTube(sys, ...
-    state_grid, input_grid, target_tube, varargin)
+    state_grid, input_grid, target_tube)
 % SReachTools/stochasticReachAvoid/getDynProgSolForTargetTube Get dynamic 
 % programming grid probability for reachability of target tube
 % ============================================================================
@@ -51,14 +51,6 @@ function grid_probability = getDynProgSolForTargetTube(sys, ...
 %   License for the use of this function is given in
 %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %
-
-
-    if length(varargin) > 0
-        options = processDynamicProgrammingOptions(varargin{:});
-    else
-        options = processDynamicProgrammingOptions();
-    end
-
     % check inputs
     validateattributes(sys, {'LtiSystem'}, {'nonempty'})
     validateattributes(state_grid, {'SpaceGrid'}, {'nonempty'})
@@ -84,22 +76,8 @@ function grid_probability = getDynProgSolForTargetTube(sys, ...
     grid_probability(ind_vector) = 1;
     
     n_targets = length(target_tube);
-    options.timer = tic;
-    options.status.total_targets = n_targets;
-    if options.verbose
-        fprintf(['Starting dynamic programming computation for target ', ...
-            'tube...\n\n'])
-    end
     if n_targets > 1
-        options.timer = tic;
         for i = 1:n_targets-1
-            options.status.current_target = i;
-            options.status.current_grid_index = 0;
-            if options.verbose
-                fprintf(['Target %d/%d: - simulation time %f ', ...
-                    'seconds\n'], i, n_targets-1, toc(options.timer))
-            end
-
             % compute the 1-step back propagation
             % can eventually allow for an option that will return the grid 
             % probability after each time instant, saving some computation time
@@ -109,73 +87,7 @@ function grid_probability = getDynProgSolForTargetTube(sys, ...
                 state_grid, ...
                 input_grid, ...
                 grid_probability, ...
-                target_tube{n_targets-i}, ...
-                options);
-        end
-    end
-
-    if strcmpi(options.status.timer.Running, 'on')
-        stop(options.status.timer);
-    end
-
-end
-
-function options = processDynamicProgrammingOptions(varargin)
-% SReachTools/getDynProgSolForTargetTube/processDynamicProgrammingOptions
-% Process options given to the Dynamic programming solver
-% ============================================================================
-%
-% Process options given to the getDynProgSolForTargetTube
-% solver function
-% 
-% Currently under construction so is not used
-%   
-% ============================================================================
-%
-% options = processDynamicProgrammingOptions(varargin)
-% 
-% Inputs:
-% -------
-%   varargin - Options, either in singluar option or Name Value pairs
-%
-% Outputs:
-% --------
-%   options - Options struct
-%
-% Notes:
-%   * Under construction, check back soon...
-% 
-% ============================================================================
-% 
-%   This function is part of the Stochastic Optimal Control Toolbox.
-%   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
-%    
-
-    options = struct();
-
-    % Default options
-    options.timer   = [];
-    options.verbose = false;
-    options.status.show = false;
-    options.status.period = NaN;
-    options.status.current_target = 0;
-    options.status.total_targets = 0;
-    options.status.timer = timer();
-
-    if ~isempty(varargin)
-        i = 1;
-        while i <= length(varargin)
-            if strcmpi(varargin{i}, 'verbose')
-                options.verbose = true;
-                i = i + 1;
-            elseif strcmpi(varargin{i}, 'displaystatus')
-                options.status.show = true;
-                options.status.period = varargin{i+1};
-                options.status.timer.Period = varargin{i+1};
-                options.status.timer.ExecutionMode = 'fixedRate';
-                i = i + 2;
-            end
+                target_tube{n_targets-i});
         end
     end
 
