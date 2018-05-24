@@ -7,9 +7,7 @@ function bounded_set = getBoundedSetForDisturbance(disturbance, ...
 % This function will get a bounded disturbance set used to compute robust
 % reach avoid sets or robust effective target tubes.
 %
-% Usage: 
-% ------
-% See examples/boundedDisturbanceSets.m
+% Usage: see examples/boundedDisturbanceSets.m
 %
 % ============================================================================
 % 

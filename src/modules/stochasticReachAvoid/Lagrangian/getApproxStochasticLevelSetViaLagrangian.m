@@ -11,9 +11,7 @@ function approx_level_set = getApproxStochasticLevelSetViaLagrangian(sys, ...
 %     Methods," in Proceedings of the IEEE Conference on Decision and Control, 
 %     2017
 %
-% USAGE: TODO: Make example
-% approx_level_set = getApproxStochasticLevelSetViaLagrangian(sys, ...
-%     beta, target_tube, approx_type, method, varargin)
+% USAGE: TODO: see examples/doubleIntegratorLevelSetApprox.m
 %
 % ============================================================================
 %
