@@ -15,12 +15,12 @@ try
                                                       [1,1])
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message, ...
                       'Expected a scalar positive time_horizon')
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -41,12 +41,12 @@ try
                                                       0)
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message, ...
                       'Expected a scalar positive time_horizon')
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -67,12 +67,12 @@ try
                                                       10)
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message, ...
                       'Safe set must be a non-empty polyhedron')
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -93,12 +93,12 @@ try
                                                       10)
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message, ...
                       'Target set must be a non-empty polyhedron')
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -119,12 +119,12 @@ try
                                                       10)
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message, ...
                       'Safe and target sets must be of the same dimension');
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -145,12 +145,12 @@ try
                                                       10)
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message, ...
                       'Safe set must be a non-empty polyhedron')
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -171,12 +171,12 @@ try
                                                       10)
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message, ...
                       'Target set must be a non-empty polyhedron')
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise

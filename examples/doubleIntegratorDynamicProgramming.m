@@ -1,4 +1,4 @@
-% SReach/doubleIntegratorDynamicProgramming
+% SReachTools/doubleIntegratorDynamicProgramming
 % ============================================================================
 % 
 % Dyhamic programming for reachability of a target tube.
@@ -16,7 +16,7 @@
 % 
 % This function is part of the Stochastic Optimal Control Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReach/blob/master/LICENSE
+%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 % 
 

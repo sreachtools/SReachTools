@@ -1,5 +1,6 @@
 classdef SimpleBox
-% SReach/SimpleBox  Class definition to obtain vertices of a n-dimensional box
+% SReachTools/SimpleBox  Class definition to obtain vertices of a n-dimensional 
+% wbox
 % ===========================================================================
 %
 % Class to obtain vertices of an n-dimensional box; often used for computing
@@ -33,7 +34,7 @@ classdef SimpleBox
 %
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 % 
 
@@ -41,7 +42,7 @@ classdef SimpleBox
         vertices
         center
 
-        % SReach/SimpleBox/dx  Box side half-lengths
+        % SReachTools/SimpleBox/dx  Box side half-lengths
         % =================================================================
         % 
         % Array of the half-lenghs of each side of the box
@@ -72,7 +73,7 @@ classdef SimpleBox
     
     methods
         function obj = SimpleBox(vertices, dx)
-        % SReach/SimpleBox/SimpleBox  Class constructor for SimpleBox
+        % SReachTools/SimpleBox/SimpleBox  Class constructor for SimpleBox
         % ====================================================================
         %
         % Constructor for SimpleBox Class
@@ -108,13 +109,13 @@ classdef SimpleBox
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReach/blob/master/LICENSE
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         % 
         % 
 
             if size(vertices, 1) > 1
                 if nargin >= 2
-                    error('SReach:invalidArgs', ['When creating a box ', ...
+                    error('SReachTools:invalidArgs', ['When creating a box ', ...
                         'using a vertices the delta in each dimension ', ...
                         'should not be provided; see help SimpleBox/SimpleBox']);
                 end
@@ -126,7 +127,7 @@ classdef SimpleBox
                 obj.vertices = vertices;
             else
                 if nargin < 2
-                    error('SReach:invalidArgs', ['When creating a box ', ...
+                    error('SReachTools:invalidArgs', ['When creating a box ', ...
                         'using a center the delta in each dimension must ', ...
                         'also be provided; see help SimpleBox/SimpleBox']);
                 end
@@ -200,7 +201,7 @@ classdef SimpleBox
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReach/blob/master/LICENSE
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         % 
         % 
             lb = obj.center - obj.dx;
@@ -208,7 +209,7 @@ classdef SimpleBox
         end
         
         function p = computeGaussianProbability(obj, vertex_probabilites)
-        % SReach/SimpleBox/computeGaussianProbability  Compute the likelihood
+        % SReachTools/SimpleBox/computeGaussianProbability  Compute the likelihood
         % for Gaussian to be in box
         % =====================================================================
         % 
@@ -236,7 +237,7 @@ classdef SimpleBox
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReach/blob/master/LICENSE
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         % 
         % 
             
@@ -255,7 +256,7 @@ classdef SimpleBox
         end
         
         function poly = getPolyhedron(obj)
-        % SReach/SimpleBox/getPolyhedron  Get Polyhedron form of box
+        % SReachTools/SimpleBox/getPolyhedron  Get Polyhedron form of box
         % ================================================================
         %
         % Class method to get the MPT Polyhedron representation of the 
@@ -282,7 +283,7 @@ classdef SimpleBox
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReach/blob/master/LICENSE
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         % 
         % 
 
@@ -292,7 +293,7 @@ classdef SimpleBox
     
     methods (Static, Access = private)
         function vertices = sortVertices(vertices)
-        % SReach/SimpleBox/sortVertices  Sort box vertices
+        % SReachTools/SimpleBox/sortVertices  Sort box vertices
         % ====================================================================
         %
         % Private, static method to sort simple box vertices
@@ -319,7 +320,7 @@ classdef SimpleBox
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReach/blob/master/LICENSE
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         % 
         % 
         
@@ -342,7 +343,7 @@ classdef SimpleBox
         end
 
         function vertices = get2dBoxVerticesFromCenter(center, dx)
-        % SReach/SimpleBox/get2dBoxVerticesFromCenter
+        % SReachTools/SimpleBox/get2dBoxVerticesFromCenter
         % ====================================================================
         %
         % Priavte, static method to compute points that create a bounding box 
@@ -368,7 +369,7 @@ classdef SimpleBox
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReach/blob/master/LICENSE
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         % 
         % 
 
@@ -382,7 +383,7 @@ classdef SimpleBox
         end
 
         function vertices = get3dBoxVerticesFromCenter(center, dx)
-        % SReach/SimpleBox/get3dBoxVerticesFromCenter
+        % SReachTools/SimpleBox/get3dBoxVerticesFromCenter
         % ====================================================================
         %
         % Priavte, static method to compute points that create a bounding box 
@@ -406,7 +407,7 @@ classdef SimpleBox
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReach/blob/master/LICENSE
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         % 
         % 
 

@@ -1,8 +1,8 @@
-% SReach/doubleIntegratorLevelSetApprox  Doulbe integrator level set 
+% SReachTools/doubleIntegratorLevelSetApprox  Doulbe integrator level set 
 % approximation
 % ============================================================================
 %
-% This script is an example application of using SReach to compute
+% This script is an example application of using SReachTools to compute
 % underapproximations of the stochastic beta level set for a viability target
 % tube. The problem is based off of the double integrator example in [1].
 %
@@ -15,7 +15,7 @@
 % 
 % This function is part of the Stochastic Optimal Control Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReach/blob/master/LICENSE
+%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 % 
 

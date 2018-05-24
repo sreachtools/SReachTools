@@ -1,25 +1,25 @@
-function varargout = sreachinit(varargin)
-% SReach/sreachinit: Initialization function
+function varargout = srtinit(varargin)
+% SReachTools/srtinit: Initialization function
 % ======================================================================
 %
-%   Function to initialize and add source functions of the SReach toolbox
+%   Function to initialize and add source functions of the SReachTools toolbox
 %   to the path.
 %
 %   Usage:
 %   ------
-%   sreachinit
-%   sreachinit('--options');
+%   srtinit
+%   srtinit('--options');
 %
 % ======================================================================
 % 
-% sreachinit options
-% sreachinit('options');
+% srtinit options
+% srtinit('options');
 %
 % Inputs:
 %   Available options:
 %       -v, --verbose    Have initalization function explicitly print to
 %                        console which folders are being added to the path
-%       -x, --deinit     Remove SReach toolbox folders from the path
+%       -x, --deinit     Remove SReachTools toolbox folders from the path
 %       -t, --test       Perform unit testing after initialization or deinit
 %       -T               Perform unit testing without initialization or deinit,
 %                        will cancel out any other parameters, e.g. '-x', '-v'
@@ -28,14 +28,14 @@ function varargout = sreachinit(varargin)
 %   None
 %
 % Notes:
-%   - Performing a deinit and testing '-x -t' will deinit the SReach toolbox and
+%   - Performing a deinit and testing '-x -t' will deinit the SReachTools toolbox and
 %     then perform unit testing, causing all unit tests to fail.
 % 
 % =========================================================================
 % 
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 % 
 
@@ -51,20 +51,20 @@ function varargout = sreachinit(varargin)
         elseif strcmp(varargin{i}, '-t') || strcmp(varargin{i}, '--test')
             run_tests = true;
         elseif strcmp(varargin{i}, '-T')
-            test_results = sreachtest();
+            test_results = srttest();
             if nargout == 1
                 varargout{1} = test_results;
             end
             return;
         else
-            assert(false, 'Invalid input option, see help sreachinit')
+            assert(false, 'Invalid input option, see help srtinit')
         end
     end
     
     % get the parent dir of this function
     script_path = fileparts(mfilename('fullpath'));
     
-    % absolute path to the SReach src directory
+    % absolute path to the SReachTools src directory
     src_path = fullfile(script_path, 'src');
     ex_path = fullfile(script_path, 'examples');
     
@@ -118,18 +118,18 @@ function varargout = sreachinit(varargin)
     end
     
     if run_tests
-        sreachtest();
+        srttest();
     end
 
 end
 
-function test_results = sreachtest()
+function test_results = srttest()
 
     % get the parent dir of this function
     script_path = mfilename('fullpath');
 
-    % trick - mfile name will output /path/to/the/file/sreachinit, so as a hack can
-    % simply remove the /sreachinit (11 chars) to get the path
+    % trick - mfile name will output /path/to/the/file/srtinit, so as a hack can
+    % simply remove the /srtinit (11 chars) to get the path
     % if MATLAB changes the way mfilename works then this hack will not work
     script_path = script_path(1:end-11);
     

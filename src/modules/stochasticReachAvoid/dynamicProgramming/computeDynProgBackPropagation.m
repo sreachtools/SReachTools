@@ -1,6 +1,7 @@
 function grid_probability = computeDynProgBackPropagation(sys, ...
     state_grid, input_grid, grid_probability, initial_set, options)
-% SReach/stochasticReachAvoid/computeDynProgBackPropagation
+% SReachTools/stochasticReachAvoid/computeDynProgBackPropagation Compute the
+% dynamic programming back propagation
 % ============================================================================
 %
 % The function computes the one-step back propagation for the dynamic 
@@ -40,7 +41,7 @@ function grid_probability = computeDynProgBackPropagation(sys, ...
 %
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 
     % save the original grid probability
@@ -108,7 +109,7 @@ end
 
 function probability = fastGaussianProbFor2d(sys, ext_grid, state_vec, ...
     input_vec)
-% SReach/stochasticReachAvoid/fastGaussianProbFor2d
+% SReachTools/stochasticReachAvoid/fastGaussianProbFor2d
 % ============================================================================
 %
 % The function computes the transition probabilites for a 2-d system with
@@ -141,7 +142,7 @@ function probability = fastGaussianProbFor2d(sys, ext_grid, state_vec, ...
 % 
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 
     % compute the mean of the Gaussian through the state transition
@@ -162,7 +163,7 @@ end
 
 function probability = computeGaussianProbabForInputAndState(sys, ...
     state_grid, state_vec, input_vec)
-% SReach/computeDynProgBackPropagation/computeGaussianProbabForInputAndState
+% SReachTools/computeDynProgBackPropagation/computeGaussianProbabForInputAndState
 % Comput gaussian transition probability
 % ============================================================================
 %
@@ -196,7 +197,7 @@ function probability = computeGaussianProbabForInputAndState(sys, ...
 %
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 
     % mean after state transition
@@ -218,7 +219,7 @@ function probability = computeGaussianProbabForInputAndState(sys, ...
 end
 
 function p = computeProbabilityAtGridPoint(point, dx, mu, sigma)
-% SReach/computeDynProgBackPropagation/computeProbabilityAtGridPoint
+% SReachTools/computeDynProgBackPropagation/computeProbabilityAtGridPoint
 % Compute the probability at a grid point
 % ============================================================================
 %
@@ -250,7 +251,7 @@ function p = computeProbabilityAtGridPoint(point, dx, mu, sigma)
 % 
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 
     box = SimpleBox(point, dx);
@@ -259,7 +260,7 @@ end
 
 function new_p = gaussianProbabilityDifference(old_p, ...
     old_grid_points)
-% SReach/computeDynProgBackPropagation/gaussianProbabilityDifference
+% SReachTools/computeDynProgBackPropagation/gaussianProbabilityDifference
 % Compute the probability from gaussian using box and diffs
 % ============================================================================
 %
@@ -290,7 +291,7 @@ function new_p = gaussianProbabilityDifference(old_p, ...
 % 
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 
 
     if size(old_grid_points, 1) == 4
@@ -315,7 +316,7 @@ function new_p = gaussianProbabilityDifference(old_p, ...
 end
 
 function box_points = getBoxPointsFromGridPoint(point, dx)
-% SReach/computeDynProgBackPropagation/getBoxPointsFromGridPoint
+% SReachTools/computeDynProgBackPropagation/getBoxPointsFromGridPoint
 % Get bounding box around a grid point
 % ============================================================================
 %
@@ -346,7 +347,7 @@ function box_points = getBoxPointsFromGridPoint(point, dx)
 % 
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 
     if length(dx) == 2
@@ -384,7 +385,7 @@ function box_points = getBoxPointsFromGridPoint(point, dx)
 end
 
 function box_points = get2dBoxPointsFromGridPoint(point, dx)
-% SReach/computeDynProgBackPropagation/get2dBoxPointsFromGridPoint
+% SReachTools/computeDynProgBackPropagation/get2dBoxPointsFromGridPoint
 % Get 2d bounding box verties from grid point
 % =============================================================================
 %
@@ -416,7 +417,7 @@ function box_points = get2dBoxPointsFromGridPoint(point, dx)
 % 
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %
 
 
@@ -428,7 +429,7 @@ function box_points = get2dBoxPointsFromGridPoint(point, dx)
 end
 
 function box_points = get3dBoxPointsFromGridPoint(point, dx)
-% SReach/computeDynProgBackPropagation/get3dBoxPointsFromGridPoint
+% SReachTools/computeDynProgBackPropagation/get3dBoxPointsFromGridPoint
 % Get bounding box vertiices for 3-d box at grid point
 % ============================================================================
 %
@@ -460,7 +461,7 @@ function box_points = get3dBoxPointsFromGridPoint(point, dx)
 % 
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %
 
     box_points = zeros(8, length(dx));
@@ -475,7 +476,7 @@ function box_points = get3dBoxPointsFromGridPoint(point, dx)
 end
 
 function displayStatus(obj, event, options)
-% SReach/computeDynProgBackPropagation/displayStatus
+% SReachTools/computeDynProgBackPropagation/displayStatus
 % Display current status of computation
 % ============================================================================
 %
@@ -503,7 +504,7 @@ function displayStatus(obj, event, options)
 % 
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %
 
     fprintf('\n')

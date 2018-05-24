@@ -1,6 +1,6 @@
 function [a, b, c] = functionWithNestedFunction(d, e, f)
-% SReach/functionWithNestedFunction: Function with nested function documentation
-% example
+% SReachTools/functionWithNestedFunction: Function with nested function 
+% documentation example
 % ============================================================================
 %
 % Example of standard function documentation
@@ -38,7 +38,7 @@ function [a, b, c] = functionWithNestedFunction(d, e, f)
 % 
 % This function is part of the Stochastic Optimal Control Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReach/blob/master/LICENSE
+%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 % 
 
@@ -49,7 +49,7 @@ function [a, b, c] = functionWithNestedFunction(d, e, f)
 end
 
 function output = nestedFunction(in1, in2)
-% SReach/functionWithNestedFunction: Nested function documentation example
+% SReachTools/functionWithNestedFunction: Nested function documentation example
 % ============================================================================
 %
 % Nested function documentation is very similar to standard function
@@ -81,7 +81,7 @@ function output = nestedFunction(in1, in2)
 % 
 % This function is part of the Stochastic Optimal Control Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReach/blob/master/LICENSE
+%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 % 
 

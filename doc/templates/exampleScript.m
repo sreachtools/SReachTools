@@ -1,4 +1,4 @@
-% SReach/exampleScript: Example script documentation example
+% SReachTools/exampleScript: Example script documentation example
 % ============================================================================
 %
 % Details about the example script. Be detailed here so that users calling help
@@ -12,7 +12,7 @@
 % 
 % This function is part of the Stochastic Optimal Control Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReach/blob/master/LICENSE
+%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 % 
 

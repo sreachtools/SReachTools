@@ -15,12 +15,12 @@ try
                                                                    2);
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message, ...
                       'Expected a non-empty polyhedral input space')
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -42,12 +42,12 @@ try
                                                                    [2,2]);
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message, ...
                       'Expected a scalar positive time_horizon')
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -69,12 +69,12 @@ try
                                                                    0);
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message, ...
                       'Expected a scalar positive time_horizon')
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -99,12 +99,12 @@ try
                             concatenated_input_space_b]) == ...
             Polyhedron('lb', -umax * ones(time_horizon,1),...
                        'ub',  umax * ones(time_horizon,1)),...
-            'SReach:internal',...
+            'SReachTools:internal',...
             'Mismatch in U^N');
 catch ME
     disp(ME.message)
     incorrect_error_id_sent_out = 1;
-    error('SReach:internal',...
+    error('SReachTools:internal',...
           'Was not expecting an error')
     throw(ME)
 end

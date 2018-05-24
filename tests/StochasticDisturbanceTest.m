@@ -11,14 +11,14 @@ try
                                                  zeros(5,1));
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message, ...
                       ['Gaussian disturbance needs the mean vector and ',...
                       'covariance matrix'])
                 correct_error_id_sent_out = 1;
             else
                 disp(ME.message)
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -36,13 +36,13 @@ try
                                                  eye(4));
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message, ...
                       'Mean and covariance matrix have different dimensions')
                 correct_error_id_sent_out = 1;
             else
                 disp(ME.message)
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -67,7 +67,7 @@ try
 catch ME
     disp(ME.message)
     incorrect_error_id_sent_out = 1;
-    error('SReach:internal',...
+    error('SReachTools:internal',...
           'Was not expecting an error')
     throw(ME)
 end
@@ -93,7 +93,7 @@ try
             'Dimension mismatch between the object and the covariance matrix');
 catch ME
     incorrect_error_id_sent_out = 1;
-    error('SReach:internal',...
+    error('SReachTools:internal',...
           'Was not expecting an error')
     throw(ME)
 end

@@ -1,5 +1,5 @@
 classdef StochasticDisturbance
-% SReach/StochasticDisturbance: Create a stochastic disturbance object
+% SReachTools/StochasticDisturbance: Create a stochastic disturbance object
 % ==========================================================================
 %
 % Defines a stochastic disturbance with a standard probability density
@@ -51,7 +51,7 @@ classdef StochasticDisturbance
 % 
 % This function is part of the Stochastic Optimal Control Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReach/blob/master/LICENSE
+%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 % 
 
@@ -83,7 +83,7 @@ classdef StochasticDisturbance
     end
     methods
         function obj = StochasticDisturbance(disturbance_type, varargin)
-        % SReach/StochasticDisturbance: Constructor for StochasticDisturbance
+        % SReachTools/StochasticDisturbance: Constructor for StochasticDisturbance
         % class
         % ====================================================================
         %
@@ -122,7 +122,7 @@ classdef StochasticDisturbance
         % 
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReach/blob/master/LICENSE
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         % 
         % 
             
@@ -134,7 +134,7 @@ classdef StochasticDisturbance
             switch(lower(obj.type))
                 case 'gaussian'
                     assert(length(varargin) == 2,...
-                           'SReach:invalidArgs',...
+                           'SReachTools:invalidArgs',...
                            ['Gaussian disturbance needs the mean vector and ',...
                            'covariance matrix']);
                        
@@ -151,7 +151,7 @@ classdef StochasticDisturbance
                     % Check if the mean and covariance are of correct dimensions
                     assert(size(obj.parameters.mean,1) ==...
                            size(obj.parameters.covariance,1),...
-                           'SReach:invalidArgs',...
+                           'SReachTools:invalidArgs',...
                            ['Mean and covariance matrix have different ',...
                             'dimensions']);
                         
@@ -164,13 +164,13 @@ classdef StochasticDisturbance
                                           obj.parameters.mean',...
                                           obj.parameters.covariance);
                 otherwise
-                    error('SReach:internal',...
+                    error('SReachTools:internal',...
                           'Unsupported disturbance type');
             end
         end
         
         function disp(obj)
-        % SReach/StochasticDisturbance/disp  Override of MATLAB internal display
+        % SReachTools/StochasticDisturbance/disp  Override of MATLAB internal display
         % ====================================================================
         % 
         % Overriding of MATLAB built-in display function for the class
@@ -189,7 +189,7 @@ classdef StochasticDisturbance
         % 
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReach/blob/master/LICENSE
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         % 
         %
             

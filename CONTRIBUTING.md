@@ -42,11 +42,11 @@ Some minor changes have been done.
       mark the leveraging action by adding in the description comment `DELEGATED
       INPUT HANDLING`.
     - Avoid `if-condition-error-end` for sanity checks. Use `assert`.
-    - Exceptions must include a `msgIdentifer` of the form `SReach:XXX`.
+    - Exceptions must include a `msgIdentifer` of the form `SReachTools:XXX`.
       Identifiers currently in use are
-        * `SReach:internal`    --- For internal errors (TODOs).
-        * `SReach:invalidArgs` --- For invalid arguments.
-        * `SReach:setup_error` --- For lack of the necessary dependencies.
+        * `SReachTools:internal`    --- For internal errors (TODOs).
+        * `SReachTools:invalidArgs` --- For invalid arguments.
+        * `SReachTools:setup_error` --- For lack of the necessary dependencies.
     - Ensure that exception message is succinct and disambiguous. Don't be TeX!
     - Test all exceptions provided in the code.
     - Exception message do not end with a period.
@@ -56,7 +56,7 @@ Some minor changes have been done.
       list form.
 - Ensure the help tags of the classes and functions follow the same
   structure as `LtiSystem` and `getReachAvoidSet()` respectively.
-    - SReach/NAME: Succint description of the class/function
+    - SReachTools/NAME: Succint description of the class/function
     - Horizontal separator
     - Detailed description
     - Usage example

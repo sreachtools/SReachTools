@@ -1,4 +1,4 @@
-This stochastic reachability toolbox (SReach), its source, and its
+This stochastic reachability toolbox (SReachTools), its source, and its
 documentation are copyright © 2018 by Abraham P. Vinod and Joseph D. Gleason.
 
 Use or creating copies of all or part of this work is subject to the following
@@ -14,7 +14,7 @@ at:
 
 LICENSE
 
-The stochastic reachability toolbox (SReach), its source, and its
+The stochastic reachability toolbox (SReachTools), its source, and its
 documentation (hereafter, Software) is copyrighted by Abraham P. Vinod and
 Joseph D. Gleason (hereafter, Developers) and ownership of all rights, title and
 interest in and to the Software remains with the Developers. By using or copying

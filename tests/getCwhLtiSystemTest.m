@@ -17,12 +17,12 @@ try
                          GaussianDist);
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message, ...
                       'Must provide polyhedral input space')
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -41,12 +41,12 @@ try
                          GaussianDist);
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message, ...
                       'Input matrix does not have correct column numbers')
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -69,12 +69,12 @@ try
                                     diag([1e-4, 1e-4])));
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message, ...
                       'Disturbance matrix does not have correct column numbers')
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -94,7 +94,7 @@ try
 catch ME
     disp(ME.message)
     incorrect_error_id_sent_out = 1;
-    error('SReach:internal',...
+    error('SReachTools:internal',...
           'Was not expecting an error')
     throw(ME)
 end

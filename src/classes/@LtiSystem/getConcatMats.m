@@ -1,5 +1,5 @@
 function [Z,H,G] = getConcatMats(sys, time_horizon)
-% SReach/LtiSystem/getConcatMats: Get concatenated matrices
+% SReachTools/LtiSystem/getConcatMats: Get concatenated matrices
 % ============================================================================
 % 
 % Computes the matrices corresponding to the concatentated state vector X.
@@ -94,13 +94,13 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
 %
 % This function is part of the Stochastic Optimal Control Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReach/blob/master/LICENSE
+%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 %
 
     % Ensure that time_horizon is a scalar
     assert( isscalar(time_horizon) && time_horizon > 0,...
-           'SReach:invalidArgs',...
+           'SReachTools:invalidArgs',...
            'Expected a scalar positive time_horizon');
 
     %% Construct Z matrix

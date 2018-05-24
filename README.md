@@ -1,6 +1,6 @@
-# Stochastic reachability toolbox (SReach)
+# Stochastic reachability toolbox (SReachTools)
 
-SReach is a MATLAB toolbox to tackle various problems in stochastic reachability.
+SReachTools is a MATLAB toolbox to tackle various problems in stochastic reachability.
 
 This is an area of active research, and this toolbox will attempt to cater
 certain classes of problems. We aim to support the following problems:

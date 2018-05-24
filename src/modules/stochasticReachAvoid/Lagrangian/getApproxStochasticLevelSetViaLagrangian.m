@@ -1,6 +1,6 @@
 function approx_level_set = getApproxStochasticLevelSetViaLagrangian(sys, ...
     beta, target_tube, approx_type, method, varargin)
-% SReach/stochasticReachAvoid/getApproxStochasticLevelSetViaLagrangian: 
+% SReachTools/stochasticReachAvoid/getApproxStochasticLevelSetViaLagrangian: 
 % Get approximate level set using lagrangian methods
 % ============================================================================
 %
@@ -34,7 +34,7 @@ function approx_level_set = getApproxStochasticLevelSetViaLagrangian(sys, ...
 % 
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 % 
 
@@ -57,7 +57,7 @@ function approx_level_set = getApproxStochasticLevelSetViaLagrangian(sys, ...
         case 'overapproximation'
             do_underapprox = false;
         otherwise
-            error('SReach:invalidArgs', ['Input ''approx_type'' must be ', ...
+            error('SReachTools:invalidArgs', ['Input ''approx_type'' must be ', ...
                 'either ''underapproximation'' or ''overapproximation'', ', ...
                 'see help getApproxStochasticLevelSetViaLagrangian']);
     end

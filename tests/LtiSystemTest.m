@@ -13,12 +13,12 @@ try
     sys = LtiSystem('InputMatrix');
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message, ...
                       'Arguments must be given as name-value pairs')
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -34,12 +34,12 @@ try
     sys = LtiSystem();
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message,...
                       'State matrix can not be empty')
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -55,12 +55,12 @@ try
     sys = LtiSystem('InputMatrix',eye(2));
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message,...
                       'State matrix can not be empty')
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -76,12 +76,12 @@ try
     sys = LtiSystem('InputMatrixGoneBad',eye(2));
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message,...
                       'Unhandled argument given')
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -99,12 +99,12 @@ try
                     'InputSpace', Polyhedron('lb', -1, 'ub', 1));
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message,...
                       'Input matrix does not have correct row numbers')
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -122,12 +122,12 @@ try
                     'InputSpace', Polyhedron('lb', [-1;-1], 'ub', [1;1]));
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message,...
                       'Input matrix does not have correct column numbers')
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -144,12 +144,12 @@ try
                     'InputMatrix', ones(2,4));
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message,...
                       'Empty input space: But non-column input matrix')
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -168,12 +168,12 @@ try
                     'Disturbance', Polyhedron('lb', -1, 'ub', 1));
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message,...
                       'Disturbance matrix does not have correct row numbers')
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -191,12 +191,12 @@ try
                     'Disturbance', Polyhedron('lb', [-1,-1], 'ub', [1,1]));
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message,...
                       'Disturbance matrix does not have correct column numbers')
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -212,12 +212,12 @@ try
     sys = LtiSystem('StateMatrix', [1; 1]);
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message,...
                       'State matrix is not square')
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
                 %fprintf('Wrong error message\nExpected: ')
                 %disp(ME.message)
@@ -237,12 +237,12 @@ try
                     'DisturbanceMatrix', ones(2,4));
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message,...
                       'Empty disturbance: But non-column disturbance matrix')
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -266,12 +266,12 @@ try
                     'Disturbance', GaussianDisturbance);
 catch ME
     switch ME.identifier
-        case 'SReach:invalidArgs'
+        case 'SReachTools:invalidArgs'
             if strcmp(ME.message,...
                       'Disturbance matrix does not have correct column numbers')
                 correct_error_id_sent_out = 1;
             else
-                error('SReach:internal',...
+                error('SReachTools:internal',...
                       'Unexpected message')
             end
         otherwise
@@ -289,7 +289,7 @@ try
                     'Disturbance', Polyhedron('lb', -1, 'ub', [1]));
 catch ME
     incorrect_error_id_sent_out = 1;
-    error('SReach:internal',...
+    error('SReachTools:internal',...
           'Was not expecting an error')
     throw(ME)
 end
@@ -304,7 +304,7 @@ try
                     'InputSpace', Polyhedron('lb', -1, 'ub', [1]));
 catch ME
     incorrect_error_id_sent_out = 1;
-    error('SReach:internal',...
+    error('SReachTools:internal',...
           'Was not expecting an error')
     throw(ME)
 end
@@ -319,7 +319,7 @@ try
                     'InputSpace', Polyhedron('lb', -1, 'ub', 1));
 catch ME
     incorrect_error_id_sent_out = 1;
-    error('SReach:internal',...
+    error('SReachTools:internal',...
           'Was not expecting an error')
     throw(ME)
 end
@@ -335,7 +335,7 @@ try
                     'Disturbance', Polyhedron('lb', -1, 'ub', 1));
 catch ME
     incorrect_error_id_sent_out = 1;
-    error('SReach:internal',...
+    error('SReachTools:internal',...
           'Was not expecting an error')
     throw(ME)
 end
@@ -353,7 +353,7 @@ try
                     'Disturbance', Polyhedron('lb', -ones(6,1), 'ub', ones(6,1)));
 catch ME
     incorrect_error_id_sent_out = 1;
-    error('SReach:internal',...
+    error('SReachTools:internal',...
           'Was not expecting an error')
     throw(ME)
 end
@@ -371,7 +371,7 @@ try
                     'Disturbance', Polyhedron('lb', -1, 'ub', 1));
 catch ME
     incorrect_error_id_sent_out = 1;
-    error('SReach:internal',...
+    error('SReachTools:internal',...
           'Was not expecting an error')
     throw(ME)
 end
@@ -391,7 +391,7 @@ try
                     'Disturbance', GaussianDisturbance);
 catch ME
     incorrect_error_id_sent_out = 1;
-    error('SReach:internal',...
+    error('SReachTools:internal',...
           'Was not expecting an error')
     throw(ME)
 end
@@ -413,7 +413,7 @@ try
                     'Disturbance', GaussianDisturbance);
 catch ME
     incorrect_error_id_sent_out = 1;
-    error('SReach:internal',...
+    error('SReachTools:internal',...
           'Was not expecting an error')
     throw(ME)
 end

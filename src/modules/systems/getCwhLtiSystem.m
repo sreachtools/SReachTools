@@ -2,7 +2,7 @@ function sys = getCwhLtiSystem(dim, ...
                                input_space, ...
                                disturbance, ...
                                user_params)
-% SReach/systemDefinitions/getCwhLtiSystem: Create a LtiSystem object for
+% SReachTools/systemDefinitions/getCwhLtiSystem: Create a LtiSystem object for
 % the spacecraft dynamics using Clohessy-Wiltshire-Hill (CWH) dynamics
 % =============================================================================
 %
@@ -79,21 +79,21 @@ function sys = getCwhLtiSystem(dim, ...
 %
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 
     %% Input handling
     % Input must be a 2-dimensional polytope
     assert( isa(input_space, 'Polyhedron'), ...
-           'SReach:invalidArgs',...
+           'SReachTools:invalidArgs',...
            'Must provide polyhedral input space');
     assert( isa(disturbance, 'StochasticDisturbance'), ...
-            'SReach:invalidArgs', ...
+            'SReachTools:invalidArgs', ...
             'Must provide a stochastic disturbance');
 
     %% CWH dynamics parameters
     if nargin < 3
-        error('SReach:internal', 'Too few input arguments.');
+        error('SReachTools:internal', 'Too few input arguments.');
     elseif nargin < 4
         params = getDefaultCwhParameters();
     else
@@ -119,7 +119,7 @@ function sys = getCwhLtiSystem(dim, ...
 end
 
 function params = getDefaultCwhParameters()
-% SReach/getCwhLtiSystem/getDefaultCwhParameters: Get default parameter
+% SReachTools/getCwhLtiSystem/getDefaultCwhParameters: Get default parameter
 % struct
 % =============================================================================
 %
@@ -147,7 +147,7 @@ function params = getDefaultCwhParameters()
 %
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 
     params = struct();
@@ -180,7 +180,7 @@ function params = getDefaultCwhParameters()
 end
 
 function params = checkSystemParameters(user_params)
-% SReach/getCwhLtiSystem/checkSystemParameters: Check the given system
+% SReachTools/getCwhLtiSystem/checkSystemParameters: Check the given system
 % parameters
 % =============================================================================
 %
@@ -206,7 +206,7 @@ function params = checkSystemParameters(user_params)
 %
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 
     params = getDefaultCwhParameters();
@@ -272,7 +272,7 @@ function params = checkSystemParameters(user_params)
 end
 
 function [state_matrix, input_matrix] = get4dCwhStateAndInputMatrices(params)
-% SReach/getCwhLtiSystem/get4dCwhStateAndInputMatrices: Get 4-d CWH 
+% SReachTools/getCwhLtiSystem/get4dCwhStateAndInputMatrices: Get 4-d CWH 
 % matrices
 % =============================================================================
 %
@@ -295,7 +295,7 @@ function [state_matrix, input_matrix] = get4dCwhStateAndInputMatrices(params)
 %
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 
     % redefine important variable for simplicity
@@ -364,7 +364,7 @@ function [state_matrix, input_matrix] = get4dCwhStateAndInputMatrices(params)
 end
 
 function [state_matrix, input_matrix] = get6dCwhStateAndInputMatrices(params)
-% SReach/getCwhLtiSystem/get4dCwhStateAndInputMatrices: Get 6-d CWH 
+% SReachTools/getCwhLtiSystem/get4dCwhStateAndInputMatrices: Get 6-d CWH 
 % matrices
 % =============================================================================
 %
@@ -387,7 +387,7 @@ function [state_matrix, input_matrix] = get6dCwhStateAndInputMatrices(params)
 %
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 
     % redefine important variable for simplicity

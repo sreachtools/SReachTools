@@ -1,5 +1,5 @@
 classdef SpaceGrid
-% SReach/SpaceGrid  Create a state space grid object
+% SReachTools/SpaceGrid  Create a state space grid object
 % =============================================================================
 %
 % Class to hold the gridding of a particular space, e.g. state or input.
@@ -43,7 +43,7 @@ classdef SpaceGrid
 %
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 % 
 
@@ -63,7 +63,7 @@ classdef SpaceGrid
     end
     methods
         function obj = SpaceGrid(lb, ub, n_points, external_flag)
-        % SReach/SpaceGrid/SpaceGrid  Constructor
+        % SReachTools/SpaceGrid/SpaceGrid  Constructor
         % ====================================================================
         %
         % SpaceGrid class constructor
@@ -96,7 +96,7 @@ classdef SpaceGrid
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReach/blob/master/LICENSE
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         % 
         % 
 
@@ -114,7 +114,7 @@ classdef SpaceGrid
             elseif strcmp(external_flag, 'external')
                 obj.is_external = true;
             else
-                error('SReach:invalidArgs', ['Flag for external ', ...
+                error('SReachTools:invalidArgs', ['Flag for external ', ...
                         'grid creation must be either ''internal'' or ', ...
                         '''external''']);
             end
@@ -126,7 +126,7 @@ classdef SpaceGrid
             
             % check if lower and upper are same dimension
             if length(lb) ~= length(ub)
-                error('SReach:invalidArgs', ['Lower and upper bounds must ', ...
+                error('SReachTools:invalidArgs', ['Lower and upper bounds must ', ...
                     'be equivalent in length (dimension).']);
             end
             
@@ -140,7 +140,7 @@ classdef SpaceGrid
                 % need to check to ensure that the numer of points is the same
                 % as the number of dimensions of the lower and upper bounds
                 if length(n_points) ~= length(lb)
-                    error('SReach:invalidArgs', ['Number of points must ', ...
+                    error('SReachTools:invalidArgs', ['Number of points must ', ...
                         'be either a scalar or a vector of equivalent ', ...
                         'length of the lower and upper bounds.']);
                 end
@@ -169,7 +169,7 @@ classdef SpaceGrid
                     obj.actual_lb = lb + obj.grid_delta;
                     obj.actual_ub = ub - obj.grid_delta;
                 otherwise
-                    error('SReach:invalidArgs', ['Flag for external ', ...
+                    error('SReachTools:invalidArgs', ['Flag for external ', ...
                         'grid creation must be either ''internal'' or ', ...
                         '''external''']);
             end
@@ -201,7 +201,7 @@ classdef SpaceGrid
         end
         
         function ind_vector = getIndicatorVectorForSet(obj, s)
-        % SReach/SpaceGrid/getIndicatorVectorForSet  Get indicator vector
+        % SReachTools/SpaceGrid/getIndicatorVectorForSet  Get indicator vector
         % ====================================================================
         % 
         % Get indicator vector for the grid points which lie in a Polyhedron
@@ -229,7 +229,7 @@ classdef SpaceGrid
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReach/blob/master/LICENSE
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         % 
         % 
 
@@ -238,7 +238,7 @@ classdef SpaceGrid
         end
 
         function sortGrid(obj)
-        % SReach/SpaceGrid/sortGrid  Sort space grid vectors
+        % SReachTools/SpaceGrid/sortGrid  Sort space grid vectors
         % ====================================================================
         % 
         % Sort space grid vectors, ascending
@@ -259,7 +259,7 @@ classdef SpaceGrid
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReach/blob/master/LICENSE
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         % 
         %
         
@@ -269,7 +269,7 @@ classdef SpaceGrid
         end
         
         function varargout = getMeshGrids(obj)
-        % SReach/SpaceGrid/getMeshGrids  Get MATLAB meshgrids
+        % SReachTools/SpaceGrid/getMeshGrids  Get MATLAB meshgrids
         % ====================================================================
         % 
         % Get MATLAB meshgrids for the SpaceGrid object; only works for grids 
@@ -297,12 +297,12 @@ classdef SpaceGrid
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReach/blob/master/LICENSE
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         % 
         %
 
             if obj.dim > 3
-                error('SReach:internal', ['Can only get meshgrid for 2 or ', ...
+                error('SReachTools:internal', ['Can only get meshgrid for 2 or ', ...
                     '3-dimentional systems']);
             end
             
@@ -330,13 +330,13 @@ classdef SpaceGrid
                     obj.n_points + 1, ...
                     'external');
             else
-                error('SReach:internal', ['Cannot create an external grid ', ...
+                error('SReachTools:internal', ['Cannot create an external grid ', ...
                     'from an external grid']);
             end
         end
         
         function plotGridProbability(obj, grid_probability)
-        % SReach/SpaceGrid/plotGridProbability  Plot grid probability
+        % SReachTools/SpaceGrid/plotGridProbability  Plot grid probability
         % ====================================================================
         % 
         % Perform surface plot of 2-dimensional grid probability
@@ -356,11 +356,11 @@ classdef SpaceGrid
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReach/blob/master/LICENSE
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         % 
         %
             if obj.dim > 2
-                error('SReach:internal', ['Can only plot for 1 or ', ...
+                error('SReachTools:internal', ['Can only plot for 1 or ', ...
                     '2-dimentional systems']);
             end
             
@@ -376,7 +376,7 @@ classdef SpaceGrid
     
     methods (Hidden)
         function plotGrid(obj)
-        % SReach/SpaceGrid/plotGridProbability  Plot grid 
+        % SReachTools/SpaceGrid/plotGridProbability  Plot grid 
         % ====================================================================
         % 
         % Hidden method to plot 2 or 3-dimensional grid
@@ -396,12 +396,12 @@ classdef SpaceGrid
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReach/blob/master/LICENSE
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         % 
         %
 
             if obj.dim > 3
-                error('SReach:internal', ['Can only plot the grid for 2 ', ...
+                error('SReachTools:internal', ['Can only plot the grid for 2 ', ...
                     'or 3-dimensional grids']);
             end
             
@@ -422,7 +422,7 @@ classdef SpaceGrid
         end
         
         function arrays = getGridArrays(obj)
-        % SReach/SpaceGrid/getGridArrays  Get arrays for grid vectors for each
+        % SReachTools/SpaceGrid/getGridArrays  Get arrays for grid vectors for each
         % dimension
         % ====================================================================
         % 
@@ -447,7 +447,7 @@ classdef SpaceGrid
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReach/blob/master/LICENSE
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         % 
         %
 
@@ -463,7 +463,7 @@ classdef SpaceGrid
     
     methods (Access = private)
         function grid_vector = getGridVectorFromInds(obj, inds)
-        % SReach/SpaceGrid/getGridVectorFromInds  Get the grid vector from 
+        % SReachTools/SpaceGrid/getGridVectorFromInds  Get the grid vector from 
         % indices
         % ====================================================================
         %
@@ -488,7 +488,7 @@ classdef SpaceGrid
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReach/blob/master/LICENSE
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         % 
         %
         
@@ -499,7 +499,7 @@ classdef SpaceGrid
             % make sure that the length of the indices matches the bounds
             % dimension
             if length(inds) ~= length(obj.lower_bounds)
-                error('SReach:internal', ['Length/dimension of indices do ', ...
+                error('SReachTools:internal', ['Length/dimension of indices do ', ...
                     'not match the length/dimensions of the bounds']);
             end
             

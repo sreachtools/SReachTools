@@ -3,7 +3,7 @@ function prob = getProbReachSet(sys,...
                                 target_set,...
                                 target_time,...
                                 desired_accuracy)
-% SReach/forwardStochasticReach/getProbReachSet: Compute the probability that
+% SReachTools/forwardStochasticReach/getProbReachSet: Compute the probability that
 % the state at target_time will lie in the target_set
 % ============================================================================
 %
@@ -44,7 +44,7 @@ function prob = getProbReachSet(sys,...
 %
 % This function is part of the Stochastic Optimal Control Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReach/blob/master/LICENSE
+%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %
 %
     [mean_x, cov_x] = getFSRPDMeanCovariance(sys,...

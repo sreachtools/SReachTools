@@ -1,7 +1,7 @@
 function [concatenated_input_space_A, concatenated_input_space_b] = ...
                                          getConcatInputSpace(sys,...
                                                                    time_horizon)
-% SReach/LtiSystem/getConcatInputSpace: Get concatenated input space 
+% SReachTools/LtiSystem/getConcatInputSpace: Get concatenated input space 
 % matrices
 % ============================================================================
 % 
@@ -42,18 +42,18 @@ function [concatenated_input_space_A, concatenated_input_space_b] = ...
 %
 % This function is part of the Stochastic Optimal Control Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReach/blob/master/LICENSE
+%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 %
 
     %% Input handling
     % Ensure that the system has a non-empty input space
     assert(~sys.input_space.isEmptySet,...
-           'SReach:invalidArgs',...
+           'SReachTools:invalidArgs',...
            'Expected a non-empty polyhedral input space');
     % Ensure that time horizon is a scalar and positive
     assert( isscalar(time_horizon) && time_horizon > 0,...
-           'SReach:invalidArgs',...
+           'SReachTools:invalidArgs',...
            'Expected a scalar positive time_horizon');
 
     %% Construction of the concatenated input space

@@ -1,7 +1,7 @@
 function aug_eff_target = getAugEffTarget(sys, ...
                                           target_tube, ...
                                           disturbance)
-% SReach/getAugEffTarget
+% SReachTools/getAugEffTarget
 % ============================================================================
 %
 % This function will compute the augmented effect target via the algorithm in
@@ -36,7 +36,7 @@ function aug_eff_target = getAugEffTarget(sys, ...
 %
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %
 
     % validate the inputs

@@ -1,5 +1,5 @@
 classdef DocClass
-% SReach/DocClass: One-sentence description of the class
+% SReachTools/DocClass: One-sentence description of the class
 % ===========================================================================
 %
 % More detailed description of the class. This area can have a minor paragraph
@@ -32,7 +32,7 @@ classdef DocClass
 %
 % This function is part of the Stochastic Optimal Control Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReach/blob/master/LICENSE
+%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %
 %
     properties
@@ -45,7 +45,7 @@ classdef DocClass
 
     methods
         function obj = DocClass(in1, in2, in3, varargin)
-        % SReach/DocClass/DocClass: DocClass constructor
+        % SReachTools/DocClass/DocClass: DocClass constructor
         % ====================================================================
         %
         % Example class constructor. Follow documentation style guidelines for 
@@ -84,7 +84,7 @@ classdef DocClass
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/SReach/blob/master/LICENSE
+        %      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         % 
         % 
             obj.property_1 = in1;
@@ -93,7 +93,7 @@ classdef DocClass
         end
 
         function a = someRandomMethod(obj)
-        % SReach/DocClass/someRandomMethod: Random method to return a random
+        % SReachTools/DocClass/someRandomMethod: Random method to return a random
         % number
         % ====================================================================
         %
@@ -120,7 +120,7 @@ classdef DocClass
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/SReach/blob/master/LICENSE
+        %      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         % 
         % 
             a = rand();

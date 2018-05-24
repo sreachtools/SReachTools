@@ -1,5 +1,5 @@
 classdef InputGrid
-% SReach/InputGrid: Create a input space grid object
+% SReachTools/InputGrid: Create a input space grid object
 % ============================================================================
 %
 % Defines an input space grid used for dynamic programming computations
@@ -43,7 +43,7 @@ classdef InputGrid
 %
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 
     properties (SetAccess = private)
@@ -59,7 +59,7 @@ classdef InputGrid
     end
     methods
         function obj = InputGrid(lb, ub, n_points)
-        % SReach/InputGrid/InputGrid
+        % SReachTools/InputGrid/InputGrid
         % ====================================================================
         %
         % InputGrid class constructor
@@ -93,7 +93,7 @@ classdef InputGrid
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReach/blob/master/LICENSE
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         %   
 
             % validate that the lower and upper bounds are positie integer
@@ -103,7 +103,7 @@ classdef InputGrid
             
             % check if lower and upper are same dimension
             if length(lb) ~= length(ub)
-                error('SReach:invalidArgs', ['Lower and upper bounds must ', ...
+                error('SReachTools:invalidArgs', ['Lower and upper bounds must ', ...
                     'be equivalent in length (dimension).']);
             end
             
@@ -117,7 +117,7 @@ classdef InputGrid
                 % need to check to ensure that the numer of points is the same
                 % as the number of dimensions of the lower and upper bounds
                 if length(n_points) ~= length(lb)
-                    error('SReach:invalidArgs', ['Number of points must ', ...
+                    error('SReachTools:invalidArgs', ['Number of points must ', ...
                         'be either a scalar or a vector of equivalent ', ...
                         'length of the lower and upper bounds.']);
                 end
@@ -160,7 +160,7 @@ classdef InputGrid
         end
         
         function ind_vector = getIndicatorVectorForSet(obj, s)
-        % SReach/InputGrid/getIndicatorVectorForSet Get indicator vector for
+        % SReachTools/InputGrid/getIndicatorVectorForSet Get indicator vector for
         % points in grid that lie in set 
         % ====================================================================
         %
@@ -190,7 +190,7 @@ classdef InputGrid
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReach/blob/master/LICENSE
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         % 
 
             validateattributes(s, {'Polyhedron'}, {'nonempty'})
@@ -200,7 +200,7 @@ classdef InputGrid
     
     methods (Hidden)
         function grid_vector = getGridVectorFromInds(obj, inds)
-        % SReach/InputGrid/getGridVectorFromInds  Get grid vector
+        % SReachTools/InputGrid/getGridVectorFromInds  Get grid vector
         % ====================================================================
         %
         % Class method returning an indicator vector (vector of zeros and ones)
@@ -225,7 +225,7 @@ classdef InputGrid
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReach/blob/master/LICENSE
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         %    
 
             % validate inputs
@@ -235,7 +235,7 @@ classdef InputGrid
             % make sure that the length of the indices matches the bounds
             % dimension
             if length(inds) ~= length(obj.lower_bounds)
-                error('SReach:internal', ['Length/dimension of indices do ', ...
+                error('SReachTools:internal', ['Length/dimension of indices do ', ...
                     'not match the length/dimensions of the bounds']);
             end
             

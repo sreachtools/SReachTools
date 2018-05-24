@@ -21,7 +21,7 @@ function [boundary_theta,...
                             covariance_X_sans_input,...
                             desired_accuracy,...
                             PSoptions)
-% SReach/stochasticReachAvoid/computeBoundaryPointViaBisection: Compute via
+% SReachTools/stochasticReachAvoid/computeBoundaryPointViaBisection: Compute via
 % bisection them maximum extension of a ray starting from xmax and the
 % associated optimal open-loop controller and maximum reach-avoid probability
 % (Internal function --- assumes arguments are all ok)
@@ -31,9 +31,9 @@ function [boundary_theta,...
 % as possible while being above a given probability_threshold_of_interest. This
 % function is useful in computing a polytopic underapproximation of the
 % stochastic reach-avoid set in
-% getFtBasedUnderapproximateStochasticReachAvoidSet.
+% getFtBasedUnderapproxStochReachAvoidSet.
 %
-% USAGE: See getFtBasedUnderapproximateStochasticReachAvoidSet.
+% USAGE: See getFtBasedUnderapproxStochReachAvoidSet.
 %
 % =============================================================================
 %
@@ -119,19 +119,19 @@ function [boundary_theta,...
 % Notes:
 % * NOT ACTIVELY TESTED: TODO
 % * NO INPUT HANDLING: For computational speed. To be used via
-%   getFtBasedUnderapproximateStochasticReachAvoidSet
+%   getFtBasedUnderapproxStochReachAvoidSet
 % * MATLAB DEPENDENCY: Uses MATLAB's Global Optimization Toolbox; Statistics and
 %                      Machine Learning Toolbox.
 %                      Needs patternsearch for gradient-free optimization
 %                      Needs normpdf, normcdf, norminv for Genz's algorithm
-% * Uses computeFtLowerBoundStochasticReachAvoid to compute the
+% * Uses computeFtLowerBoundStochReachAvoid to compute the
 %   actual stochastic reach-avoid underapproximation
 % 
 % =============================================================================
 % 
 % This function is part of the Stochastic Optimal Control Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReach/blob/master/LICENSE
+%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %
 %
 
@@ -165,7 +165,7 @@ function [boundary_theta,...
             % open-loop optimal controller starting from candidate_initial_state
             [optimal_reachAvoid_probability_at_this_step,...
              optimal_input_at_this_step] =...
-                       computeFtLowerBoundStochasticReachAvoid(...
+                       computeFtLowerBoundStochReachAvoid(...
                                                   sys,...
                                                   candidate_initial_state,...
                                                   time_horizon,...

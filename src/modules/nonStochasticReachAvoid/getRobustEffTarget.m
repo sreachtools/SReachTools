@@ -2,7 +2,7 @@ function robust_eff_target = getRobustEffTarget(sys, ...
                                                 target_tube, ...
                                                 disturbance, ...
                                                 options)
-% SReach/getRobustEffTarget Get robust Effective Target Set
+% SReachTools/getRobustEffTarget Get robust Effective Target Set
 % =========================================================================
 %
 % This function will compute the augmented effect target via the algorithm in
@@ -37,7 +37,7 @@ function robust_eff_target = getRobustEffTarget(sys, ...
 % 
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 % 
 
@@ -45,7 +45,7 @@ function robust_eff_target = getRobustEffTarget(sys, ...
     if nargin < 4
         options = getDefaultOptions();
     elseif nargin < 3
-        error('SReach:Internal', 'No enough input arguments.');
+        error('SReachTools:Internal', 'No enough input arguments.');
     end
     
     validateattributes(sys, {'LtiSystem'}, {'nonempty'});
@@ -156,7 +156,7 @@ function back_recursion_set = performRobustEffectiveTargetRecursion(...
     inverted_state_matrix, ...
     effective_dist, ...
     style)
-% SReach/performRobustEffectiveTargetRecursion  Do the 
+% SReachTools/performRobustEffectiveTargetRecursion  Do the 
 % one set backward recursion to obtain the effective target
 % =========================================================================
 %
@@ -200,7 +200,7 @@ function back_recursion_set = performRobustEffectiveTargetRecursion(...
 % 
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 % 
     
@@ -266,7 +266,7 @@ function back_recursion_set = performRobustEffectiveTargetRecursion(...
 end
 
 function options = getDefaultOptions()
-% SReach/getRobustEffTarget/getDefaultOptions  Get default solver options
+% SReachTools/getRobustEffTarget/getDefaultOptions  Get default solver options
 % =========================================================================
 %
 % Nested function to obtain default solver/logging options
@@ -291,7 +291,7 @@ function options = getDefaultOptions()
 % 
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 % 
 

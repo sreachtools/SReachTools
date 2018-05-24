@@ -1,4 +1,4 @@
-% SReach/boundedDisturbanceSets: Bounded disturbance set generation example
+% SReachTools/boundedDisturbanceSets: Bounded disturbance set generation example
 % ============================================================================
 %
 % Example script for generating bounded disturbances with different methods.
@@ -11,7 +11,7 @@
 % 
 % This function is part of the Stochastic Optimal Control Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReach/blob/master/LICENSE
+%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 % 
 

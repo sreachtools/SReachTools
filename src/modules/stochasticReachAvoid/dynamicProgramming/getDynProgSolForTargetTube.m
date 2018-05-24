@@ -1,6 +1,7 @@
 function grid_probability = getDynProgSolForTargetTube(sys, ...
     state_grid, input_grid, target_tube, varargin)
-% SReach/stochasticReachAvoid/getDynProgSolForTargetTube
+% SReachTools/stochasticReachAvoid/getDynProgSolForTargetTube Get dynamic 
+% programming grid probability for reachability of target tube
 % ============================================================================
 %
 % The function computes the probability of staying in a target tube defined
@@ -48,7 +49,7 @@ function grid_probability = getDynProgSolForTargetTube(sys, ...
 % 
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %
 
 
@@ -72,7 +73,7 @@ function grid_probability = getDynProgSolForTargetTube(sys, ...
     validateattributes(sys.disturbance, {'StochasticDisturbance'}, ...
         {'nonempty'});
     if ~strcmpi(sys.disturbance.type, 'Gaussian')
-        error('SReach:invalidArgs', ['Dynamic programming methods can ', ...
+        error('SReachTools:invalidArgs', ['Dynamic programming methods can ', ...
             'only handle stochastic disturbances of type Gaussian']);
     end
     
@@ -120,7 +121,7 @@ function grid_probability = getDynProgSolForTargetTube(sys, ...
 end
 
 function options = processDynamicProgrammingOptions(varargin)
-% SReach/getDynProgSolForTargetTube/processDynamicProgrammingOptions
+% SReachTools/getDynProgSolForTargetTube/processDynamicProgrammingOptions
 % Process options given to the Dynamic programming solver
 % ============================================================================
 %
@@ -148,7 +149,7 @@ function options = processDynamicProgrammingOptions(varargin)
 % 
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %    
 
     options = struct();

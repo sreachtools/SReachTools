@@ -1,6 +1,6 @@
 function bounded_set = getBoundedSetForDisturbance(disturbance, ...
     horizon_length, beta, method, varargin)
-% SReach/stochasticReachAvoid/getBoundedSetForDisturbance: Get bounded 
+% SReachTools/stochasticReachAvoid/getBoundedSetForDisturbance: Get bounded 
 % disturbance set for approximation
 % ============================================================================
 %
@@ -83,7 +83,7 @@ function bounded_set = getBoundedSetForDisturbance(disturbance, ...
 %
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %
 
     % only need to validate attributes if not loading from file
@@ -93,7 +93,7 @@ function bounded_set = getBoundedSetForDisturbance(disturbance, ...
         validateattributes(disturbance, {'StochasticDisturbance'}, ...
             {'nonempty'})
         if ~strcmpi(disturbance.type, 'Gaussian')
-            error('SReach:invalidArgs', 'Disturbance must be of type Gaussian');
+            error('SReachTools:invalidArgs', 'Disturbance must be of type Gaussian');
         end
 
         % check that the horizon is some nonzero integer
@@ -151,7 +151,7 @@ function bounded_set = getBoundedSetForDisturbance(disturbance, ...
             validateattributes(varargin{1}, {'char'}, {'nonempty'})
             
             if exist(varargin{1}, 'file') ~= 2
-                error('SReach:internal', ['Mat file to load does not ', ...
+                error('SReachTools:internal', ['Mat file to load does not ', ...
                     'exist on the path.']);
             end
             
@@ -161,7 +161,7 @@ function bounded_set = getBoundedSetForDisturbance(disturbance, ...
             % look for the Polyhedron
             fnames = fields(ls);
             if length(fnames) > 1
-                error('SReach:internal', ['Mat file contains more than ', ...
+                error('SReachTools:internal', ['Mat file contains more than ', ...
                     'saved object. Please see Notes section of the help ', ...
                     'for details about how mat files used for loading ', ...
                     'must be structured.']);
@@ -175,7 +175,7 @@ function bounded_set = getBoundedSetForDisturbance(disturbance, ...
             
             
         otherwise
-            error('SReach:invalidArgs', ['Invalid method provided, see ', ...
+            error('SReachTools:invalidArgs', ['Invalid method provided, see ', ...
                 'help for available methods']);
     end
 
@@ -183,7 +183,7 @@ end
 
 function bounded_set = boundedEllipseByRandomVectors(disturbance, ...
     horizon_length, beta, n_directions)
-% SReach/getBoundedSetForDisturbance/boundedEllipseByRandomVectors: Get bounded 
+% SReachTools/getBoundedSetForDisturbance/boundedEllipseByRandomVectors: Get bounded 
 % disturbance ellipse with random direction choices
 % ============================================================================
 %
@@ -212,7 +212,7 @@ function bounded_set = boundedEllipseByRandomVectors(disturbance, ...
 %
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %
 
     % should probably provide a warning about the use of random direction for
@@ -250,7 +250,7 @@ end
 
 function poly = getOptimizationBoxForGaussian(disturbance, horizon_length, ...
     beta, center)
-% SReach/getBoundedSetForDisturbance/getOptimizationBoxForGaussian: Get bounded 
+% SReachTools/getBoundedSetForDisturbance/getOptimizationBoxForGaussian: Get bounded 
 % disturbance as box through solution of optimization problem
 % ============================================================================
 %
@@ -280,7 +280,7 @@ function poly = getOptimizationBoxForGaussian(disturbance, horizon_length, ...
 %
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %
 
     center = disturbance.parameters.covariance^(-1/2)*(center - ...
@@ -305,7 +305,7 @@ function poly = getOptimizationBoxForGaussian(disturbance, horizon_length, ...
 end
 
 function [c, ceq] = nonlinearOptimBoxConstraints(l, c, p)
-% SReach/getOptimizationBoxForGaussian/nonlinearOptimBoxConstraints: Nonlinear
+% SReachTools/getOptimizationBoxForGaussian/nonlinearOptimBoxConstraints: Nonlinear
 % constraints for getOptimizationBoxForGaussian
 % ============================================================================
 %
@@ -332,7 +332,7 @@ function [c, ceq] = nonlinearOptimBoxConstraints(l, c, p)
 %
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %
 
     c = p - mvncdf(c'-l'/2, c'+l'/2, zeros(size(l')), eye(length(l)));
@@ -342,7 +342,7 @@ end
 
 function poly = getBoundingBoxForGaussian(disturbance, horizon_length, ...
     beta, err)
-% SReach/getBoundedSetForDisturbance/getBoundingBoxForGaussian: Get bounded 
+% SReachTools/getBoundedSetForDisturbance/getBoundingBoxForGaussian: Get bounded 
 % disturbance as box through bisection
 % ============================================================================
 %
@@ -371,7 +371,7 @@ function poly = getBoundingBoxForGaussian(disturbance, horizon_length, ...
 %
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReach/blob/master/LICENSE
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %
 
     MAX_ITERS = 10000;

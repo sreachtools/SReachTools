@@ -1,7 +1,7 @@
-% SReach/doubleIntegratorMultipleLevelSet
+% SReachTools/doubleIntegratorMultipleLevelSet
 % ============================================================================
 % 
-% This script is an example application of using SReach to compute
+% This script is an example application of using SReachTools to compute
 % underapproximations of the stochastic beta level set for the reachability
 % of a target tube with multiple bounded disturbance sets. The example
 % uses double integrator dynamics:
@@ -18,7 +18,7 @@
 % 
 % This function is part of the Stochastic Optimal Control Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReach/blob/master/LICENSE
+%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 %
 

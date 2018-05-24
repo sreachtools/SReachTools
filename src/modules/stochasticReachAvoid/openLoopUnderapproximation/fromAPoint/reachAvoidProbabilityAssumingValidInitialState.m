@@ -1,15 +1,16 @@
 function [reach_avoid_probability] = ...
-   reachAvoidProbabilityAssumingValidInitialState(input_vector,...
+   reachAvoidProbAssumingValidInitialState(input_vector,...
                                                   mean_X_sans_input,...
                                                   covariance_X_sans_input,...
                                                   H_matrix,...
                                                   concatenated_target_tube_A,...
                                                   concatenated_target_tube_b,...
                                                   desired_accuracy)
-% SReach/stochasticReachAvoid/reachAvoidProbabilityAssumingValidInitialState
+% SReachTools/stochasticReachAvoid/reachAvoidProbAssumingValidInitialState
+% Compute reach avoid prob with FT underapproximation
 % =============================================================================
 %
-% reachAvoidProbabilityAssumingValidInitialState computes the objective
+% reachAvoidProbAssumingValidInitialState computes the objective
 % function of the Fourier transform-based underapproximation of the terminal
 % hitting-time stochastic reach avoid problem as discussed in
 %
@@ -17,16 +18,16 @@ function [reach_avoid_probability] = ...
 % Reach-Avoid Problem for High-Dimensional LTI Systems using Fourier
 % Transforms," in IEEE Control Systems Letters (L-CSS), 2017.
 %
-% Specifically, reachAvoidProbabilityAssumingValidInitialState computes the
+% Specifically, reachAvoidProbAssumingValidInitialState computes the
 % integral of the Gaussian random vector (concatenated state vector) X over the
 % reach-avoid (polytopic) tube safe_set^{time_horizon-1} x target_set. 
 %
-% USAGE: See computeFtLowerBoundStochasticReachAvoid.
+% USAGE: See computeFtLowerBoundStochReachAvoid.
 %
 % =============================================================================
 %
 % [reach_avoid_probability] = ...
-%    reachAvoidProbabilityAssumingValidInitialState(input_vector,...
+%    reachAvoidProbAssumingValidInitialState(input_vector,...
 %                                                   mean_X_sans_input,...
 %                                                   covariance_X_sans_input,...
 %                                                   H_matrix,...
@@ -56,13 +57,13 @@ function [reach_avoid_probability] = ...
 % Notes:
 % * NOT ACTIVELY TESTED: TODO
 % * NO INPUT HANDLING: For computational speed. To be used via
-%   computeFtLowerBoundStochasticReachAvoid
+%   computeFtLowerBoundStochReachAvoid
 % * MATLAB DEPENDENCY: Uses MATLAB's Statistics and Machine Learning Toolbox.
 %                      Need normpdf, norminv, normcdf for Genz's algorithm
 % * Uses Genz's algorithm for integral of multivariate Gaussian, qscmvnv, that
 %   can be found at
 %   http://www.math.wsu.edu/faculty/genz/software/matlab/qscmvnv.m. 
-%      * This function has been included in SReach/src/helperFunctions. 
+%      * This function has been included in SReachTools/src/helperFunctions. 
 %      * This quasi-Monte-Carlo simulations and Cholesky decompostion-based
 %        algorithm is driven to provide a desired accuracy by appropriately
 %        increasing the number of Monte Carlo particles used.
@@ -79,7 +80,7 @@ function [reach_avoid_probability] = ...
 % 
 % This function is part of the Stochastic Optimal Control Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReach/blob/master/LICENSE
+%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %
 %
 
