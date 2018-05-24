@@ -1,6 +1,4 @@
-function aug_eff_target = getAugEffTarget(sys, ...
-                                          target_tube, ...
-                                          disturbance)
+function aug_eff_target = getAugEffTarget(sys, target_tube, disturbance)
 % SReachTools/getAugEffTarget
 % ============================================================================
 %
@@ -37,20 +35,26 @@ function aug_eff_target = getAugEffTarget(sys, ...
 %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 
-    % validate the inputs
     inpar = inputParser();
-    inpar.addRequired('sys', @(x) validateattributes(x, {'LtiSystem'}, ...
-        {'nonempty'}));
-    inpar.addRequired('target_tube', @(x) validateattributes(x, ...
-        {'TargetTube'}, {'nonempty'}));
+    inpar.addRequired('sys', @(x) validateattributes(x, ...
+        {'LtiSystem', 'LtvSystem'}, {'nonempty'}));
     inpar.addRequired('disturbance', @(x) validateattributes(x, ...
         {'Polyhedron'}, {'nonempty'}));
-
-    inpar.parse(sys, target_tube, disturbance);
-
+    % TODO: Used the second option instead
+    %inpar.addRequired('target_tube', @(x) srtValidateTargetTube(x));
+    inpar.addRequired('target_tube', @(x) validateattributes(x, ...
+        {'TargetTube'}, {'nonempty'}));
     % validate that all elements of the target_tube are polyhedron
     for i = 1:length(target_tube)
         validateattributes(target_tube(i), {'Polyhedron'}, {'nonempty'});
+    end
+    inpar.parse(sys, target_tube, disturbance);
+    try
+        inpar.parse(sys, target_tube, disturbance);
+    catch cause_exc
+        exc = SrtInvalidArgsError.withFunctionName();
+        exc = addCause(exc, cause_exc);
+        throwAsCaller(exc);
     end
     
     horizon_length = length(target_tube);

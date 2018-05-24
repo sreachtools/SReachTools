@@ -1,4 +1,4 @@
-function sys = getCwhLtiSystem(dim, varargin)
+function sys = getCwhLtiSystem(dim, inputSpace, dist, varargin)
 % SReachTools/systemDefinitions/getCwhLtiSystem: Create a LtiSystem object for
 % the spacecraft dynamics using Clohessy-Wiltshire-Hill (CWH) dynamics
 % =============================================================================
@@ -60,6 +60,10 @@ function sys = getCwhLtiSystem(dim, varargin)
 %                             diag([1e-4, 1e-4, 1e-4, 5e-8, 5e-8, 5e-8])));
 %
 % =============================================================================
+% 
+% sys = getCwhLtiSystem(dim);
+% sys = getCwhLtiSystem(dim, user_params);
+% sys = getCwhLtiSystem(dim, user_params, Name, Value);
 %
 % Inputs:
 % -------
@@ -101,13 +105,31 @@ function sys = getCwhLtiSystem(dim, varargin)
 %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 
+    % Input handling
+    inpar = inputParser();
+    inpar.addRequired('dim', @(x) validateattributes(x, ...
+        {'numeric'}, {'integer', '>', 0}));
+    inpar.addOptional('inputSpace', Polyhedron(), @(x) validateattributes(x,...
+        {'Polyhedron'}, {'nonempty'}));
+    inpar.addOptional('dist', Polyhedron(), @(x) validateattributes(x,...
+        {'Polyhedron', 'StochasticDisturbance', 'RandomVector'},{'nonempty'}));
+    
+    try
+        inpar.parse(dim, inputSpace, dist)
+    catch err
+        exc = SrtInvalidArgsError.withFunctionName();
+        exc = exc.addCause(err);
+        throw(exc)
+    end
+
     %% CWH dynamics parameters --- Default or user-provided
-    if length(varargin) == 3
-        params = checkSystemParameters(varargin{3});
-    elseif length(varargin) < 3
-        params = getDefaultCwhParameters();
+    if isempty(varargin)
+        params = CwhSystemParameters();        
+    elseif length(varargin)==1
+        validateattributes(varargin{1}, {'CwhSystemParameters'},{'nonempty'});
+        params = varargin{1};
     else
-        error('SReachTools:invalidArgs', 'Too many inputs');
+        error('SReachTools:invalidArgs', 'Too many input arguments.');
     end
     
     % System matrix construction
@@ -124,40 +146,29 @@ function sys = getCwhLtiSystem(dim, varargin)
     
     
     %% Input handling
-    if isempty(varargin)
+    if isEmptySet(inputSpace) && isa(dist,'Polyhedron') && isEmptySet(dist)
         % Construct a LtiSystem object without disturbance or input space
         sys = LtiSystem('StateMatrix', state_matrix);
-    elseif length(varargin) == 1
-        % Only input space --- No disturbance
-        assert( isa(varargin{1}, 'Polyhedron'), ...
-               'SReachTools:invalidArgs', ...
-               'Must provide polyhedral input space');           
+    elseif isa(dist,'Polyhedron') && isEmptySet(dist)
         % Construct a LtiSystem object without disturbance
         sys = LtiSystem('StateMatrix', state_matrix, ...
                         'InputMatrix', input_matrix, ...
-                        'InputSpace', varargin{1});
+                        'InputSpace', inputSpace);
     else        % Since length(varargin) < 3, length(varargin) == 2
-        % Input space and disturbance
-        assert( isa(varargin{1}, 'Polyhedron'), ...
-               'SReachTools:invalidArgs', ...
-               'Must provide polyhedral input space');           
-        assert( isa(varargin{2}, 'RandomVector'), ...
-                'SReachTools:invalidArgs', ...
-                'Must provide a random vector object');
         % Disturbance matrix construction is nxn identity
         disturbance_matrix = eye(size(state_matrix,2));
-        if isEmptySet(varargin{1})
+        if isEmptySet(inputSpace)
             % Construct a LtiSystem object without input space
             sys = LtiSystem('StateMatrix', state_matrix, ...
                             'DisturbanceMatrix', disturbance_matrix, ...
-                            'Disturbance', varargin{2});            
+                            'Disturbance', dist);            
         else
             % Construct a LtiSystem object with everything in
             sys = LtiSystem('StateMatrix', state_matrix, ...
                             'InputMatrix', input_matrix, ...
-                            'InputSpace', varargin{1}, ...
+                            'InputSpace', inputSpace, ...
                             'DisturbanceMatrix', disturbance_matrix, ...
-                            'Disturbance', varargin{2});            
+                            'Disturbance', dist);            
         end
     end    
 end
@@ -244,159 +255,4 @@ function [state_matrix, input_matrix] = get6dCwhStateAndInputMatrices(params)
                             0, ...
                             sampling_period, ...
                             'ArrayValued', true) * B_cts;
-end
-
-
-function params = getDefaultCwhParameters()
-% SReachTools/getCwhLtiSystem/getDefaultCwhParameters: Get default parameter
-% struct
-% =============================================================================
-%
-% Get the default parameters for the CWH system dynamics. Defaults:
-%   sampling period              = 20 s
-%   orbital radius               = 850 + 6378.1 m
-%   gravitational constant       = 6.673e-11
-%   celestial body mass          = 5.9472e24 kg
-%   gravitational body           = grav_constant * celes_mass / 1e6
-%   orbital angular velocity     = sqrt(grav_body / orbital_radius^3)
-%   chief mass                   = 300 kg
-%   discretized orbital distance = orbit_ang_vel * sampling_period rad
-%   
-% Usage: Nested function
-%
-% =============================================================================
-%
-% Inputs: None
-%
-% Outputs:
-% --------
-%   params - Parameter struct
-%
-% =============================================================================
-%
-%   This function is part of the Stochastic Reachability Toolbox.
-%   License for the use of this function is given in
-%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
-% 
-
-    params = struct();
-
-    % sampling period in sec
-    params.sampling_period = 20;
-
-    % Orbital radius in m
-    params.orbital_radius = 850 + 6378.1;
-
-    % Universal gravitational constant                                           
-    params.grav_constant = 6.673e-11;
-
-    % Mass of the celestial body (default is Earth)
-    params.celes_mass = 5.9472e24;
-
-    % Gravitation constant for the pull of the celestial body (default Earth)
-    params.grav_body = params.grav_constant * params.celes_mass / 1000^3;
-
-    % Angular velocity in the orbit
-    params.orbit_ang_vel = sqrt(params.grav_body / params.orbital_radius^3);
-
-    % Mass of the chief kg
-    params.chief_mass = 300; 
-
-    % Discretized orbital distance
-    params.disc_orbit_dist = params.orbit_ang_vel * params.sampling_period;                
-
-
-end
-
-function params = checkSystemParameters(user_params)
-% SReachTools/getCwhLtiSystem/checkSystemParameters: Check the given system
-% parameters
-% =============================================================================
-%
-% Check the provided system parameters and update any defaults
-%   
-% Usage: Nested function
-%
-% =============================================================================
-%
-% Inputs:
-% -------
-%   user_params - User parameter struct
-%                 Possible values that may be adjusted are --- sampling_period,
-%                 orbital_radius, grav_constant, celes_mass, chief_mass,
-%                 orbit_ang_vel, disc_orbit_dist
-%                 If empty, default values are set.
-%
-% Outputs:
-% --------
-%   params - Parameter struct
-%
-% =============================================================================
-%
-%   This function is part of the Stochastic Reachability Toolbox.
-%   License for the use of this function is given in
-%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
-% 
-
-    params = getDefaultCwhParameters();
-    all_fields = fields(params);
-
-    user_fields = fields(params);
-    for i = 1:length(all_fields)
-        switch(lower(all_fields{i}))
-            case 'sampling_period'
-                if ismember('sampling_period', user_fields)
-                    params.sampling_period = user_params.sampling_period;
-                end
-            case 'orbital_radius'
-                if ismember('orbital_radius', user_fields)
-                    params.orbital_radius = user_params.orbital_radius;
-                end
-            case 'grav_constant'
-                if ismember('grav_constant', user_fields)
-                    warning(['Gravitational constant is a universal ', ...
-                        'constant, simulation for different universes not ', ...
-                        'available. Using this universe''s constant of ', ...
-                        '%f.'], params.grav_constant)
-                end
-            case 'celes_mass'
-                if ismember('celes_mass', user_fields)
-                    params.celes_mass = user_params.celes_mass;
-                end
-            case 'grav_body'
-                if ismember('grav_body', user_fields)
-                    warning(['The gravitational force of a celestial body ', ...
-                        'is determined via an algebraic equation. Cannot ', ...
-                        'set this value.'])
-                end
-
-                params.grav_body = params.grav_constant * params.celes_mass/...
-                    1000^3;
-            case 'orbit_ang_vel'
-                if ismember('orbit_ang_vel', user_fields)
-                    warning(['The orbital angular velocity of a satellite ', ...
-                        'is determined via an algebraic equation. Cannot ', ...
-                        'set this value.'])
-                end
-
-                params.orbit_ang_vel = sqrt(poarams.grav_body / ...
-                    params.orbital_radius^3);
-            case 'chief_mass'
-                if ismember('chief_mass', user_fields)
-                    params.chief_mass = user_params.chief_mass;
-                end
-            case 'disc_orbit_dist'
-                if ismember('sampling_period', user_fields)
-                    warning(['The discretized orbital distance of a ', ...
-                        'satellite is determined via an algebraic ', ...
-                        'equation. Cannot set this value.'])
-                end
-
-                params.disc_orbit_dist = params.orbit_ang_vel * ...
-                    params.sampling_period;
-
-            otherwise
-                error('SReachTools:invalidArgs', 'Unhandled option');
-        end
-    end
 end

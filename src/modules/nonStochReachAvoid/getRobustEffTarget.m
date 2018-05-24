@@ -49,15 +49,25 @@ function robust_eff_target = getRobustEffTarget(sys, ...
     % validate the inputs
     inpar = inputParser();
     inpar.addRequired('sys', @(x) validateattributes(x, ...
-        {'LtiSystem', 'LtvSystem'}, {'nonempty'}));
     inpar.addRequired('target_tube', @(x) validateattributes(x, ...
         {'TargetTube'}, {'nonempty'}));
+    %TODO: Joe
+    %inpar.addRequired('target_tube', @(x) srtValidateTargetTube(x));
+    % validate that all elements of the target_tube are polyhedron
+    for i = 1:length(target_tube)
+        validateattributes(target_tube(i), {'Polyhedron'}, {'nonempty'});
+    end
     inpar.addRequired('disturbance', @(x) validateattributes(x, ...
         {'Polyhedron'}, {'nonempty'}));
-    inpar.addParameter('style', 'standard', @(x) validatestring(x, ...
-        {'standard', 'vrep'}));
 
-    inpar.parse(sys, target_tube, disturbance, varargin{:});
+    inpar.parse(sys, target_tube, disturbance);
+    try
+        inpar.parse(sys, target_tube, disturbance);
+    catch cause_exc
+        exc = SrtInvalidArgsError.withFunctionName();
+        exc = addCause(exc, cause_exc);
+        throwAsCaller(exc);
+    end
 
     if sys.state_dim > 4
         warning(['Because both vertex and facet representation of ', ...
@@ -65,11 +75,6 @@ function robust_eff_target = getRobustEffTarget(sys, ...
             'operations computing for systems greater than 4 dimensions', ...
             'can take significant time and computational effort because ', ...
             'of the need to solve the vertex-facet enumeration problem.'])
-    end
-    
-    % validate that all elements of the target_tube are polyhedron
-    for i = 1:length(target_tube)
-        validateattributes(target_tube(i), {'Polyhedron'}, {'nonempty'});
     end
     
     horizon_length = length(target_tube);
@@ -169,9 +174,7 @@ function back_recursion_set = computeRobusteEffTargetRecursion(...
 % effective target set. See recursion from
 %   [[Will fill out this once paper is actually submitted]]
 % 
-% Usage
-% -----
-% Nested function in getRobustEffTarget
+% Usage: Nested function in getRobustEffTarget
 %
 % =========================================================================
 % 
@@ -265,7 +268,7 @@ function back_recursion_set = computeRobusteEffTargetRecursion(...
             % here because of the vertex-facet enumeration
             back_recursion_set = intersect(reach_set, target_tube_set);
         otherwise
-            assert(false, 'Unhandled option')
+            throw(SrtInternalError('Unhandled option'));
     end
 
 end

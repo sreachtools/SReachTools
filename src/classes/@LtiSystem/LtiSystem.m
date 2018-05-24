@@ -72,7 +72,7 @@ classdef LtiSystem < LtvSystem
         % Usage:
         % ------
         % T = 0.5;
-        % sys = LTISYSTEM('StateMatrix', [1, T; 0, 1], ...
+        % sys = LtiSystem('StateMatrix', [1, T; 0, 1], ...
         %                 'InputMatrix', [T^2/2;T], ...
         %                 'InputSpace', Polyhedron('lb', -1, 'ub', 1), ...
         %                 'DisturbanceMatrix', [T^2/2;T], ...
@@ -80,7 +80,7 @@ classdef LtiSystem < LtvSystem
         %
         % =====================================================================
         %
-        % obj = LTISYSTEM(Name, Value)
+        % obj = LtiSystem(Name, Value)
         % 
         % Inputs:
         % -------
@@ -123,13 +123,11 @@ classdef LtiSystem < LtvSystem
                 @(x) validateattributes(x, {'numeric'}, ...
                     {'nonempty'}));
 
-            % Because InputSpace and Disturbance will be handled in the
+            % TODO: Joe Because InputSpace and Disturbance will be handled in the
             % LtvSystem superclass call just ignore what their inputs are 
             % right now
-            inpar.addParameter('InputSpace', Polyhedron(), ...
-                @(x) true);
-            inpar.addParameter('Disturbance', [], ...
-                @(x) true);
+            inpar.addParameter('InputSpace', Polyhedron(), @(x) true);
+            inpar.addParameter('Disturbance', [], @(x) true);
 
             try
                 inpar.parse(varargin{:});

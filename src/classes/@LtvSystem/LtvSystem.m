@@ -560,3 +560,107 @@ classdef LtvSystem
             getHmatMeanCovForXSansInput(sys, initial_state, time_horizon);
     end
 end
+
+%%TODO: Joe
+%% State matrix must be defined (cannot be using defaults)
+%if any(strcmp('StateMatrix', inpar.UsingDefaults))
+%    exc = SrtInvalidArgsError.withFunctionName();
+%    exc = exc.addCause(SrtInvalidArgsError(['StateMatrix ', ...
+%        'parameter must be provided']));
+%    throwAsCaller(exc);
+%end
+%
+%% set if input and disturbance properties are using defaults
+%is_default = struct();
+%is_default.InputSpace = any(strcmp('InputSpace', ...
+%    inpar.UsingDefaults));
+%is_default.InputMatrix = any(strcmp('InputMatrix', ...
+%    inpar.UsingDefaults));
+%is_default.DisturbanceMatrix = any(strcmp('DisturbanceMatrix', ...
+%    inpar.UsingDefaults));
+%is_default.Disturbance = any(strcmp('Disturbance', ...
+%    inpar.UsingDefaults));
+%
+%
+%obj.state_matrix    = inpar.Results.StateMatrix;
+%obj.state_dimension = size(obj.state_matrix, 1);
+%
+%% Set input and validate appropriate sizes
+%obj.input_space     = inpar.Results.InputSpace;
+%obj.input_dimension = obj.input_space.Dim;
+%
+%if is_default.InputMatrix
+%    obj.input_matrix = zeros(obj.state_dimension, ...
+%        obj.input_dimension);
+%else
+%    obj.input_matrix = inpar.Results.InputMatrix;
+%end
+%
+%if size(obj.input_matrix, 2) ~= obj.input_dimension
+%    exc = SrtInvalidArgsError.withFunctionName();
+%    exc = exc.addCause(SrtInvalidArgsError(['Mismatch between ', ...
+%        'input matrix and input space: number of ', ...
+%        'columns of input matrix does not match the ', ...
+%        'dimension size of the input space']));
+%    throwAsCaller(exc);
+%end
+%
+%if size(obj.input_matrix, 1) ~= obj.state_dimension
+%    exc = SrtInvalidArgsError.withFunctionName();
+%    exc = exc.addCause(SrtInvalidArgsError(['Mismatch between ', ...
+%        'input matrix and state dimension: number of ', ...
+%        'rows of input matrix does not match the ', ...
+%        'dimension size of the state space']));
+%    throwAsCaller(exc);
+%end
+%
+%% input matrix and space must either both be using default or
+%% neither
+%if xor(is_default.InputMatrix, is_default.InputSpace)
+%    exc = SrtInvalidArgsError.withFunctionName();
+%    exc = exc.addCause(SrtInvalidArgsError(['Input matrix ', ...
+%        'and input space must be simultaneously defined']));
+%    throwAsCaller(exc);
+%end
+%
+%% setting disturbance properties
+%obj.disturbance = inpar.Results.Disturbance;
+%if isa(obj.disturbance, 'Polyhedron')
+%    obj.disturbance_dimension = obj.disturbance.Dim;
+%else
+%    obj.disturbance_dimension = obj.disturbance.dimension;
+%end
+%
+%if any(strcmp('DisturbanceMatrix', inpar.UsingDefaults))
+%    obj.disturbance_matrix = zeros(obj.state_dimension, ...
+%        obj.disturbance_dimension);
+%else
+%    obj.disturbance_matrix = inpar.Results.DisturbanceMatrix;
+%end
+%
+%if size(obj.disturbance_matrix, 2) ~= obj.disturbance_dimension
+%    exc = SrtInvalidArgsError.withFunctionName();
+%    exc = exc.addCause(SrtInvalidArgsError(['Mismatch between ', ...
+%        'distrubance matrix and disturbance: number of ', ...
+%        'columns of disturbance matrix does not match the ', ...
+%        'dimension size of the disturbance']));
+%    throwAsCaller(exc);
+%end
+%
+%if size(obj.disturbance_matrix, 1) ~= obj.state_dimension
+%    exc = SrtInvalidArgsError.withFunctionName();
+%    exc = exc.addCause(SrtInvalidArgsError(['Mismatch between ', ...
+%        'input matrix and state dimension: number of ', ...
+%        'rows of input matrix does not match the ', ...
+%        'dimension size of the state space']));
+%    throwAsCaller(exc);
+%end
+%
+%% disturbance and distrubance matrix must either both be left as 
+%% default or both be defined
+%if xor(is_default.Disturbance, is_default.DisturbanceMatrix) 
+%    exc = SrtInvalidArgsError.withFunctionName();
+%    exc = exc.addCause(SrtInvalidArgsError(['Disturbance ', ...
+%        'matrix and disturbance must be simultaneously defined']));
+%    throwAsCaller(exc);
+%end

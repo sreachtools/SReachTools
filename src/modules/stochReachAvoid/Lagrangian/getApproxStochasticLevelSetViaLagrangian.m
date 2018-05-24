@@ -50,30 +50,29 @@ function approx_level_set = getApproxStochasticLevelSetViaLagrangian(sys, ...
     inpar.addRequired('method', @(x) any(validatestring(x, ...
         {'random', 'box', 'load'})));
 
-    inpar.parse(sys, beta, target_tube, approx_type, method);
-
+    try
+        inpar.parse(sys, beta, target_tube, approx_type, method);
+    catch err
+        exc = SrtInvalidArgsError.withFunctionName();
+        exc = exc.addCause(err);
+        throwAsCaller(exc);
+    end
     % additional non-input parser validations
-    validateattributes(sys.dist, {'RandomVector','StochasticDisturbance'}, ...
-        {'nonempty'});
-    
     % validate that all elements of the target_tube are polyhedron
     for i = 1:length(target_tube)
         validateattributes(target_tube(i), {'Polyhedron'}, {'nonempty'});
     end
+    validateattributes(sys.dist, {'RandomVector','StochasticDisturbance'}, ...
+        {'nonempty'});
     
-    validateattributes(approx_type, {'char', 'string'}, {'nonempty'});
     switch(approx_type)
         case 'underapproximation'
             do_underapprox = true;
         case 'overapproximation'
             do_underapprox = false;
         otherwise
-            error('SReachTools:invalidArgs', ['Input ''approx_type'' must be ', ...
-                'either ''underapproximation'' or ''overapproximation'', ', ...
-                'see help getApproxStochasticLevelSetViaLagrangian']);
+            throw(SrtInternalError('Unhandled option %s', approx_type));
     end
-    
-    validateattributes(method, {'char', 'string'}, {'nonempty'});
     
     if length(target_tube) > 1
         if do_underapprox
