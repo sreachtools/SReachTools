@@ -13,7 +13,7 @@ function [mean_x, cov_x] = getFSRPDMeanCovariance(sys,...
 % Proceedings of the 20th International Conference on Hybrid Systems:
 % Computation and Control (HSCC), 2017.
 %
-% USAGE: 
+% USAGE: See getProbReachSet.m, examples/forwardStochasticReachCWH.mlx.
 %
 % ============================================================================
 % 
@@ -23,13 +23,16 @@ function [mean_x, cov_x] = getFSRPDMeanCovariance(sys,...
 % Inputs:
 % -------
 %   sys           - An object of LtiSystem class 
-%   initial_state - x_0
+%   initial_state - Initial state can be a deterministic n-dimensional vector
+%                   or a RandomVector object
 %   target_time   - Time of interest (positive scalar)
 %
 % Outputs:
 % --------
 %   mean_x        - Mean of the stochastic disturbance
 %   cov_x         - Covariance of the stochastic disturbance
+%
+% See also getProbReachSet
 %
 % ============================================================================
 %
@@ -40,12 +43,14 @@ function [mean_x, cov_x] = getFSRPDMeanCovariance(sys,...
 %
 
     %% Input handling
-    % Ensure that initial state is a column vector of appropriate dimension
-    assert( size(initial_state,1) == sys.state_dimension &&...
-            size(initial_state,2) == 1,...
-           'SReachTools:invalidArgs',...
-           ['Expected a sys.state_dimension-dimensional column-vector for ',...
-           'initial state']);
+    if ~isa(initial_state,'RandomVector')
+        % Ensure that initial state is a column vector of appropriate dimension
+        assert( size(initial_state,1) == sys.state_dimension &&...
+                size(initial_state,2) == 1,...
+               'SReachTools:invalidArgs',...
+               ['Expected a sys.state_dimension-dimensional column-vector ',...
+               'for initial state']);
+    end
 
     % Ensure that the given system has a Gaussian disturbance
     assert(strcmp(class(sys.disturbance),'StochasticDisturbance') &&...
@@ -80,10 +85,24 @@ function [mean_x, cov_x] = getFSRPDMeanCovariance(sys,...
                                             1:sys.disturbance_dimension),...
              flipped_ctrb_mat_disturb];
     end
-    % Computation of mean and covariance of x at target_time by Proposition 1,
-    % HSCC 2017
-    mean_x = sys.state_matrix^target_time * initial_state + ...
-                            flipped_ctrb_mat_disturb * mean_concat_disturb;
-    cov_x = flipped_ctrb_mat_disturb * cov_concat_disturb *...
+
+    A_power_target_time = sys.state_matrix^target_time;
+    if isa(initial_state,'RandomVector')
+        % mu_x = A^\tau * mu_{x_0} + C * mu_{W};
+        mean_x = A_power_target_time * initial_state.parameters.mean + ...
+                                flipped_ctrb_mat_disturb * mean_concat_disturb;
+        % cov_x = A^\tau * cov_{x_0} * (A^\tau)' + C * cov_{W} * C';
+        cov_x = A_power_target_time * initial_state.parameters.covariance *...
+                A_power_target_time' + flipped_ctrb_mat_disturb *...
+                                 cov_concat_disturb * flipped_ctrb_mat_disturb';
+    else
+        % Computation of mean and covariance of x at target_time by Proposition
+        % 1, HSCC 2017
+        % mu_x = A^\tau * x_0 + C * mu_W;
+        mean_x = A_power_target_time * initial_state + ...
+                                flipped_ctrb_mat_disturb * mean_concat_disturb;
+        % cov_x = C * cov_{W} * C';
+        cov_x = flipped_ctrb_mat_disturb * cov_concat_disturb *...
                                                       flipped_ctrb_mat_disturb';
+    end
 end
