@@ -17,12 +17,17 @@
         </label>
 
         <div class="trigger">
-          {%- for path in page_paths -%}
+<!--           {%- for path in page_paths -%}
             {%- assign my_page = site.pages | where: "path", path | first -%}
             {%- if my_page.title -%}
             <a class="page-link" href="{{ my_page.url | relative_url }}">{{ my_page.title | escape }}</a>
             {%- endif -%}
-          {%- endfor -%}
+          {%- endfor -%} -->
+            <a class="page-link" href="{{ "/" | relative_url }}">Home</a>
+            <!-- <a class="page-link" href="/about">About</a> -->
+            <a class="page-link" href="{{ "/docs" | relative_url }}">Docs</a>
+            <a class="page-link" href="{{ "/license" | relative_url }}">License</a>
+            <a class="page-link" href="{{ "/contact" | relative_url }}">Contact</a>
         </div>
       </nav>
     {%- endif -%}

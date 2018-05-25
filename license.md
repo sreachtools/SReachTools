@@ -11,12 +11,11 @@ Use or creating copies of all or part of this work is subject to the following
 licensing agreement.
 
 This license is derived from 
-1) the ACM Software Copyright and License Agreement (1998), which can be found
-at:
+1. the ACM Software Copyright and License Agreement (1998), which can be found
+at: 
+[http://www.acm.org/pubs/copyright_policy/softwareCRnotice.html](http://www.acm.org/pubs/copyright_policy/softwareCRnotice.html)
 
-    http://www.acm.org/pubs/copyright_policy/softwareCRnotice.html
-
-2) the license of Toolbox of Level Set Methods owned by Ian M. Mitchell.
+2. the license of Toolbox of Level Set Methods owned by Ian M. Mitchell.
 
 LICENSE
 

@@ -2,34 +2,11 @@
   <data class="u-url" href="{{ "/" | relative_url }}"></data>
 
   <div class="wrapper">
-
-    <!-- <h2 class="footer-heading">{{ site.title | escape }}</h2> -->
-
     <div class="footer-col-wrapper">
-      <div class="footer-col footer-col-1">
-        <ul class="contact-list">
-          <li class="p-name">
-            {%- if site.author -%}
-              {{ site.author | escape }}
-            {%- else -%}
-              {{ site.title | escape }}
-            {%- endif -%}
-            </li>
-            {%- if site.email -%}
-            <li><a class="u-email" href="mailto:{{ site.email }}">{{ site.email }}</a></li>
-            {%- endif -%}
-        </ul>
+      <div style="text-align: center;">
+        <p>&copy {{ "now" | date: "%Y-%m-%d" }} Abraham P. Vinod, Joseph D. Gleason</p>
+        <p>Powered by <a href="https://jekyllrb.com/">Jekyll</a>; theme modified from <a href="https://github.com/jekyll/minima">Jekyll minima</a></p>
       </div>
-
-      <div class="footer-col footer-col-2">
-        {%- include social.html -%}
-      </div>
-
-      <div class="footer-col footer-col-3">
-        <p>{{- site.description | escape -}}</p>
-      </div>
-    </div>
-
   </div>
 
 </footer>

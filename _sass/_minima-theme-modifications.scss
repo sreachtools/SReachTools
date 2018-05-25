@@ -1,0 +1,44 @@
+// Colors
+$unm-cherry: #ba0c2f !default;
+$inverted-text-color: #fff !default;
+
+.post-link {
+    display: inline-block;
+    @include relative-font-size(1);
+}
+
+.site-header {
+  border-top: 0px;
+  border-bottom: 0px;
+  min-height: $spacing-unit * 1.865;
+  background: $unm-cherry;
+  color: $inverted-text-color;
+
+}
+
+.site-title {
+  font-weight: 500;
+
+  &,
+  &:visited {
+    color: $inverted-text-color;
+  }
+}
+
+.site-nav {
+  .page-link {
+    color: $inverted-text-color;
+    font-weight: 500;
+  }
+
+  @include media-query($on-palm) {
+    background-color: $unm-cherry;
+    border: 1px solid $unm-cherry;
+
+    .menu-icon {
+      > svg {
+        fill: $inverted-text-color;
+      }
+    }
+  }
+}
