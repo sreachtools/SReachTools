@@ -14,7 +14,7 @@
 %
 % ============================================================================
 % 
-% This function is part of the Stochastic Optimal Control Toolbox.
+% This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
 %      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
@@ -67,7 +67,7 @@ view(0, 90)
 
 %% Moving target problem
 target_tube = {Polyhedron('lb', [-1, -1], 'ub', [1, 1]), ...
-    Polyhedron('lb', [-0.5, -1], 'ub', [1, 0.5]),...
+    Polyhedron('lb', [-0.5, -1], 'ub', [1, 0.5]), ...
     Polyhedron('lb', [-1, -1], 'ub', [0.5, 0.5]), ...
     Polyhedron('lb', [-1, -0.5], 'ub', [0.5, 1]), ...
     Polyhedron('lb', [-0.5, -0.5], 'ub', [1, 1])};

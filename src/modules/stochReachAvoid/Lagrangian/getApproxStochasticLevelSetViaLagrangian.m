@@ -11,8 +11,9 @@ function approx_level_set = getApproxStochasticLevelSetViaLagrangian(sys, ...
 %     Methods," in Proceedings of the IEEE Conference on Decision and Control, 
 %     2017
 %
-% USAGE: TODO: see examples/doubleIntegratorLevelSetApprox.m
-%
+% USAGE: see examples/doubleIntegratorLevelSetApprox.m
+%        or  examples/lagrangianApproximations.m
+% 
 % ============================================================================
 %
 % Inputs:
@@ -30,7 +31,7 @@ function approx_level_set = getApproxStochasticLevelSetViaLagrangian(sys, ...
 %
 % ============================================================================
 % 
-%   This function is part of the Stochastic Optimal Control Toolbox.
+%   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
 %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
@@ -83,6 +84,7 @@ function approx_level_set = getApproxStochasticLevelSetViaLagrangian(sys, ...
                 bounded_set);
         end
     else
+        % return set in target tube if length is 1
         approx_level_set = target_tube{1};
     end
 end

@@ -36,7 +36,7 @@ function [a, b, c] = functionWithNestedFunction(d, e, f)
 % 
 % ============================================================================
 % 
-% This function is part of the Stochastic Optimal Control Toolbox.
+% This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
 %      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
@@ -79,7 +79,7 @@ function output = nestedFunction(in1, in2)
 % 
 % ============================================================================
 % 
-% This function is part of the Stochastic Optimal Control Toolbox.
+% This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
 %      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 

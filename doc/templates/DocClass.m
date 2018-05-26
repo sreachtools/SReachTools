@@ -30,7 +30,7 @@ classdef DocClass
 %
 % ===========================================================================
 %
-% This function is part of the Stochastic Optimal Control Toolbox.
+% This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
 %      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %
@@ -82,7 +82,7 @@ classdef DocClass
         % 
         % ====================================================================
         % 
-        % This function is part of the Stochastic Optimal Control Toolbox.
+        % This function is part of the Stochastic Reachability Toolbox.
         % License for the use of this function is given in
         %      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         % 
@@ -118,7 +118,7 @@ classdef DocClass
         %
         % ====================================================================
         % 
-        % This function is part of the Stochastic Optimal Control Toolbox.
+        % This function is part of the Stochastic Reachability Toolbox.
         % License for the use of this function is given in
         %      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         % 

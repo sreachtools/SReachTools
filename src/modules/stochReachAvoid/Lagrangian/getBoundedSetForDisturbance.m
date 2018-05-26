@@ -23,10 +23,10 @@ function bounded_set = getBoundedSetForDisturbance(disturbance, ...
 %   varargin       - Dependent upon method chosen, see below
 %
 %   Available methods:
-%       'random'       - Get an approximation of the ellipsoid using random
-%                        direction choices; only usable for Gaussian-type
-%                        disturbances; varargin must be an integer for the
-%                        number of random directions to be used; e.g.
+%       'random' - Get an approximation of the ellipsoid using random
+%                  direction choices; only usable for Gaussian-type
+%                  disturbances; varargin must be an integer for the
+%                  number of random directions to be used; e.g.
 %           bounded_set = getBoundedSetForDisturbance(...
 %               StochasticDisturbance('Gaussian', zeros(2,1), eye(2)), ...
 %               4, ...
@@ -34,34 +34,21 @@ function bounded_set = getBoundedSetForDisturbance(disturbance, ...
 %               'random', ...
 %               100);
 %
-%       'box'       - Get an n-dimensional cuboid that satisfies the
-%                        probability threshold; does not accept varargins;
-%                        currenlty not implemented; e.g.
+%       'box'    - Get an n-dimensional cuboid that satisfies the
+%                  probability threshold; does not accept varargins;
+%                  currenlty not implemented; e.g.
 %           bounded_set = getBoundedSetForDisturbance(...
 %               StochasticDisturbance('Gaussian', zeros(2,1), eye(2)), ...
 %               4, ...
 %               0.8, ...
 %               'box');
 %
-%       'optim-box' - Get approximation of ellipsoid through solution to an
-%                        optimization problem to find a solution where the
-%                        vectors are more uniformly spread across the ellipse;
-%                        only usage for Gaussian-type disturbances; varagin must
-%                        be an integer for the number of directions; currently
-%                        not implemented; e.g.
-%           bounded_set = getBoundedSetForDisturbance(...
-%               StochasticDisturbance('Gaussian', zeros(2,1), eye(2)), ...
-%               4, ...
-%               0.8, ...
-%               'optimization', ...
-%               100);
-%
-%       'load'         - Load a predefined polyhedron bounding set; primarily
-%                        used for comparison and repeatability testing; varargin
-%                        must be a character array of the path to the file to
-%                        load; mat files to be loaded must have specific design,
-%                        see Notes section; when using load method all other 
-%                        inputs are irrelevant; e.g.
+%       'load'   - Load a predefined polyhedron bounding set; primarily
+%                  used for comparison and repeatability testing; varargin
+%                  must be a character array of the path to the file to
+%                  load; mat files to be loaded must have specific design,
+%                  see Notes section; when using load method all other 
+%                  inputs are irrelevant; e.g.
 %           bounded_set = getBoundedSetForDisturbance(...
 %               [], ...
 %               [], ...
@@ -79,7 +66,7 @@ function bounded_set = getBoundedSetForDisturbance(disturbance, ...
 %
 % ============================================================================
 %
-%   This function is part of the Stochastic Optimal Control Toolbox.
+%   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
 %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %
@@ -208,7 +195,7 @@ function bounded_set = boundedEllipseByRandomVectors(disturbance, ...
 %
 % ============================================================================
 %
-%   This function is part of the Stochastic Optimal Control Toolbox.
+%   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
 %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %
@@ -276,7 +263,7 @@ function poly = getOptimizationBoxForGaussian(disturbance, horizon_length, ...
 %
 % ============================================================================
 %
-%   This function is part of the Stochastic Optimal Control Toolbox.
+%   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
 %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %
@@ -328,7 +315,7 @@ function [c, ceq] = nonlinearOptimBoxConstraints(l, c, p)
 %
 % ============================================================================
 %
-%   This function is part of the Stochastic Optimal Control Toolbox.
+%   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
 %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %
@@ -367,7 +354,7 @@ function poly = getBoundingBoxForGaussian(disturbance, horizon_length, ...
 %
 % ============================================================================
 %
-%   This function is part of the Stochastic Optimal Control Toolbox.
+%   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
 %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %

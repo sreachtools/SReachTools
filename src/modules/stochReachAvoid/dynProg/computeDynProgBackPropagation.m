@@ -1,5 +1,5 @@
-function grid_probability = computeDynProgBackPropagation(sys, ...
-    state_grid, input_grid, grid_probability, initial_set)
+function grid_prob = computeDynProgBackPropagation(sys, ...
+    state_grid, input_grid, grid_prob, initial_set)
 % SReachTools/stochasticReachAvoid/computeDynProgBackPropagation Compute the
 % dynamic programming back propagation
 % ============================================================================
@@ -16,21 +16,21 @@ function grid_probability = computeDynProgBackPropagation(sys, ...
 % 
 % ============================================================================
 %
-% grid_probability = computeDynProgBackPropagation(sys, ...
-%     state_grid, input_grid, grid_probability, initial_set)
+% grid_prob = computeDynProgBackPropagation(sys, ...
+%     state_grid, input_grid, grid_prob, initial_set)
 % 
 % Inputs:
 % -------
-%   sys              - LtiSystem object
-%   state_grid       - SpaceGrid object
-%   input_grid       - InputGrid object
-%   grid_probability - Nx1 Array of probability values, where N is equivalent
-%                      to size(state_grid, 1)
-%   initial_set      - Polyhedron object
+%   sys         - LtiSystem object
+%   state_grid  - SpaceGrid object
+%   input_grid  - InputGrid object
+%   grid_prob   - Nx1 Array of probability values, where N is equivalent
+%                 to size(state_grid, 1)
+%   initial_set - Polyhedron object
 %
 % Outputs:
 % --------
-%   grid_probability - Nx1 Array of probability values, where N is equivalent
+%   grid_prob - Nx1 Array of probability values, where N is equivalent
 %                      to size(state_grid, 1)
 %
 % Notes:
@@ -39,13 +39,13 @@ function grid_probability = computeDynProgBackPropagation(sys, ...
 %
 % ============================================================================
 %
-%   This function is part of the Stochastic Optimal Control Toolbox.
+%   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
 %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 
     % save the original grid probability
-    old_grid_prob = grid_probability;
+    old_grid_prob = grid_prob;
     n_state_grid_points = size(state_grid.grid, 1);
     n_input_grid_points = size(input_grid.grid, 1);
     
@@ -62,7 +62,7 @@ function grid_probability = computeDynProgBackPropagation(sys, ...
         if ~initial_set.contains(state_vec)
             % since not in the initial set can immediately set probability to 
             % zero
-            grid_probability(ix) = 0;
+            grid_prob(ix) = 0;
         else
             input_prob = zeros(n_input_grid_points, 1);
             for iu = 1:n_input_grid_points
@@ -84,7 +84,7 @@ function grid_probability = computeDynProgBackPropagation(sys, ...
             end 
 
             % get the highest probability
-            grid_probability(ix) = max(input_prob);
+            grid_prob(ix) = max(input_prob);
         end
     end
 
@@ -123,7 +123,7 @@ function probability = fastGaussianProbFor2d(sys, ext_grid, state_vec, ...
 %
 % ============================================================================
 % 
-%   This function is part of the Stochastic Optimal Control Toolbox.
+%   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
 %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
@@ -178,7 +178,7 @@ function probability = computeGaussianProbabForInputAndState(sys, ...
 % 
 % ============================================================================
 %
-%   This function is part of the Stochastic Optimal Control Toolbox.
+%   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
 %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
@@ -232,7 +232,7 @@ function p = computeProbabilityAtGridPoint(point, dx, mu, sigma)
 % 
 % ============================================================================
 % 
-%   This function is part of the Stochastic Optimal Control Toolbox.
+%   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
 %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
@@ -272,7 +272,7 @@ function new_p = gaussianProbabilityDifference(old_p, ...
 % 
 % ============================================================================
 % 
-%   This function is part of the Stochastic Optimal Control Toolbox.
+%   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
 %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 
@@ -328,7 +328,7 @@ function box_points = getBoxPointsFromGridPoint(point, dx)
 % 
 % ============================================================================
 % 
-%   This function is part of the Stochastic Optimal Control Toolbox.
+%   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
 %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
@@ -398,7 +398,7 @@ function box_points = get2dBoxPointsFromGridPoint(point, dx)
 % 
 % =============================================================================
 % 
-%   This function is part of the Stochastic Optimal Control Toolbox.
+%   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
 %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %
@@ -442,7 +442,7 @@ function box_points = get3dBoxPointsFromGridPoint(point, dx)
 % 
 % ============================================================================
 % 
-%   This function is part of the Stochastic Optimal Control Toolbox.
+%   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
 %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %

@@ -1,4 +1,4 @@
-function grid_probability = getDynProgSolForTargetTube(sys, ...
+function grid_prob = getDynProgSolForTargetTube(sys, ...
     state_grid, input_grid, target_tube)
 % SReachTools/stochasticReachAvoid/getDynProgSolForTargetTube Get dynamic 
 % programming grid probability for reachability of target tube
@@ -19,7 +19,7 @@ function grid_probability = getDynProgSolForTargetTube(sys, ...
 %
 % ============================================================================
 %
-% grid_probability = getDynProgSolForTargetTube(sys, ...
+% grid_prob = getDynProgSolForTargetTube(sys, ...
 %     state_grid, input_grid, target_tube, varargin)
 % 
 % Inputs:
@@ -31,8 +31,8 @@ function grid_probability = getDynProgSolForTargetTube(sys, ...
 %
 % Outputs:
 % --------
-%   grid_probability - Nx1 Array of probability values, where N is equivalent
-%                      to size(state_grid, 1)
+%   grid_prob   - Nx1 Array of probability values, where N is equivalent
+%                 to size(state_grid, 1)
 %
 % Notes:
 %   - WARNING: Dynamic programming suffers from the curse of dimensionality! As
@@ -47,7 +47,7 @@ function grid_probability = getDynProgSolForTargetTube(sys, ...
 % 
 % ============================================================================
 % 
-%   This function is part of the Stochastic Optimal Control Toolbox.
+%   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
 %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %
@@ -71,9 +71,9 @@ function grid_probability = getDynProgSolForTargetTube(sys, ...
     
     % start with initialization of probability of 1s for everything in final
     % target tube
-    grid_probability = zeros(size(state_grid.grid, 1), 1);
+    grid_prob = zeros(size(state_grid.grid, 1), 1);
     ind_vector = state_grid.getIndicatorVectorForSet(target_tube{end});
-    grid_probability(ind_vector) = 1;
+    grid_prob(ind_vector) = 1;
     
     n_targets = length(target_tube);
     if n_targets > 1
@@ -82,12 +82,11 @@ function grid_probability = getDynProgSolForTargetTube(sys, ...
             % can eventually allow for an option that will return the grid 
             % probability after each time instant, saving some computation time
             % if you are trying to generate images for multiple time points
-            grid_probability = computeDynProgBackPropagation(...
-                sys, ...
-                state_grid, ...
-                input_grid, ...
-                grid_probability, ...
-                target_tube{n_targets-i});
+            grid_prob = computeDynProgBackPropagation(sys, ...
+                                                      state_grid, ...
+                                                      input_grid, ...
+                                                      grid_prob, ...
+                                                      target_tube{n_targets-i});
         end
     end
 

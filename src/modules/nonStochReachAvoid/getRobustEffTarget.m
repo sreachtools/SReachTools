@@ -9,9 +9,7 @@ function robust_eff_target = getRobustEffTarget(sys, ...
 % the paper:
 %      [[Will fill out this once paper is actually submitted]]
 %
-% Usage:
-% ------
-% Will create example to demonstrate use
+% Usage: See examples/lagrangianApproximations.m
 %
 % =========================================================================
 %
@@ -42,7 +40,7 @@ function robust_eff_target = getRobustEffTarget(sys, ...
 %   
 % =========================================================================
 % 
-%   This function is part of the Stochastic Optimal Control Toolbox.
+%   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
 %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
@@ -188,7 +186,7 @@ function back_recursion_set = performRobustEffectiveTargetRecursion(...
 % 
 % =========================================================================
 % 
-%   This function is part of the Stochastic Optimal Control Toolbox.
+%   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
 %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 

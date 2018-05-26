@@ -8,9 +8,7 @@ function aug_eff_target = getAugEffTarget(sys, ...
 % the paper:
 %      [[Will fill out this once paper is actually submitted]]
 %
-% Usage
-% -----
-% Will create example to demonstrate use
+% Usage: See examples/lagrangianApproximations.m
 %   
 % ============================================================================
 %
@@ -34,7 +32,7 @@ function aug_eff_target = getAugEffTarget(sys, ...
 %
 % ============================================================================
 %
-%   This function is part of the Stochastic Optimal Control Toolbox.
+%   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
 %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %

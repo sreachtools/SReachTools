@@ -13,7 +13,7 @@
 %
 % ============================================================================
 % 
-% This function is part of the Stochastic Optimal Control Toolbox.
+% This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
 %      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
@@ -23,7 +23,7 @@
 T = 0.25;
 
 % define the system
-sys = getChainOfIntegLtiSystem(2,...
+sys = getChainOfIntegLtiSystem(2, ...
     T, ...
     Polyhedron('lb', -0.1, 'ub', 0.1), ...
     StochasticDisturbance('Gaussian', zeros(2,1), 0.005*eye(2)));
