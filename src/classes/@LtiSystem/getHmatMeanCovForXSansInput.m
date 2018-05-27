@@ -2,29 +2,31 @@ function [H, mean_X_sans_input, cov_X_sans_input, varargout] = ...
                             getHmatMeanCovForXSansInput(sys, ...
                                                         initial_state, ...
                                                         time_horizon)
-% SReachTools/LtiSystem/getHmatMeanCovForXSansInput: Get concatenated matrices
-% for computation for concatenated state
+% SReachTools/LtiSystem/getHmatMeanCovForXSansInput: Get input policy-free mean
+% and covariance of the trajectory from a given initial state for a known time
+% horizon and the concatenated input matrix
 % ============================================================================
 %
 % Helps in the computation of the mean and covariance of the concatenated
 % state vector X for a given stochastic LTI system as given in (17) of
-%     A. Vinod and M. Oishi, "Scalable Underapproximation for Stochastic
-%     Reach-Avoid Problem for High-Dimensional LTI Systems using Fourier
-%     Transforms," in IEEE Control Systems Letters (L-CSS), 2017.
-% Also, returns the Z and G if needed
+%
+% A. Vinod and M. Oishi, "Scalable Underapproximation for Stochastic Reach-Avoid
+% Problem for High-Dimensional LTI Systems using Fourier Transforms," in IEEE
+% Control Systems Letters (L-CSS), 2017.
+%
+% Also, returns H, and Z and G if needed
 %
 % For more details on the matrix notation, please see the documentation of
 % LtiSystem/getConcatMats(). 
 %
-% USAGE: See
-% modules/stochasticReachAvoid/getFtLowerBoundStochasticReachAvoid
+% Usage: See getFtLowerBoundStochReachAvoid
 %
 % ============================================================================
 % 
 % [H, mean_X_sans_input, cov_X_sans_input, varargout] = ...
 %                getHmatMeanCovForXSansInput(sys, ...
-%                                                         initial_state, ...
-%                                                         time_horizon)
+%                                            initial_state, ...
+%                                            time_horizon)
 % Inputs:
 % -------
 %   sys           - An object of LtiSystem class 
@@ -34,16 +36,19 @@ function [H, mean_X_sans_input, cov_X_sans_input, varargout] = ...
 % Outputs:
 % --------
 %   H                - Concatenated input matrix
-%   mean_X_sans_input       - mean of X
-%   cov_X_sans_input - covariance of X
-%   Z                    - (optional) Concatenated state matrix
+%   mean_X_sans_input- Mean of X with zero input under the disturbance from the
+%                      provided initial state
+%   cov_X_sans_input - Covariance of X with zero input under the disturbance
+%                      from the provided initial state
+%   Z                - (optional) Concatenated state matrix
 %   G                - (optional) Concatenated disturbance matrix
 %
 % Notes:
 % ------
+% * X refers to the concatenated state vector X=[x_1^\top x_2^\top ...
+%   x_N^\top]^\top. See @LtiSystem/getConcatMats for more
+%   information about the notation used.
 % * This function also serves as a delegatee for input handling.
-% * See @LtiSystem/getConcatMats for more information about the
-%   notation used.
 % 
 % ============================================================================
 %

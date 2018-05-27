@@ -78,8 +78,10 @@ function [maximum_underapproximate_reach_avoid_probability, ...
 %                                 notation used in next three inputs)
 %  H                            - Concatenated input matrix
 %  mean_X_sans_input_sans_initial_state
-%                               - Mean of X w\ zero input under the disturbance
-%  cov_X_sans_input             - Covariance of X w\ zero input under the
+%                               - Mean of X with zero input under the
+%                                 disturbance and with zero initial state
+%                                 influence
+%  cov_X_sans_input             - Covariance of X with zero input under the
 %                                 disturbance
 %  affine_hull_of_interest_2D
 %                               - Affine hull whose slice of the stochastic

@@ -15,7 +15,7 @@ function [reach_avoid_probability_mcarlo, ...
 % terminal hitting-time stochastic reach-avoid problem from an initial
 % state given an optimal open-loop input policy.
 %
-% USAGE: See examples/verificationCwhForAnInitialState.m for usage
+% Usage: See examples/verificationCwhForAnInitialState.mlx for usage
 %
 % =============================================================================
 % [reach_avoid_probability_mcarlo, ...

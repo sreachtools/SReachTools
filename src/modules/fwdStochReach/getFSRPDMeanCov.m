@@ -1,8 +1,8 @@
-function [mean_x, cov_x] = getFSRPDMeanCovariance(sys, ...
-                                                  initial_state, ...
-                                                  target_time)
-% SReachTools/forwardStochasticReach/getFSRPDMeanCovariance: Compute the mean 
-% and the covariance of the state at a time instant in future
+function [mean_x, cov_x] = getFSRPDMeanCov(sys, ...
+                                           initial_state, ...
+                                           target_time)
+% SReachTools/forwardStochasticReach/getFSRPDMeanCov: Compute the mean and the
+% covariance of the state at a time instant in future
 % ============================================================================
 %
 % Computes the mean and the covariance of a Gaussian-perturbed LTI uncontrolled
@@ -13,13 +13,12 @@ function [mean_x, cov_x] = getFSRPDMeanCovariance(sys, ...
 % Proceedings of the 20th International Conference on Hybrid Systems:
 % Computation and Control (HSCC), 2017.
 %
-% USAGE: See getProbReachSet.m, examples/forwardStochasticReachCWH.mlx.
+% Usage: See getProbReachSet, examples/forwardStochasticReachCWH.mlx.
 %
 % ============================================================================
 % 
-% [mean_x, cov_x] = getFSRPDMeanCovariance(sys, ...
-%                                          initial_state, ...
-%                                          target_time)
+% [mean_x, cov_x] = getFSRPDMeanCov(sys, initial_state, target_time)
+% 
 % Inputs:
 % -------
 %   sys           - An object of LtiSystem class 
@@ -32,7 +31,12 @@ function [mean_x, cov_x] = getFSRPDMeanCovariance(sys, ...
 %   mean_x        - Mean of the stochastic disturbance
 %   cov_x         - Covariance of the stochastic disturbance
 %
-% See also getProbReachSet
+% See also getProbReachSet, getHmatMeanCovForXSansInput
+%
+% Notes:
+% ------
+% * getHmatMeanCovForXSansInput computes the FSRPD for the joint state vector
+%   and getFSRPDMeanCov computes the FSRPD for the state at time t.
 %
 % ============================================================================
 %
@@ -56,12 +60,12 @@ function [mean_x, cov_x] = getFSRPDMeanCovariance(sys, ...
     assert(strcmp(class(sys.disturbance),'StochasticDisturbance') &&...
            strcmp(sys.disturbance.type,'Gaussian'), ...
           'SReachTools:invalidArgs', ...
-          'getFSRPDMeanCovariance accepts only Gaussian-perturbed LTI systems');
+          'getFSRPDMeanCov accepts only Gaussian-perturbed LTI systems');
 
     % Ensure that the given system is uncontrolled
     assert(sys.input_dimension == 0, ...
           'SReachTools:invalidArgs', ...
-          'getFSRPDMeanCovariance accepts only uncontrolled LTI systems');
+          'getFSRPDMeanCov accepts only uncontrolled LTI systems');
 
     % Ensure that the target_time is a positive scalar
     assert( isscalar(target_time) && target_time > 0, ...

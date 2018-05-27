@@ -5,8 +5,8 @@ classdef LtiSystem
 % Defines a discrete-time LTI system that is:
 %     - control-free and disturbance-free, or
 %     - controlled but disturbance-free, or
-%     - perturbed but control-free, or
-%     - controlled and perturbed system.
+%     - perturbed (stochastic/uncertain) but control-free, or
+%     - controlled and perturbed (stochastic/uncertain).
 %
 % Perturbation can be either:
 %     - a bounded uncertainity with no stochastic information
@@ -27,11 +27,15 @@ classdef LtiSystem
 %
 % LTISYSTEM Properties:
 % ---------------------
-%   state_matrix          - State matrix (Square matrix)
-%   input_matrix          - Input matrix
-%   input_space           - Input space (Polyhedron)
-%   disturbance_matrix    - Disturbance matrix  
-%   disturbance           - Disturbance object (empty/Polyhedron/StochasticDisturbance)     
+%   state_matrix          - State matrix (Square matrix, state_dimension x
+%                           state_dimension)
+%   input_matrix          - Input matrix (Matrix, state_dimension x
+%                           input_dimension)
+%   input_space           - Input space (empty / Polyhedron)
+%   disturbance_matrix    - Disturbance matrix (Matrix, state_dimension x
+%                           disturbance_dimension)
+%   disturbance           - Disturbance object 
+%                           (empty / Polyhedron / StochasticDisturbance)     
 %   state_dimension       - State dimension (scalar)   
 %   input_dimension       - Input dimension (scalar)  
 %   disturbance_dimension - Disturbance dimension (scalar)
@@ -40,13 +44,17 @@ classdef LtiSystem
 % ------------------
 %   LtiSystem/LtiSystem   - Constructor
 %   getConcatInputSpace   - Get concatenated input space
-%   getConcatMats         - Get concatenated input and state matrices
+%   getConcatMats         - Get concatenated state, input, and disturbance
+%                           matrices
+%   getHmatMeanCovForXSansInput
+%                         - Get input policy-free mean and covariance of the
+%                           trajectory from a given initial state for a known
+%                           time horizon and the concatenated input matrix
 % 
-%
-%
 % Notes:
 % -----
 % * EXTERNAL DEPENDENCY: Uses MPT3 to define input,robust disturbance space
+%
 % =============================================================================
 %
 %   This function is part of the Stochastic Reachability Toolbox.
@@ -105,10 +113,11 @@ classdef LtiSystem
         %   obj - LtiSystem object
         %
         % Notes:
-        %   - 'InputMatrix' and 'InputSpace' need to be either defined together or
-        %     neither of them.
-        %   - 'DisturbanceMatrix' and 'Disturbance' need to be either defined together 
-        %     or neither of them.
+        % ------
+        % * 'InputMatrix' and 'InputSpace' need to be either defined together
+        %   or neither of them.
+        % * 'DisturbanceMatrix' and 'Disturbance' need to be either defined
+        %   together or neither of them.
         % 
         % =====================================================================
         % 
@@ -226,10 +235,8 @@ classdef LtiSystem
         % 
         % disp(obj)
         % 
-        % Inputs: None
-        % Outputs: None
-        %
         % Notes:
+        % ------
         %   - disp function for this class was inspired from MPT3
         %     (http://people.ee.ethz.ch/~mpt/3/)
         % 
@@ -277,9 +284,6 @@ classdef LtiSystem
         %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         %   
             
-            % Developer note: Joseph Gleason - 30 March 2018
-            % This method should probably be changed to a private method
-
             % Sanity check --- Have all properties been initialized?
             props = properties(obj);
             for i = 1:length(props)

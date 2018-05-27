@@ -36,8 +36,8 @@ function sys = getChainOfIntegLtiSystem(dim, T, input_space, disturb)
 % -------
 %   dim         - Dimensions
 %   T           - Discretization time step
-%   input_space - Input space
-%   disturb     - Disturbance
+%   input_space - Input space (Polyhedron)
+%   disturb     - Disturbance object (Polyhedron / StochasticDisturbance)
 % 
 % Outputs:
 % --------
@@ -49,25 +49,25 @@ function sys = getChainOfIntegLtiSystem(dim, T, input_space, disturb)
 %   License for the use of this function is given in
 %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
+%
 
-% anonymous function for getting the necessary matrix internals
-facT = @(t, n) t^n / factorial(n);
-
-% initialization
-state_mat = eye(dim);
-input_mat = zeros(dim, 1);
-
-for i = 1:dim
-    input_mat(i) = facT(T, dim-i+1);
-    for j = i+1:dim
-        state_mat(i, j) = facT(T, j-i);
+    % anonymous function for getting the necessary matrix internals
+    facT = @(t, n) t^n / factorial(n);
+    
+    % initialization
+    state_mat = eye(dim);
+    input_mat = zeros(dim, 1);
+    
+    for i = 1:dim
+        input_mat(i) = facT(T, dim-i+1);
+        for j = i+1:dim
+            state_mat(i, j) = facT(T, j-i);
+        end
     end
-end
-
-sys = LtiSystem('StateMatrix', state_mat, ...
-    'InputMatrix', input_mat, ...
-    'InputSpace', input_space, ...
-    'DisturbanceMatrix', eye(2), ...
-    'Disturbance', disturb);
-
+    
+    sys = LtiSystem('StateMatrix', state_mat, ...
+        'InputMatrix', input_mat, ...
+        'InputSpace', input_space, ...
+        'DisturbanceMatrix', eye(dim), ...
+        'Disturbance', disturb);
 end

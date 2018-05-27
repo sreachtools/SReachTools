@@ -1,7 +1,7 @@
 function prob = iteratedQscmvnv(qscmvnv_cov, ...
-                                qscmvnv_polytope_lower_bound, ...
-                                qscmvnv_polytope_coeff_matrix, ...
-                                qscmvnv_polytope_upper_bound, ...
+                                qscmvnv_lb, ...
+                                qscmvnv_coeff_matrix, ...
+                                qscmvnv_ub, ...
                                 desired_accuracy, ...
                                 warning_iteration)
 % SReachTools/iteratedQscmvnv: Wrapper for Genz's algorithm to compute the
@@ -11,13 +11,15 @@ function prob = iteratedQscmvnv(qscmvnv_cov, ...
 % 
 % This function computes the integral of a zero-mean Gaussian \eta with
 % covariance matrix qscmvnv_cov over the set of inequalities 
-%       qscmvnv_polytope_lower_bound <= qscmvnv_polytope_coeff_matrix * \eta 
-%                                    <= qscmvnv_polytope_upper_bound
+%       qscmvnv_lb <= qscmvnv_coeff_matrix * \eta <= qscmvnv_ub
 % Genz's algorithm (qscmvnv) is called iteratively to attain a desired accuracy.
 %
-% USAGE: To integrate a Gaussian of mean Gauss_mean and covariance Gauss_cov,
-% over a target_set = Polyhedron('H', [A b]) constructed from m half-spaces (A
-% has m rows), do the following
+% Usage: 
+% -----
+%
+% % To integrate a Gaussian of mean Gauss_mean and covariance Gauss_cov,
+% % over a target_set = Polyhedron('H', [A b]), do the following (for an accuracy
+% % of 1e-4 and warnings after 10 iterations)
 %
 % prob=iteratedQscmvnv(Gauss_cov, ...
 %                      repmat(-Inf, [size(target_set.A, 1), 1]);
@@ -29,33 +31,28 @@ function prob = iteratedQscmvnv(qscmvnv_cov, ...
 % ============================================================================
 % 
 % prob = iteratedQscmvnv(qscmvnv_cov, ...
-%                        qscmvnv_polytope_lower_bound, ...
-%                        qscmvnv_polytope_coeff_matrix, ...
-%                        qscmvnv_polytope_upper_bound, ...
+%                        qscmvnv_lb, ...
+%                        qscmvnv_coeff_matrix, ...
+%                        qscmvnv_ub, ...
 %                        desired_accuracy, ...
 %                        warning_iteration)
 %
 % Inputs:
 % -------
-% qscmvnv_cov                      - Covariance matrix 
-% qscmvnv_polytope_lower_bound, 
-%   qscmvnv_polytope_coeff_matrix,
-%   qscmvnv_polytope_upper_bound   - The polytope over which the integral happens
-%                                    is given by
-%                                    qscmvnv_polytope_lower_bound <= 
-%                                           qscmvnv_polytope_coeff_matrix * x 
-%                                                <= qscmvnv_polytope_upper_bound
-% desired_accuracy              - Accuracy of the integral evaluation 
-%                                 [If unsure, use 1e-8 if sys.state_dimension <=
-%                                 4 1e-3 otherwise]
-% warning_iteration             - No. of iterations after which warning should
-%                                 be provided to make the user aware that the
-%                                 accuracy setting might be too high [If unsure,
-%                                 use 10]
+% qscmvnv_cov         - Covariance matrix 
+% qscmvnv_lb, qscmvnv_coeff_matrix, qscmvnv_ub 
+%                     - The set whose set-membership probability is of interest
+%                       qscmvnv_lb <= qscmvnv_coeff_matrix * x 
+%                       qscmvnv_ub => qscmvnv_coeff_matrix * x 
+% desired_accuracy    - Accuracy of the integral evaluation [If unsure, use 1e-8
+%                       if sys.state_dimension <= 4, and 1e-3 otherwise]
+% warning_iteration   - No. of iterations after which warning should be provided
+%                       to make the user aware that the accuracy setting might
+%                       be too high [If unsure, use 10]
 %
 % Outputs:
 % --------
-%   prob                        - Integral of the Gaussian over this polytope
+%   prob              - Integral of the Gaussian over the set specified
 %
 % Notes:
 % ------
@@ -74,6 +71,7 @@ function prob = iteratedQscmvnv(qscmvnv_cov, ...
 %   desired_accuracy. This is to allow to take log of the prob, if desired.
 % * In case, the target set is a hyper-cuboid and the state_dimension < 25,
 %   then use mvncdf instead.
+%
 % ============================================================================
 %
 % This function is part of the Stochastic Reachability Toolbox.
@@ -90,9 +88,9 @@ function prob = iteratedQscmvnv(qscmvnv_cov, ...
         [temp_probability, error_quadrature] = ...
                                        qscmvnv(points_base^points_power, ...
                                                qscmvnv_cov, ...
-                                               qscmvnv_polytope_lower_bound, ...
-                                               qscmvnv_polytope_coeff_matrix, ...
-                                               qscmvnv_polytope_upper_bound);
+                                               qscmvnv_lb, ...
+                                               qscmvnv_coeff_matrix, ...
+                                               qscmvnv_ub);
         % Rounding off the integral to the desired accuracy
         temp_probability = round(temp_probability/desired_accuracy) *...
                             desired_accuracy;

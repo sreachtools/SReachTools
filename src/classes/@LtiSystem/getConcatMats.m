@@ -56,8 +56,7 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
 %     'DisturbanceMatrix', eye(2), ...
 %     'Disturbance', Polyhedron('lb', -dmax *ones(2,1), 'ub', dmax *ones(2,1)));
 % % Compute the robust reach-avoid set
-% [Z,H,G] = getConcatMats(sys, ...
-%                                                    time_horizon);
+% [Z,H,G] = getConcatMats(sys, time_horizon);
 %
 % =============================================================================
 %
@@ -75,19 +74,16 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
 %
 % Notes:
 % ------
+% * For control-free and/or disturbance-free LTI systems, H and G are set to
+%   zeros( sys.state_dimension * time_horizon, 1) as appropriate.
 % * Deviation from Skaf and Boyd's definition,
-%     * Concatenated state is [x_1 x_2 ... x_{N}].
+%     * Concatenated state is X=[x_1 x_2 ... x_{N}].
 %     * Z definition excludes the initial state x_0 in contrast to Skaf and
 %       Boyd's definition of x_0.
-%     * H, G does include the first row since initial state is
-%       not there.
+%     * H, G does include the first row since initial state is not there.
 %     * This function computes for a LTI system instead of the original LTV
 %       formulation.
-% * Code is slightly suboptimal since it computes the extended controllability
-%   matrix via for loops.
-% * For control-free and/or disturbance-free LTI systems, H and
-%   G are set to zeros( sys.state_dimension * time_horizon, 1) as
-%   appropriate.
+% * Computes the extended controllability matrix via for loops. (suboptimal way)
 % * This function also serves as a delegatee for input handling
 % 
 % ============================================================================
@@ -103,14 +99,15 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
            'SReachTools:invalidArgs', ...
            'Expected a scalar positive time_horizon');
 
-    %% Construct Z matrix
+    %% Construct Z matrix --- concatenated state matrix
     % Z = [A;A^2;...A^{N}]
     Z=[];
     for time_index=1:time_horizon
-        Z=[Z;sys.state_matrix^time_index];
+        Z=[Z;
+           sys.state_matrix^time_index];
     end
     
-    %% Construct H
+    %% Construct H matrix --- concatenated input matrix
     if sys.input_dimension > 0
         % Compute the respective extended controllability matrix (flipped)
         % [A^{N-1}B A^{N-2}B ... AB B]
@@ -140,13 +137,13 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
                             zeros(sys.state_dimension, ...
                                 blocks_of_zero_required * sys.input_dimension)];
             H = [H;
-                        current_row];
+                 current_row];
         end
     else
         H = zeros(sys.state_dimension * time_horizon, 1);
     end
 
-    %% Construct G
+    %% Construct G matrix --- concatenated disturbance matrix
     if sys.disturbance_dimension > 0
         % Compute the respective extended controllability matrix (flipped)
         % [A^{N-1}F A^{N-2}F ... AF F]
@@ -179,7 +176,7 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
                       zeros(sys.state_dimension, ...
                           blocks_of_zero_required * sys.disturbance_dimension)];
             G = [G;
-                        current_row];
+                 current_row];
         end
     else
         G = zeros(sys.state_dimension * time_horizon, 1);

@@ -8,12 +8,12 @@ function prob = getProbReachSet(sys, ...
 % may be a vector or a RandomVector object
 % ============================================================================
 %
-% This function uses getFSRPDMeanCovariance to compute the forward stochastic
+% This function uses getFSRPDMeanCov to compute the forward stochastic
 % reach probability density (FSRPD) at a future target time. Next, it evaluates
 % the integral of the resulting Gaussian over the user-specified target_set (a
 % MPT Polyhedron) using iteratedQscmvnv.
 %
-% USAGE: See examples/forwardStochasticReachCWH.mlx
+% Usage: See examples/forwardStochasticReachCWH.mlx
 %
 % ============================================================================
 % 
@@ -38,7 +38,7 @@ function prob = getProbReachSet(sys, ...
 % --------
 %   prob             - Probability that x_{target_time} lies in target_set
 %
-% See also iteratedQscmvnv, getFSRPDMeanCovariance.
+% See also iteratedQscmvnv, getFSRPDMeanCov.
 %
 % Notes:
 % ------
@@ -52,21 +52,18 @@ function prob = getProbReachSet(sys, ...
 %
 %
 
-    [mean_x, cov_x] = getFSRPDMeanCovariance(sys, ...
-                                             initial_state, ...
-                                             target_time);
+    [mean_x, cov_x] = getFSRPDMeanCov(sys, initial_state, target_time);
         
     % Construct the concatenated target tube polytope for qscmvnv
-    qscmvnv_polytope_lower_bound = repmat(-Inf, ...
-                                      [size(target_set.A, 1), 1]);
-    qscmvnv_polytope_coeff_matrix = target_set.A;
-    qscmvnv_polytope_upper_bound = target_set.b - target_set.A * mean_x;
+    qscmvnv_lb = repmat(-Inf, [size(target_set.A, 1), 1]);
+    qscmvnv_coeff_matrix = target_set.A;
+    qscmvnv_ub = target_set.b - target_set.A * mean_x;
 
     % Call Genz's algorithm in an iterative approach to compute the probability
     prob=iteratedQscmvnv(cov_x, ...
-                         qscmvnv_polytope_lower_bound, ...
-                         qscmvnv_polytope_coeff_matrix, ...
-                         qscmvnv_polytope_upper_bound, ...
+                         qscmvnv_lb, ...
+                         qscmvnv_coeff_matrix, ...
+                         qscmvnv_ub, ...
                          desired_accuracy, ...
                          10);
 end

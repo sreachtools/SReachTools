@@ -10,7 +10,7 @@ function concat_state_realization = generateMonteCarloSims(...
 % generateMonteCarloSims produces a required number of trajectories for a
 % Gaussian LTI system.
 %
-% USAGE: See SReachTools/stochasticReachAvoid/checkViaMonteCarloSims for usage
+% Usage: See checkViaMonteCarloSims and examples/forwardStochasticReachCWH.mlx
 %
 % =============================================================================
 % concat_state_realization = generateMonteCarloSims(n_monte_carlo_sims, ...

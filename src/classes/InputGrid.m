@@ -160,8 +160,8 @@ classdef InputGrid
         end
         
         function ind_vector = getIndicatorVectorForSet(obj, s)
-        % SReachTools/InputGrid/getIndicatorVectorForSet Get indicator vector for
-        % points in grid that lie in set 
+        % SReachTools/InputGrid/getIndicatorVectorForSet Get indicator vector
+        % for points in grid that lie in set 
         % ====================================================================
         %
         % Class method returning an indicator vector (vector of zeros and ones)
@@ -215,11 +215,11 @@ classdef InputGrid
         % Inputs:
         % -------
         %   obj  - InputGrid object
-        %   inds - ???
+        %   inds - TODO
         % 
         % Outputs:
         % --------
-        %   grid_vector - ???
+        %   grid_vector - TODO
         % 
         % ====================================================================
         %

@@ -11,8 +11,7 @@ function grid_prob = computeDynProgBackPropagation(sys, ...
 % systems: A stochastic reach-avoid decision problem," Automatica, vol. 46,
 % no. 12, pp. 1951--1961, 2010.
 %
-% USAGE: Almost exclusively used as a part of 
-%        getDynamicProgrammingSolutionForTargetTube.m
+% Usage: See getDynProgSolForTargetTube
 % 
 % ============================================================================
 %
@@ -32,6 +31,8 @@ function grid_prob = computeDynProgBackPropagation(sys, ...
 % --------
 %   grid_prob - Nx1 Array of probability values, where N is equivalent
 %                      to size(state_grid, 1)
+%
+% See also getDynProgSolForTargetTube
 %
 % Notes:
 %   - Currently this back propagation, and subsequently the entire dynamic 
