@@ -55,9 +55,8 @@ function [reach_avoid_probability_mcarlo, ...
 %                                    be updated by this function if plotting is
 %                                    enabled)
 %
-% See also generateMonteCarloSims,
-% getFtLowerBoundStochasticReachAvoid,
-% @LtiSystem/getConcatMats
+% See also generateMonteCarloSims, getLowerBoundStochReachAvoid,
+% @LtiSystem/getConcatMats.
 %
 % Notes:
 % ------

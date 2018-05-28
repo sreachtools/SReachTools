@@ -30,10 +30,9 @@ function [boundary_theta, ...
 % computeBoundaryPointViaBisection extends a ray originating from xmax as long
 % as possible while being above a given prob_threshold. This
 % function is useful in computing a polytopic underapproximation of the
-% stochastic reach-avoid set in
-% getFtBasedUnderapproxStochReachAvoidSet.
+% stochastic reach-avoid set in getUnderapproxStochReachAvoidSet.
 %
-% USAGE: See getFtBasedUnderapproxStochReachAvoidSet.
+% USAGE: See getUnderapproxStochReachAvoidSet.
 %
 % =============================================================================
 %
@@ -119,7 +118,7 @@ function [boundary_theta, ...
 % Notes:
 % * NOT ACTIVELY TESTED: TODO
 % * NO INPUT HANDLING: For computational speed. To be used via
-%   getFtBasedUnderapproxStochReachAvoidSet
+%   getUnderapproxStochReachAvoidSet
 % * MATLAB DEPENDENCY: Uses MATLAB's Global Optimization Toolbox; Statistics and
 %                      Machine Learning Toolbox.
 %                      Needs patternsearch for gradient-free optimization

@@ -9,7 +9,7 @@ function set_of_direction_vectors = computeSetOfDirectionVectors(...
 % computeSetOfDirectionVectors samples affine_hull_of_interest_2D for a set of
 % "equally spaced" set of direction vectors. These vectors help in the
 % construction of the polytopic underapproximation of the stochastic reach-avoid
-% set in getFtBasedUnderapproxStochReachAvoidSet.
+% set in getUnderapproxStochReachAvoidSet.
 %
 % Any vector in the affine hull (Ae*x = be) can be described as 
 %        x_0 + d_i,  i= {1,2, ...,no_of_direction_vectors}
@@ -23,7 +23,7 @@ function set_of_direction_vectors = computeSetOfDirectionVectors(...
 % This function computes d_i. 
 %
 % USAGE: See
-% modules/stochasticReachAvoid/getFtBasedUnderapproxStochReachAvoidSet
+% modules/stochasticReachAvoid/getUnderapproxStochReachAvoidSet
 %
 % =============================================================================
 %
@@ -48,7 +48,7 @@ function set_of_direction_vectors = computeSetOfDirectionVectors(...
 %   set_of_direction_vectors   - Set of direction vectors sampled from
 %                                affine_hull_of_interest_2D
 %
-% See also getFtBasedUnderapproxStochReachAvoidSet
+% See also getUnderapproxStochReachAvoidSet
 %
 % Notes:
 % ------

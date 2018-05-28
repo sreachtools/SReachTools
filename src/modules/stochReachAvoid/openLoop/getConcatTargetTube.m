@@ -14,7 +14,7 @@ function [concat_target_tube_A, concat_target_tube_b] = ...
 % 
 % concat_target_tube_A * X <= concat_target_tube_b 
 %
-% Usage: See getFtLowerBoundStochasticReachAvoid.
+% Usage: See getLowerBoundStochReachAvoid.
 %
 % ============================================================================
 %

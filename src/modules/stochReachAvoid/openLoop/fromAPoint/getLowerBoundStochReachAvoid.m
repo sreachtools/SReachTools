@@ -1,20 +1,19 @@
-function [lower_bound_on_stochastic_reach_avoid_problem, ...
-          optimal_input_vector] = ...
-                          getFtLowerBoundStochasticReachAvoid(sys, ...
-                                                              initial_state, ...
-                                                              time_horizon, ...
-                                                              safe_set, ...
-                                                              target_set, ...
-                                                              varargin)
-% SReachTools/stochasticReachAvoid/getFtLowerBoundStochasticReachAvoid: 
-% Solve the stochastic reach-avoid problem (lower bound on the probability and
-% an open-loop controller synthesis) using Fourier transform and convex
+function [lb_stoch_reach_avoid, optimal_input_vector] =...
+                           getLowerBoundStochReachAvoid(sys,...
+                                                        initial_state,...
+                                                        time_horizon,...
+                                                        safe_set,...
+                                                        target_set,...
+                                                        varargin)
+% SReachTools/stochasticReachAvoid/getLowerBoundStochReachAvoid: Solve the
+% stochastic reach-avoid problem (lower bound on the probability and an
+% open-loop controller synthesis) using Fourier transform and convex
 % optimization
 % =============================================================================
 %
-% getFtLowerBoundStochasticReachAvoid implements the Fourier
-% transform-based underapproximation to the terminal hitting-time stochastic
-% reach-avoid problem discussed in
+% getLowerBoundStochReachAvoid implements the Fourier transform-based
+% underapproximation to the terminal hitting-time stochastic reach-avoid problem
+% discussed in
 %
 % A. Vinod and M. Oishi, "Scalable Underapproximation for Stochastic Reach-Avoid
 % Problem for High-Dimensional LTI Systems using Fourier Transforms," in IEEE
@@ -27,40 +26,35 @@ function [lower_bound_on_stochastic_reach_avoid_problem, ...
 %
 % =============================================================================
 %
-% [lower_bound_on_stochastic_reach_avoid_problem, ...
-%           optimal_input_vector] = ...
-%                         getFtLowerBoundStochasticReachAvoid(sys, ...
-%                                                             initial_state, ...
-%                                                             time_horizon, ...
-%                                                             safe_set, ...
-%                                                             target_set, ...
-%                                                             varargin)
+% [lb_stoch_reach_avoid, optimal_input_vector] =...
+%                                 getLowerBoundStochReachAvoid(sys,...
+%                                                              initial_state,...
+%                                                              time_horizon,...
+%                                                              safe_set,...
+%                                                              target_set,...
+%                                                              varargin)
 %
 % Inputs:
 % -------
-%   sys                        - LtiSystem object describing the system to be
-%                                verified
-%   initial_state              - Initial state of interest
-%   time_horizon               - Time horizon of the stochastic reach-avoid
-%                                problem
-%   safe_set                   - Safe set for stochastic reach-avoid problem
-%   target_set                 - Target set for stochastic reach-avoid problem
-%   desired_accuracy           - (Optional) Accuracy  [Default 5e-3]
-%   PSoptions                  - (Optional) Options for patternsearch [Default
-%                                 psoptimset('Display', 'off')]
+%   sys                  - LtiSystem object describing the system to be verified
+%   initial_state        - Initial state of interest
+%   time_horizon         - Time horizon of the stochastic reach-avoid problem
+%   safe_set             - Safe set for stochastic reach-avoid problem
+%   target_set           - Target set for stochastic reach-avoid problem
+%   desired_accuracy     - (Optional) Accuracy  [Default 5e-3]
+%   PSoptions            - (Optional) Options for patternsearch [Default
+%                           psoptimset('Display', 'off')]
 %
 % Outputs:
 % --------
-%   lower_bound_on_stochastic_reach_avoid_problem 
-%                              - Lower bound on the terminal-hitting stochastic
-%                                reach avoid problem computed using Fourier
-%                                transform and convex optimization
-%   optimal_input_vector       - Optimal open-loop policy
-%                                ((sys.input_dimension) * time_horizon)-dim.
-%                                vector U = [u_0; u_1; ...; u_N] (column vector)
+%   lb_stoch_reach_avoid - Lower bound on the terminal-hitting stochastic reach
+%                          avoid problem computed using Fourier transform and
+%                          convex optimization
+%   optimal_input_vector - Optimal open-loop policy ((sys.input_dimension) *
+%                          time_horizon)-dim.  vector U = [u_0; u_1; ...; u_N]
+%                          (column vector)
 %
-% See also verificationOfCwhDynamics and
-% computeFtLowerBoundStochReachAvoid.
+% See also computeFtLowerBoundStochReachAvoid, getCcLowerBoundStochReachAvoid.
 %
 % Notes:
 % * NOT ACTIVELY TESTED: Builds on other tested functions.
@@ -101,8 +95,8 @@ function [lower_bound_on_stochastic_reach_avoid_problem, ...
     if ~safe_set.contains(initial_state)
         % Stochastic reach-avoid probability is zero and no admissible open-loop
         % policy exists, if given an unsafe initial state
-        lower_bound_on_stochastic_reach_avoid_problem = 0;
-        optimal_input_vector = nan(input_dimension * time_horizon, 1);
+        lb_stoch_reach_avoid = 0;
+        optimal_input_vector = nan(sys.input_dimension * time_horizon, 1);
     else
         % Stochastic reach-avoid probability may be non-trivial
         % EXTERNAL DEPENDENCY CHECK
@@ -182,8 +176,7 @@ function [lower_bound_on_stochastic_reach_avoid_problem, ...
 
         % Patternsearch and Fourier transform-based open-loop underapproximation
         % of the stochastic reach-avoid problem
-        [lower_bound_on_stochastic_reach_avoid_problem, ...
-         optimal_input_vector] = ...
+        [lb_stoch_reach_avoid, optimal_input_vector] = ...
             computeFtLowerBoundStochReachAvoid(sys, ...
                                                initial_state, ...
                                                time_horizon, ...

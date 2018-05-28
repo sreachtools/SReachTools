@@ -19,7 +19,7 @@ function [H, mean_X_sans_input, cov_X_sans_input, varargout] = ...
 % For more details on the matrix notation, please see the documentation of
 % LtiSystem/getConcatMats(). 
 %
-% Usage: See getFtLowerBoundStochReachAvoid
+% Usage: See getLowerBoundStochReachAvoid
 %
 % ============================================================================
 % 
