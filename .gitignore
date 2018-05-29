@@ -1,5 +1,3 @@
-*.m~
-examples/figs/
-*.asv
-*.swp
-*.todo
+_site
+.sass-cache
+.jekyll-metadata
