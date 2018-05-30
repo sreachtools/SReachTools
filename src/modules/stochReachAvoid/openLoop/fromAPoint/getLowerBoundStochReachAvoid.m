@@ -41,6 +41,11 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
 %   time_horizon         - Time horizon of the stochastic reach-avoid problem
 %   safe_set             - Safe set for stochastic reach-avoid problem
 %   target_set           - Target set for stochastic reach-avoid problem
+%   guess_optimal_input_vector
+%                        - (Optional) Provide a concatenated guess for the
+%                          optimal input policy vector in the form of U = [u_0;
+%                          u_1; ...; u_N]. [If unsure, provide []. This will
+%                          trigger a CVX-based initialization computation.]
 %   desired_accuracy     - (Optional) Accuracy  [Default 5e-3]
 %   PSoptions            - (Optional) Options for patternsearch [Default
 %                           psoptimset('Display', 'off')]

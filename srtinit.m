@@ -70,12 +70,12 @@ function varargout = srtinit(varargin)
     
     if ismac                            % MAC (TODO: Untested)
         % new paths to add
-        new_paths = strsplit([script_path ';' genpath(src_path), ...
-            genpath(ex_path)], ';');
+        new_paths = strsplit([script_path ':' genpath(src_path), ...
+            genpath(ex_path)], ':');
    
         % current MATLAB folders on path
         p = path;
-        path_cell = split(p, ';');
+        path_cell = split(p, ':');
     elseif ispc                         % WINDOWS
         % new paths to add
         new_paths = strsplit([script_path ';' genpath(src_path), ...
@@ -124,6 +124,12 @@ function varargout = srtinit(varargin)
 end
 
 function test_results = srttest()
+    % Require MPT3 to run SReachTools
+    assert(exist('mpt_init','file')==2, ...
+           'SReachTools:setup_error', ...
+           ['This toolbox uses MPT3. Please get it ', ...
+            'from http://control.ee.ethz.ch/~mpt/3/.']);
+
     % get the parent dir of this function
     script_path = fileparts(mfilename('fullpath'));
     

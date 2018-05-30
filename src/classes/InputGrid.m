@@ -215,11 +215,11 @@ classdef InputGrid
         % Inputs:
         % -------
         %   obj  - InputGrid object
-        %   inds - TODO
+        %   inds - Indices for each dimension
         % 
         % Outputs:
         % --------
-        %   grid_vector - TODO
+        %   grid_vector - vector of points in the point
         % 
         % ====================================================================
         %

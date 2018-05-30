@@ -4,8 +4,8 @@ function prob = iteratedQscmvnv(qscmvnv_cov, ...
                                 qscmvnv_ub, ...
                                 desired_accuracy, ...
                                 warning_iteration)
-% SReachTools/iteratedQscmvnv: Wrapper for Genz's algorithm to compute the
-% integral of a Gaussian over an intersection of halfspaces up to a
+% SReachTools/helperFunctions/iteratedQscmvnv: Wrapper for Genz's algorithm to
+% compute the integral of a Gaussian over an intersection of halfspaces up to a
 % desired_accuracy
 % ============================================================================
 % 

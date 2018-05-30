@@ -1,12 +1,12 @@
-function set_of_direction_vectors = computeSetOfDirectionVectors(...
+function set_of_direction_vectors = computeDirectionVectors(...
                                                    no_of_direction_vectors, ...
                                                    state_dimension, ...
                                                    affine_hull_of_interest_2D)
-% SReachTools/stochasticReachAvoid/computeSetOfDirectionVectors: Sample a set of
+% SReachTools/stochasticReachAvoid/computeDirectionVectors: Sample a set of
 % direction vectors constrained to lie within affine_hull_of_interest_2D
 % =============================================================================
 %
-% computeSetOfDirectionVectors samples affine_hull_of_interest_2D for a set of
+% computeDirectionVectors samples affine_hull_of_interest_2D for a set of
 % "equally spaced" set of direction vectors. These vectors help in the
 % construction of the polytopic underapproximation of the stochastic reach-avoid
 % set in getUnderapproxStochReachAvoidSet.
@@ -22,12 +22,11 @@ function set_of_direction_vectors = computeSetOfDirectionVectors(...
 % We can obtain v_1 and v_2 from the columns of null(Ae). 
 % This function computes d_i. 
 %
-% USAGE: See
-% modules/stochasticReachAvoid/getUnderapproxStochReachAvoidSet
+% USAGE: See stochasticReachAvoid/getUnderapproxStochReachAvoidSet
 %
 % =============================================================================
 %
-% set_of_direction_vectors = computeSetOfDirectionVectors(...
+% set_of_direction_vectors = computeDirectionVectors(...
 %                                                 no_of_direction_vectors, ...
 %                                                 state_dimension, ...
 %                                                 affine_hull_of_interest_2D)
