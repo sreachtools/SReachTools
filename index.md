@@ -6,8 +6,6 @@ layout: home
 title:
 ---
 
-## Quick Start
-
 ### Dependencies
 
 * MATLAB (>2017a)
