@@ -1,8 +1,8 @@
 ---
 layout: page
-title: List of posts from this project
 permalink: /blog/
 ---
+A list of posts in this project blog
 
 <ul class="post-list">
   {%- for post in site.posts -%}

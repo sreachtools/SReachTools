@@ -14,7 +14,7 @@
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
 title: SReachTools
-email: abyvinod@unm.edu
+email: aby.vinod@gmail.com
 description: >- # this means to ignore newlines until "baseurl:"
   SReachTools: A MATLAB toolbox for stochastic reachability methods.
 baseurl: "/SReachTools" # the subpath of your site, e.g. /blog
