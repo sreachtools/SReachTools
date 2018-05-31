@@ -22,6 +22,6 @@ They are available in the `examples` folder of the project.
 
 Please feel free to add requests for more examples at [https://github.com/abyvinod/SReachTools/issues](https://github.com/abyvinod/SReachTools/issues).
 
-## Acknowledgements
+#### Acknowledgements
 
 Thanks to [https://htmlpreview.github.io/](https://htmlpreview.github.io/) for providing a way to link URL from GitHub.
