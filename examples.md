@@ -1,9 +1,8 @@
 ---
 layout: page
 permalink: /examples/
+title: Demonstration examples for SReachTools
 ---
-
-# Examples demonstrating various features of SReachTools
 
 We consider various stochastic LTI systems like
 
