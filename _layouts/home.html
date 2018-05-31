@@ -16,8 +16,8 @@ layout: default
   {%- endfor -%}
 
   {%- if site.posts.size > 0 -%}
-    <div class="news-header-wrapper" style="display:inline-block;">
-      <h2 id="news">
+    <div>
+      <h2 id="news" style="display:inline-block;">
         {{ page.list_title | default: "News" }}
       </h2>
       <a href="{{ "/feed.xml" | relative_url }}">
