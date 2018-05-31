@@ -16,14 +16,12 @@ layout: default
   {%- endfor -%}
 
   {%- if site.posts.size > 0 -%}
-    <div class="news-header-wrapper" style="display:inline-block;">
-      <h3 class="post-list-heading" style="display: inline-block;">
+      <h2 id="#news">
         {{ page.list_title | default: "News" }}
       </h3>
       <a href="{{ "/feed.xml" | relative_url }}">
         <img src="{{ "/assets/if_social_style_3_rss_341106.svg" | relative_url }}" style="width: 20px; height:20px; padding-bottom: 7px; padding-left: 10px;"/>
       </a>
-    </div>
     <ul class="post-list">
       {%- for post in site.posts -%}
       <li>
