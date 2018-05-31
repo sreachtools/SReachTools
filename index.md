@@ -31,5 +31,4 @@ This will disable some of the features of SReachTools.
 
 ### Examples
 
-See `examples/*.pdf` for the PDF version of various examples run using SReachTools.
-These are also catalouged in our [project page](https://abyvinod.github.io/SReachTools/examples/).
+See our [examples page](https://abyvinod.github.io/SReachTools/examples/).

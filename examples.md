@@ -9,7 +9,8 @@ We consider various stochastic LTI systems like
 * the relative dynamics of a spacecraft in space to a docking station
 * the stochastic double integrator.
 
-All these examples are written using MATLAB's LiveEditor and are available in the `examples` folder. 
+All these examples listed below were written using MATLAB's LiveEditor.
+They are available in the `examples` folder of the project. 
 
 **NOTE**: The HTML pages will open in the same page if CTRL/CMD key is not pressed.
 
