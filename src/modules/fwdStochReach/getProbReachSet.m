@@ -42,8 +42,9 @@ function prob = getProbReachSet(sys, ...
 %
 % Notes:
 % ------
-% *  In case, the target set is a hyper-cuboid and the state_dimension < 25,
-%    then use mvncdf instead.
+% * In case, the target set is a hyper-cuboid and the state_dimension < 25,
+%   then use mvncdf instead.
+% * The target set must be a Polyhedron object.
 % ============================================================================
 %
 % This function is part of the Stochastic Reachability Toolbox.
@@ -51,7 +52,20 @@ function prob = getProbReachSet(sys, ...
 %      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %
 %
+    
+    %% INPUT HANDLING
+    % Scalar desired_accuracy
+    assert(isscalar(desired_accuracy), ...
+           'SReachTools:invalidArgs', ...
+           'Expected a scalar value for desired_accuracy');
 
+    % target_set is a non-empty Polyhedron
+    assert(isa(target_set, 'Polyhedron') && ~target_set.isEmptySet(), ...
+           'SReachTools:invalidArgs', ...
+           'Target set must be a non-empty polyhedron');
+
+    % Compute the mean and the covariance matrices
+    % GUARANTEES: Gaussian-perturbed LTI system, initial state, and target time
     [mean_x, cov_x] = getFSRPDMeanCov(sys, initial_state, target_time);
         
     % Construct the concatenated target tube polytope for qscmvnv

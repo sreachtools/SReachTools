@@ -19,9 +19,7 @@ function [concat_target_tube_A, concat_target_tube_b] = ...
 % ============================================================================
 %
 % [concat_target_tube_A, concat_target_tube_b] = ..
-%                                         getConcatTargetTube(safe_set, ...
-%                                                             target_set, ...
-%                                                             time_horizon)
+%     getConcatTargetTube(safe_set, target_set, time_horizon);
 % 
 % Inputs:
 % -------

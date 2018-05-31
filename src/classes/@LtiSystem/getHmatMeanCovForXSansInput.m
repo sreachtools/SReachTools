@@ -30,7 +30,8 @@ function [H, mean_X_sans_input, cov_X_sans_input, varargout] = ...
 % Inputs:
 % -------
 %   sys           - An object of LtiSystem class 
-%   initial_state - x_0
+%   initial_state - Initial state can be a deterministic n-dimensional vector
+%                   x_0 or a RandomVector object
 %   time_horizon  - Time of interest (N)
 %
 % Outputs:
@@ -59,13 +60,6 @@ function [H, mean_X_sans_input, cov_X_sans_input, varargout] = ...
 %
 
     %% Input handling
-    % Ensure that initial state is a column vector of appropriate dimension
-    assert( size(initial_state,1) == sys.state_dimension &&...
-            size(initial_state,2) == 1, ...
-           'SReachTools:invalidArgs', ...
-           ['Expected a sys.state_dimension-dimensional column-vector for ', ...
-           'initial state']);
-
     % Ensure that the given system has a Gaussian disturbance
     assert( strcmp(class(sys.disturbance),'StochasticDisturbance') &&...
             strcmp(sys.disturbance.type,'Gaussian'), ...
@@ -73,8 +67,10 @@ function [H, mean_X_sans_input, cov_X_sans_input, varargout] = ...
            ['getHmatMeanCovForXSansInput is for', ...
             ' Gaussian-perturbed LTI systems only']);
 
-    % Compute the concatenated matrices for X
+    %% Compute the concatenated matrices for X
     % GUARANTEES: Scalar time_horizon>0
+    % H will be a zeros(sys.state_dimension * time_horizon, 1) matrix for an
+    % uncontrolled LTI system
     [Z, H, G] = getConcatMats(sys, time_horizon);
 
     % IID assumption allows to compute the mean and covariance of the
@@ -84,9 +80,25 @@ function [H, mean_X_sans_input, cov_X_sans_input, varargout] = ...
     cov_concat_disturb  = kron(eye(time_horizon), ...
                                sys.disturbance.parameters.covariance);
                                  
-    % Computation of mean and covariance of X (sans input) by (17), LCSS 2017
-    mean_X_sans_input = Z * initial_state + G * mean_concat_disturb;
-    cov_X_sans_input = G * cov_concat_disturb * G';
+    if isa(initial_state,'RandomVector')
+        mean_X_sans_input = Z * initial_state.parameters.mean + G *...
+            mean_concat_disturb;
+        cov_X_sans_input = Z * initial_state.parameters.covariance * Z' + ...
+            G * cov_concat_disturb * G';
+    else
+        % Ensure that initial state is a column vector of appropriate dimension
+        assert( size(initial_state,1) == sys.state_dimension &&...
+                size(initial_state,2) == 1, ...
+               'SReachTools:invalidArgs', ...
+               ['Expected a sys.state_dimension-dimensional column-vector ', ...
+                'for initial state']);
+
+        % Computation of mean and covariance of X (sans input) by (17), LCSS 2017
+        mean_X_sans_input = Z * initial_state + G * mean_concat_disturb;
+        cov_X_sans_input = G * cov_concat_disturb * G';
+    end
+
+    % Optional output arguments
     varargout{1} = Z;
     varargout{2} = G;
 end
