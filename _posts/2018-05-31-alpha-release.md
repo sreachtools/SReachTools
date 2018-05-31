@@ -1,10 +1,20 @@
 ---
-# Feel free to add content and custom Front Matter to this file.
-# To modify the layout, see https://jekyllrb.com/docs/themes/#overriding-theme-defaults
-
-layout: home
-title: "Stochastic Reachability Toolbox"
+layout: post
+title:  "Alpha Release"
+date:   2018-05-31 13:40:00 -0600
+categories: jekyll update
+author: "Joseph D. Gleason"
 ---
+
+The alpha release ([v0.2](https://github.com/abyvinod/SReachTools/tree/v0.2)) of the SReachTools Toolbox is now out. The SReachTools
+toolbox is a set of MATLAB codes to facilitate stochastic reachability
+computations. The toolbox currently supports reachability computations with 
+several methods:
+* Dynamic programming computation
+* Fourier transformation approximations
+* Lagrangian (set-based) approximations
+
+See the quick-start guide below for installation instructions.
 
 ## Quick start guide: installation and examples
 

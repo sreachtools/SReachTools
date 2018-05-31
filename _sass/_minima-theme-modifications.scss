@@ -2,34 +2,12 @@
 $unm-cherry: #ba0c2f !default;
 $inverted-text-color: #fff !default;
 
-.formspree-contact {
-  text-align: center;
+.post-list {
+  > li {
+    margin-bottom: 0px;
 
-  > input {
-    display: block;
-    margin: 0px auto;
-    margin-bottom: 5px;
-    width: 80%;
-  }
-
-  > textarea {
-    display: block;
-    margin: 0px auto;
-    width: 80%;
-    max-width: 80%;
-    min-width: 80%;
-    min-height: 100px;
-  }
-
-  @include media-query($on-palm) {
-    > input {
-      width: 90%;
-    }
-
-  > textarea {
-      width: 90%;
-      max-width: 90%;
-      min-width: 90%;
+    > p {
+      margin-bottom: 0px;
     }
   }
 }
@@ -69,7 +47,9 @@ $inverted-text-color: #fff !default;
 
     .menu-icon {
       > svg {
-        fill: $inverted-text-color;
+        > path {
+          fill: $inverted-text-color;
+        }
       }
     }
   }

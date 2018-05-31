@@ -6,9 +6,9 @@ categories: jekyll update
 author: "Joseph D. Gleason"
 ---
 
-We have released v0.1 of the SReachTools (Stochastic Reachability Tools)
-Toolbox! This is a pre-alpha release. The codes and functionality have been
-tested internally by Abraham and myself, but we do expect bugs to be present. 
+We have released the pre-alpha ([v0.1-alpha](https://github.com/abyvinod/SReachTools/tree/v0.1-alpha)) version of the SReachTools (Stochastic
+Reachability Tools) Toolbox! The codes and functionality have been tested
+internally by Abraham and myself, but we do expect bugs to be present. 
 
 Please help us out: if you use the code and find a bug, create an
 [issue](https://github.com/abyvinod/SReachTools/issues) so we know what needs
