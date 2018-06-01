@@ -13,7 +13,7 @@ title: "Stochastic Reachability Toolbox"
 You can skip installing the dependencies marked **optional**.
 This will disable some of the features of SReachTools.
 
-1. MATLAB (>2017a)
+1. MATLAB (2017a or newer)
     * Toolboxes
         * MATLAB's Global Optimization Toolbox (**Optional**)
         * MATLAB's Statistics and Machine Learning Toolbox (**Optional**)
