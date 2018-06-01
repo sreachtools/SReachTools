@@ -49,3 +49,4 @@ This will disable some of the features of SReachTools.
 1. Run `srtinit -v -t` in MATLAB to add the toolbox to the paths, visualize the steps, and test the installation.  
    - You can add `p=pwd();cd /path/to/SReachTools/folder;srtinit;cd(p);` to your MATLAB's `startup.m` to automatically have this done in future.
 
+------
