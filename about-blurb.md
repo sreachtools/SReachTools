@@ -3,7 +3,7 @@ layout: default
 title: "About Blurb"
 ---
 
-SReachTools is a open-source MATLAB Toolbox for performing stochastic verification and reachability analysis.  
+SReachTools is an open-source MATLAB Toolbox for performing stochastic verification and reachability analysis.  
 
 - [Github repository](https://github.com/abyvinod/SReachTools)
 - [Quick start guide](#quick-start)
