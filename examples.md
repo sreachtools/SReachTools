@@ -12,7 +12,7 @@ We consider various stochastic LTI systems like
 All these examples listed below were written using MATLAB's LiveEditor.
 They are available in the `examples` folder of the project. 
 
-{% include note.html content="HTML examples are not mobile friendly. We're working on it." %}
+{% include important-note.html content="HTML examples are not mobile friendly. We're working on it." %}
 
 1. **Forward stochastic reachability**: Computes the probability of the state of the spacecraft lying in a set at future time of interest with/without safety requirements. We also demonstrate how SReachTools can handle a deterministic and a stochastic initial state. [[PDF](https://github.com/abyvinod/SReachTools/raw/master/examples/forwardStochasticReachCWH.pdf)] [[HTML](forwardStochasticReachCWH.html)] 
 1. **Underapproximative verification using Fourier transforms and convex optimization**: Computes a lower bound on the safety probability for a spacecraft rendezvous and docking probability starting from a given state, its associated controller, and a subset of all the initial states from which a desired safety probability can be met.

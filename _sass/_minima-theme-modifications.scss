@@ -2,6 +2,15 @@
 $unm-cherry: #ba0c2f !default;
 $inverted-text-color: #fff !default;
 
+.important-note{
+   padding: 15px;
+   background-color: #fcf8e3;
+   border-color: #faebcc;
+   margin-top: 10px;
+   margin-bottom: 15px;
+   border-radius: 5px;
+}
+
 .desc-figure{
   text-align: center;
 }
