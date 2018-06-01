@@ -38,15 +38,27 @@ function approx_level_set = getApproxStochasticLevelSetViaLagrangian(sys, ...
 % 
 
     % verify inputs
-    validateattributes(sys, {'LtiSystem'}, {'nonempty'});
+    inpar = inputParser();
+    inpar.addRequired('sys', @(x) validateattributes(x, {'LtiSystem'}, ...
+        {'nonempty'}));
+    inpar.addRequired('beta', @(x) validateattributes(x, {'numeric'}, ...
+        {'>=', 0, '<=', 1}));
+    inpar.addRequired('target_tube', ...
+        @(x) validateattributes(x, {'TargetTube'}, {'nonempty'}));
+    inpar.addRequired('approx_type', @(x) any(validatestring(x, ...
+        {'underapproximation', 'overapproximation'})));
+    inpar.addRequired('method', @(x) any(validatestring(x, ...
+        {'random', 'box', 'load'})));
+
+    inpar.parse(sys, beta, target_tube, approx_type, method);
+
+    % additional non-input parser validations
     validateattributes(sys.disturbance, {'StochasticDisturbance'}, ...
         {'nonempty'});
-    validateattributes(beta, {'numeric'}, {'>=', 0, '<=', 1});
     
     % validate that all elements of the target_tube are polyhedron
-    validateattributes(target_tube, {'cell'}, {'nonempty'});
     for i = 1:length(target_tube)
-        validateattributes(target_tube{i}, {'Polyhedron'}, {'nonempty'});
+        validateattributes(target_tube(i), {'Polyhedron'}, {'nonempty'});
     end
     
     validateattributes(approx_type, {'char', 'string'}, {'nonempty'});

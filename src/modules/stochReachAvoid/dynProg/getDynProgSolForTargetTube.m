@@ -55,9 +55,9 @@ function grid_prob = getDynProgSolForTargetTube(sys, ...
     validateattributes(sys, {'LtiSystem'}, {'nonempty'})
     validateattributes(state_grid, {'SpaceGrid'}, {'nonempty'})
     validateattributes(input_grid, {'InputGrid'}, {'nonempty'})
-    validateattributes(target_tube, {'cell'}, {'nonempty', 'vector'});
+    validateattributes(target_tube, {'TargetTube'}, {'nonempty'});
     for i = 1:length(target_tube)
-        validateattributes(target_tube{i}, {'Polyhedron'}, {'nonempty'});
+        validateattributes(target_tube(i), {'Polyhedron'}, {'nonempty'});
     end
     
     % need a stochastic disturbance of type Gaussian for probability computation
@@ -65,14 +65,15 @@ function grid_prob = getDynProgSolForTargetTube(sys, ...
     validateattributes(sys.disturbance, {'StochasticDisturbance'}, ...
         {'nonempty'});
     if ~strcmpi(sys.disturbance.type, 'Gaussian')
-        error('SReachTools:invalidArgs', ['Dynamic programming methods can ', ...
-            'only handle stochastic disturbances of type Gaussian']);
+        error('SReachTools:invalidArgs', ['Dynamic programming methods ', ...
+            'can only handle stochastic disturbances of type Gaussian']);
     end
     
     % start with initialization of probability of 1s for everything in final
     % target tube
     grid_prob = zeros(size(state_grid.grid, 1), 1);
-    ind_vector = state_grid.getIndicatorVectorForSet(target_tube{end});
+    ind_vector = state_grid.getIndicatorVectorForSet(target_tube( ...
+        length(target_tube)));
     grid_prob(ind_vector) = 1;
     
     n_targets = length(target_tube);
@@ -86,7 +87,7 @@ function grid_prob = getDynProgSolForTargetTube(sys, ...
                                                       state_grid, ...
                                                       input_grid, ...
                                                       grid_prob, ...
-                                                      target_tube{n_targets-i});
+                                                      target_tube(n_targets-i));
         end
     end
 
