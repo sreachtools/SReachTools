@@ -6,6 +6,25 @@ layout: home
 title: "Stochastic Reachability Toolbox"
 ---
 
+## What does SReachTools do?
+
+SReachTools focuses on the following problem --- Construct **controllers** and characterize the **set of initial states** such that 
+1. the controller satisfies the specified control bounds,
+1. the stochastic system stays within a time-varying **target tube** with a probability above a given threshold? \\
+For example, a typical **reach-avoid** constraint is to stay within a *safe set* to stay within the time horizon and reach a *target set* at the time horizon when starting from an initial state \\(\overline{x}\_0\\), as shown in the figure below. \\
+![A cartoon depicting the stochastic reach-avoid problem]({{ "/assets/StochReachAvoidCartoon.jpeg" | absolute_url }})\\
+Here, we would like to pick the *green* controller over the *red* controller and compute the collection, the *orange set*, of all initial states such that the probability of success (reach-avoid) \\(\mathbb{P}\\) is above a given threshold \\(\theta\\).
+
+This problem has a wide range of applications --- space applications ([spacecraft rendezvous and docking problem](./examples/FtCVXUnderapproxVerifyCWH.html)), transport (semi-autonomous/fully-autonomous cars and airplanes), biomedical applications (automated anesthesia delivery system), to name a few.
+
+This toolbox provides MATLAB APIs to tackle this problem for Gaussian-perturbed linear time-invariant systems using [Fourier transforms](./FtCVXUnderapproxVerifyCWH.html) [^1], [Lagrangian (set-operations)](./examples/lagrangianApproximations.html) [^2], and [dynamic programming](./examples/doubleIntegratorDynamicProgramming.html) [^3] [^4] methods.
+We are currently building extensions to include linear time-varying systems and non-Gaussian disturbances.
+
+[^1]: A. P. Vinod and M. M. K. Oishi, "[Scalable Underapproximative Verification of Stochastic LTI Systems using Convexity and Compactness](https://doi.org/10.1145/3178126.3178148)", in Proceedings of Hybrid Systems: Computation and Control, 2018
+[^2]: J. D. Gleason, A. P. Vinod, M. M. K. Oishi, "[Underapproximation of Reach-Avoid Sets for Discrete-Time Stochastic Systems via Lagrangian Methods](https://doi-org/10.1109/CDC.2017.8264291)," in Proceedings of the IEEE Conference on Decision and Control, 2017
+[^3]: S. Summers and J. Lygeros, "[Verification of discrete time stochastic hybrid systems: A stochastic reach-avoid decision problem](https://doi.org/10.1016/j.automatica.2010.08.006)," Automatica, 2010.
+[^4]: A. Abate, M. Prandini, J. Lygeros, S. Sastry, "[Probabilistic reachability and safety for controlled discrete time stochastic hybrid systems](https://doi.org/10.1016/j.automatica.2008.03.027)," Automatica, 2008.
+
 ## Quick start guide: installation and examples
 
 ### Dependencies
