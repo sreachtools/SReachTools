@@ -19,7 +19,7 @@ This problem appears in a wide range of applications --- space applications ([sp
 
 This toolbox provides MATLAB APIs to tackle this problem for Gaussian-perturbed linear time-invariant systems using [Fourier transforms](./FtCVXUnderapproxVerifyCWH.html) [^1], [Lagrangian (set-operations)](./examples/lagrangianApproximations.html) [^2], and [dynamic programming](./examples/doubleIntegratorDynamicProgramming.html) [^3] [^4] methods.
 We currently provide polytopic underapproximation and open-loop controller synthesis for this problem.
-We are currently building extensions to include linear time-varying systems, closed-loop controller synthesis, and non-Gaussian disturbances.
+In future, we will provide extensions to linear time-varying systems, closed-loop controller synthesis, and non-Gaussian disturbances.
 
 [^1]: A. P. Vinod and M. M. K. Oishi, "[Scalable Underapproximative Verification of Stochastic LTI Systems using Convexity and Compactness](https://doi.org/10.1145/3178126.3178148)", in Proceedings of Hybrid Systems: Computation and Control, 2018
 [^2]: J. D. Gleason, A. P. Vinod, M. M. K. Oishi, "[Underapproximation of Reach-Avoid Sets for Discrete-Time Stochastic Systems via Lagrangian Methods](https://doi-org/10.1109/CDC.2017.8264291)," in Proceedings of the IEEE Conference on Decision and Control, 2017
