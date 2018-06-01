@@ -15,7 +15,7 @@ For example, a typical **reach-avoid** constraint is to stay within a *safe set*
 ![A cartoon depicting the stochastic reach-avoid problem]({{ "/assets/StochReachAvoidCartoon.jpeg" | absolute_url }})\\
 Here, we would like to pick the *green* controller over the *red* controller and compute the collection, the *orange set*, of all initial states such that the probability of success (reach-avoid) \\(\mathbb{P}\\) is above a given threshold \\(\theta\\).
 
-This problem has a wide range of applications --- space applications ([spacecraft rendezvous and docking problem](./examples/FtCVXUnderapproxVerifyCWH.html)), transport (semi-autonomous/fully-autonomous cars and airplanes), biomedical applications (automated anesthesia delivery system), to name a few.
+This problem appears in a wide range of applications --- space applications ([spacecraft rendezvous and docking problem](./examples/FtCVXUnderapproxVerifyCWH.html)), transport (semi-autonomous/fully-autonomous cars and airplanes), biomedical applications (automated anesthesia delivery system), to name a few.
 
 This toolbox provides MATLAB APIs to tackle this problem for Gaussian-perturbed linear time-invariant systems using [Fourier transforms](./FtCVXUnderapproxVerifyCWH.html) [^1], [Lagrangian (set-operations)](./examples/lagrangianApproximations.html) [^2], and [dynamic programming](./examples/doubleIntegratorDynamicProgramming.html) [^3] [^4] methods.
 We currently provide polytopic underapproximation and open-loop controller synthesis for this problem.
