@@ -26,7 +26,7 @@ In future, we will provide extensions to linear time-varying systems, closed-loo
 [^3]: S. Summers and J. Lygeros, "[Verification of discrete time stochastic hybrid systems: A stochastic reach-avoid decision problem](https://doi.org/10.1016/j.automatica.2010.08.006)," Automatica, 2010.
 [^4]: A. Abate, M. Prandini, J. Lygeros, S. Sastry, "[Probabilistic reachability and safety for controlled discrete time stochastic hybrid systems](https://doi.org/10.1016/j.automatica.2008.03.027)," Automatica, 2008.
 
-## Quick start guide: installation and examples
+## Quick start guide
 
 ### Dependencies
 
@@ -49,6 +49,3 @@ This will disable some of the features of SReachTools.
 1. Run `srtinit -v -t` in MATLAB to add the toolbox to the paths, visualize the steps, and test the installation.  
    - You can add `p=pwd();cd /path/to/SReachTools/folder;srtinit;cd(p);` to your MATLAB's `startup.m` to automatically have this done in future.
 
-### Examples
-
-See our [examples page](https://abyvinod.github.io/SReachTools/examples/).
