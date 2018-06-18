@@ -75,7 +75,7 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
 % Notes:
 % ------
 % * For control-free and/or disturbance-free LTI systems, H and G are set to
-%   zeros( sys.state_dimension * time_horizon, 1) as appropriate.
+%   zeros( sys.state_dim * time_horizon, 1) as appropriate.
 % * Deviation from Skaf and Boyd's definition,
 %     * Concatenated state is X=[x_1 x_2 ... x_{N}].
 %     * Z definition excludes the initial state x_0 in contrast to Skaf and
@@ -104,21 +104,21 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
     Z=[];
     for time_index=1:time_horizon
         Z=[Z;
-           sys.state_matrix^time_index];
+           sys.state_mat^time_index];
     end
     
     %% Construct H matrix --- concatenated input matrix
-    if sys.input_dimension > 0
+    if sys.input_dim > 0
         % Compute the respective extended controllability matrix (flipped)
         % [A^{N-1}B A^{N-2}B ... AB B]
-        flipped_controllability_matrix_input = sys.input_matrix;
+        flipped_controllability_matrix_input = sys.input_mat;
         for time_index=1:time_horizon-1
             % Prepend A times (A^(time_index-1) * B) to the existing 
             % flipped_controllability_matrix_input
             flipped_controllability_matrix_input = ...
-                [sys.state_matrix * ...
+                [sys.state_mat * ...
                     flipped_controllability_matrix_input(:, ...
-                                                    1:sys.input_dimension), ...
+                                                    1:sys.input_dim), ...
                  flipped_controllability_matrix_input];
         end
         % use parts of flipped_controllability_matrix_input to obtain H 
@@ -130,31 +130,31 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
         H = [];
         for blocks_of_zero_required = time_horizon-1:-1:0
             relevant_indices_for_the_current_row = ...
-                      ((blocks_of_zero_required * sys.input_dimension) + 1) :... 
-                      (sys.input_dimension * time_horizon);
+                      ((blocks_of_zero_required * sys.input_dim) + 1) :... 
+                      (sys.input_dim * time_horizon);
             current_row = [ flipped_controllability_matrix_input(:, ...
                                 relevant_indices_for_the_current_row), ...
-                            zeros(sys.state_dimension, ...
-                                blocks_of_zero_required * sys.input_dimension)];
+                            zeros(sys.state_dim, ...
+                                blocks_of_zero_required * sys.input_dim)];
             H = [H;
                  current_row];
         end
     else
-        H = zeros(sys.state_dimension * time_horizon, 1);
+        H = zeros(sys.state_dim * time_horizon, 1);
     end
 
     %% Construct G matrix --- concatenated disturbance matrix
-    if sys.disturbance_dimension > 0
+    if sys.dist_dim > 0
         % Compute the respective extended controllability matrix (flipped)
         % [A^{N-1}F A^{N-2}F ... AF F]
-        flipped_controllability_matrix_disturbance = sys.disturbance_matrix;
+        flipped_controllability_matrix_disturbance = sys.disturbance_mat;
         for time_index=1:time_horizon-1
             % Prepend A times (A^(time_index-1) * F) to the existing 
             % flipped_controllability_matrix_disturbance
             flipped_controllability_matrix_disturbance = ...
-                [sys.state_matrix * ...
+                [sys.state_mat * ...
                     flipped_controllability_matrix_disturbance(:, ...
-                                               1:sys.disturbance_dimension), ...
+                                               1:sys.dist_dim), ...
                  flipped_controllability_matrix_disturbance];
         end
         % use parts of flipped_controllability_matrix_disturbance to obtain
@@ -168,17 +168,17 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
         G = [];
         for blocks_of_zero_required = time_horizon-1:-1:0
             relevant_indices_for_the_current_row = ...
-                ((blocks_of_zero_required * sys.disturbance_dimension) + 1) :... 
-                (sys.disturbance_dimension * time_horizon);
+                ((blocks_of_zero_required * sys.dist_dim) + 1) :... 
+                (sys.dist_dim * time_horizon);
             current_row = ...
                     [ flipped_controllability_matrix_disturbance(:, ...
                           relevant_indices_for_the_current_row), ...
-                      zeros(sys.state_dimension, ...
-                          blocks_of_zero_required * sys.disturbance_dimension)];
+                      zeros(sys.state_dim, ...
+                          blocks_of_zero_required * sys.dist_dim)];
             G = [G;
                  current_row];
         end
     else
-        G = zeros(sys.state_dimension * time_horizon, 1);
+        G = zeros(sys.state_dim * time_horizon, 1);
     end
 end

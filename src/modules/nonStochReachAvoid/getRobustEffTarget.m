@@ -49,7 +49,7 @@ function robust_eff_target = getRobustEffTarget(sys, ...
     % validate the inputs
     inpar = inputParser();
     inpar.addRequired('sys', @(x) validateattributes(x, ...
-        {'LtiSystem'}, {'nonempty'}));
+        {'LtiSystem', 'LtvSystem'}, {'nonempty'}));
     inpar.addRequired('target_tube', @(x) validateattributes(x, ...
         {'cell'}, {'nonempty'}));
     inpar.addRequired('disturbance', @(x) validateattributes(x, ...
@@ -59,7 +59,7 @@ function robust_eff_target = getRobustEffTarget(sys, ...
 
     inpar.parse(sys, target_tube, disturbance, varargin{:});
 
-    if sys.state_dimension > 4
+    if sys.state_dim > 4
         warning(['Because both vertex and facet representation of ', ...
             'polyhedra aer required for the necessary set recursion ', ...
             'operations computing for systems greater than 4 dimensions', ...
@@ -77,12 +77,15 @@ function robust_eff_target = getRobustEffTarget(sys, ...
 
     % MPT does not support A \ P or P / A (P is Polyhedron and A is matrix)
     % so we must invert prior
-    inverted_state_matrix = inv(sys.state_matrix);
-    minus_bu = - sys.input_matrix * sys.input_space;
+    if sys.islti()
+        inverted_state_matrix = inv(sys.state_mat);
+        minus_bu = - sys.input_mat * sys.input_space;
+    end
+
     effective_target_temp = target_tube{horizon_length};
     if horizon_length > 1
         if n_disturbances > 1
-            if sys.state_dimension > 2
+            if sys.state_dim > 2
                 % warning(['The convex hull operation may produce ', ...
                 %     'inconsistent or inaccurate results for systems with ', ...
                 %     'dimensions greater than 2. See [[url once note has ', ...
@@ -93,11 +96,16 @@ function robust_eff_target = getRobustEffTarget(sys, ...
             end
             effective_target_tube = target_tube;
             for i = horizon_length-1:-1:1
+                if ~sys.islti()
+                    inverted_state_matrix = inv(sys.state_mat(i))
+                    minus_bu = sys.input_mat(i) * sys.input_space;
+                end
+
                 eff_target_stopwatch = tic;
 
                 vertices = [];
                 for j = 1: n_disturbances
-                    effective_dist = sys.disturbance_matrix * disturbance{j};
+                    effective_dist = sys.disturbance_mat(i) * disturbance{j};
                     single_dist_stopwatch = tic;
                     effective_target = performRobustEffectiveTargetRecursion(...
                         effective_target_tube{i+1}, ...
@@ -118,8 +126,17 @@ function robust_eff_target = getRobustEffTarget(sys, ...
             end
             effective_target_temp = effective_target_tube{1};
         else
-            effective_dist = sys.disturbance_matrix * disturbance;
+            if sys.islti()
+                effective_dist = sys.disturbance_mat * disturbance;
+            end
+
             for i = horizon_length-1:-1:1
+                if ~sys.islti()
+                    inverted_state_matrix = inv(sys.state_mat(i));
+                    minus_bu = sys.input_mat(i) * sys.input_space;
+                    effective_dist = sys.disturbance_mat(i) * disturbance;
+                end
+                
                 eff_target_stopwatch = tic;
                 effective_target_temp = ...
                     performRobustEffectiveTargetRecursion(...

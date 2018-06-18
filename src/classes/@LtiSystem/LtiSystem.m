@@ -1,4 +1,4 @@
-classdef LtiSystem
+classdef LtiSystem < LtvSystem
 % SReachTools/LtiSystem: Create a discrete-time LTI system object
 % ============================================================================
 %
@@ -62,17 +62,6 @@ classdef LtiSystem
 %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 %
 %
-
-    properties (SetAccess = immutable)
-        state_matrix          = []
-        state_dimension       = []
-        input_matrix          = []
-        input_space           = []
-        input_dimension       = []
-        disturbance_matrix    = []
-        disturbance           = []
-        disturbance_dimension = []
-    end
     
     methods
         function obj = LtiSystem(varargin)
@@ -126,203 +115,99 @@ classdef LtiSystem
         %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         % 
 
-            % Input arguments must be name-value pairs (hence even in count)
-            assert(mod(length(varargin), 2) == 0, ...
-                   'SReachTools:invalidArgs', ...  
-                   'Arguments must be given as name-value pairs');
-            
-            var_index = 1;
-            while var_index < length(varargin)
-                % Loop through the input arguments (Name followed by value)
-                switch(lower(varargin{var_index}))
-                    case 'statematrix'
-                        validateattributes(varargin{var_index+1}, ...
-                                          {'numeric'}, ...
-                                          {'nonempty'});
-                        obj.state_matrix = varargin{var_index+1};
-                    case 'inputmatrix'
-                        validateattributes(varargin{var_index+1}, ...
-                                           {'numeric'}, ...
-                                           {'nonempty'});
-                        obj.input_matrix = varargin{var_index+1};
-                    case 'disturbancematrix'
-                        validateattributes(varargin{var_index+1}, ...
-                                           {'numeric'}, ...
-                                           {'nonempty'});
-                        obj.disturbance_matrix = varargin{var_index+1};
-                    case 'inputspace'
-                        % Currently InputSpace has to be a Polyhedron (MPT)
-                        assert(exist('mpt_init','file')==2, ...
-                               'SReachTools:setup_error', ...
-                               ['This function uses MPT3. Please get it ', ...
-                                'from http://control.ee.ethz.ch/~mpt/3/.']);
-                        validateattributes(varargin{var_index+1}, ...
-                                           {'Polyhedron'}, ...
-                                           {'nonempty'});
-                        obj.input_space = varargin{var_index+1};
-                    case 'disturbance'
-                        % Currently Disturbance has to be a Polyhedron (MPT) or
-                        % an object of StochasticDisturbance
-                        validateattributes(varargin{var_index+1}, ...
-                                           {'Polyhedron', ...
-                                            'StochasticDisturbance'}, ...
-                                           {'nonempty'});
-                        obj.disturbance = varargin{var_index+1};
-                    otherwise
-                        % Raise exception for any unhandled argument
-                        error('SReachTools:invalidArgs', ...
-                              'Unhandled argument given');
-                end
-                var_index = var_index + 2;
+            inpar = inputParser();
+            inpar.addParameter('StateMatrix', [], ...
+                @(x) validateattributes(x, {'numeric'}, ...
+                    {'nonempty', 'square'}));
+            inpar.addParameter('InputMatrix', [], ...
+                @(x) validateattributes(x, {'numeric'}, ...
+                    {'nonempty'}));
+            inpar.addParameter('DisturbanceMatrix', [], ...
+                @(x) validateattributes(x, {'numeric'}, ...
+                    {'nonempty', 'square'}));
+
+            % Because InputSpace and Disturbance will be handled in the
+            % LtvSystem superclass call just ignore what their inputs are 
+            % right now
+            inpar.addParameter('InputSpace', Polyhedron(), ...
+                @(x) true);
+            inpar.addParameter('Disturbance', [], ...
+                @(x) true);
+
+            try
+                inpar.parse(varargin{:});
+            catch err
+                exc = MException('SReachTools:invalidArgs', ...
+                    'Invalid arguments provided to LtiSystem');
+                exc = exc.addCause(err);
+                throwAsCaller(exc)
             end
 
-            % Defining state dimension after ensuring a non-empty square state
-            % matrix
-            assert(~isempty(obj.state_matrix), ...
-                   'SReachTools:invalidArgs', ...  
-                   'State matrix can not be empty');
-            assert(size(obj.state_matrix,2) == size(obj.state_matrix,1), ...
-                   'SReachTools:invalidArgs', ...
-                   'State matrix is not square');
-            obj.state_dimension = size(obj.state_matrix,2);
-
-            % Setting default values for properties that were not specified
-            % No values provided to matrices => zero
-            if isempty(obj.input_matrix)
-                obj.input_matrix = zeros(obj.state_dimension,1);
-            end
-            if isempty(obj.disturbance_matrix)
-                obj.disturbance_matrix = zeros(obj.state_dimension,1);
-            end
-            % No values provided to 'spaces' => empty polyhedra
-            if isempty(obj.input_space)
-                obj.input_space = Polyhedron();
-            end 
-            if isempty(obj.disturbance)
-                obj.disturbance = Polyhedron();
-            end 
-
-            % Updating dimension information
-            obj.input_dimension = obj.input_space.Dim;
-            if strcmp(class(obj.disturbance), 'Polyhedron')
-                obj.disturbance_dimension = obj.disturbance.Dim;
-            elseif strcmp(class(obj.disturbance), 'StochasticDisturbance')
-                obj.disturbance_dimension = obj.disturbance.dimension;
-            else
-                error('SReachTools:internal', ...
-                      'Unsupported disturbance provided');
-            end
-
-            % Sanity checks
-            checkSystemProperties(obj);
+            obj@LtvSystem(varargin{:})            
         end
 
-        function disp(obj)
-        % SReachTools/LtiSystem/disp: Display information about LtiSystem object
+        function disp(obj, varargin)
+        % SReachTools/LtiSystem/disp: Overload of MATLAB internal disp
+        % ====================================================================
+        %
+        % Overloaded method of MATLAB's internal disp. 
+        %
+        % Usage: Overload of internal method
+        %
         % =====================================================================
         %
-        % Overloading of MATLAB's built-in display for object to create
-        % prettier and more concise output
-        %
-        % Usage
-        % -----
-        % % needs variable 'ltisys' which is an LtiSystem object
-        % disp(ltisys);
-        % ltisys
-        % ltisys.disp();
+        % disp(obj, Name, Value)
         % 
-        % =====================================================================
+        % Inputs:
+        % -------
+        %   obj - LtiSystem object
+        %   ------------------------------------------------------------
+        %   Name           | Value
+        %   ------------------------------------------------------------
+        %   verbose        | true or false
         % 
-        % disp(obj)
+        % Outputs: None
         % 
         % Notes:
         % ------
-        %   - disp function for this class was inspired from MPT3
-        %     (http://people.ee.ethz.ch/~mpt/3/)
-        % 
-        % =====================================================================
-        % 
-        %   This function is part of the Stochastic Reachability Toolbox.
-        %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
-        %           
-
-            plural = @(s, n) [num2str(n) ' ' s repmat('s', 1, double(n~=1))];
-            disp(sprintf('LTI System with %s, %s, %s', ...
-				plural('state', obj.state_dimension), ...
-				plural('input', obj.input_dimension), ...
-				plural('disturbance', obj.disturbance_dimension)));
-        end
-    end
-
-    
-    methods (Hidden)
-        function checkSystemProperties(obj)
-        % SReachTools/LtiSystem/checkSystemProperties: Check the properties of
-        % and LtiSystem object
-        % =====================================================================
-        %
-        % Class (hidden) method to verify the correct definition of system 
-        % properties for an LtiSystem object
-        %
-        % Usage:
-        % ------
-        % % needs variable 'ltisys' which is an LtiSystem object
-        % ltisys.checkSystemProperties();
-        % 
-        % ====================================================================
-        % 
-        % checkSystemProperties(obj)
-        % 
-        % Inputs: None
-        % Outputs: None
+        % * disp function for this class was inspired from MPT3
+        %   (http://people.ee.ethz.ch/~mpt/3/)
         %
         % =====================================================================
         % 
         %   This function is part of the Stochastic Reachability Toolbox.
         %   License for the use of this function is given in
         %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
-        %   
-            
-            % Sanity check --- Have all properties been initialized?
-            props = properties(obj);
-            for i = 1:length(props)
-                if isempty(obj.(props{i}))
-                    error('SReachTools:internal', ...
-                          sprintf('Property %s not init by the constructor', ...
-                                  props{i}));
-                end
+        % 
+
+            inpar = inputParser();
+            inpar.addParameter('verbose', false, ...
+                @(x) assert(islogical(x), 'verbose input must be a logical'));
+
+            try
+                inpar.parse(varargin{:})
+            catch err
+                exc = MException('SReachTools:innvalidArgs', ...
+                    'Invalid arguments to LtiSystem/disp');
+                exc = exc.addCause(err);
+                throwAsCaller(exc)
             end
-            % Sanity check --- Input matrix of correct size
-            assert(obj.state_dimension == size(obj.input_matrix,1), ...
-                   'SReachTools:invalidArgs', ...
-                   'Input matrix does not have correct row numbers');
-            if obj.input_dimension > 0
-                assert(obj.input_dimension == size(obj.input_matrix,2), ...
-                       'SReachTools:invalidArgs', ...
-                       'Input matrix does not have correct column numbers');
+
+            if inpar.Results.verbose
+                fprintf(['Linear Time Invariant System with:\n\n', ...
+                    '    %d states\n', ...
+                    '    %d inputs\n', ...
+                    '    state matrix function -> %s\n', ...
+                    '    input matrix function -> %s\n\n'], ...
+                    obj.state_dim, ...
+                    obj.input_dim, ...
+                    length(obj.params{1}), ...
+                    func2str(obj.state_mat), ...
+                    func2str(obj.input_mat));
             else
-                assert(obj.input_dimension + 1 == size(obj.input_matrix,2), ...
-                       'SReachTools:invalidArgs', ...
-                       'Empty input space: But non-column input matrix');
-            end
-            % Sanity check --- Disturbance matrix of correct size
-            assert(obj.state_dimension == size(obj.disturbance_matrix,1), ...
-                   'SReachTools:invalidArgs', ...
-                   'Disturbance matrix does not have correct row numbers');
-            if obj.disturbance_dimension > 0
-                % Empty polyhedron has dimension 0, but matrix set to [0]
-                assert(obj.disturbance_dimension == ...
-                       size(obj.disturbance_matrix,2), ...
-                       'SReachTools:invalidArgs', ...
-                       ['Disturbance matrix does not have correct column', ... 
-                       ' numbers']);
-            else
-                % Empty polyhedron has dimension 0, but matrix set to [0]
-                assert(obj.disturbance_dimension + 1 == ...
-                       size(obj.disturbance_matrix,2), ...
-                       'SReachTools:invalidArgs', ...
-                       'Empty disturbance: But non-column disturbance matrix');
+                fprintf(['Linear Time Invariant System with %d states, ', ...
+                    'and %d inputs\n'], obj.state_dim, ...
+                    obj.input_dim);
             end
         end
     end

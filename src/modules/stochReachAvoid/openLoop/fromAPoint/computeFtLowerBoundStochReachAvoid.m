@@ -80,7 +80,7 @@ function [lower_bound_stoch_reach_avoid, optimal_input_vector] = ...
 %                                   using Fourier transform and convex 
 %                                   optimization
 %   optimal_input_vector          - Optimal open-loop policy
-%                                   ((sys.input_dimension) *
+%                                   ((sys.input_dim) *
 %                                   time_horizon)-dimensional vector 
 %                                   U = [u_0; u_1; ...; u_N] (column vector)
 %
@@ -130,8 +130,8 @@ function [lower_bound_stoch_reach_avoid, optimal_input_vector] = ...
         % To account for the case where the mean state can not be held within
         % the reach-avoid tube, we use slack variables which should ideally be
         % zero but if positive then should be as least positive as possible
-        length_input_vector = sys.input_dimension * time_horizon;
-        length_state_vector = sys.state_dimension * time_horizon;
+        length_input_vector = sys.input_dim * time_horizon;
+        length_state_vector = sys.state_dim * time_horizon;
         % minimize |s|
         % subject to 
         %                                  X = mean_X_sans_input + \mathscr{H} U

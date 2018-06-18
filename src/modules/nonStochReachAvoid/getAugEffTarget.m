@@ -48,10 +48,17 @@ function aug_eff_target = getAugEffTarget(sys, ...
     end
     
     horizon_length = length(target_tube);
-    inverted_state_matrix = inv(sys.state_matrix);
+    if sys.islti()
+        inverted_state_matrix = inv(sys.state_mat);
+    end
+
     eff_target_temp = target_tube{horizon_length};
     if horizon_length > 1
         for i = 1:horizon_length - 1
+            if ~sys.islti()
+                inverted_state_matrix = inv(sys.state_mat(i));
+            end
+            
             if disturbance.isEmptySet
                 % No requirement of robustness
                 new_target = eff_target_temp;
@@ -59,13 +66,12 @@ function aug_eff_target = getAugEffTarget(sys, ...
                 % Compute a new target set for this iteration that is robust to 
                 % the disturbance
                 new_target = eff_target_temp + ...
-                             (-sys.disturbance_matrix * disturbance);
+                             (-sys.disturbance_mat(i) * disturbance);
             end
 
             % One-step backward reach set
             one_step_backward_reach_set = inverted_state_matrix * ...
-                (new_target + (-sys.input_matrix * sys.input_space));
-
+                (new_target + (-sys.input_mat(i) * sys.input_space));
 
             % Guarantee staying within target_tube by intersection
             eff_target_temp = intersect(one_step_backward_reach_set, ...

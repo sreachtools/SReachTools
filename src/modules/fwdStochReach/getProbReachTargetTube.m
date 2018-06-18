@@ -69,7 +69,7 @@ function prob = getProbReachTargetTube(sys, ...
            'Expected a scalar value for desired_accuracy');
 
     % Obtain the input policy
-    if sys.input_dimension > 0
+    if sys.input_dim > 0
         assert(length(varargin) == 1, ...
                'SReachTools:invalidArgs', ...
                'Expected an input policy only for a controlled system');
@@ -78,7 +78,7 @@ function prob = getProbReachTargetTube(sys, ...
         input_policy = 0;
     end
 
-    % Compute H (zeros(sys.state_dimension*time_horizon,1)), mean_X_sans_input,
+    % Compute H (zeros(sys.state_dim*time_horizon,1)), mean_X_sans_input,
     % cov_X_sans_input for the safety_cost_function definition
     % GUARANTEES: Gaussian-perturbed LTI system (sys) and well-defined
     % initial_state and time_horizon

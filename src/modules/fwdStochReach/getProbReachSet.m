@@ -31,7 +31,7 @@ function prob = getProbReachSet(sys, ...
 %   target_time      - Time of interest (positive scalar)
 %   target_set       - Target set 
 %   desired_accuracy - Accuracy of the integral evaluation 
-%                      [If unsure, use 1e-8 if sys.state_dimension <= 4
+%                      [If unsure, use 1e-8 if sys.state_dim <= 4
 %                                      1e-3 otherwise]
 %
 % Outputs:

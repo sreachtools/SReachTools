@@ -38,8 +38,8 @@ function approx_level_set = getApproxStochasticLevelSetViaLagrangian(sys, ...
 % 
 
     % verify inputs
-    validateattributes(sys, {'LtiSystem'}, {'nonempty'});
-    validateattributes(sys.disturbance, {'StochasticDisturbance'}, ...
+    validateattributes(sys, {'LtiSystem', 'LtvSystem'}, {'nonempty'});
+    validateattributes(sys.disturbance, {'RandomVector'}, ...
         {'nonempty'});
     validateattributes(beta, {'numeric'}, {'>=', 0, '<=', 1});
     

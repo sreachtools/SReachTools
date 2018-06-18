@@ -45,7 +45,7 @@ function prob = iteratedQscmvnv(qscmvnv_cov, ...
 %                       qscmvnv_lb <= qscmvnv_coeff_matrix * x 
 %                       qscmvnv_ub => qscmvnv_coeff_matrix * x 
 % desired_accuracy    - Accuracy of the integral evaluation [If unsure, use 1e-8
-%                       if sys.state_dimension <= 4, and 1e-3 otherwise]
+%                       if sys.state_dim <= 4, and 1e-3 otherwise]
 % warning_iteration   - No. of iterations after which warning should be provided
 %                       to make the user aware that the accuracy setting might
 %                       be too high [If unsure, use 10]

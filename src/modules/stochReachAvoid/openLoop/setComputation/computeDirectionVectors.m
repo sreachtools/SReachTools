@@ -36,7 +36,7 @@ function set_of_direction_vectors = computeDirectionVectors(...
 %   no_of_direction_vectors    - Number of unique directions defining the polytope
 %                                vertices 
 %   state_dimension            - Dimension of the state space
-%                                (For example, sys.state_dimension)
+%                                (For example, sys.state_dim)
 %   affine_hull_of_interest_2D - Affine hull whose slice of the stochastic
 %                                reach-avoid set is of interest
 %                                Dimension state_dimension-2
@@ -74,12 +74,12 @@ function set_of_direction_vectors = computeDirectionVectors(...
             'SReachTools:invalidArgs', ...
             'State dimension needs to be a positive scalar');
 
-    % Check affine_hull_of_interest_2D_A has rank 2, has sys.state_dimension
+    % Check affine_hull_of_interest_2D_A has rank 2, has sys.state_dim
     % columns, and is non-empty
     affine_hull_of_interest_2D.minAffineRep();
     assert( rank(affine_hull_of_interest_2D.Ae) == state_dimension - 2, ...
             'SReachTools:invalidArgs', ...
-            'Dimension of affine hull is not sys.state_dimension-2');
+            'Dimension of affine hull is not sys.state_dim-2');
     assert( affine_hull_of_interest_2D.Dim == state_dimension, ...
             'SReachTools:invalidArgs', ...
             'Affine hull is not embedded in n-dimensional space');

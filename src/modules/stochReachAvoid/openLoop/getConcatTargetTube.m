@@ -8,7 +8,7 @@ function [concat_target_tube_A, concat_target_tube_b] = ...
 %
 % getConcatTargetTube computes the concatenated target tube,
 % safe_set^{time_horizon -1 } x target_set, a huge polyhedron in the
-% (sys.state_dimension x time_horizon)-dimensional Euclidean space.
+% (sys.state_dim x time_horizon)-dimensional Euclidean space.
 % The output matrices satisfy the relation that the a concatenated state vector
 % X lies in the reach-avoid tube if and only if
 % 

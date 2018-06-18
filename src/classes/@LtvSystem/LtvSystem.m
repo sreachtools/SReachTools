@@ -1,4 +1,69 @@
-classdef LtvSystem 
+classdef LtvSystem
+% SReachTools/LtvSystem: Create a discrete-time LTV system object
+% ============================================================================
+%
+% Defines a discrete-time LTV system that is:
+%     - control-free and disturbance-free, or
+%     - controlled but disturbance-free, or
+%     - perturbed (stochastic/uncertain) but control-free, or
+%     - controlled and perturbed (stochastic/uncertain).
+%
+% Perturbation can be either:
+%     - a bounded uncertainity with no stochastic information
+%     - a StochasticDisturbance object
+%
+%  Usage:
+%  ------
+%  % Define a double integrator system:
+%
+%  T = 0.5;
+%  sys = LtvSystem('StateMatrix', [1, T; 0, 1], ...
+%                  'InputMatrix', [T^2/2;T], ...
+%                  'InputSpace', Polyhedron('lb', -1, 'ub', 1), ...
+%                  'DisturbanceMatrix', [T^2/2;T], ...
+%                  'Disturbance', Polyhedron('lb', -1, 'ub', 1));
+%   
+% ============================================================================
+%
+% LtvSystem Properties:
+% ---------------------
+%   state_mat       - State matrix (Square matrix, state_dimension x
+%                     state_dimension)
+%   input_mat       - Input matrix (Matrix, state_dimension x
+%                     input_dimension)
+%   input_space     - Input space (empty / Polyhedron)
+%   disturbance_mat - Disturbance matrix (Matrix, state_dimension x
+%                     disturbance_dimension)
+%   disturbance     - Disturbance object 
+%                     (empty / Polyhedron / StochasticDisturbance)     
+%   state_dim       - State dimension (scalar)   
+%   input_dim       - Input dimension (scalar)  
+%   dist_dim        - Disturbance dimension (scalar)
+% 
+% LtvSystem Methods:
+% ------------------
+%   LtvSystem/LtvSystem   - Constructor
+%   getConcatInputSpace   - Get concatenated input space
+%   getConcatMats         - Get concatenated state, input, and disturbance
+%                           matrices
+%   getHmatMeanCovForXSansInput
+%                         - Get input policy-free mean and covariance of the
+%                           trajectory from a given initial state for a known
+%                           time horizon and the concatenated input matrix
+%   islti                 - Get logical value 1 if system is LTI
+%   isltv                 - Get logical value 1 if system is LTV (strictly)
+% 
+% Notes:
+% -----
+% * EXTERNAL DEPENDENCY: Uses MPT3 to define input,robust disturbance space
+%
+% =============================================================================
+%
+%   This function is part of the Stochastic Reachability Toolbox.
+%   License for the use of this function is given in
+%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%
+%
 
     properties (SetAccess = protected)
         state_mat
@@ -11,11 +76,64 @@ classdef LtvSystem
         disturbance
         disturbance_mat
         dist_dim
-        type
+
+    end
+
+    properties (Access = private)
+        sys_type
     end
 
     methods
         function obj = LtvSystem(varargin)
+        % SReachTools/LtvSystem/LtvSystem: Create a discrete-time LTI system 
+        % object
+        % ====================================================================
+        %
+        % Constructor method fot the LTV System class. Will create the 
+        % LtvSystem object
+        %
+        % Usage:
+        % ------
+        % T = 0.5;
+        % sys = LtvSystem('StateMatrix', [1, T; 0, 1], ...
+        %                 'InputMatrix', [T^2/2;T], ...
+        %                 'InputSpace', Polyhedron('lb', -1, 'ub', 1), ...
+        %                 'DisturbanceMatrix', [T^2/2;T], ...
+        %                 'Disturbance', Polyhedron('lb', -1, 'ub', 1));
+        %
+        % =====================================================================
+        %
+        % obj = LtvSystem(Name, Value)
+        % 
+        % Inputs:
+        % -------
+        %   ------------------------------------------------------------
+        %   Name               | Value
+        %   ------------------------------------------------------------
+        %   StateMatrix        | Square numeric matrix
+        %   InputMatrix        | (optional) Numeric matrix
+        %   DisturbanceMatrix  | (optional) Numeric matrix
+        %   InputSpace         | (optional) Polyhedron
+        %   Disturbance        | (optional) Polyhedron or 
+        %                      |            StochasticDisturbance
+        % 
+        % Outputs:
+        % --------
+        %   obj - LtvSystem object
+        %
+        % Notes:
+        % ------
+        % * 'InputMatrix' and 'InputSpace' need to be either defined together
+        %   or neither of them.
+        % * 'DisturbanceMatrix' and 'Disturbance' need to be either defined
+        %   together or neither of them.
+        % 
+        % =====================================================================
+        % 
+        %   This function is part of the Stochastic Reachability Toolbox.
+        %   License for the use of this function is given in
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        % 
 
             inpar = inputParser();
             inpar.addParameter('StateMatrix', [], ...
@@ -23,7 +141,7 @@ classdef LtvSystem
                     {'nonempty', 'square'}));
             inpar.addParameter('InputMatrix', [], ...
                 @(x) validateattributes(x, {'function_handle', 'numeric'}, ...
-                    {'nonempty', 'square'}));
+                    {'nonempty'}));
             inpar.addParameter('InputSpace', Polyhedron(), ...
                 @(x) isa(x, 'Polyhedron'));
             inpar.addParameter('Disturbance', [], ...
@@ -77,9 +195,9 @@ classdef LtvSystem
                isnumeric(inpar.Results.InputMatrix) && ...
                isnumeric(inpar.Results.DisturbanceMatrix)
 
-                obj.type = 'LTI';
+                obj.sys_type = 'LTI';
             else
-                obj.type = 'LTV';
+                obj.sys_type = 'LTV';
             end
 
             obj.input_space = inpar.Results.InputSpace;
@@ -89,7 +207,11 @@ classdef LtvSystem
             if any(strcmp(inpar.UsingDefaults, 'Disturbance'))
                 obj.dist_dim = 0;
             else
-                obj.dist_dim = obj.disturbance.dimension;
+                if isa(obj.disturbance, 'RandomVector')
+                    obj.dist_dim = obj.disturbance.dimension;
+                else
+                    obj.dist_dim = obj.disturbance.Dim;
+                end
             end
 
             % Set the state matrix
@@ -124,24 +246,22 @@ classdef LtvSystem
             % Input matrix
             % If not specified then the input matrix should be a 
             % obj.state_dim x 0 matrix
-            if isnumeric(inpar.Results.InputMatrix)
-                if any(strcmp(inpar.UsingDefaults, 'InputMatrix'))
+            if any(strcmp(inpar.UsingDefaults, 'InputMatrix'))
+                if obj.islti()
+                    obj.input_mat = zeros(obj.state_dim, obj.input_dim);
+                else
+                    obj.input_mat = @(t) zeros(obj.state_dim, ...
+                        obj.input_dim);
+                end
+            else
+                if isnumeric(inpar.Results.InputMatrix)
                     if obj.islti()
-                        obj.input_mat = zeros(obj.state_dim, obj.input_dim);
+                        obj.input_mat = inpar.Results.InputMatrix;
                     else
-                        obj.input_mat = @(t) zeros(obj.state_dim, ...
-                            obj.input_dim);
+                        obj.input_mat = @(t) inpar.Results.InputMatrix;
                     end
                 else
-                    if isnumeric(inpar.Results.InputMatrix)
-                        if obj.islti()
-                            obj.input_mat = inpar.Results.InputMatrix;
-                        else
-                            obj.input_mat = @(t) inpar.Results.InputMatrix;
-                        end
-                    else
-                        obj.input_mat = inpar.Results.InputMatrix;
-                    end
+                    obj.input_mat = inpar.Results.InputMatrix;
                 end
             end
 
@@ -189,9 +309,11 @@ classdef LtvSystem
                 else
                     if isnumeric(inpar.Results.DisturbanceMatrix)
                         if obj.islti()
-                            obj.disturbance_mat = inpar.Results.InputMatrix;
+                            obj.disturbance_mat = ...
+                                inpar.Results.DisturbanceMatrix;
                         else
-                            obj.disturbance_mat = @(t) inpar.Results.InputMatrix;
+                            obj.disturbance_mat = ...
+                                @(t) inpar.Results.DisturbanceMatrix;
                         end
                     else
                         obj.disturbance_mat = inpar.Results.DisturbanceMatrix;
@@ -225,12 +347,40 @@ classdef LtvSystem
                     'Invalid arguments provided to LtvSystem');
                 exc = exc.addCause(MException('', ['Obtained disturbance matrix is not ', ...
                     'consistent with the dimension of the disturbance space, ', ...
-                    'i.e. size(obj.disturbance_mat(1), 2) ~= obj.input.dim']));
+                    'i.e. size(obj.disturbance_mat(1), 2) ~= obj.dist_dim']));
                 throwAsCaller(exc)
             end
         end
 
         function v = subsref(obj, s)
+        % SReachTools/LtvSystem/subsref: Overload of MATLAB internal subsref
+        % ====================================================================
+        %
+        % Overloaded method of MATLAB's internal subsref. Overloading allows
+        % for calling the functions (if existing) for the time-varying system
+        % matrices
+        %
+        % Usage: Overload of internal method
+        %
+        % =====================================================================
+        %
+        % obj.property
+        % obj.method(args)
+        % obj.state_mat(t)
+        % 
+        % Inputs: None
+        % 
+        % Outputs:
+        % --------
+        %   v - Value from the subsref call
+        %
+        % =====================================================================
+        % 
+        %   This function is part of the Stochastic Reachability Toolbox.
+        %   License for the use of this function is given in
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        % 
+
             if  length(s) == 2 && ...
                 strcmp(s(1).type, '.') && ...
                 any(strcmp(s(1).subs, {'state_mat', 'input_mat', ...
@@ -262,6 +412,38 @@ classdef LtvSystem
         end
 
         function disp(obj, varargin)
+        % SReachTools/LtvSystem/disp: Overload of MATLAB internal disp
+        % ====================================================================
+        %
+        % Overloaded method of MATLAB's internal disp. 
+        %
+        % Usage: Overload of internal method
+        %
+        % =====================================================================
+        %
+        % disp(obj, Name, Value)
+        % 
+        % Inputs:
+        % -------
+        %   obj - LtvSystem object
+        %   ------------------------------------------------------------
+        %   Name           | Value
+        %   ------------------------------------------------------------
+        %   verbose        | true or false
+        % 
+        % Outputs: None
+        % 
+        % Notes:
+        % ------
+        % * disp function for this class was inspired from MPT3
+        %   (http://people.ee.ethz.ch/~mpt/3/)
+        %
+        % =====================================================================
+        % 
+        %   This function is part of the Stochastic Reachability Toolbox.
+        %   License for the use of this function is given in
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        % 
 
             inpar = inputParser();
             inpar.addParameter('verbose', false, ...
@@ -294,29 +476,84 @@ classdef LtvSystem
             end
         end
 
-        function ans = islti(obj)
-            ans = strcmp(obj.type, 'LTI');
+        function yn = islti(obj)
+        % SReachTools/LtvSystem/islti: Get boolean result if system is LTI
+        % ====================================================================
+        %
+        % Get boolean result if system is LTI. Considered LTI if state_mat, 
+        % input_mat, and disturbance_mat are all matrices
+        %
+        % Usage:
+        % ------
+        % T = 0.5;
+        % sys = LtvSystem('StateMatrix', [1, T; 0, 1], ...
+        %                 'InputMatrix', [T^2/2;T], ...
+        %                 'InputSpace', Polyhedron('lb', -1, 'ub', 1), ...
+        %                 'DisturbanceMatrix', [T^2/2;T], ...
+        %                 'Disturbance', Polyhedron('lb', -1, 'ub', 1));
+        % if sys.islti()
+        %   disp('System is LTI')
+        % else
+        %   disp('System is not LTI')
+        % end
+        % 
+        % =====================================================================
+        %
+        % yn = obj.islti()
+        % 
+        % Inputs: None
+        % Outputs:
+        % --------
+        %   yn - Logical value of 1 if system is LTI
+        % 
+        % =====================================================================
+        % 
+        %   This function is part of the Stochastic Reachability Toolbox.
+        %   License for the use of this function is given in
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        % 
+
+            yn = strcmp(obj.sys_type, 'LTI');
         end
 
-        function ans = isltv(obj)
-            ans = strcmp(obj.type, 'LTV');
+        function yn = isltv(obj)
+        % SReachTools/LtvSystem/islti: Get boolean result if system is LTI
+        % ====================================================================
+        %
+        % Get boolean result if system is LTI. Considered LTI if state_mat, 
+        % input_mat, and disturbance_mat are all matrices
+        %
+        % Usage:
+        % ------
+        % T = 0.5;
+        % sys = LtvSystem('StateMatrix', [1, T; 0, 1], ...
+        %                 'InputMatrix', [T^2/2;T], ...
+        %                 'InputSpace', Polyhedron('lb', -1, 'ub', 1), ...
+        %                 'DisturbanceMatrix', [T^2/2;T], ...
+        %                 'Disturbance', Polyhedron('lb', -1, 'ub', 1));
+        % if sys.islti()
+        %   disp('System is LTI')
+        % else
+        %   disp('System is not LTI')
+        % end
+        % 
+        % =====================================================================
+        %
+        % yn = obj.islti()
+        % 
+        % Inputs: None
+        % Outputs:
+        % --------
+        %   yn - Logical value of 1 if system is LTI
+        % 
+        % =====================================================================
+        % 
+        %   This function is part of the Stochastic Reachability Toolbox.
+        %   License for the use of this function is given in
+        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        % 
+
+            yn = strcmp(obj.sys_type, 'LTV');
         end
     end
-
-    methods (Static, Access = private)
-        function validateParameters(params)
-            if ~isa(params, 'cell') || ~isvector(params)
-                error('SReachTools:invalidArgs', ['Parameters must be ', ...
-                    'a cell array of cell arrays']);
-            end
-
-            for lv = 1:length(params)
-                if ~isa(params{lv}, 'cell')
-                    error('SReachTools:invalidArgs', ['Parameters must be ', ...
-                        'a cell array of cell arrays']);
-                end
-            end
-        end
-    end
-
 end
