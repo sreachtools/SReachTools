@@ -105,7 +105,7 @@ function robust_eff_target = getRobustEffTarget(sys, ...
 
                 vertices = [];
                 for j = 1: n_disturbances
-                    effective_dist = sys.disturbance_mat(i) * disturbance{j};
+                    effective_dist = sys.dist_mat(i) * disturbance{j};
                     single_dist_stopwatch = tic;
                     effective_target = performRobustEffectiveTargetRecursion(...
                         effective_target_tube{i+1}, ...
@@ -127,14 +127,14 @@ function robust_eff_target = getRobustEffTarget(sys, ...
             effective_target_temp = effective_target_tube{1};
         else
             if sys.islti()
-                effective_dist = sys.disturbance_mat * disturbance;
+                effective_dist = sys.dist_mat * disturbance;
             end
 
             for i = horizon_length-1:-1:1
                 if ~sys.islti()
                     inverted_state_matrix = inv(sys.state_mat(i));
                     minus_bu = sys.input_mat(i) * sys.input_space;
-                    effective_dist = sys.disturbance_mat(i) * disturbance;
+                    effective_dist = sys.dist_mat(i) * disturbance;
                 end
                 
                 eff_target_stopwatch = tic;

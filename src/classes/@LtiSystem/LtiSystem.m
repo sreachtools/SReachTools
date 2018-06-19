@@ -27,18 +27,15 @@ classdef LtiSystem < LtvSystem
 %
 % LTISYSTEM Properties:
 % ---------------------
-%   state_matrix          - State matrix (Square matrix, state_dimension x
-%                           state_dimension)
-%   input_matrix          - Input matrix (Matrix, state_dimension x
-%                           input_dimension)
-%   input_space           - Input space (empty / Polyhedron)
-%   disturbance_matrix    - Disturbance matrix (Matrix, state_dimension x
-%                           disturbance_dimension)
-%   disturbance           - Disturbance object 
-%                           (empty / Polyhedron / StochasticDisturbance)     
-%   state_dimension       - State dimension (scalar)   
-%   input_dimension       - Input dimension (scalar)  
-%   disturbance_dimension - Disturbance dimension (scalar)
+%   state_matrix - State matrix (Square matrix, state_dim x state_dim)
+%   input_matrix - Input matrix (Matrix, state_dim x input_dim)
+%   input_space  - Input space (empty / Polyhedron)
+%   dist_matrix  - Disturbance matrix (Matrix, state_dim x dist_dim)
+%   dist         - Disturbance object 
+%                  (empty / Polyhedron / StochasticDisturbance)     
+%   state_dim    - State dimension (scalar)   
+%   input_dim    - Input dimension (scalar)  
+%   dist_dim     - Disturbance dimension (scalar)
 % 
 % LTISYSTEM Methods:
 % ------------------

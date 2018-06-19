@@ -39,8 +39,7 @@ function approx_level_set = getApproxStochasticLevelSetViaLagrangian(sys, ...
 
     % verify inputs
     validateattributes(sys, {'LtiSystem', 'LtvSystem'}, {'nonempty'});
-    validateattributes(sys.disturbance, {'RandomVector'}, ...
-        {'nonempty'});
+    validateattributes(sys.dist, {'RandomVector'}, {'nonempty'});
     validateattributes(beta, {'numeric'}, {'>=', 0, '<=', 1});
     
     % validate that all elements of the target_tube are polyhedron
@@ -68,7 +67,7 @@ function approx_level_set = getApproxStochasticLevelSetViaLagrangian(sys, ...
             % Perform underapproximation
 
             % get bounded disturbance set
-            bounded_set = getBoundedSetForDisturbance(sys.disturbance, ...
+            bounded_set = getBoundedSetForDisturbance(sys.dist, ...
                 length(target_tube)-1, beta, method, varargin{:});
 
             % get underapproximated level set (robust effective target)
@@ -76,7 +75,7 @@ function approx_level_set = getApproxStochasticLevelSetViaLagrangian(sys, ...
                 bounded_set);
         else
             % get bounded disturbance set
-            bounded_set = getBoundedSetForDisturbance(sys.disturbance, ...
+            bounded_set = getBoundedSetForDisturbance(sys.dist, ...
                 length(target_tube)-1, (1-beta), method, varargin{:});
             
             % get overapproximated level set (augmented effective target)

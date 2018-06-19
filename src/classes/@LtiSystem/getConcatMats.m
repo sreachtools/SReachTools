@@ -147,7 +147,7 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
     if sys.dist_dim > 0
         % Compute the respective extended controllability matrix (flipped)
         % [A^{N-1}F A^{N-2}F ... AF F]
-        flipped_controllability_matrix_disturbance = sys.disturbance_mat;
+        flipped_controllability_matrix_disturbance = sys.dist_mat;
         for time_index=1:time_horizon-1
             % Prepend A times (A^(time_index-1) * F) to the existing 
             % flipped_controllability_matrix_disturbance

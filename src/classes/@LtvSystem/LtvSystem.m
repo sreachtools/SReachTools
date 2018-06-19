@@ -32,9 +32,9 @@ classdef LtvSystem
 %   input_mat       - Input matrix (Matrix, state_dimension x
 %                     input_dimension)
 %   input_space     - Input space (empty / Polyhedron)
-%   disturbance_mat - Disturbance matrix (Matrix, state_dimension x
-%                     disturbance_dimension)
-%   disturbance     - Disturbance object 
+%   dist_mat - Disturbance matrix (Matrix, state_dimension x
+%                     dist_dimension)
+%   dist     - Disturbance object 
 %                     (empty / Polyhedron / StochasticDisturbance)     
 %   state_dim       - State dimension (scalar)   
 %   input_dim       - Input dimension (scalar)  
@@ -73,8 +73,8 @@ classdef LtvSystem
         input_space
         input_dim
 
-        disturbance
-        disturbance_mat
+        dist
+        dist_mat
         dist_dim
 
     end
@@ -203,14 +203,14 @@ classdef LtvSystem
             obj.input_space = inpar.Results.InputSpace;
             obj.input_dim = obj.input_space.Dim;
 
-            obj.disturbance = inpar.Results.Disturbance;
+            obj.dist = inpar.Results.Disturbance;
             if any(strcmp(inpar.UsingDefaults, 'Disturbance'))
                 obj.dist_dim = 0;
             else
-                if isa(obj.disturbance, 'RandomVector')
-                    obj.dist_dim = obj.disturbance.dimension;
+                if isa(obj.dist, 'RandomVector')
+                    obj.dist_dim = obj.dist.dimension;
                 else
-                    obj.dist_dim = obj.disturbance.Dim;
+                    obj.dist_dim = obj.dist.Dim;
                 end
             end
 
@@ -243,7 +243,7 @@ classdef LtvSystem
             end
 
 
-            % Input matrix
+            %% Input matrix
             % If not specified then the input matrix should be a 
             % obj.state_dim x 0 matrix
             if any(strcmp(inpar.UsingDefaults, 'InputMatrix'))
@@ -295,36 +295,32 @@ classdef LtvSystem
                 throwAsCaller(exc)
             end
 
-            % Input matrix
-            % If not specified then the input matrix should be a 
+            % Disturbance matrix
+            % If not specified then the disturbance matrix should be a 
             % obj.state_dim x 0 matrix
-            if isnumeric(inpar.Results.DisturbanceMatrix)
-                if any(strcmp(inpar.UsingDefaults, 'DisturbanceMatrix'))
+            if any(strcmp(inpar.UsingDefaults, 'DisturbanceMatrix'))
+                if obj.islti()
+                    obj.dist_mat = zeros(obj.state_dim, obj.dist_dim);
+                else
+                    obj.dist_mat = @(t) zeros(obj.state_dim, ...
+                        obj.dist_dim);
+                end
+            else
+                if isnumeric(inpar.Results.DisturbanceMatrix)
                     if obj.islti()
-                        obj.disturbance_mat = zeros(obj.state_dim, obj.dist_dim);
+                        obj.dist_mat = inpar.Results.DisturbanceMatrix;
                     else
-                        obj.disturbance_mat = @(t) zeros(obj.state_dim, ...
-                            obj.dist_dim);
+                        obj.dist_mat = @(t) inpar.Results.DisturbanceMatrix;
                     end
                 else
-                    if isnumeric(inpar.Results.DisturbanceMatrix)
-                        if obj.islti()
-                            obj.disturbance_mat = ...
-                                inpar.Results.DisturbanceMatrix;
-                        else
-                            obj.disturbance_mat = ...
-                                @(t) inpar.Results.DisturbanceMatrix;
-                        end
-                    else
-                        obj.disturbance_mat = inpar.Results.DisturbanceMatrix;
-                    end
+                    obj.dist_mat = inpar.Results.DisturbanceMatrix;
                 end
             end
-
+            
             if obj.islti()
-                F = obj.disturbance_mat;
+                F = obj.dist_mat;
             else
-                F = obj.disturbance_mat(1);
+                F = obj.dist_mat(1);
             end
 
             % check consistency of the input matrix and state dimension, i.e.
@@ -335,7 +331,7 @@ classdef LtvSystem
                     'Invalid arguments provided to LtvSystem');
                 exc = exc.addCause(MException('', ['Obtained disturbance matrix is not ', ...
                     'consistent with the dimension of the state space, ', ...
-                    'i.e. size(obj.disturbance_mat(1), 1) ~= obj.state_dim']));
+                    'i.e. size(obj.dist_mat(1), 1) ~= obj.state_dim']));
                 throwAsCaller(exc)
             end
 
@@ -347,7 +343,7 @@ classdef LtvSystem
                     'Invalid arguments provided to LtvSystem');
                 exc = exc.addCause(MException('', ['Obtained disturbance matrix is not ', ...
                     'consistent with the dimension of the disturbance space, ', ...
-                    'i.e. size(obj.disturbance_mat(1), 2) ~= obj.dist_dim']));
+                    'i.e. size(obj.dist_mat(1), 2) ~= obj.dist_dim']));
                 throwAsCaller(exc)
             end
         end
@@ -384,7 +380,7 @@ classdef LtvSystem
             if  length(s) == 2 && ...
                 strcmp(s(1).type, '.') && ...
                 any(strcmp(s(1).subs, {'state_mat', 'input_mat', ...
-                    'disturbance_mat'})) && ...
+                    'dist_mat'})) && ...
                 strcmp(s(2).type, '()')
 
                 % access matrix
@@ -484,7 +480,7 @@ classdef LtvSystem
         % ====================================================================
         %
         % Get boolean result if system is LTI. Considered LTI if state_mat, 
-        % input_mat, and disturbance_mat are all matrices
+        % input_mat, and dist_mat are all matrices
         %
         % Usage:
         % ------
@@ -524,7 +520,7 @@ classdef LtvSystem
         % ====================================================================
         %
         % Get boolean result if system is LTI. Considered LTI if state_mat, 
-        % input_mat, and disturbance_mat are all matrices
+        % input_mat, and dist_mat are all matrices
         %
         % Usage:
         % ------
