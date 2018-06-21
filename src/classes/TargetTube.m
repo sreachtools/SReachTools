@@ -45,6 +45,9 @@ classdef TargetTube
         %
         tube = Polyhedron();
     end
+    properties
+        dim
+    end
 
     methods
         function obj = TargetTube(varargin)
@@ -115,6 +118,7 @@ classdef TargetTube
                    'Safe and target sets must be of the same dimension');
 
                 obj.tube(1, time_horizon) = target_set;
+                obj.dim = safe_set.Dim;
                 for itt = 1:time_horizon-1
                     obj.tube(itt) = safe_set;
                 end
@@ -123,11 +127,11 @@ classdef TargetTube
                         {'nonempty'})
 
                 obj.tube(1, nargin) = varargin{nargin};
-                set_dim = obj.tube(nargin).Dim;
+                obj.dim = obj.tube(nargin).Dim;
                 for itt = 1:nargin-1
                     validateattributes(varargin{itt}, {'Polyhedron'}, ...
                         {'nonempty'})
-                    assert(varargin{itt}.Dim == set_dim, ...
+                    assert(varargin{itt}.Dim == obj.dim, ...
                         'SReachTools:invalidArgs', ...
                         ['All sets in the target tube must be of the same ', ...
                          'dimension']);
@@ -181,7 +185,7 @@ classdef TargetTube
         % Function to get length of target tube, returns length of tube
         % property
         %
-        % Usage: Overloadig of MATLAB length function
+        % Usage: Overloading of MATLAB length function
         % 
         % ====================================================================
         %
@@ -222,16 +226,16 @@ classdef TargetTube
         %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
         % 
 
-            disp(sprintf('   TargetTube of %d sets\n', length(obj)));
+            fprintf('TargetTube of %d sets\n', length(obj));
         end
 
         function [concat_target_tube_A, concat_target_tube_b] = concat(obj)
         % SReachTools/TargetTube/concat: Get concatenated target tube
-        % ============================================================================
+        % ======================================================================
         %
         % This method computes the concatenated target tube, 
         % safe_set^{time_horizon -1 } x target_set, a huge polyhedron in the
-        % (sys.state_dimension x time_horizon)-dimensional Euclidean space.
+        % (obj.dim x time_horizon)-dimensional Euclidean space.
         % The output matrices satisfy the relation that the a concatenated 
         % state vector X lies in the reach-avoid tube if and only if
         % 
@@ -239,9 +243,9 @@ classdef TargetTube
         %
         % Usage: See getFtLowerBoundTargetTube.
         %
-        % ============================================================================
+        % ======================================================================
         %
-        % [concat_target_tube_A, concat_target_tube_b] = concaat(obj);
+        % [concat_target_tube_A, concat_target_tube_b] = concat(obj);
         % 
         % Inputs: None
         %    
@@ -254,7 +258,7 @@ classdef TargetTube
         % ------
         % * This function also serves as a delegatee for input handling.
         % 
-        % ============================================================================
+        % ======================================================================
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
@@ -271,5 +275,58 @@ classdef TargetTube
             [tube_b_vecs{:}] = obj.tube(:).b;
             concat_target_tube_b = vertcat(tube_b_vecs{:});
         end
-    end
+        
+        function [contains_flag] = contains(obj,X)
+        % SReachTools/TargetTube/contains: Check if a given concatenates state
+        % trajectory lies in the target tube
+        % ======================================================================
+        %
+        % This method is a wrapper over MPT's Polyhedron/contains 
+        % 
+        % Usage: See checkViaMonteCarloSims
+        %
+        % ======================================================================
+        %
+        % [contains_flag] = contains(obj,X);
+        % 
+        % Inputs: 
+        % -------
+        %
+        %   X             - Concatenated state vector (or collection of it
+        %                   arranged columnwise)
+        %    
+        % Outputs:
+        % --------
+        %   contains_flag - Row vector of length equal to columns in X
+        %
+        % Notes:
+        % ------
+        % * This function is useful for Monte-Carlo simulation-based
+        %   verification
+        % 
+        % ======================================================================
+        % 
+        % This function is part of the Stochastic Optimal Control Toolbox.
+        % License for the use of this function is given in
+        %      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %
+        %
+            assert(size(X,1)== length(obj) * obj.dim,...
+                'SReachTools:invalidArgs',...
+                ['Concatenated state vector/matrix provided has incorrect ',...
+                 'number of rows']);
+            assert(size(X,2) > 0, 'SReachTools:invalidArgs',...
+                ['Concatenated state vector/matrix provided should have at ',...
+                 'least one column']);
+            % Matrix to store the result for each time instant, trajectory
+            contains_flag_all = zeros(length(obj),size(X,2));
+            % Iterate over all time indexes since MPT contains will do
+            % unnecessarily n_poly x n_state comparisons
+            for t_indx = 1:length(obj)
+                X_at_t_indx = X((t_indx-1)*obj.dim + 1: t_indx*obj.dim,:);
+                contains_flag_all(t_indx,:) = obj.tube(t_indx).contains(X_at_t_indx);
+            end
+            contains_flag = min(contains_flag_all);
+        end
+    end    
 end
