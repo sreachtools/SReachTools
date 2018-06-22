@@ -62,9 +62,11 @@ function [concat_target_tube_A, concat_target_tube_b] = ...
            'Expected a scalar positive time_horizon');
 
     %% Construction of the concatenated target tube
-    concat_target_tube_A = blkdiag(kron(eye(time_horizon-1),safe_set.A), ...
-                                   target_set.A);
-    concat_target_tube_b = [kron(ones(time_horizon-1,1), safe_set.b);
-                                  target_set.b];
+    target_tube = TargetTube('reach-avoid', safe_set, target_set, time_horizon);
+    [concat_target_tube_A, concat_target_tube_b] = concat(target_tube);
+    % concat_target_tube_A = blkdiag(kron(eye(time_horizon-1),safe_set.A), ...
+    %                                target_set.A);
+    % concat_target_tube_b = [kron(ones(time_horizon-1,1), safe_set.b);
+    %                               target_set.b];
 end
 

@@ -38,13 +38,19 @@ function aug_eff_target = getAugEffTarget(sys, ...
 %
 
     % validate the inputs
-    validateattributes(sys, {'LtiSystem'}, {'nonempty'});
-    validateattributes(target_tube, {'cell'}, {'nonempty'});
-    validateattributes(disturbance, {'Polyhedron'}, {'nonempty'});
-    
+    inpar = inputParser();
+    inpar.addRequired('sys', @(x) validateattributes(x, {'LtiSystem'}, ...
+        {'nonempty'}));
+    inpar.addRequired('target_tube', @(x) validateattributes(x, ...
+        {'TargetTube'}, {'nonempty'}));
+    inpar.addRequired('disturbance', @(x) validateattributes(x, ...
+        {'Polyhedron'}, {'nonempty'}));
+
+    inpar.parse(sys, target_tube, disturbance);
+
     % validate that all elements of the target_tube are polyhedron
     for i = 1:length(target_tube)
-        validateattributes(target_tube{i}, {'Polyhedron'}, {'nonempty'});
+        validateattributes(target_tube(i), {'Polyhedron'}, {'nonempty'});
     end
     
     horizon_length = length(target_tube);
@@ -52,7 +58,7 @@ function aug_eff_target = getAugEffTarget(sys, ...
         inverted_state_matrix = inv(sys.state_mat);
     end
 
-    eff_target_temp = target_tube{horizon_length};
+    eff_target_temp = target_tube(horizon_length);
     if horizon_length > 1
         for i = 1:horizon_length - 1
             if ~sys.islti()
@@ -66,7 +72,7 @@ function aug_eff_target = getAugEffTarget(sys, ...
                 % Compute a new target set for this iteration that is robust to 
                 % the disturbance
                 new_target = eff_target_temp + ...
-                             (-sys.disturbance_mat(i) * disturbance);
+                             (-sys.dist_mat(i) * disturbance);
             end
 
             % One-step backward reach set
@@ -75,7 +81,7 @@ function aug_eff_target = getAugEffTarget(sys, ...
 
             % Guarantee staying within target_tube by intersection
             eff_target_temp = intersect(one_step_backward_reach_set, ...
-                                              target_tube{horizon_length-i});
+                                              target_tube(horizon_length-i));
         end
     end
     aug_eff_target = eff_target_temp;
