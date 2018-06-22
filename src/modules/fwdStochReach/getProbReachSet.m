@@ -42,7 +42,7 @@ function prob = getProbReachSet(sys, ...
 %
 % Notes:
 % ------
-% * In case, the target set is a hyper-cuboid and the state_dimension < 25,
+% * In case, the target set is a hyper-cuboid and the state_dim < 25,
 %   then use mvncdf instead.
 % * The target set must be a Polyhedron object.
 % ============================================================================

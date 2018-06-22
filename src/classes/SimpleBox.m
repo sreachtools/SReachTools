@@ -18,10 +18,10 @@ classdef SimpleBox
 %
 % SIMPLEBOX Properties:
 % ---------------------
-%   vertices  - Array (m x n) of vertices; each vertex is a (1 x n) array
-%   center    - Array (1 x n) of box center location
-%   dx        - Array (1 x n) of half-lengths of box sides
-%   dimension - Dimension of box (scalar)
+%   vertices- Array (m x n) of vertices; each vertex is a (1 x n) array
+%   center  - Array (1 x n) of box center location
+%   dx      - Array (1 x n) of half-lengths of box sides
+%   dim     - Dimension of box (scalar)
 %
 % SIMPLEBOX Methods:
 % ------------------
@@ -68,7 +68,7 @@ classdef SimpleBox
         %
         %
         dx
-        dimension
+        dim
     end
     
     methods
@@ -170,7 +170,7 @@ classdef SimpleBox
                 end
             end
             
-            obj.dimension = length(obj.dx);
+            obj.dim = length(obj.dx);
         end
         
         function [lb, ub] = getBounds(obj)
@@ -386,13 +386,13 @@ classdef SimpleBox
         % SReachTools/SimpleBox/get3dBoxVerticesFromCenter
         % ====================================================================
         %
-        % Priavte, static method to compute points that create a bounding box 
-        % around a given ceneter and spacing in each direction for 2-dimensional 
+        % Private, static method to compute points that create a bounding box 
+        % around a given ceneter and spacing in each direction for 2-dimal 
         % systems. The small system can be hard-coded for increased speed.
         % 
         % Usage:
         % ------
-        % % privae method of SimpleBox
+        % % private method of SimpleBox
         %
         % ====================================================================
         %

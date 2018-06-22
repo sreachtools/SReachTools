@@ -29,7 +29,7 @@ classdef StochasticDisturbance < RandomVector
 % ------------------------
 %   type       - Stochastic disturbance type (string)
 %   parameters - System parameters (struct)
-%   dimension  - Stochastic disturbance dimension (scalar)
+%   dim        - Stochastic disturbance dimension (scalar)
 %   pdf        - Probability density function (function handle)
 %
 % StochasticDisturbance Methods:
@@ -46,7 +46,7 @@ classdef StochasticDisturbance < RandomVector
 % * The anonymous function used for the definition of obj.pdf transposes the
 %   accepted column vector for using mvnpdf.
 % * StochasticDisturbance.pdf takes in arguments of the form N_points x
-%   stochastic_disturbance_dimension
+%   stochastic_disturbance_dim
 % 
 % =========================================================================
 % 
@@ -89,7 +89,7 @@ classdef StochasticDisturbance < RandomVector
         %
             
             disp(sprintf('%s-dimensional %s stochastic disturbance', ...
-                         num2str(obj.dimension), ...
+                         num2str(obj.dim), ...
                          obj.type));
         end
     end

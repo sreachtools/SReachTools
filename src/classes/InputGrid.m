@@ -103,8 +103,8 @@ classdef InputGrid
             
             % check if lower and upper are same dimension
             if length(lb) ~= length(ub)
-                error('SReachTools:invalidArgs', ['Lower and upper bounds must ', ...
-                    'be equivalent in length (dimension).']);
+                error('SReachTools:invalidArgs', ['Lower and upper bounds ',...
+                    'must be equivalent in vector length (dimension).']);
             end
             
             % if number of points is a scalar then copy amount for each

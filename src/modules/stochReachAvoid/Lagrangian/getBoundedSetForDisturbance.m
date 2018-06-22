@@ -202,7 +202,7 @@ function bounded_set = boundedEllipseByRandomVectors(disturbance, ...
 
     % should probably provide a warning about the use of random direction for
     % 2-dimensional system
-    % if disturbance.dimension <= 2)
+    % if disturbance.dim <= 2)
     %     warning(['For disturbances with dimension less than 2 random ', ...
     %         'there are more direct solutions for obtaining the ellipse. ', ...
     %         'Using ''lowdim'' option will provide faster and likely better ', ...
@@ -276,7 +276,7 @@ function poly = getOptimizationBoxForGaussian(disturbance, horizon_length, ...
     
     perimeter_func = @(l) sum(l);
     
-    l0 = ones(disturbance.dimension, 1);
+    l0 = ones(disturbance.dim, 1);
     
     l = fmincon(perimeter_func, l0, [], [], [], [], ...
         zeros(size(l0)), [], ...
@@ -364,11 +364,11 @@ function poly = getBoundingBoxForGaussian(disturbance, horizon_length, ...
     a = 0;
     b = 1;
     
-    mu = zeros(1, disturbance.dimension);
-    sigma = eye(disturbance.dimension);
+    mu = zeros(1, disturbance.dim);
+    sigma = eye(disturbance.dim);
     
-    center = zeros(1, disturbance.dimension);
-    dx_ones = ones(1, disturbance.dimension);
+    center = zeros(1, disturbance.dim);
+    dx_ones = ones(1, disturbance.dim);
     
     box = SimpleBox(center, b*dx_ones);
     p = box.computeGaussianProbability(mvncdf(box.vertices, mu, sigma));

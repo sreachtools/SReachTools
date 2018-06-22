@@ -83,11 +83,10 @@ function [maximum_underapproximate_reach_avoid_probability, ...
 %                                 influence
 %  cov_X_sans_input             - Covariance of X with zero input under the
 %                                 disturbance
-%  affine_hull_of_interest_2D
-%                               - Affine hull whose slice of the stochastic
-%                                 reach-avoid set is of interest
-%                                 Dimension of state_dimension-2 
-%                                 Define this by Polyhedron('He',[A_eq, b_eq])
+%  affine_hull_of_interest_2D   - Affine hull whose slice of the stochastic
+%                                 reach-avoid set is of interest. It is an
+%                                 affine hull of dimension of state_dim-2.
+%                                 [Example: Polyhedron('He',[A_eq, b_eq])]
 %  desired_accuracy             - Accuracy
 %  PSoptions                    - Options for patternsearch 
 %

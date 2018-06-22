@@ -69,7 +69,7 @@ function prob = iteratedQscmvnv(qscmvnv_cov, ...
 %        increasing the number of Monte Carlo particles used.
 % * In the event, the integral is below the desired_accuracy, prob is set to
 %   desired_accuracy. This is to allow to take log of the prob, if desired.
-% * In case, the target set is a hyper-cuboid and the state_dimension < 25,
+% * In case, the target set is a hyper-cuboid and the state_dim < 25,
 %   then use mvncdf instead.
 %
 % ============================================================================

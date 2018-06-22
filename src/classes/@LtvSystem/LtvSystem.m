@@ -27,15 +27,11 @@ classdef LtvSystem
 %
 % LtvSystem Properties:
 % ---------------------
-%   state_mat       - State matrix (Square matrix, state_dimension x
-%                     state_dimension)
-%   input_mat       - Input matrix (Matrix, state_dimension x
-%                     input_dimension)
+%   state_mat       - State matrix (Square matrix, state_dim x state_dim)
+%   input_mat       - Input matrix (Matrix, state_dim x input_dim)
 %   input_space     - Input space (empty / Polyhedron)
-%   dist_mat - Disturbance matrix (Matrix, state_dimension x
-%                     dist_dimension)
-%   dist     - Disturbance object 
-%                     (empty / Polyhedron / StochasticDisturbance)     
+%   dist_mat        - Disturbance matrix (Matrix, state_dim x dist_dim)
+%   dist            - Disturbance object (empty/Polyhedron/RandomVector)     
 %   state_dim       - State dimension (scalar)   
 %   input_dim       - Input dimension (scalar)  
 %   dist_dim        - Disturbance dimension (scalar)
@@ -207,8 +203,9 @@ classdef LtvSystem
             if any(strcmp(inpar.UsingDefaults, 'Disturbance'))
                 obj.dist_dim = 0;
             else
-                if isa(obj.dist, 'RandomVector')
-                    obj.dist_dim = obj.dist.dimension;
+                if isa(obj.dist, 'RandomVector') || isa(obj.dist,...
+                    'StochasticDisturbance') 
+                    obj.dist_dim = obj.dist.dim;
                 else
                     obj.dist_dim = obj.dist.Dim;
                 end

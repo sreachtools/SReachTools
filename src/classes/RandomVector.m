@@ -27,7 +27,7 @@ classdef RandomVector
 % ------------------------
 %   type       - Random vector type (string)
 %   parameters - System parameters (struct)
-%   dimension  - Random vector dimension (scalar)
+%   dim        - Random vector dimension (scalar)
 %   pdf        - Probability density function (function handle)
 %
 % RandomVector Methods:
@@ -44,7 +44,7 @@ classdef RandomVector
 % * The anonymous function used for the definition of obj.pdf transposes the
 %   accepted column vector for using mvnpdf.
 % * RandomVector.pdf takes in arguments of the form N_points x
-%   random_vector_dimension
+%   random_vector_dim
 % 
 % =========================================================================
 % 
@@ -77,7 +77,7 @@ classdef RandomVector
         %   parameters.covariance - Covariance matrix (p x p)
         % 
         parameters
-        dimension
+        dim
         pdf
     end
     methods
@@ -137,7 +137,7 @@ classdef RandomVector
                             'dimensions']);
                         
                     % Update the dimension
-                    obj.dimension = size(obj.parameters.mean, 1);
+                    obj.dim = size(obj.parameters.mean, 1);
                     
                     % Define an anonymous function using MATLAB's built-in pdf 
                     % Transpose the mean for mvnpdf
@@ -165,7 +165,7 @@ classdef RandomVector
         %
             
             disp(sprintf('%s-dimensional %s random vector', ...
-                         num2str(obj.dimension), ...
+                         num2str(obj.dim), ...
                          obj.type));
         end
     end

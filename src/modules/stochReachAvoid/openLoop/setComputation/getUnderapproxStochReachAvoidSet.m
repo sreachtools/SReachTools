@@ -55,7 +55,7 @@ function [underapprox_stoch_reach_avoid_polytope, ...
 %                          vertices 
 %   affine_hull_of_interest_2D
 %                        - Affine hull whose slice of the stochastic reach-avoid
-%                          set is of interest, Dimension state_dimension-2
+%                          set is of interest, Dimension state_dim-2
 %                          Define this by Polyhedron('He',[A_eq, b_eq])
 %   desired_accuracy     - (Optional) Accuracy expected for the integral of the
 %                          Gaussian random vector X over the
@@ -170,7 +170,7 @@ function [underapprox_stoch_reach_avoid_polytope, ...
     % GUARANTEES: Gaussian-perturbed LTI system (sys)
     [H, mean_X_sans_input_sans_initial_state, cov_X_sans_input, ...
      Abar, ~] = ...
-     getHmatMeanCovForXSansInput(sys,zeros(sys.state_dimension,1),time_horizon);
+     getHmatMeanCovForXSansInput(sys,zeros(sys.state_dim,1),time_horizon);
 
     % Parsing the optional arguments 
     if length(varargin) == 2

@@ -42,7 +42,7 @@ function prob = getProbReachTargetTube(sys, ...
 %
 % Notes:
 % ------
-% * In case, the target set is a hyper-cuboid and the state_dimension < 25,
+% * In case, the target set is a hyper-cuboid and the state_dim < 25,
 %   then use mvncdf instead.
 % * The safe set and the target set must be Polyhedron objects.
 % ============================================================================

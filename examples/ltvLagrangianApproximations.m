@@ -76,14 +76,8 @@ plot(safe_set)
 xlabel('$x_1$', 'Interpreter', 'latex')
 ylabel('$x_2$', 'Interpreter', 'latex')
 
-% safe sets
-target_tube = {safe_set, ...
-    safe_set, ...
-    safe_set, ...
-    safe_set, ...
-    safe_set};
-
-N = length(target_tube);
+N = 5;          % time_horizon
+target_tube = TargetTube('viability', safe_set, N);  % safe sets
 
 % For the Lagrangian methods we compute robust and augmented effective target 
 % sets---for the under and overapproximations, respectively. For this computation 
@@ -99,7 +93,7 @@ N = length(target_tube);
 beta = 0.8;
 
 % bounded set for Lagrangian
-lag_bounded_set = getBoundedSetForDisturbance(sys.disturbance, N, beta, ...
+lag_bounded_set = getBoundedSetForDisturbance(sys.dist, N, beta, ...
     'random', 50);
 %% 
 % Now we can compute the Lagrangian under and overapproximations which we 

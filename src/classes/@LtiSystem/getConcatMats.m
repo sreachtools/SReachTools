@@ -4,8 +4,8 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
 % 
 % Computes the matrices corresponding to the concatentated state vector X.
 %
-% Consider a LtiSystem object with n as the state_dimension, m as the
-% input_dimension, and p as the disturbance_dimension. Given a time of
+% Consider a LtiSystem object with n as the state_dim, m as the
+% input_dim, and p as the disturbance_dim. Given a time of
 % interest N, we define a concatenated state vector (a nN-dimensional vector)
 %           __       __
 %           |   x_1   |
@@ -123,7 +123,7 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
         end
         % use parts of flipped_controllability_matrix_input to obtain H 
         % blocks_of_zero_required are the number of columns in the zero matrices
-        %   that have state_dimension number of rows. These zero matrices go to
+        %   that have state_dim number of rows. These zero matrices go to
         %   the right of the submatrices of flipped_controllability_matrix_input
         %   in the H construction.
         % Start H construction from the top row
@@ -160,7 +160,7 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
         % use parts of flipped_controllability_matrix_disturbance to obtain
         %   G 
         % blocks_of_zero_required are the number of columns in the zero matrices
-        %   that have state_dimension number of rows. These zero matrices go to
+        %   that have state_dim number of rows. These zero matrices go to
         %   the right of the submatrices of
         %   flipped_controllability_matrix_disturbance in the G
         %   construction.
