@@ -1,9 +1,8 @@
 function [lb_stoch_reach_avoid, optimal_input_vector] =...
                            getLowerBoundStochReachAvoid(sys,...
                                                         initial_state,...
-                                                        time_horizon,...
-                                                        safe_set,...
-                                                        target_set,...
+                                                        target_tube,...
+                                                        init_safe_set,...
                                                         varargin)
 % SReachTools/stochasticReachAvoid/getLowerBoundStochReachAvoid: Solve the
 % stochastic reach-avoid problem (lower bound on the probability and an
@@ -29,18 +28,15 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
 % [lb_stoch_reach_avoid, optimal_input_vector] =...
 %                                 getLowerBoundStochReachAvoid(sys,...
 %                                                              initial_state,...
-%                                                              time_horizon,...
-%                                                              safe_set,...
-%                                                              target_set,...
+%                                                              target_tube,...
 %                                                              varargin)
 %
 % Inputs:
 % -------
 %   sys                  - LtiSystem object describing the system to be verified
 %   initial_state        - Initial state of interest
-%   time_horizon         - Time horizon of the stochastic reach-avoid problem
-%   safe_set             - Safe set for stochastic reach-avoid problem
-%   target_set           - Target set for stochastic reach-avoid problem
+%   target_tube          - Target tube to stay within [TargetTube object]
+%   init_safe_set        - Safe set for initial state
 %   guess_optimal_input_vector
 %                        - (Optional) Provide a concatenated guess for the
 %                          optimal input policy vector in the form of U = [u_0;
@@ -87,17 +83,16 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
 %
 %
 
-    %% INPUT HANDLING
-    % Construct concatenated target tube (Called earlier to sanitize safe_set)
-    % GUARANTEES: Non-empty target and safe sets (polyhedron) and scalar
-    %             time_horizon>0
-    [concat_target_tube_A, concat_target_tube_b] = ...
-                                             getConcatTargetTube(safe_set, ...
-                                                                 target_set, ...
-                                                                 time_horizon);
-    
+    % Get half space representation of the target tube and time horizon
+    [concat_target_tube_A, concat_target_tube_b] = target_tube.concat();
+    time_horizon = length(target_tube);
+
+    % Input handling: Check for safe set
+    validateattributes(init_safe_set, {'Polyhedron'}, {'nonempty'});
+
+
     % Check if safe set contains the initial state
-    if ~safe_set.contains(initial_state)
+    if ~init_safe_set.contains(initial_state)
         % Stochastic reach-avoid probability is zero and no admissible open-loop
         % policy exists, if given an unsafe initial state
         lb_stoch_reach_avoid = 0;
@@ -168,7 +163,7 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
             end
             desired_accuracy = 1e-3;
             PSoptions = psoptimset('Display', 'off');
-        elseif length(varargin) == 0
+        elseif isempty(varargin) == 0
             guess_optimal_input_vector = [];
             desired_accuracy = 1e-3;
             PSoptions = psoptimset('Display', 'off');
