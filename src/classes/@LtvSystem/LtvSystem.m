@@ -551,5 +551,8 @@ classdef LtvSystem
 
             yn = strcmp(obj.sys_type, 'LTV');
         end
+        
+        % Methods that have been defined externally
+        [Z, H, G] = getConcatMats(sys, time_horizon);
     end
 end
