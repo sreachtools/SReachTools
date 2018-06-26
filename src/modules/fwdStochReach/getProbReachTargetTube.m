@@ -70,7 +70,7 @@ function prob = getProbReachTargetTube(sys, ...
                'Expected an input policy only for a controlled system');
         input_policy = varargin{1};
     else
-        input_policy = 0;
+        input_policy = zeros(0, 1);
     end
 
     % Compute H (zeros(sys.state_dim*time_horizon,1)), mean_X_sans_input,

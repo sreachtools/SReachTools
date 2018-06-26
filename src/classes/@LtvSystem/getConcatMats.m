@@ -4,7 +4,7 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
 % 
 % Computes the matrices corresponding to the concatentated state vector X.
 %
-% Consider a LtiSystem object with n as the state_dim, m as the
+% Consider a LtvSystem object with n as the state_dim, m as the
 % input_dim, and p as the disturbance_dim. Given a time of
 % interest N, we define a concatenated state vector (a nN-dimensional vector)
 %           __       __
@@ -49,7 +49,7 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
 % umax = 0.75;
 % dmax = 0.1;
 % % Double integrator system
-% sys = LtiSystem(...
+% sys = LtvSystem(...
 %     'StateMatrix', [1, T; 0, 1], ...
 %     'InputMatrix', [T^2; T], ...
 %     'InputSpace', Polyhedron('lb', -umax, 'ub', umax), ...
@@ -63,7 +63,7 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
 % [Z,H,G] = getConcatMats(sys, time_horizon)
 % Inputs:
 % -------
-%   sys          - An object of LtiSystem class 
+%   sys          - An object of LtvSystem class 
 %   time_horizon - Time of interest (N)
 %
 % Outputs:
@@ -170,22 +170,3 @@ function prod_state_mat = computeMatProductsStateMat(sys, t, tau)
         end
     end
 end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% if sys.input_dim > 0 && sys.dist_dim >0
-%     ltisys = LtiSystem('StateMatrix',sys.state_mat,...
-%                        'InputMatrix',sys.input_mat,...
-%                        'Input',sys.input_space,...
-%                        'DisturbanceMatrix',sys.dist_mat,...
-%                        'Disturbance',sys.dist);
-% elseif sys.input_dim > 0 && sys.dist_dim == 0
-%     ltisys = LtiSystem('StateMatrix',sys.state_mat,...
-%                        'InputMatrix',sys.input_mat,...
-%                        'Input',sys.input_space);
-% elseif sys.input_dim == 0 && sys.dist_dim > 0
-%     ltisys = LtiSystem('StateMatrix',sys.state_mat,...
-%                        'DisturbanceMatrix',sys.dist_mat,...
-%                        'Disturbance',sys.dist);
-% else
-%     ltisys = LtiSystem('StateMatrix',sys.state_mat);
-% end
-% [Z,G,H] = ltisys.getConcatMats(time_horizon);

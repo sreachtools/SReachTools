@@ -101,7 +101,7 @@ function concat_state_realization = generateMonteCarloSims(...
                   repmat(optimal_input_vector,1, n_monte_carlo_sims);
     else
         concat_optimal_input_vector = ...
-                zeros(1, n_monte_carlo_sims);
+                zeros(0, n_monte_carlo_sims);
     end
 
     if isa(initial_state,'RandomVector')

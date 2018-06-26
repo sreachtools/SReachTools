@@ -1,7 +1,7 @@
 function [concat_input_space_A, concat_input_space_b] = ...
                                          getConcatInputSpace(sys, ...
                                                              time_horizon)
-% SReachTools/LtiSystem/getConcatInputSpace: Get half space representation of
+% SReachTools/LtvSystem/getConcatInputSpace: Get half space representation of
 % the concatenated (polytopic) input space for the given time horizon
 % ============================================================================
 % 
@@ -13,9 +13,9 @@ function [concat_input_space_A, concat_input_space_b] = ...
 % ------
 %
 % % Compute the (matrix form) set of admissible open-loop control policies given
-% % a LtiSystem and a time horizon
+% % a LtvSystem and a time horizon
 %
-% sys = LtiSystem(...
+% sys = LtvSystem(...
 %     'StateMatrix', eye(2), ...
 %     'InputMatrix', ones(2,1), ...
 %     'InputSpace', Polyhedron('lb', -umax, 'ub', umax));
@@ -32,7 +32,7 @@ function [concat_input_space_A, concat_input_space_b] = ...
 % 
 % Inputs:
 % -------
-%   sys                  - An object of LtiSystem class 
+%   sys                  - An object of LtvSystem class 
 %   time_horizon         - Time horizon
 %
 % Outputs:

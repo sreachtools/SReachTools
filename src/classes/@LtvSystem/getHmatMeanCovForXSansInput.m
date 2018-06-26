@@ -1,8 +1,7 @@
-function [H, mean_X_sans_input, cov_X_sans_input, varargout] = ...
-                            getHmatMeanCovForXSansInput(sys, ...
-                                                        initial_state, ...
-                                                        time_horizon)
-% SReachTools/LtiSystem/getHmatMeanCovForXSansInput: Get input policy-free mean
+function [varargout] = getHmatMeanCovForXSansInput(sys, ...
+                                                   initial_state, ...
+                                                   time_horizon)
+% SReachTools/LtvSystem/getHmatMeanCovForXSansInput: Get input policy-free mean
 % and covariance of the trajectory from a given initial state for a known time
 % horizon and the concatenated input matrix
 % ============================================================================
@@ -17,7 +16,7 @@ function [H, mean_X_sans_input, cov_X_sans_input, varargout] = ...
 % Also, returns H, and Z and G if needed
 %
 % For more details on the matrix notation, please see the documentation of
-% LtiSystem/getConcatMats(). 
+% LtvSystem/getConcatMats(). 
 %
 % Usage: See getLowerBoundStochReachAvoid
 %
@@ -29,7 +28,7 @@ function [H, mean_X_sans_input, cov_X_sans_input, varargout] = ...
 %                                            time_horizon)
 % Inputs:
 % -------
-%   sys           - An object of LtiSystem class 
+%   sys           - An object of LtvSystem class 
 %   initial_state - Initial state can be a deterministic n-dimensional vector
 %                   x_0 or a RandomVector object
 %   time_horizon  - Time of interest (N)
@@ -47,8 +46,9 @@ function [H, mean_X_sans_input, cov_X_sans_input, varargout] = ...
 % Notes:
 % ------
 % * X refers to the concatenated state vector X=[x_1^\top x_2^\top ...
-%   x_N^\top]^\top. See @LtiSystem/getConcatMats for more
+%   x_N^\top]^\top. See @LtvSystem/getConcatMats for more
 %   information about the notation used.
+% * Assumes the disturbance is independent and identically distributed
 % * This function also serves as a delegatee for input handling.
 % 
 % ============================================================================
@@ -81,7 +81,10 @@ function [H, mean_X_sans_input, cov_X_sans_input, varargout] = ...
     cov_concat_disturb  = kron(eye(time_horizon), ...
                                sys.dist.parameters.covariance);
                                  
+
     if isa(initial_state,'RandomVector')
+        % TODO: Waiting for a reference --- but essentially propagation of mean and
+        % covariance
         mean_X_sans_input = Z * initial_state.parameters.mean + G *...
             mean_concat_disturb;
         cov_X_sans_input = Z * initial_state.parameters.covariance * Z' + ...
@@ -100,6 +103,9 @@ function [H, mean_X_sans_input, cov_X_sans_input, varargout] = ...
     end
 
     % Optional output arguments
-    varargout{1} = Z;
-    varargout{2} = G;
+    varargout{1} = H;
+    varargout{2} = mean_X_sans_input;
+    varargout{3} = cov_X_sans_input;
+    varargout{4} = Z;
+    varargout{5} = G;
 end

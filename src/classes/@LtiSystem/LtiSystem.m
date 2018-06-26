@@ -211,14 +211,29 @@ classdef LtiSystem < LtvSystem
             end
         end
 
-        % Methods that have been defined externally
-        [concat_input_space_A, concat_input_space_b] = ...
-                                         getConcatInputSpace(sys, ...
-                                                             time_horizon);
-        [Z,G,H] = getConcatMats(sys, time_horizon);
-        [H, mean_X_sans_input, cov_X_sans_input, varargout] = ...
-                            getHmatMeanCovForXSansInput(sys, ...
-                                                        initial_state, ...
-                                                        time_horizon);
+        % Methods inherited from LTV
+        function [Z,G,H] = getConcatMats(sys, time_horizon);
+
+            [Z,G,H] = getConcatMats@LtvSystem(sys, time_horizon);
+
+        end
+
+        function [concat_input_space_A, concat_input_space_b] =...
+            getConcatInputSpace(sys, time_horizon);
+
+            [concat_input_space_A, concat_input_space_b] =...
+                getConcatInputSpace@LtvSystem(sys, time_horizon);
+
+        end
+
+        function varargout = getHmatMeanCovForXSansInput(sys,...
+            initial_state, time_horizon)
+
+            [varargout{1:nargout}] = getHmatMeanCovForXSansInput@LtvSystem(...
+                sys,...
+                initial_state,...
+                time_horizon);
+
+        end
     end
 end

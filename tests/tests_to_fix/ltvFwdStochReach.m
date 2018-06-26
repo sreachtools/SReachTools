@@ -32,13 +32,17 @@ lsys = LtiSystem('StateMatrix', [1,T;
 
 if all(all(abs(Z-Zlti)<1e-8)) && all(all(abs(H-Hlti)<1e-8)) && all(all(abs(G-Glti)<1e-8))
     disp('Matching!')
+else
+    disp('Not matching!')
 end
-% [Z,H,G]=sys.getConcatMats(10);                 
-% [Zlti,Hlti,Glti]=lsys.getConcatMats(10);                 
-% 
-% if all(all(abs(Z-Zlti)<1e-8)) && all(all(abs(H-Hlti)<1e-8)) && all(all(abs(G-Glti)<1e-8))
-%     disp('Matching!')
-% end
+
+[Z,H,G]=sys.getConcatMats(10);                 
+[Zlti,Hlti,Glti]=lsys.getConcatMats(10);                 
+if all(all(abs(Z-Zlti)<1e-8)) && all(all(abs(H-Hlti)<1e-8)) && all(all(abs(G-Glti)<1e-8))
+    disp('Matching!')
+else
+    disp('Not matching!')
+end
 sys = LtvSystem('StateMatrix', @(t) [1,t;
                                 0,1],...
                 'InputMatrix', @(t) [1+t^2/2;
