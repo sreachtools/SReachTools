@@ -345,7 +345,7 @@ classdef LtvSystem
             end
         end
 
-        function v = subsref(obj, s)
+        function varargout = subsref(obj, s)
         % SReachTools/LtvSystem/subsref: Overload of MATLAB internal subsref
         % ====================================================================
         %
@@ -395,12 +395,12 @@ classdef LtvSystem
                 end
 
                 if obj.islti()
-                    v = obj.(s(1).subs);
+                    [varargout{1:nargout}] = obj.(s(1).subs);
                 else
-                    v = obj.(s(1).subs)(s(2).subs{1});
+                    [varargout{1:nargout}] = obj.(s(1).subs)(s(2).subs{1});
                 end
             else
-                v = builtin('subsref', obj, s);
+                [varargout{1:nargout}] = builtin('subsref', obj, s);
             end
         end
 
