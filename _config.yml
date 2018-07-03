@@ -14,14 +14,18 @@
 # You can create any custom variable you would like, and they will be accessible
 # in the templates via {{ site.myvariable }}.
 title: SReachTools
-email: aby.vinod@gmail.com
+email: gleasonj@unm.edu
 description: >- # this means to ignore newlines until "baseurl:"
   SReachTools: A MATLAB toolbox for stochastic reachability methods.
 baseurl: "/SReachTools" # the subpath of your site, e.g. /blog
-url: "https://abyvinod.github.io" # the base hostname & protocol for your site, e.g. http://example.com
+url: "https://unm-hscl.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 # twitter_username: jekyllrb
-github_username:  abyvinod/SReachTools
+github_username:  unm-hscl
 # linkedin_username: jekyll
+
+collections:
+  docs:
+    output: true
 
 # Build settings
 markdown: kramdown
