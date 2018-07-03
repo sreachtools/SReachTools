@@ -14,4 +14,3 @@ gem install jekyll bundler
 bundle init
 bundle install
 bundle update
-
