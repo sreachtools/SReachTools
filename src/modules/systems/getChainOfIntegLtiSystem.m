@@ -58,6 +58,7 @@ function sys = getChainOfIntegLtiSystem(dim, T, input_space, disturb)
     state_mat = eye(dim);
     input_mat = zeros(dim, 1);
     
+    % Populate the upper triangle of state_mat and the entries of input_mat
     for i = 1:dim
         input_mat(i) = facT(T, dim-i+1);
         for j = i+1:dim
