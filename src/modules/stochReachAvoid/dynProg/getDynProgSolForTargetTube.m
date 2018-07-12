@@ -1,5 +1,5 @@
 function grid_prob = getDynProgSolForTargetTube(sys, ...
-    state_grid, input_grid, target_tube)
+    state_grid, input_grid, target_tube_with_tZero)
 % SReachTools/stochasticReachAvoid/getDynProgSolForTargetTube Get dynamic 
 % programming grid probability for reachability of target tube
 % ============================================================================
@@ -13,7 +13,7 @@ function grid_prob = getDynProgSolForTargetTube(sys, ...
 % no. 12, pp. 1951--1961, 2010.
 %
 % The problem of examining the reachability of a target tube can be found in
-% a work that we intend to publish soon :D
+% a work that we intend to publish soon :D TODO
 %
 % Usage: See example doubleIntegratorDynmaicProgramming.m
 %
@@ -27,7 +27,9 @@ function grid_prob = getDynProgSolForTargetTube(sys, ...
 %   sys         - LtiSystem object
 %   state_grid  - SpaceGrid object
 %   input_grid  - InputGrid object
-%   target_tube - Cell array of Polyhedron objects
+%   target_tube_with_tZero
+%               - Target tube of length N+1 where N is the time_horizon. It should have
+%                   polyhedrons T_0, T_1,...,T_N.
 %
 % Outputs:
 % --------
@@ -55,9 +57,9 @@ function grid_prob = getDynProgSolForTargetTube(sys, ...
     validateattributes(sys, {'LtiSystem'}, {'nonempty'})
     validateattributes(state_grid, {'SpaceGrid'}, {'nonempty'})
     validateattributes(input_grid, {'InputGrid'}, {'nonempty'})
-    validateattributes(target_tube, {'TargetTube'}, {'nonempty'});
-    for i = 1:length(target_tube)
-        validateattributes(target_tube(i), {'Polyhedron'}, {'nonempty'});
+    validateattributes(target_tube_with_tZero, {'TargetTube'}, {'nonempty'});
+    for i = 1:length(target_tube_with_tZero)
+        validateattributes(target_tube_with_tZero(i), {'Polyhedron'}, {'nonempty'});
     end
     
     % need a stochastic disturbance of type Gaussian for probability computation
@@ -72,22 +74,23 @@ function grid_prob = getDynProgSolForTargetTube(sys, ...
     % start with initialization of probability of 1s for everything in final
     % target tube
     grid_prob = zeros(size(state_grid.grid, 1), 1);
-    ind_vector = state_grid.getIndicatorVectorForSet(target_tube( ...
-        length(target_tube)));
+    ind_vector = state_grid.getIndicatorVectorForSet(target_tube_with_tZero( ...
+        length(target_tube_with_tZero)));
     grid_prob(ind_vector) = 1;
     
-    n_targets = length(target_tube);
+    n_targets = length(target_tube_with_tZero);
     if n_targets > 1
-        for i = 1:n_targets-1
+        for i = n_targets-1:-1:1
+            fprintf('Computing V_%d\n',i-1);
             % compute the 1-step back propagation
-            % can eventually allow for an option that will return the grid 
+            % TODO: Allow for an option that will return the grid 
             % probability after each time instant, saving some computation time
             % if you are trying to generate images for multiple time points
             grid_prob = computeDynProgBackPropagation(sys, ...
-                                                      state_grid, ...
-                                                      input_grid, ...
-                                                      grid_prob, ...
-                                                      target_tube(n_targets-i));
+                state_grid, ...
+                input_grid, ...
+                grid_prob, ...
+                target_tube_with_tZero(i));
         end
     end
 

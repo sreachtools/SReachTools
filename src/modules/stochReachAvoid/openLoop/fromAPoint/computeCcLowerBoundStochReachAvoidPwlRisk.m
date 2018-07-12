@@ -61,8 +61,9 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
 %                           @LtiSystem/getConcatMats for the notation used)
 %   mean_X_sans_input    - Mean of X without the influence of the input
 %   cov_X_sans_input     - Covariance of X without the influence of the input
-%   desired_accuracy     - Desired accuracy for the optimal stochastic
-%                           reach-avoid probability [If unsure, use 1e-3]
+%   desired_accuracy     - (UNUSED: TODO) Desired accuracy for the optimal
+%                          stochastic reach-avoid probability [If unsure, use
+%                          1e-3]
 %
 % Outputs:
 % --------
@@ -114,9 +115,7 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
         cov_X_sans_input * concat_target_tube_A')));
 
     % TODO: Translate desired_accuracy to piecewise_count
-    piecewise_count = 1e3;
-    [invcdf_approx_A, invcdf_approx_b, lower_bound_on_deltai] =...
-        computeNormCdfInvOverApprox(piecewise_count);
+    [invcdf_approx_m, invcdf_approx_c, lb_deltai]=computeNormCdfInvOverApprox();
     
     %% Solve the feasibility problem
     cvx_begin quiet
@@ -129,12 +128,12 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
             mean_X == mean_X_sans_input + H * U_vector;
             concat_input_space_A * U_vector <= concat_input_space_b;
             for deltai_indx=1:no_linear_constraints
-                norminvover(deltai_indx) >= invcdf_approx_A.*...
-                    deltai(deltai_indx) + invcdf_approx_b; 
+                norminvover(deltai_indx) >= invcdf_approx_m.*...
+                    deltai(deltai_indx) + invcdf_approx_c; 
             end
             concat_target_tube_A * mean_X + sigma_vector * norminvover...
                 <= concat_target_tube_b;
-            deltai >= lower_bound_on_deltai;
+            deltai >= lb_deltai;
             deltai <= 0.5;
     cvx_end
     %% Overwrite the solutions
