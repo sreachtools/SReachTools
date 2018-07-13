@@ -35,21 +35,21 @@ function grid_prob = getDynProgSolForTargetTube(sys, ...
 %                 to size(state_grid, 1)
 %
 % Notes:
-%   - WARNING: Dynamic programming suffers from the curse of dimensionality! As
-%     such, this code will effective and with reasonable speed compute dynamic
-%     programming solutions for 2-dimensional systems with Gaussian 
-%     disturbances. However, for 3-dimensional systems or larger the required
-%     computation time, and memory, will exponentially grow to the point that 
-%     the simulation will take longer than it took for me to get my PhD.
-%   
-%   - Currently this back propagation, and subsequently the entire dynamic 
-%     programming recursion, only works for Gaussian disturbances.
+% ------
+% * WARNING: Dynamic programming suffers from the curse of dimensionality! As
+%   such, this code will effective and with reasonable speed compute dynamic
+%   programming solutions for 2-dimensional systems with Gaussian 
+%   disturbances. However, for 3-dimensional systems or larger the required
+%   computation time, and memory, will exponentially grow to the point that 
+%   the simulation will take longer than it took for me to get my PhD.
+% * Currently this back propagation, and subsequently the entire dynamic 
+%   programming recursion, only works for Gaussian disturbances.
 % 
 % ============================================================================
 % 
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
     % check inputs
     validateattributes(sys, {'LtiSystem'}, {'nonempty'})

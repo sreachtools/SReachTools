@@ -50,14 +50,14 @@ classdef LtvSystem
 %   isltv                 - Get logical value 1 if system is LTV (strictly)
 % 
 % Notes:
-% -----
+% ------
 % * EXTERNAL DEPENDENCY: Uses MPT3 to define input,robust disturbance space
 %
 % =============================================================================
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 %
 
@@ -128,7 +128,7 @@ classdef LtvSystem
         % 
         %   This function is part of the Stochastic Reachability Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
 
             inpar = inputParser();
@@ -371,7 +371,7 @@ classdef LtvSystem
         % 
         %   This function is part of the Stochastic Reachability Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
 
             if  length(s) == 2 && ...
@@ -435,7 +435,7 @@ classdef LtvSystem
         % 
         %   This function is part of the Stochastic Reachability Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
 
             inpar = inputParser();
@@ -506,7 +506,7 @@ classdef LtvSystem
         % 
         %   This function is part of the Stochastic Reachability Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
 
             yn = strcmp(obj.sys_type, 'LTI');
@@ -546,7 +546,7 @@ classdef LtvSystem
         % 
         %   This function is part of the Stochastic Reachability Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
 
             yn = strcmp(obj.sys_type, 'LTV');

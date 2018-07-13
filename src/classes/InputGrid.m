@@ -35,15 +35,16 @@ classdef InputGrid
 %                              points are in a Polyhedron set
 %
 % Notes:
-%   - After the 'external' option is removed from the SpaceGrid class there will
-%     be very little difference between InputGrid and SpaceGrid. The classes
-%     will be merged for convenience.
+% ------
+% * After the 'external' option is removed from the SpaceGrid class there will
+%   be very little difference between InputGrid and SpaceGrid. The classes
+%   will be merged for convenience.
 % 
 % ============================================================================
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 
     properties (SetAccess = private)
@@ -93,7 +94,7 @@ classdef InputGrid
         %
         %   This function is part of the Stochastic Reachability Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         %   
 
             % validate that the lower and upper bounds are positie integer
@@ -190,7 +191,7 @@ classdef InputGrid
         %
         %   This function is part of the Stochastic Reachability Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
 
             validateattributes(s, {'Polyhedron'}, {'nonempty'})
@@ -225,7 +226,7 @@ classdef InputGrid
         %
         %   This function is part of the Stochastic Reachability Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         %    
 
             % validate inputs

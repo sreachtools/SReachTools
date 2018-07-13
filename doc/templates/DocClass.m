@@ -32,7 +32,7 @@ classdef DocClass
 %
 % This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 %
     properties
@@ -84,7 +84,7 @@ classdef DocClass
         % 
         % This function is part of the Stochastic Reachability Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
         % 
             obj.property_1 = in1;
@@ -120,7 +120,7 @@ classdef DocClass
         % 
         % This function is part of the Stochastic Reachability Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
         % 
             a = rand();

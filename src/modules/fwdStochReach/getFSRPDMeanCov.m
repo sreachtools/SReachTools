@@ -42,7 +42,7 @@ function [mean_x, cov_x] = getFSRPDMeanCov(sys, ...
 %
 % This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 %
 

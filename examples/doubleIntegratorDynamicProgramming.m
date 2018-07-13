@@ -36,8 +36,8 @@
 % # Make sure that |srtinit| is run before running this script.
 % 
 % This Live Script is part of the SReachTools toolbox. License for the use 
-% of this function is given in <https://github.com/abyvinod/SReachTools/blob/master/LICENSE. 
-% https://github.com/abyvinod/SReachTools/blob/master/LICENSE.>
+% of this function is given in <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE. 
+% https://github.com/unm-hscl/SReachTools/blob/master/LICENSE.>
 %% Setup the system
 %%
 % discretization parameter

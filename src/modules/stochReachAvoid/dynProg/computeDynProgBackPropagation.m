@@ -35,14 +35,15 @@ function grid_prob = computeDynProgBackPropagation(sys, ...
 % See also getDynProgSolForTargetTube
 %
 % Notes:
-%   - Currently this back propagation, and subsequently the entire dynamic 
-%     programming recursion, only works for Gaussian disturbances.
+% ------
+% * Currently this back propagation, and subsequently the entire dynamic 
+%   programming recursion, only works for Gaussian disturbances.
 %
 % ============================================================================
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 
     % save the original grid probability
@@ -126,7 +127,7 @@ function probability = fastGaussianProbFor2d(sys, ext_grid, state_vec, ...
 % 
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 
     % compute the mean of the Gaussian through the state transition
@@ -181,7 +182,7 @@ function probability = computeGaussianProbabForInputAndState(sys, ...
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 
     % mean after state transition
@@ -235,7 +236,7 @@ function p = computeProbabilityAtGridPoint(point, dx, mu, sigma)
 % 
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 
     box = SimpleBox(point, dx);
@@ -275,7 +276,7 @@ function new_p = gaussianProbabilityDifference(old_p, ...
 % 
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 
 
     if size(old_grid_points, 1) == 4
@@ -331,7 +332,7 @@ function box_points = getBoxPointsFromGridPoint(point, dx)
 % 
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 
     if length(dx) == 2
@@ -401,7 +402,7 @@ function box_points = get2dBoxPointsFromGridPoint(point, dx)
 % 
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 
 
@@ -445,7 +446,7 @@ function box_points = get3dBoxPointsFromGridPoint(point, dx)
 % 
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 
     box_points = zeros(8, length(dx));

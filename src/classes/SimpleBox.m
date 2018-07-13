@@ -34,7 +34,7 @@ classdef SimpleBox
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 % 
 
@@ -78,8 +78,8 @@ classdef SimpleBox
         %
         % Constructor for SimpleBox Class
         %
-        % Usage
-        % -----
+        % Usage:
+        % ------
         % % call by passing in vertices
         % simpbox = SIMPLEBOX([1,1;-1,-1;-1,1;1,-1]);
         % 
@@ -109,7 +109,7 @@ classdef SimpleBox
         %
         %   This function is part of the Stochastic Reachability Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
         % 
 
@@ -188,9 +188,7 @@ classdef SimpleBox
         %
         % [lb, ub] = obj.getBounds();
         %
-        % Inputs:
-        % -------
-        % None
+        % Inputs: None
         %
         % Outputs:
         % --------
@@ -201,7 +199,7 @@ classdef SimpleBox
         %
         %   This function is part of the Stochastic Reachability Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
         % 
             lb = obj.center - obj.dx;
@@ -237,7 +235,7 @@ classdef SimpleBox
         %
         %   This function is part of the Stochastic Reachability Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
         % 
             
@@ -271,19 +269,17 @@ classdef SimpleBox
         %
         % poly = obj.getPolyhedron()
         %
-        % Inputs
-        % ------
-        % None
+        % Inputs: None
         %
-        % Outputs
-        % -------
+        % Outputs:
+        % --------
         % poly - Polyhedron object
         %
         % ================================================================
         %
         %   This function is part of the Stochastic Reachability Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
         % 
 
@@ -320,7 +316,7 @@ classdef SimpleBox
         %
         %   This function is part of the Stochastic Reachability Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
         % 
         
@@ -369,7 +365,7 @@ classdef SimpleBox
         %
         %   This function is part of the Stochastic Reachability Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
         % 
 
@@ -397,17 +393,19 @@ classdef SimpleBox
         % ====================================================================
         %
         % Inputs:
+        % -------
         %   center - Current SpaceGrid grid point
         %   dx     - State SpaceGrid deltas
         %
         % Outputs:
+        % --------
         %   vertices - Array of vertices
         % 
         % ====================================================================
         %
         %   This function is part of the Stochastic Reachability Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
         % 
 

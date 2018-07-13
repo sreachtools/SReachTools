@@ -7,7 +7,7 @@ classdef RandomVector
 % We support the following pdfs:
 %     1. Gaussian
 %
-% Usage
+% Usage:
 % ------
 %
 % % Define a Gaussian random variable of mean 0 and standard deviation 2:
@@ -50,7 +50,7 @@ classdef RandomVector
 % 
 % This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 % 
 
@@ -96,14 +96,14 @@ classdef RandomVector
         %                   sigma
         %
         % Outputs:
-        % -------
+        % --------
         %   obj - Random vector object
         %
         % =====================================================================
         % 
         % This function is part of the Stochastic Reachability Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
         % 
             
@@ -160,7 +160,7 @@ classdef RandomVector
         % 
         % This function is part of the Stochastic Reachability Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
         %
             

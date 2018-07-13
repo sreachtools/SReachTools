@@ -73,13 +73,13 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
 % * Specify both desired_accuracy and PSoptions or neither to use the defaults 
 % * Specify an optional guess_optimal_input_vector to skip the use of CVX
 % * See @LtiSystem/getConcatMats for more information about the
-%     notation used.
+%   notation used.
 % 
 % =============================================================================
 % 
 % This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 %
 

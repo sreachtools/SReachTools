@@ -33,7 +33,7 @@ function approx_level_set = getApproxStochasticLevelSetViaLagrangian(sys, ...
 % 
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 % 
 

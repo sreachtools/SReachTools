@@ -68,7 +68,7 @@ function bounded_set = getBoundedSetForDisturbance(disturbance, ...
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 
     % only need to validate attributes if not loading from file
@@ -197,7 +197,7 @@ function bounded_set = boundedEllipseByRandomVectors(disturbance, ...
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 
     % should probably provide a warning about the use of random direction for
@@ -265,7 +265,7 @@ function poly = getOptimizationBoxForGaussian(disturbance, horizon_length, ...
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 
     center = disturbance.parameters.covariance^(-1/2)*(center - ...
@@ -317,7 +317,7 @@ function [c, ceq] = nonlinearOptimBoxConstraints(l, c, p)
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 
     c = p - mvncdf(c'-l'/2, c'+l'/2, zeros(size(l')), eye(length(l)));
@@ -356,7 +356,7 @@ function poly = getBoundingBoxForGaussian(disturbance, horizon_length, ...
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 
     MAX_ITERS = 10000;

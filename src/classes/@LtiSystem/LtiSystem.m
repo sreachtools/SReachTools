@@ -49,14 +49,14 @@ classdef LtiSystem < LtvSystem
 %                           time horizon and the concatenated input matrix
 % 
 % Notes:
-% -----
+% ------
 % * EXTERNAL DEPENDENCY: Uses MPT3 to define input,robust disturbance space
 %
 % =============================================================================
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 %
     
@@ -109,7 +109,7 @@ classdef LtiSystem < LtvSystem
         % 
         %   This function is part of the Stochastic Reachability Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
 
             inpar = inputParser();
@@ -174,7 +174,7 @@ classdef LtiSystem < LtvSystem
         % 
         %   This function is part of the Stochastic Reachability Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
 
             inpar = inputParser();

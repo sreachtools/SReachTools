@@ -34,7 +34,7 @@ classdef TargetTube
 % 
 % This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 % 
     properties (Access = private)
@@ -90,7 +90,7 @@ classdef TargetTube
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         %   
 
             if ischar(varargin{1})
@@ -156,19 +156,19 @@ classdef TargetTube
         %
         % subsref(obj, s)
         % 
-        % Input:
-        % ------
+        % Inputs:
+        % -------
         %   s - Subscripted reference struct array
         % 
         % see also subsref
         % 
-        % Outpus: None
+        % Outputs: None
         % 
         % ====================================================================
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
 
             if strcmp(s(1).type, '()')
@@ -191,14 +191,14 @@ classdef TargetTube
         %
         % length(obj)
         % 
-        % Input:  None
-        % Outpus: None
+        % Inputs:  None
+        % Outputs: None
         % 
         % ====================================================================
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
 
             n_tubes = length(obj.tube);
@@ -216,14 +216,14 @@ classdef TargetTube
         %
         % disp(obj)
         % 
-        % Input:  None
-        % Outpus: None
+        % Inputs:  None
+        % Outputs: None
         % 
         % ====================================================================
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
 
             fprintf('TargetTube of %d sets\n', length(obj));
@@ -262,7 +262,7 @@ classdef TargetTube
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         %
         %
 
@@ -308,7 +308,7 @@ classdef TargetTube
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         %
         %
             assert(size(X,1)== length(obj) * obj.dim,...

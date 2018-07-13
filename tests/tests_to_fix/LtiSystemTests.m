@@ -19,7 +19,7 @@ classdef LtiSystemTests < matlab.unittest.TestCase
 %
 % This function is part of the Stochastic Optimal Control Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/Socbox/blob/master/LICENSE
+%      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
 %
 %
     properties (Access = private)
@@ -57,7 +57,7 @@ classdef LtiSystemTests < matlab.unittest.TestCase
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
         % 
         % 
             p = inputParser();
@@ -85,7 +85,7 @@ classdef LtiSystemTests < matlab.unittest.TestCase
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
         % 
         % 
 
@@ -106,7 +106,7 @@ classdef LtiSystemTests < matlab.unittest.TestCase
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
         % 
         % 
 
@@ -127,7 +127,7 @@ classdef LtiSystemTests < matlab.unittest.TestCase
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
         % 
         % 
 
@@ -147,7 +147,7 @@ classdef LtiSystemTests < matlab.unittest.TestCase
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
         % 
         % 
 
@@ -170,7 +170,7 @@ classdef LtiSystemTests < matlab.unittest.TestCase
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
         % 
         % 
 
@@ -196,7 +196,7 @@ classdef LtiSystemTests < matlab.unittest.TestCase
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
         % 
         % 
 
@@ -222,7 +222,7 @@ classdef LtiSystemTests < matlab.unittest.TestCase
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
         % 
         % 
 
@@ -248,7 +248,7 @@ classdef LtiSystemTests < matlab.unittest.TestCase
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
         % 
         % 
 
@@ -275,7 +275,7 @@ classdef LtiSystemTests < matlab.unittest.TestCase
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
         % 
         %
 
@@ -303,7 +303,7 @@ classdef LtiSystemTests < matlab.unittest.TestCase
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
         % 
         %
 
@@ -327,7 +327,7 @@ classdef LtiSystemTests < matlab.unittest.TestCase
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
         % 
         %
 
@@ -353,7 +353,7 @@ classdef LtiSystemTests < matlab.unittest.TestCase
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
         % 
         %
 
@@ -385,7 +385,7 @@ classdef LtiSystemTests < matlab.unittest.TestCase
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
         % 
         %
 
@@ -409,7 +409,7 @@ classdef LtiSystemTests < matlab.unittest.TestCase
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
         % 
         %
 
@@ -431,7 +431,7 @@ classdef LtiSystemTests < matlab.unittest.TestCase
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
         % 
         %
             T = test_case.T;
@@ -454,7 +454,7 @@ classdef LtiSystemTests < matlab.unittest.TestCase
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
         % 
         %
 
@@ -478,7 +478,7 @@ classdef LtiSystemTests < matlab.unittest.TestCase
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
         % 
         %
 
@@ -505,7 +505,7 @@ classdef LtiSystemTests < matlab.unittest.TestCase
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
         % 
         %
 
@@ -531,7 +531,7 @@ classdef LtiSystemTests < matlab.unittest.TestCase
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
         % 
         %
 
@@ -559,7 +559,7 @@ classdef LtiSystemTests < matlab.unittest.TestCase
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
         % 
         %
         

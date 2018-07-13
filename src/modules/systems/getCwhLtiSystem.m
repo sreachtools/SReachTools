@@ -85,20 +85,20 @@ function sys = getCwhLtiSystem(dim, varargin)
 % * This code and the parameters were obtained from Lesser's repeatability code
 %   for the 2013 CDC paper.
 % * The default parameters for the CWH system dynamics are:
-%   sampling period              = 20 s
-%   orbital radius               = 850 + 6378.1 m
-%   gravitational constant       = 6.673e-11
-%   celestial body mass          = 5.9472e24 kg
-%   gravitational body           = grav_constant * celes_mass / 1e6
-%   orbital angular velocity     = sqrt(grav_body / orbital_radius^3)
-%   chief mass                   = 300 kg
-%   discretized orbital distance = orbit_ang_vel * sampling_period rad
+%       sampling period              = 20 s
+%       orbital radius               = 850 + 6378.1 m
+%       gravitational constant       = 6.673e-11
+%       celestial body mass          = 5.9472e24 kg
+%       gravitational body           = grav_constant * celes_mass / 1e6
+%       orbital angular velocity     = sqrt(grav_body / orbital_radius^3)
+%       chief mass                   = 300 kg
+%       discretized orbital distance = orbit_ang_vel * sampling_period rad
 %
 % =============================================================================
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 
     %% CWH dynamics parameters --- Default or user-provided
@@ -186,7 +186,7 @@ function [state_matrix, input_matrix] = get6dCwhStateAndInputMatrices(params)
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 
     % redefine important variable for simplicity
@@ -276,7 +276,7 @@ function params = getDefaultCwhParameters()
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 
     params = struct();
@@ -335,7 +335,7 @@ function params = checkSystemParameters(user_params)
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 
     params = getDefaultCwhParameters();
