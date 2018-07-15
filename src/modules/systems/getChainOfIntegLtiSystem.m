@@ -1,4 +1,4 @@
-function sys = getChainOfIntegLtiSystem(dim, T, inputSpace, dist_mat, distSpace)
+function sys = getChainOfIntegLtiSystem(dim, T, varargin)
 % SReachTools/systems/getChainofIntegLtiSystem  Get chain of integrators Lti 
 % System
 % ============================================================================
@@ -55,37 +55,20 @@ function sys = getChainOfIntegLtiSystem(dim, T, inputSpace, dist_mat, distSpace)
         {'numeric'}, {'integer', '>', 0}));
     inpar.addRequired('T', @(x) validateattributes(x, ...
         {'numeric'}, {'>', 0}));
-    inpar.addRequired('inputSpace', @(x) validateattributes(x,...
-        {'Polyhedron'}, {'nonempty'}));
-    inpar.addRequired('dist_mat', @(x) validateattributes(x, {'numeric'},...
-        {'nonempty'}));
-    inpar.addRequired('distSpace',  @(x) validateattributes(x,...
+    inpar.addOptional('inputSpace', Polyhedron.emptySet(1), @(x) validateInputSpace(x));
+    inpar.addOptional('distSpace', Polyhedron(), @(x) validateattributes(x,...
         {'Polyhedron', 'StochasticDisturbance', 'RandomVector'},{'nonempty'}));
-
+    inpar.addOptional('dist_mat', [], @(x) validateattributes(x, {'numeric'},...
+        {'nonempty'}));
+    
     try
-        inpar.parse(dim, T, inputSpace, dist_mat, distSpace)
+        inpar.parse(dim, T, varargin{:})
     catch err
         exc = SrtInvalidArgsError.withFunctionName();
         exc = exc.addCause(err);
         throwAsCaller(exc);
     end
-
-    % if input space is defined it can only be of dimension 1
-    if inpar.Results.inputSpace.Dim > 1
-        exc = SrtInvalidArgsError();
-        exc = exc.addCause(SrtInvalidArgsError(['Chain of integrator ', ...
-            'input space can only have dimension of 1']));
-        throwAsCaller(exc);
-    end
-
-    if xor(any(strcmp('Disturbance', inpar.UsingDefaults)), ...
-           any(strcmp('DisturbanceMatrix', inpar.UsingDefaults)))
-        exc = SrtInvalidArgsError();
-        exc = exc.addCause(SrtInvalidArgsError(['Disturbance ', ...
-            'matrix and disturbance must be simultaneously defined']));
-        throwAsCaller(exc);
-    end
-
+    
     % anonymous function for getting the necessary matrix internals
     facT = @(t, n) t^n / factorial(n);
 
@@ -100,10 +83,44 @@ function sys = getChainOfIntegLtiSystem(dim, T, inputSpace, dist_mat, distSpace)
             state_mat(i, j) = facT(T, j-i);
         end
     end
-
-    sys = LtiSystem('StateMatrix', state_mat, ...
+    
+    if any(strcmp('dist', inpar.UsingDefaults))
+        %Disturbance not specified
+        if ~any(strcmp('dist_mat', inpar.UsingDefaults))
+            % Dist_mat specified --- throw error
+            exc = SrtInvalidArgsError();
+            exc = exc.addCause(SrtInvalidArgsError(['Disturbance ', ...
+                'must be defined as well.']));
+            throwAsCaller(exc);
+        end
+        sys = LtiSystem('StateMatrix', state_mat, ...
         'InputMatrix', input_mat, ...
-        'InputSpace', inpar.Results.inputSpace, ...
-        'DisturbanceMatrix', inpar.Results.dist_mat, ...
-        'Disturbance', inpar.Results.distSpace);
+        'InputSpace', inpar.Results.inputSpace);
+    else
+        if isempty(inpar.Results.dist_mat)
+            validated_dist_mat = eye(dim);
+        else
+            validated_dist_mat = inpar.Results.dist_mat;
+        end
+        sys = LtiSystem('StateMatrix', state_mat, ...
+            'InputMatrix', input_mat, ...
+            'InputSpace', inpar.Results.inputSpace, ...
+            'DisturbanceMatrix', validated_dist_mat, ...
+            'Disturbance', inpar.Results.distSpace);    
+    end   
+end
+
+function boolean_res = validateInputSpace(polyt)
+    % Ensure that the input space is polytopic and one-dimensional
+    
+    validateattributes(polyt, {'Polyhedron'}, {'nonempty'});   
+
+    % if input space is defined it can only be of dimension 1
+    if polyt.Dim > 1
+        exc = SrtInvalidArgsError();
+        exc = exc.addCause(SrtInvalidArgsError(['Chain of integrator ', ...
+            'input space can only have dimension of 1']));
+        throwAsCaller(exc);
+    end
+    boolean_res = true;
 end

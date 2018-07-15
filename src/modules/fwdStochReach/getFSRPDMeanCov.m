@@ -66,21 +66,22 @@ function [mean_x, cov_x] = getFSRPDMeanCov(sys, ...
     end
 
     if ~isa(initial_state,'RandomVector')
-        % Ensure that initial state is a column vector of appropriate dimension
+        % Ensure that initial state is a column vector of appropriate dim
         if ~iscolumn(initial_state) && ...
-           length(initial_state) == sys.state_dimension
+           length(initial_state) == sys.state_dim
 
             exc = SrtInvalidArgsError.withFunctionName();
             exc = exc.addCause(SrtInvalidArgsError(['Expected a ', ...
-                'sys.state_dimension-dimensional column-vector for ', ...
+                'sys.state_dim-dimensional column-vector for ', ...
                 'initial state']));
             throw(exc);
         end
     end
 
     % Ensure that the given system has a Gaussian disturbance
-    if ~isa(sys.disturbance), 'StochasticDisturbance') || ...
-       ~strcmp(sys.disturbance.type), 'Gaussian')
+    if ~(isa(sys.dist, 'StochasticDisturbance') && ...
+            isa(sys.dist, 'RandomVector') && ...
+            strcmp(sys.dist.type, 'Gaussian'))
     
         exc = SrtInvalidArgsError.withFunctionName();
         exc = exc.addCause(SrtInvalidArgsError(['getFSRPDMeanCovariance ', ...
@@ -89,7 +90,7 @@ function [mean_x, cov_x] = getFSRPDMeanCov(sys, ...
     end
 
     % Ensure that the given system is uncontrolled
-    if sys.input_dimension ~= 0
+    if sys.input_dim ~= 0
         exc = SrtInvalidArgsError.withFunctionName();
         exc = exc.addCause(SrtInvalidArgsError(['getFSRPDMeanCovariance ', ...
             'accepts only uncontrolled LTI systems']));

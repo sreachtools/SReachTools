@@ -1,4 +1,4 @@
-function aug_eff_target = getAugEffTarget(sys, target_tube, disturbance)
+function aug_eff_target = getAugEffTarget(sys, target_tube_with_tZero, disturbance)
 % SReachTools/getAugEffTarget
 % ============================================================================
 %
@@ -13,7 +13,7 @@ function aug_eff_target = getAugEffTarget(sys, target_tube, disturbance)
 % Inputs:
 % -------
 %   sys          - LtiSystem object
-%   target_tube  - Cell array of Polyhedron objects 
+%   target_tube_with_tZero  - Cell array of Polyhedron objects 
 %   disturbance  - Polyhedron object (bounded disturbance set)
 %
 % Outputs:
@@ -38,55 +38,51 @@ function aug_eff_target = getAugEffTarget(sys, target_tube, disturbance)
     inpar = inputParser();
     inpar.addRequired('sys', @(x) validateattributes(x, ...
         {'LtiSystem', 'LtvSystem'}, {'nonempty'}));
+    inpar.addRequired('target_tube_with_tZero', @(x) validateattributes(x, ...
+        {'TargetTube'}, {'nonempty'}));
     inpar.addRequired('disturbance', @(x) validateattributes(x, ...
         {'Polyhedron'}, {'nonempty'}));
-    % TODO: Used the second option instead
-    %inpar.addRequired('target_tube', @(x) srtValidateTargetTube(x));
-    inpar.addRequired('target_tube', @(x) validateattributes(x, ...
-        {'TargetTube'}, {'nonempty'}));
-    % validate that all elements of the target_tube are polyhedron
-    for i = 1:length(target_tube)
-        validateattributes(target_tube(i), {'Polyhedron'}, {'nonempty'});
-    end
-    inpar.parse(sys, target_tube, disturbance);
+    
     try
-        inpar.parse(sys, target_tube, disturbance);
+        inpar.parse(sys, target_tube_with_tZero, disturbance);
     catch cause_exc
         exc = SrtInvalidArgsError.withFunctionName();
         exc = addCause(exc, cause_exc);
         throwAsCaller(exc);
     end
     
-    horizon_length = length(target_tube);
+    tube_length = length(target_tube_with_tZero);
     if sys.islti()
         inverted_state_matrix = inv(sys.state_mat);
     end
 
-    eff_target_temp = target_tube(horizon_length);
-    if horizon_length > 1
-        for i = 1:horizon_length - 1
+    effective_target_tube = repmat(Polyhedron(), tube_length, 1);
+    effective_target_tube(end) = target_tube_with_tZero(end);
+    if tube_length > 1
+        for tube_indx = tube_length - 1:-1:1
+            current_time = tube_indx - 1;
             if ~sys.islti()
-                inverted_state_matrix = inv(sys.state_mat(i));
+                inverted_state_matrix = inv(sys.state_mat(current_time));
             end
             
             if disturbance.isEmptySet
-                % No requirement of robustness
-                new_target = eff_target_temp;
+                % No augmentation
+                new_target = effective_target_tube(tube_indx+1);
             else
                 % Compute a new target set for this iteration that is robust to 
                 % the disturbance
-                new_target = eff_target_temp + ...
-                             (-sys.dist_mat(i) * disturbance);
+                new_target = effective_target_tube(tube_indx+1) + ...
+                    (-sys.dist_mat(current_time) * disturbance);
             end
 
             % One-step backward reach set
             one_step_backward_reach_set = inverted_state_matrix * ...
-                (new_target + (-sys.input_mat(i) * sys.input_space));
+                (new_target + (-sys.input_mat(current_time) * sys.input_space));
 
-            % Guarantee staying within target_tube by intersection
-            eff_target_temp = intersect(one_step_backward_reach_set, ...
-                                              target_tube(horizon_length-i));
+            % Guarantee staying within target_tube_with_tZero by intersection
+            effective_target_tube(tube_indx) = intersect(...
+                one_step_backward_reach_set, target_tube_with_tZero(tube_indx));
         end
     end
-    aug_eff_target = eff_target_temp;
+    aug_eff_target = effective_target_tube(1);
 end
