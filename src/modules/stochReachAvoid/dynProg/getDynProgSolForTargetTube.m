@@ -81,7 +81,7 @@ function grid_prob = getDynProgSolForTargetTube(sys, ...
     n_targets = length(target_tube_with_tZero);
     if n_targets > 1
         for i = n_targets-1:-1:1
-            fprintf('Computing V_%d\n',i-1);
+            fprintf('Computing V_%d...000%',i-1);
             % compute the 1-step back propagation
             % TODO: Allow for an option that will return the grid 
             % probability after each time instant, saving some computation time
@@ -91,6 +91,7 @@ function grid_prob = getDynProgSolForTargetTube(sys, ...
                 input_grid, ...
                 grid_prob, ...
                 target_tube_with_tZero(i));
+            fprintf('\n');
         end
     end
 

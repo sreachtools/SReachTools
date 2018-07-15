@@ -59,6 +59,10 @@ function grid_prob = computeDynProgBackPropagation(sys, ...
         use_fast_gaussian = false;
     end
     
+    print_marker = linspace(1,n_state_grid_points,10+1);
+    print_marker(end) = print_marker(end)-1;
+    print_marker_indx = 1;
+    print_marker_val = (print_marker(2)-print_marker(1))/n_state_grid_points*100;
     for ix = 1:n_state_grid_points
         state_vec = state_grid.grid(ix, :)';
         if ~initial_set.contains(state_vec)
@@ -87,6 +91,11 @@ function grid_prob = computeDynProgBackPropagation(sys, ...
 
             % get the highest probability
             grid_prob(ix) = max(input_prob);
+        end
+        if ix > print_marker(print_marker_indx)
+            val = (print_marker_indx-1) * print_marker_val;
+            fprintf('\b\b\b\b%3d%%', round(val))
+            print_marker_indx = print_marker_indx + 1;
         end
     end
 

@@ -58,12 +58,9 @@ function approx_level_set = getApproxStochasticLevelSetViaLagrangian(sys, ...
         throwAsCaller(exc);
     end
     % additional non-input parser validations
-    % validate that all elements of the target_tube are polyhedron
-    for i = 1:length(target_tube)
-        validateattributes(target_tube(i), {'Polyhedron'}, {'nonempty'});
-    end
     validateattributes(sys.dist, {'RandomVector','StochasticDisturbance'}, ...
         {'nonempty'});
+    validatestring(sys.dist.type, {'Gaussian'}, {'nonempty'});
     
     switch(approx_type)
         case 'underapproximation'
