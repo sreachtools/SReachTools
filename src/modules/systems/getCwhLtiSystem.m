@@ -129,7 +129,8 @@ function sys = getCwhLtiSystem(dim, inputSpace, dist, varargin)
         validateattributes(varargin{1}, {'CwhSystemParameters'},{'nonempty'});
         params = varargin{1};
     else
-        error('SReachTools:invalidArgs', 'Too many input arguments.');
+        exc = SrtInvalidArgsError('Too many input arguments.');
+        throwAsCaller(exc);
     end
     
     % System matrix construction
@@ -141,7 +142,7 @@ function sys = getCwhLtiSystem(dim, inputSpace, dist, varargin)
         state_matrix = state_matrix_6D;
         input_matrix = input_matrix_6D;
     else
-        error('SReachTools:invalidArgs', 'dim must be 4 or 6.');
+        throwAsCaller(SrtInvalidArgsError('dim must be 4 or 6.'));
     end
     
     

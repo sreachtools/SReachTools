@@ -78,7 +78,8 @@ function bounded_set = getBoundedSetForDisturbance(disturbance, ...
         validateattributes(disturbance, {'RandomVector'}, ...
             {'nonempty'})
         if ~strcmpi(disturbance.type, 'Gaussian')
-            error('SReachTools:invalidArgs', 'Disturbance must be of type Gaussian');
+            exc = SrtInvalidArgsError('Disturbance must be of type Gaussian');
+            throwAsCaller(exc);
         end
 
         % check that the horizon is some nonzero integer
@@ -136,8 +137,9 @@ function bounded_set = getBoundedSetForDisturbance(disturbance, ...
             validateattributes(varargin{1}, {'char'}, {'nonempty'})
             
             if exist(varargin{1}, 'file') ~= 2
-                error('SReachTools:internal', ['Mat file to load does not ', ...
+                exc = SrtInternalError(['Mat file to load does not ', ...
                     'exist on the path.']);
+                throw(exc);
             end
             
             % load the mat file, loads as a struct
@@ -146,10 +148,11 @@ function bounded_set = getBoundedSetForDisturbance(disturbance, ...
             % look for the Polyhedron
             fnames = fields(ls);
             if length(fnames) > 1
-                error('SReachTools:internal', ['Mat file contains more than ', ...
+                exc = SrtInternalError(['Mat file contains more than ', ...
                     'saved object. Please see Notes section of the help ', ...
                     'for details about how mat files used for loading ', ...
                     'must be structured.']);
+                throw(exc);
             else
                 bounded_set = ls.(fnames{1});
             end
@@ -160,8 +163,10 @@ function bounded_set = getBoundedSetForDisturbance(disturbance, ...
             
             
         otherwise
-            error('SReachTools:invalidArgs', ['Invalid method provided, see ', ...
-                'help for available methods']);
+            exc = SrtInvalidArgsError(['Invalid method provided, see ', ...
+                'help for available methods'])
+            throwAsCaller(exc);
+            
     end
 
 end

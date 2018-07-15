@@ -104,8 +104,9 @@ classdef InputGrid
             
             % check if lower and upper are same dimension
             if length(lb) ~= length(ub)
-                error('SReachTools:invalidArgs', ['Lower and upper bounds ',...
+                exc = SrtInvalidArgsError(['Lower and upper bounds ',...
                     'must be equivalent in vector length (dimension).']);
+                throwAsCaller(exc);
             end
             
             % if number of points is a scalar then copy amount for each
@@ -118,9 +119,10 @@ classdef InputGrid
                 % need to check to ensure that the numer of points is the same
                 % as the number of dimensions of the lower and upper bounds
                 if length(n_points) ~= length(lb)
-                    error('SReachTools:invalidArgs', ['Number of points must ', ...
+                    exc = SrtInvalidArgsError(['Number of points must ', ...
                         'be either a scalar or a vector of equivalent ', ...
                         'length of the lower and upper bounds.']);
+                    throwAsCaller(exc);
                 end
             end
             
@@ -236,8 +238,9 @@ classdef InputGrid
             % make sure that the length of the indices matches the bounds
             % dimension
             if length(inds) ~= length(obj.lower_bounds)
-                error('SReachTools:internal', ['Length/dimension of indices do ', ...
+                exc = SrtInternalError(['Length/dimension of indices do ', ...
                     'not match the length/dimensions of the bounds']);
+                throw(exc);
             end
             
             % get the grid vector

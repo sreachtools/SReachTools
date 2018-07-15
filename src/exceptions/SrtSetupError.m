@@ -17,7 +17,7 @@ classdef SrtSetupError < SrtBaseException
 %
 %   This function is part of the Stochastic Optimal Control Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
     
     properties (Constant, Access = private)

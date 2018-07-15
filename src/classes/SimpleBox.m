@@ -115,9 +115,11 @@ classdef SimpleBox
 
             if size(vertices, 1) > 1
                 if nargin >= 2
-                    error('SReachTools:invalidArgs', ['When creating a box ', ...
+                    exc = SrtInvalidArgsError(['When creating a box ', ...
                         'using a vertices the delta in each dimension ', ...
-                        'should not be provided; see help SimpleBox/SimpleBox']);
+                        'should not be provided; see help ', ...
+                        'SimpleBox/SimpleBox']);
+                    throwAsCaller(exc);
                 end
                 vertices = obj.sortVertices(vertices);
 
@@ -127,9 +129,10 @@ classdef SimpleBox
                 obj.vertices = vertices;
             else
                 if nargin < 2
-                    error('SReachTools:invalidArgs', ['When creating a box ', ...
+                    exc = SrtInvalidArgsError(['When creating a box ', ...
                         'using a center the delta in each dimension must ', ...
                         'also be provided; see help SimpleBox/SimpleBox']);
+                    throwAsCaller(exc);
                 end
                 center = vertices;
 

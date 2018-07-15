@@ -41,6 +41,8 @@ function varargout = srtinit(varargin)
 %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 % 
+    
+    SRTINIT_PATH = fileparts(which('srtinit.m'));
 
     verbose   = false;
     deinit    = false;
@@ -62,8 +64,13 @@ function varargout = srtinit(varargin)
         elseif strcmp(varargin{lv}, '--update')
             update_sreachtools();
             return;
+        elseif strcmp(varargin{lv}, '--version')
+            dets = ver(SRTINIT_PATH);
+            fprintf('SReachTools version %s\n', dets.Version);
+            return;
         else
-            assert(false, 'Invalid input option, see help srtinit')
+            throwAsCaller(SrtInvalidArgsError(['Invalid input option, ', ...
+                'see help srtinit']));
         end
     end
     
@@ -131,10 +138,10 @@ end
 
 function test_results = srttest()
     % Require MPT3 to run SReachTools
-    assert(exist('mpt_init','file')==2, ...
-           'SReachTools:setup_error', ...
-           ['This toolbox uses MPT3. Please get it ', ...
-            'from http://control.ee.ethz.ch/~mpt/3/.']);
+    if exist('mpt_init', 'file') ~= 2
+        throw(SrtSetupError(['This toolbox uses MPT3. Please get it ', ...
+            'from http://control.ee.ethz.ch/~mpt/3/.']));
+    end
 
     % get the parent dir of this function
     script_path = fileparts(mfilename('fullpath'));
@@ -149,13 +156,15 @@ end
 
 function update_sreachtools()
 
+    SRTINIT_PATH = fileparts(which('srtinit.m'));
+
     % First check current version and newest version from repository
     % get repository tags
     fprintf('Fetching repository data...\n')
     tag_data = webread(['https://api.github.com/repos/unm-hscl/', ...
         'SReachTools/tags']);
 
-    local_version = ver('.');
+    local_version = ver(SRTINIT_PATH);
     fprintf('Current SReachTools version  :  %s\n', local_version.Version);
 
     fprintf('Newest SReachTools version   :  %s\n', tag_data(1).name(2:end));

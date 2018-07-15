@@ -114,9 +114,10 @@ classdef SpaceGrid
             elseif strcmp(external_flag, 'external')
                 obj.is_external = true;
             else
-                error('SReachTools:invalidArgs', ['Flag for external ', ...
+                exc = SrtInvalidArgsError(['Flag for external ', ...
                         'grid creation must be either ''internal'' or ', ...
                         '''external''']);
+                throwAsCaller(exc);
             end
             
             % validate that the lower and upper bounds are positie integer
@@ -126,8 +127,9 @@ classdef SpaceGrid
             
             % check if lower and upper are same dimension
             if length(lb) ~= length(ub)
-                error('SReachTools:invalidArgs', ['Lower and upper bounds must ', ...
-                    'be equivalent in length (dimension).']);
+                exc = SrtInvalidArgsError(['Lower and upper bounds ', ...
+                    'must be equivalent in length (dimension).']);
+                throwAsCaller(exc);
             end
             
             % if number of points is a scalar then copy amount for each
@@ -140,9 +142,10 @@ classdef SpaceGrid
                 % need to check to ensure that the numer of points is the same
                 % as the number of dimensions of the lower and upper bounds
                 if length(n_points) ~= length(lb)
-                    error('SReachTools:invalidArgs', ['Number of points must ', ...
-                        'be either a scalar or a vector of equivalent ', ...
-                        'length of the lower and upper bounds.']);
+                    exc = SrtInvalidArgsError(['Number of points ', ...
+                        'must be either a scalar or a vector of ', ...
+                        'equivalent length of the lower and upper bounds.']);
+                    throwAsCaller(exc);
                 end
             end
             
@@ -169,9 +172,10 @@ classdef SpaceGrid
                     obj.actual_lb = lb + obj.grid_delta;
                     obj.actual_ub = ub - obj.grid_delta;
                 otherwise
-                    error('SReachTools:invalidArgs', ['Flag for external ', ...
+                    exc = SrtInvalidArgsError(['Flag for external ', ...
                         'grid creation must be either ''internal'' or ', ...
-                        '''external''']);
+                        '''external'''])
+                    throwAsCaller(exc);
             end
             
             
@@ -302,8 +306,9 @@ classdef SpaceGrid
         %
 
             if obj.dim > 3
-                error('SReachTools:internal', ['Can only get meshgrid for 2 or ', ...
-                    '3-dimentional systems']);
+                exc = SrtInternalError(['Can only get meshgrid for 2 ', ...
+                    'or 3-dimentional systems']);
+                throw(exc);
             end
             
             if obj.dim == 2
@@ -330,8 +335,9 @@ classdef SpaceGrid
                     obj.n_points + 1, ...
                     'external');
             else
-                error('SReachTools:internal', ['Cannot create an external grid ', ...
-                    'from an external grid']);
+                exc = SrtInternalError(['Cannot create an external ', ...
+                    'grid from an external grid']);
+                throw(exc);
             end
         end
         
@@ -360,8 +366,9 @@ classdef SpaceGrid
         % 
         %
             if obj.dim > 2
-                error('SReachTools:internal', ['Can only plot for 1 or ', ...
+                exc = SrtInternalError(['Can only plot for 1 or ', ...
                     '2-dimentional systems']);
+                throw(exc);
             end
             
             if obj.dim == 2
@@ -401,8 +408,9 @@ classdef SpaceGrid
         %
 
             if obj.dim > 3
-                error('SReachTools:internal', ['Can only plot the grid for 2 ', ...
-                    'or 3-dimensional grids']);
+                exc = SrtInternalError(['Can only plot the grid for ', ...
+                    '2 or 3-dimensional grids'])
+                throw(exc);
             end
             
             if obj.dim == 2
@@ -499,8 +507,9 @@ classdef SpaceGrid
             % make sure that the length of the indices matches the bounds
             % dimension
             if length(inds) ~= length(obj.lower_bounds)
-                error('SReachTools:internal', ['Length/dimension of indices do ', ...
-                    'not match the length/dimensions of the bounds']);
+                exc = SrtInternalError(['Length/dimension of indices ', ...
+                    'do not match the length/dimensions of the bounds']);
+                throw(exc);
             end
             
             % get the grid vector

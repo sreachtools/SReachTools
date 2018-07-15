@@ -50,13 +50,14 @@ function [concat_input_space_A, concat_input_space_b] = ...
 
     %% Input handling
     % Ensure that the system has a non-empty input space
-    assert(~sys.input_space.isEmptySet, ...
-           'SReachTools:invalidArgs', ...
-           'Expected a non-empty polyhedral input space');
+    if sys.input_space.isEmptySet
+      throwAsCaller(SrtInvalidArgsError('Expected a non-empty polyhedral input space'));
+    end
+
     % Ensure that time horizon is a scalar and positive
-    assert( isscalar(time_horizon) && time_horizon > 0, ...
-           'SReachTools:invalidArgs', ...
-           'Expected a scalar positive time_horizon');
+    if ~isscalar(time_horizon) || time_horizon <= 0
+      throwAsCaller(SrtInvalidArgsError('Expected a scalar positive time_horizon'));
+    end
 
     %% Construction of the concatenated input space (input_space^{time_horizon})
     concat_input_space_A = kron(eye(time_horizon), sys.input_space.A);

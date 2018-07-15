@@ -114,11 +114,11 @@ classdef RandomVector
 
             switch(lower(obj.type))
                 case 'gaussian'
-                    assert(length(varargin) == 2, ...
-                           'SReachTools:invalidArgs', ...
-                           ['Gaussian random vector needs the mean vector ', ...
-                           'and covariance matrix']);
-                       
+                    if length(varargin) ~= 2 
+                        throwAsCaller(SrtInvalidArgsError(['Gaussian random vector needs the mean vector ', ...
+                           'and covariance matrix']));
+                    end
+
                     % Check if mean is a nonempty numeric column vector
                     validateattributes(varargin{1}, {'numeric'}, {'column'});
                     % Check if covariance matrix is a nonempty square matrix
@@ -130,11 +130,10 @@ classdef RandomVector
                     obj.parameters.covariance = varargin{2};
                     
                     % Check if the mean and covariance are of correct dimensions
-                    assert(size(obj.parameters.mean,1) == ...
-                           size(obj.parameters.covariance,1), ...
-                           'SReachTools:invalidArgs', ...
-                           ['Mean and covariance matrix have different ', ...
-                            'dimensions']);
+                    if size(obj.parameters.mean, 1) ~= size(obj.parameters.covariance, 1)
+                        throwAsCaller(SrtInvalidArgsError(['Mean and covariance matrix have different ', ...
+                            'dimensions']));
+                    end
                         
                     % Update the dimension
                     obj.dim = size(obj.parameters.mean, 1);
@@ -145,8 +144,9 @@ classdef RandomVector
                                           obj.parameters.mean', ...
                                           obj.parameters.covariance);
                 otherwise
-                    error('SReachTools:internal', ...
-                          'Unsupported random vector type');
+                    exc = SrtInternalError(['Unsupported random ', ...
+                        'vector type');
+                    throw(exc);
             end
         end
         

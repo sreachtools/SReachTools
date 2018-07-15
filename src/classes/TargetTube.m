@@ -105,7 +105,9 @@ classdef TargetTube
                         time_horizon = varargin{3};
                         target_set   = safe_set;
                     otherwise
-                        error('Invalid arguments, see help.')
+                        exc = SrtInvalidArgsError(['Invalid arguments, ', ...
+                            'see help.']);
+                        throwAsCaller(exc);
                 end
 
                 validateattributes(target_set, {'Polyhedron'}, {'nonempty'});
@@ -113,9 +115,10 @@ classdef TargetTube
                 validateattributes(time_horizon, {'numeric'}, ...
                     {'integer', '>', 0});
 
-                assert(safe_set.Dim == target_set.Dim,...
-                   'SReachTools:invalidArgs',...
-                   'Safe and target sets must be of the same dimension');
+                if safe_set.Dim ~= target_set.Dim
+                    throwAsCaller(SrtInvalidArgsError(['Safe and target ', ...
+                        'sets must be of the same dimension']));
+                end
 
                 obj.tube(1, time_horizon) = target_set;
                 obj.dim = safe_set.Dim;
@@ -131,10 +134,10 @@ classdef TargetTube
                 for itt = 1:nargin-1
                     validateattributes(varargin{itt}, {'Polyhedron'}, ...
                         {'nonempty'})
-                    assert(varargin{itt}.Dim == obj.dim, ...
-                        'SReachTools:invalidArgs', ...
-                        ['All sets in the target tube must be of the same ', ...
-                         'dimension']);
+                    if varargin{itt}.Dim ~= obj.dim
+                        throwAsCaller(SrtInvalidArgsError(['All sets in the target tube must be of the same ', ...
+                         'dimension']));
+                    end
 
                     obj.tube(itt) = varargin{itt};
                 end
@@ -310,14 +313,18 @@ classdef TargetTube
         % License for the use of this function is given in
         %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         %
-        %
-            assert(size(X,1)== length(obj) * obj.dim,...
-                'SReachTools:invalidArgs',...
-                ['Concatenated state vector/matrix provided has incorrect ',...
-                 'number of rows']);
-            assert(size(X,2) > 0, 'SReachTools:invalidArgs',...
-                ['Concatenated state vector/matrix provided should have at ',...
-                 'least one column']);
+        %   
+
+            if size(X, 1) ~= length(obj) * obj.dim
+                throwAsCaller(SrtInvalidArgsError(['Concatenated state vector/matrix provided has incorrect ',...
+                    'number of rows']));
+            end
+
+            if size(X, 2) <= 0
+                throwAsCaller(SrtInvalidArgsError(['Concatenated state vector/matrix provided should have at ',...
+                 'least one column']));
+            end
+            
             % Matrix to store the result for each time instant, trajectory
             contains_flag_all = zeros(length(obj),size(X,2));
             % Iterate over all time indexes since MPT contains will do

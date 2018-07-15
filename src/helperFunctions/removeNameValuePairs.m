@@ -10,7 +10,8 @@ function new_nvcell = removeNameValuePairs(orig_nvcell, names)
 
     for lv = 1:2:length(orig_nvcell)-1
         if ~ischar(orig_nvcell{lv})
-            error('Original name-value cell array must be name-value pairs')
+            throwAsCaller(SrtInvalidArgsError(['Original name-value cell ', ...
+                'array must be name-value pairs']));
         end
     end
 

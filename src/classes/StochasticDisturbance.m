@@ -59,15 +59,16 @@ classdef StochasticDisturbance < RandomVector
         function obj = StochasticDisturbance(rv_type, varargin)
             switch(lower(rv_type))
                 case 'gaussian'
-                    assert(length(varargin) == 2, ...
-                           'SReachTools:invalidArgs', ...
-                           ['Gaussian disturbance needs the mean vector ', ...
-                           'and covariance matrix']);
+                    if length(varargin) ~= 2
+                        throwAsCaller(SrtInvalidArsError(['Gaussian disturbance needs the mean vector ', ...
+                           'and covariance matrix']));
+                    end
+                    
                     args{1} = varargin{1};
                     args{2} = varargin{2};
                 otherwise
-                    error('SReachTools:internal', ...
-                          'Unsupported disturbance type');
+                    exc = SrtInternalError('Unsupported disturbance type');
+                    throw(exc);
             end
             % Call to superclass constructor must be unconditional
             obj = obj@RandomVector(rv_type, args{:});
