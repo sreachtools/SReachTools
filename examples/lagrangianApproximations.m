@@ -28,6 +28,10 @@
 % of the IEEE Conference on Decision and Control, 2017. 
 % * J. D. Gleason, A. P. Vinod, M. M. K. Oishi, "Lagrangian Approximations for 
 % Stochastic Reachability of a Target Tube", in preparation.
+% 
+% This Live Script is part of the SReachTools toolbox. License for the use 
+% of this function is given in <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE 
+% https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
 %% Problem Definition
 % In this example we will look at the viability problem for a double integrator. 
 % The system dynamics are:
@@ -57,22 +61,22 @@ sys = getChainOfIntegLtiSystem(2, ...
 % posed as a viability problem by constructing a target tube in which all sets 
 % in the tube are the safe set.
 %%
+time_horizon = 5;
+
 % safe set definition
 safe_set = Polyhedron('lb', [-1, -1], 'ub', [1, 1]);
 % target tube definition
-target_tube = TargetTube(safe_set, safe_set, safe_set, safe_set, safe_set);
-% time_horizon
-time_horizon = length(target_tube);
+target_tube = TargetTube('viability', safe_set, time_horizon);
 % probability threshold desired
 beta = 0.8;
 % Plotting of target tube
 figure()
 hold on    
-for time_indx=1:5
-    target_tube_at_time_indx = Polyhedron('H',[target_tube(time_indx).A,zeros(size(target_tube(time_indx).A,1),1), target_tube(time_indx).b], 'He',[0 0 1 time_indx]);
+for time_indx=0:time_horizon
+    target_tube_at_time_indx = Polyhedron('H',[target_tube(time_indx+1).A,zeros(size(target_tube(time_indx+1).A,1),1), target_tube(time_indx+1).b], 'He',[0 0 1 time_indx]);
     plot(target_tube_at_time_indx, 'alpha',0.25);
-    axis([-1 1 -1 1 0 time_indx]);    
 end
+axis([-1 1 -1 1 0 time_horizon]);    
 box on;
 grid on;
 xlabel('x');

@@ -145,7 +145,7 @@ classdef RandomVector
                                           obj.parameters.covariance);
                 otherwise
                     exc = SrtInternalError(['Unsupported random ', ...
-                        'vector type');
+                        'vector type']);
                     throw(exc);
             end
         end

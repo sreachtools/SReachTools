@@ -1,5 +1,5 @@
 function robust_eff_target = getRobustEffTarget(sys, ...
-                                                target_tube_with_tZero, ...
+                                                target_tube, ...
                                                 disturbance, ...
                                                 varargin)
 % SReachTools/getRobustEffTarget Get robust Effective Target Set
@@ -16,15 +16,14 @@ function robust_eff_target = getRobustEffTarget(sys, ...
 % =========================================================================
 %
 % robust_eff_target = getRobustEffTarget(sys, ...
-%                                        target_tube_with_tZero, ...
+%                                        target_tube, ...
 %                                        disturbance, ...
 %                                        Name, Value)
 % Inputs:
 % -------
 %   sys          - LtiSystem object
-%   target_tube_with_tZero
-%               - Target tube of length N+1 where N is the time_horizon. It should have
-%                   polyhedrons T_0, T_1,...,T_N.
+%   target_tube  - Target tube of length N+1 where N is the time_horizon. It should have
+%                  polyhedrons T_0, T_1,...,T_N.
 %   disturbance  - Polyhedron object (bounded disturbance set)
 % 
 %   Name       | Value
@@ -54,7 +53,7 @@ function robust_eff_target = getRobustEffTarget(sys, ...
     inpar = inputParser();
     inpar.addRequired('sys', @(x) validateattributes(x, ...
         {'LtiSystem', 'LtvSystem'}, {'nonempty'}));
-    inpar.addRequired('target_tube_with_tZero', @(x) validateattributes(x, ...
+    inpar.addRequired('target_tube', @(x) validateattributes(x, ...
         {'TargetTube'}, {'nonempty'}));
     inpar.addRequired('disturbance', @(x) validateattributes(x, ...
         {'Polyhedron'}, {'nonempty'}));
@@ -70,9 +69,9 @@ function robust_eff_target = getRobustEffTarget(sys, ...
     
     try
         if length(varargin) == 1
-            inpar.parse(sys, target_tube_with_tZero, disturbance, varargin{1});
+            inpar.parse(sys, target_tube, disturbance, varargin{1});
         else
-            inpar.parse(sys, target_tube_with_tZero, disturbance);
+            inpar.parse(sys, target_tube, disturbance);
         end
     catch cause_exc
         exc = SrtInvalidArgsError.withFunctionName();
@@ -88,7 +87,7 @@ function robust_eff_target = getRobustEffTarget(sys, ...
             'of the need to solve the vertex-facet enumeration problem.'])
     end
     
-    tube_length = length(target_tube_with_tZero);
+    tube_length = length(target_tube);
     n_disturbances = length(disturbance);
 
     % MPT does not support A \ P or P / A (P is Polyhedron and A is matrix)
@@ -108,41 +107,48 @@ function robust_eff_target = getRobustEffTarget(sys, ...
                 'inconsistent or inaccurate results for systems with ', ...
                 'dimensions greater than 2.'])
         end
+        
         effective_target_tube = repmat(Polyhedron(), tube_length, 1);
-        effective_target_tube(end) = target_tube_with_tZero(end);
-        for tube_indx = tube_length-1:-1:1
+        effective_target_tube(end) = target_tube(end);
+        for itt = tube_length-1:-1:1
             % Computing effective target tube for current_time
-            current_time = tube_indx - 1;
+            current_time = itt - 1;
             if ~sys.islti()
                 inverted_state_matrix = inv(sys.state_mat(current_time));
                 minus_bu = sys.input_mat(current_time) * sys.input_space;
             end
+
             vertices = [];
-            for j = 1: n_disturbances
+            for idist = 1: n_disturbances
                 if n_disturbances > 1
-                    effective_dist = sys.dist_mat(current_time) * disturbance{j};
+                    effective_dist = sys.dist_mat(current_time) * ...
+                        disturbance{idist};
                 else
                     effective_dist = sys.dist_mat * disturbance;
                 end
+
                 effective_target = computeRobusteEffTargetRecursion(...
-                    effective_target_tube(tube_indx+1), ...
-                    target_tube_with_tZero(tube_indx), ...
+                    effective_target_tube(itt+1), ...
+                    target_tube(itt), ...
                     minus_bu, ...
                     inverted_state_matrix, ....
                     effective_dist, ...
                     inpar.Results.style);
+
                 if n_disturbances > 1
                     % Don't trigger conversion unless you really have to
                     vertices = [vertices; effective_target.V];                
                 end
             end
+
             if n_disturbances > 1
-                effective_target_tube(tube_indx) = Polyhedron(vertices);
+                effective_target_tube(itt) = Polyhedron(vertices);
             else
-                effective_target_tube(tube_indx) = effective_target;
+                effective_target_tube(itt) = effective_target;
             end
         end
     end
+
     robust_eff_target = effective_target_tube(1);
 end
 
@@ -217,7 +223,7 @@ function back_recursion_set = computeRobusteEffTargetRecursion(...
                 (new_target + minus_bu);
 
 
-            % Guarantee staying within target_tube_with_tZero by intersection
+            % Guarantee staying within target_tube by intersection
             back_recursion_set = intersect(...
                 one_step_backward_reach_set, ...
                 target_tube_set);

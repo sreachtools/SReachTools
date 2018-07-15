@@ -1,4 +1,4 @@
-function aug_eff_target = getAugEffTarget(sys, target_tube_with_tZero, disturbance)
+function aug_eff_target = getAugEffTarget(sys, target_tube, disturbance)
 % SReachTools/getAugEffTarget
 % ============================================================================
 %
@@ -13,7 +13,7 @@ function aug_eff_target = getAugEffTarget(sys, target_tube_with_tZero, disturban
 % Inputs:
 % -------
 %   sys          - LtiSystem object
-%   target_tube_with_tZero  - Cell array of Polyhedron objects 
+%   target_tube  - Cell array of Polyhedron objects 
 %   disturbance  - Polyhedron object (bounded disturbance set)
 %
 % Outputs:
@@ -38,40 +38,40 @@ function aug_eff_target = getAugEffTarget(sys, target_tube_with_tZero, disturban
     inpar = inputParser();
     inpar.addRequired('sys', @(x) validateattributes(x, ...
         {'LtiSystem', 'LtvSystem'}, {'nonempty'}));
-    inpar.addRequired('target_tube_with_tZero', @(x) validateattributes(x, ...
+    inpar.addRequired('target_tube', @(x) validateattributes(x, ...
         {'TargetTube'}, {'nonempty'}));
     inpar.addRequired('disturbance', @(x) validateattributes(x, ...
         {'Polyhedron'}, {'nonempty'}));
     
     try
-        inpar.parse(sys, target_tube_with_tZero, disturbance);
+        inpar.parse(sys, target_tube, disturbance);
     catch cause_exc
         exc = SrtInvalidArgsError.withFunctionName();
         exc = addCause(exc, cause_exc);
         throwAsCaller(exc);
     end
     
-    tube_length = length(target_tube_with_tZero);
+    tube_length = length(target_tube);
     if sys.islti()
         inverted_state_matrix = inv(sys.state_mat);
     end
 
     effective_target_tube = repmat(Polyhedron(), tube_length, 1);
-    effective_target_tube(end) = target_tube_with_tZero(end);
+    effective_target_tube(end) = target_tube(end);
     if tube_length > 1
-        for tube_indx = tube_length - 1:-1:1
-            current_time = tube_indx - 1;
+        for itt = tube_length-1:-1:1
+            current_time = itt - 1;
             if ~sys.islti()
                 inverted_state_matrix = inv(sys.state_mat(current_time));
             end
             
             if disturbance.isEmptySet
                 % No augmentation
-                new_target = effective_target_tube(tube_indx+1);
+                new_target = effective_target_tube(itt+1);
             else
                 % Compute a new target set for this iteration that is robust to 
                 % the disturbance
-                new_target = effective_target_tube(tube_indx+1) + ...
+                new_target = effective_target_tube(itt+1) + ...
                     (-sys.dist_mat(current_time) * disturbance);
             end
 
@@ -79,9 +79,9 @@ function aug_eff_target = getAugEffTarget(sys, target_tube_with_tZero, disturban
             one_step_backward_reach_set = inverted_state_matrix * ...
                 (new_target + (-sys.input_mat(current_time) * sys.input_space));
 
-            % Guarantee staying within target_tube_with_tZero by intersection
-            effective_target_tube(tube_indx) = intersect(...
-                one_step_backward_reach_set, target_tube_with_tZero(tube_indx));
+            % Guarantee staying within target_tube by intersection
+            effective_target_tube(itt) = intersect(...
+                one_step_backward_reach_set, target_tube(itt));
         end
     end
     aug_eff_target = effective_target_tube(1);

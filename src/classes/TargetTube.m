@@ -120,9 +120,9 @@ classdef TargetTube
                         'sets must be of the same dimension']));
                 end
 
-                obj.tube(1, time_horizon) = target_set;
+                obj.tube(1, time_horizon+1) = target_set;
                 obj.dim = safe_set.Dim;
-                for itt = 1:time_horizon-1
+                for itt = 1:time_horizon
                     obj.tube(itt) = safe_set;
                 end
             else

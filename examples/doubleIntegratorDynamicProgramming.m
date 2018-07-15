@@ -25,9 +25,8 @@
 % x_{k} + \left[\begin{array}{c}    \frac{T^{2}}{2} \\    T  \end{array}\right] 
 % u_{k} + w_{k}$$
 % 
-% where $<math xmlns="http://www.w3.org/1998/Math/MathML" display="inline"><mrow><mi 
-% mathvariant="italic">T</mi></mrow></math>$ is the discretization time-step, 
-% and $w_{k}$ is the stochastic disturbance.
+% where $T$ is the discretization time-step, and $w_{k}$ is the stochastic 
+% disturbance.
 %% Notes about this Live Script:
 % # *MATLAB dependencies*: This Live Script uses MATLAB's  <https://www.mathworks.com/products/statistics.html 
 % Statistics and Machine Learning Toolbox>. 
@@ -36,8 +35,8 @@
 % # Make sure that |srtinit| is run before running this script.
 % 
 % This Live Script is part of the SReachTools toolbox. License for the use 
-% of this function is given in <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE. 
-% https://github.com/unm-hscl/SReachTools/blob/master/LICENSE.>
+% of this function is given in <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE 
+% https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
 %% Setup the system
 %%
 % discretization parameter
@@ -57,43 +56,41 @@ target_set = Polyhedron('lb', [-0.5, -0.5], 'ub', [0.5, 0.5]);
 
 %% Setup the target tube
 % Target tube is a generalization of the reach problem. The reach avoid target-tube 
-% is created by setting the first $<math xmlns="http://www.w3.org/1998/Math/MathML" 
-% display="inline"><mrow><mi mathvariant="italic">N</mi><mo>−</mo><mn>1</mn></mrow></math>$ 
-% sets in the tube as the |safe_set| and the final set as the |target_set|.
+% is created by setting the first $N-1$ sets in the tube as the |safe_set| and 
+% the final set as the |target_set|.
 %%
+% time horizon
+N = 5;
 % in target tube for the viability problem is equivalent to a tube of repeating
 % safe sets
-target_tube = TargetTube('reach-avoid', safe_set, target_set, 11);
+target_tube = TargetTube('reach-avoid', safe_set, target_set, N);
 
 % Plotting of target tube
 figure()
 hold on    
-for time_indx=1:5
-    target_tube_at_time_indx = Polyhedron('H',[target_tube(time_indx).A,zeros(size(target_tube(time_indx).A,1),1), target_tube(time_indx).b], 'He',[0 0 1 time_indx]);
+for time_indx=0:N
+    target_tube_at_time_indx = Polyhedron('H',[target_tube(time_indx+1).A,zeros(size(target_tube(time_indx+1).A,1),1), target_tube(time_indx+1).b], 'He',[0 0 1 time_indx]);
     plot(target_tube_at_time_indx, 'alpha',0.25);
-    axis([-1 1 -1 1 0 time_indx]);    
 end
+axis([-1 1 -1 1 0 N]);    
 box on;
 grid on;
 xlabel('x');
 ylabel('y');
 zlabel('time');
 title('Target tube');
-
-N = length(target_tube);
 %% Dynamic programming recursion via gridding
 % For dynamic programming, we need to create a grid over which we will perform 
 % the recursion
 %%
 % need to create a state space grid and input space grid
 ss_grid = SpaceGrid([-1, -1], [1, 1], 40);
-in_grid = InputGrid(-1, 1, 20);
+in_grid = InputGrid(-1, 1, 3);
 
 grid_probability = getDynProgSolForTargetTube(sys, ...
     ss_grid, in_grid, target_tube);
 
-
-figure(1);
+figure();
 ss_grid.plotGridProbability(grid_probability);
 view(0, 90)
 %% Reachability of a target tube for moving target problems
@@ -105,14 +102,15 @@ target_tube = TargetTube(Polyhedron('lb', [-1, -1], 'ub', [1, 1]), ...
     Polyhedron('lb', [-1, -1], 'ub', [0.5, 0.5]), ...
     Polyhedron('lb', [-1, -0.5], 'ub', [0.5, 1]), ...
     Polyhedron('lb', [-0.5, -0.5], 'ub', [1, 1]));
+N=length(target_tube)-1;
 % Plotting of target tube
 figure()
 hold on    
-for time_indx=1:5
-    target_tube_at_time_indx = Polyhedron('H',[target_tube(time_indx).A,zeros(size(target_tube(time_indx).A,1),1), target_tube(time_indx).b], 'He',[0 0 1 time_indx]);
+for time_indx=0:N
+    target_tube_at_time_indx = Polyhedron('H',[target_tube(time_indx+1).A,zeros(size(target_tube(time_indx+1).A,1),1), target_tube(time_indx+1).b], 'He',[0 0 1 time_indx]);
     plot(target_tube_at_time_indx, 'alpha',0.25);
-    axis([-1 1 -1 1 0 time_indx]);    
 end
+axis([-1 1 -1 1 0 N]);
 box on;
 grid on;
 xlabel('x');
@@ -127,6 +125,6 @@ in_grid = InputGrid(-0.1, 0.1, 3);
 grid_probability = getDynProgSolForTargetTube(sys, ...
     ss_grid, in_grid, target_tube);
 
-figure(2);
+figure();
 ss_grid.plotGridProbability(grid_probability);
 view(0, 90)
