@@ -67,7 +67,7 @@ classdef StochasticDisturbance < RandomVector
                     args{1} = varargin{1};
                     args{2} = varargin{2};
                 otherwise
-                    exc = SrtInternalError('Unsupported disturbance type');
+                    exc = SrtInvalidArgsError('Unsupported disturbance type');
                     throw(exc);
             end
             % Call to superclass constructor must be unconditional

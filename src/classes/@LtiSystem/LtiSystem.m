@@ -132,8 +132,8 @@ classdef LtiSystem < LtvSystem
             try
                 inpar.parse(varargin{:});
             catch err
-                exc = MException('SReachTools:invalidArgs', ...
-                    'Invalid arguments provided to LtiSystem');
+                exc = SrtInvalidArgsError(['Invalid arguments provided to ', ...
+                    'LtiSystem']);
                 exc = exc.addCause(err);
                 throwAsCaller(exc)
             end
