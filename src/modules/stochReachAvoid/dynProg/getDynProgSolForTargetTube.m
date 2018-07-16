@@ -67,20 +67,22 @@ function grid_prob = getDynProgSolForTargetTube(sys, ...
         throwAsCaller(SrtInvalidArgsError(['Dynamic programming methods ', ...
             'can only handle stochastic disturbances of type Gaussian']));
     end
-    
+    % n_targets is time_horizon + 1
     n_targets = length(target_tube);
 
     % start with initialization of probability of 1s for everything in final
     % target tube
+    fprintf('Set optimal value function at t=%d\n',n_targets-1);
+    
     grid_prob = zeros(size(state_grid.grid, 1), 1);
     ind_vector = state_grid.getIndicatorVectorForSet(target_tube( ...
         length(target_tube)));
     grid_prob(ind_vector) = 1;
     
-    fprintf('Set V_%d\n',n_targets-1);
-    for i = n_targets-1:-1:1
+    for itt = n_targets-1:-1:1
+        current_time = itt - 1;
         % Additional 000% for computeDynProgBackPropagation to refresh
-        fprintf('Computing V_%d...000%',i-1);
+        fprintf('Compute optimal value function at t=%d...0000%', current_time);
         % compute the 1-step back propagation
         % TODO: Allow for an option that will return the grid 
         % probability after each time instant, saving some computation time
@@ -89,7 +91,7 @@ function grid_prob = getDynProgSolForTargetTube(sys, ...
             state_grid, ...
             input_grid, ...
             grid_prob, ...
-            target_tube(i));
+            target_tube(itt));
         fprintf('\n');
     end
 end

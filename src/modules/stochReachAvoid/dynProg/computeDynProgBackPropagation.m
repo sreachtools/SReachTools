@@ -59,7 +59,8 @@ function grid_prob = computeDynProgBackPropagation(sys, ...
         use_fast_gaussian = false;
     end
     
-    print_marker = linspace(1,n_state_grid_points,10+1);
+    % For printing stuff --- Create fixed markers in the index space
+    print_marker = linspace(1,n_state_grid_points,100+1);
     print_marker(end) = print_marker(end)-1;
     print_marker_indx = 1;
     print_marker_val = (print_marker(2)-print_marker(1))/n_state_grid_points*100;

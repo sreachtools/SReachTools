@@ -55,8 +55,9 @@ function sys = getChainOfIntegLtiSystem(dim, T, varargin)
         {'numeric'}, {'integer', '>', 0}));
     inpar.addRequired('T', @(x) validateattributes(x, ...
         {'numeric'}, {'>', 0}));
-    inpar.addOptional('inputSpace', Polyhedron.emptySet(1), @(x) validateInputSpace(x));
-    inpar.addOptional('distSpace', Polyhedron(), @(x) validateattributes(x,...
+    inpar.addRequired('inputSpace', @(x) validateattributes(x, ...
+        {'Polyhedron'}, {'nonempty'}));
+    inpar.addOptional('dist', Polyhedron(), @(x) validateattributes(x,...
         {'Polyhedron', 'StochasticDisturbance', 'RandomVector'},{'nonempty'}));
     inpar.addOptional('dist_mat', [], @(x) validateattributes(x, {'numeric'},...
         {'nonempty'}));
@@ -85,28 +86,25 @@ function sys = getChainOfIntegLtiSystem(dim, T, varargin)
     end
     
     if any(strcmp('dist', inpar.UsingDefaults))
-        %Disturbance not specified
-        if ~any(strcmp('dist_mat', inpar.UsingDefaults))
-            % Dist_mat specified --- throw error
-            exc = SrtInvalidArgsError();
-            exc = exc.addCause(SrtInvalidArgsError(['Disturbance ', ...
-                'must be defined as well.']));
-            throwAsCaller(exc);
-        end
+        % Disturbance not specified (Impossible to specify dist_mat without
+        % specifying disturbance)
         sys = LtiSystem('StateMatrix', state_mat, ...
         'InputMatrix', input_mat, ...
         'InputSpace', inpar.Results.inputSpace);
     else
-        if isempty(inpar.Results.dist_mat)
+        % Disturbance specified
+        if any(strcmp('dist_mat', inpar.UsingDefaults))
+            % DisturbanceMatrix not specified
             validated_dist_mat = eye(dim);
         else
+            % DisturbanceMatrix specified
             validated_dist_mat = inpar.Results.dist_mat;
         end
         sys = LtiSystem('StateMatrix', state_mat, ...
             'InputMatrix', input_mat, ...
             'InputSpace', inpar.Results.inputSpace, ...
             'DisturbanceMatrix', validated_dist_mat, ...
-            'Disturbance', inpar.Results.distSpace);    
+            'Disturbance', inpar.Results.dist);    
     end   
 end
 
