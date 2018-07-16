@@ -11,6 +11,9 @@ classdef TargetTube
 % 
 % % Viability Problem
 % tt = TargetTube('viability', safe_set, time_horizon);
+%
+% Note that both of the above mechanisms will yield a target tube of length
+% time_horizon+1 --- T_0, T_1, ..., T_{time_horizon}.
 % 
 % % General tube
 % % Can use general Polyhedron objects, for self-containment of the 
