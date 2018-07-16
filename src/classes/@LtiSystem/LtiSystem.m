@@ -210,14 +210,14 @@ classdef LtiSystem < LtvSystem
         end
 
         % Methods inherited from LTV
-        function [Z,G,H] = getConcatMats(sys, time_horizon);
+        function [Z,G,H] = getConcatMats(sys, time_horizon)
 
             [Z,G,H] = getConcatMats@LtvSystem(sys, time_horizon);
 
         end
 
         function [concat_input_space_A, concat_input_space_b] =...
-            getConcatInputSpace(sys, time_horizon);
+            getConcatInputSpace(sys, time_horizon)
 
             [concat_input_space_A, concat_input_space_b] =...
                 getConcatInputSpace@LtvSystem(sys, time_horizon);

@@ -58,12 +58,15 @@ function prob = getProbReachSet(sys, ...
     assert(isscalar(desired_accuracy), ...
            'SReachTools:invalidArgs', ...
            'Expected a scalar value for desired_accuracy');
-
+    if desired_accuracy < 1e-2
+        warning('Accuracy of smaller than 1e-2 might be hard to enforce.');
+    end
+    
     % target_set is a non-empty Polyhedron
     assert(isa(target_set, 'Polyhedron') && ~target_set.isEmptySet(), ...
            'SReachTools:invalidArgs', ...
            'Target set must be a non-empty polyhedron');
-
+    
     % Compute the mean and the covariance matrices
     % GUARANTEES: Gaussian-perturbed LTI system, initial state, and target time
     [mean_x, cov_x] = getFSRPDMeanCov(sys, initial_state, target_time);
