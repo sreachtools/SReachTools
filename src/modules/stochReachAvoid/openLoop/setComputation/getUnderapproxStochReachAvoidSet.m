@@ -319,8 +319,47 @@ function [underapprox_stoch_reach_avoid_polytope, ...
                 % at least one x for which W(x,U)= prob_thresh_of_interest, then
                 % R would have been >=0, and the above problem would have been
                 % feasible)
-                max_underapprox_reach_avoid_prob = 0;
-                opt_input_vector_for_xmax = nan(sys.input_dim * time_horizon,1);    
+                % % Option 1: Do nothing and return NaN
+                % max_underapprox_reach_avoid_prob = 0;
+                % opt_input_vector_for_xmax = nan(sys.input_dim * time_horizon,1);    
+                % Option 2: Compute W_max
+                disp('Computing W_max');
+                cvx_begin quiet
+                    variable mean_X(sys.state_dim * time_horizon, 1);
+                    variable deltai(no_linear_constraints, 1);
+                    variable norminvover(no_linear_constraints, 1);
+                    variable xmax(sys.state_dim, 1);
+                    variable Umax(sys.input_dim * time_horizon,1);
+
+                    maximize (1-sum(deltai))
+                    subject to
+                        % Chance-constraint reformulation of the safety prob (1-6)
+                        % (1) Slack variables that are bounded below by the
+                        % piecewise linear approximation of \phi^{-1}(1-\delta)
+                        for deltai_indx=1:no_linear_constraints
+                            norminvover(deltai_indx) >= invcdf_approx_m.*...
+                                deltai(deltai_indx) + invcdf_approx_c; 
+                        end
+                        % (2) Trajectory
+                        mean_X == Z * xmax + H * Umax +...
+                            mean_X_sans_input_sans_initial_state;
+                        % (3) Ono's type of reformulation of chance constraints
+                        concat_target_tube_A_rand* mean_X +...
+                            sigma_vector * norminvover...  
+                                <= concat_target_tube_b_rand;
+                        % (4) Lower bound on delta due to pwl's domain
+                        deltai >= lb_deltai;
+                        % (5) Upper bound on delta to ensure \phi^{-1}(1-\delta) is
+                        % concave
+                        deltai <= 0.5;
+                        % Safety constraints
+                        init_safe_set.A * xmax  <= init_safe_set.b
+                        init_safe_set.Ae * xmax == init_safe_set.be
+                        % Input constraints
+                        concat_input_space_A * Umax <= concat_input_space_b;
+                cvx_end
+                max_underapprox_reach_avoid_prob = 1-sum(deltai);
+                opt_input_vector_for_xmax = Umax;    
             end
             % If non-trivial underapproximative stochastic reach-avoid polytope
             if max_underapprox_reach_avoid_prob < prob_thresh_of_interest
@@ -328,8 +367,9 @@ function [underapprox_stoch_reach_avoid_polytope, ...
                 % admissible open-loop policy exists
                 fprintf(['Polytopic underapproximation does not exist for ',...
                          'alpha = %1.2f since maximum reach probability ',...
-                         'with open-loop is below alpha.\n\n'], ...
-                         prob_thresh_of_interest);
+                         '(%1.3f) with open-loop is below alpha.\n\n'], ...
+                         prob_thresh_of_interest,...
+                         max_underapprox_reach_avoid_prob);
                 % Assigning the outputs to trivial results
                 underapprox_stoch_reach_avoid_polytope = Polyhedron();
                 xmax = nan(sys.state_dim, 1);
@@ -358,8 +398,8 @@ function [underapprox_stoch_reach_avoid_polytope, ...
                     % Get direction_index-th direction in the hyperplane
                     direction = set_of_direction_vectors(:,direction_index);
 
-%                     fprintf('Analyzing direction :%2d/%2d\n',...
-%                         direction_index, no_of_direction_vectors);
+                    fprintf('Analyzing direction :%2d/%2d\n',...
+                        direction_index, no_of_direction_vectors);
 
                     %% Solve the optimization problem to compute the boundary
                     %% point of the desired underapproximative stochastic
