@@ -1,5 +1,4 @@
-function [cdf_approx_m, cdf_approx_c,varargout] =...
-    computeNormCdfInvOverApprox()
+function [cdf_approx_m, cdf_approx_c,varargout] = computeNormCdfInvOverApprox()
 % SReachTools/stochasticReachAvoid/computeNormCdfInvOverApprox: Compute a
 % piecewise-linear overapproximation of norminv(1-x) for x\in[1e-5,0.5] to the
 % quality of 1e-4
@@ -13,24 +12,7 @@ function [cdf_approx_m, cdf_approx_c,varargout] =...
 % computeCcLowerBoundStochReachAvoidPwlRisk.
 %
 % =============================================================================
-% 
-% See the quality of the piecewise linear approximation in the range [1e-5,0.5]
-% by running the following command
 %
-% clear;close all;
-% [cdf_approx_m, cdf_approx_c,a,diff_val] = computeNormCdfInvOverApprox();
-% x=[a:1e-9:1e-4,1e-4:1e-8:1e-3,1e-3:1e-7:0.5];
-% y=max(cdf_approx_m*x+cdf_approx_c);
-% y_true = norminv(1-x);
-% err=y-y_true;
-% figure(); plot(x,y,'ro-'); hold on; plot(x,y_true,'b*-'); legend('PWL','True')
-% xlabel('x'),ylabel('norminv(1-x)');title('Approximation');
-% figure(); plot(x,err);hold on;plot(x,1e-4*ones(length(x),1)); 
-% xlim([-0.2,0.5]);ylim([-1e-5,1.5e-4]);  xlabel('x'); ylabel('PWL-true curve');
-% title('Approximation quality');
-% fprintf(['Min error: %1.4e | Max error: %1.4e | No. of ineq: %d | Diff',...
-%   'val:%1.4e\n'], min(err), max(err), length(cdf_approx_m),diff_val);
-% % Check that diff_val>1e-8 and min(err)>-10*eps
 % 
 % Inputs: None
 % -------
@@ -92,7 +74,8 @@ function [cdf_approx_m, cdf_approx_c,varargout] =...
         cdf_approx_c(indx_x) = y_1 - cdf_approx_m(indx_x) * x_1;
     end    
     varargout{1} = lb_x;
-    varargout{2} = diff_val;
+    varargout{2} = 1e-4;     % Max error estimate
+    varargout{3} = x;
 end
 
 %% Other options
@@ -103,3 +86,28 @@ end
 %     x_1 = x(1:end-1)/3 + x(2:end)*2/3;
 %     x_2 = x(1:end-1)*2/3 + x(2:end)/3;
 %     x = sort([x,x_1,x_2]);                          %gamma = 1.13;  n=327
+
+
+%% Sanity check
+% See the quality of the piecewise linear approximation in the range [1e-5,0.5]
+% by running the following command
+%
+% clear;close all;
+% [cdf_approx_m, cdf_approx_c,a, max_error_pwl, x_pwl] = computeNormCdfInvOverApprox();
+% x = x_pwl(1);
+% for x_val = x_pwl(2:end)
+%     x = [x, linspace(x(end), x_val, 100)];
+% end
+% y=max(cdf_approx_m*x+cdf_approx_c);
+% y_true = norminv(1-x);
+% err=y-y_true;
+% figure(); plot(x,y,'ro-'); hold on; plot(x,y_true,'b*-'); legend('PWL','True')
+% xlabel('x'),ylabel('norminv(1-x)');title('Approximation');
+% figure(); plot(x,err,'ro-');hold on;plot(x,1e-4*ones(length(x),1)); 
+% xlim([-0.2,0.5]);ylim([-1e-5,1.5e-4]);  xlabel('x'); ylabel('PWL-true curve');
+% title('Approximation quality');
+% if max(err) > max_error_pwl
+%   disp('Predicted error is smaller than the original error');
+% end
+% fprintf(['Min error: %1.4e | Max error: %1.4e | No. of ineq: %d\n'],...
+%   min(err), max(err), length(cdf_approx_m));

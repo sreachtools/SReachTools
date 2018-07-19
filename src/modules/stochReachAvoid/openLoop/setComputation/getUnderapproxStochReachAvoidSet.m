@@ -83,14 +83,17 @@ function [underapprox_stoch_reach_avoid_polytope, ...
 %                        - (Optional) Maximum attainable stochastic reach-avoid
 %                          prob using an open-loop controller; Maximum
 %                          terminal-hitting time reach-avoid prob at xmax
-%   opt_theta_i      - (Optional) Vector comprising of scaling factors along
+%   opt_theta_i          - (Optional) Vector comprising of scaling factors along
 %                          each direction of interest
-%   opt_reachAvoid_i - (Optional) Maximum terminal-hitting time reach-avoid
+%   opt_reachAvoid_i     - (Optional) Maximum terminal-hitting time reach-avoid
 %                          prob at the vertices of the polytope
-%   R                - (Optional) Chebyshev radius associated with xmax
 %   vertex_underapprox_polytope
-%                    - (Optional) Vertices of the polytope: xmax + opt_theta_i *
+%                        - (Optional) Vertices of the polytope: xmax + opt_theta_i *
 %                          set_of_direction_vectors
+%   R                    - (Optional for ccc) Chebyshev radius associated with
+%                          xmax
+%   artificial_consv_pwl - (Optional for ccc) Artificial conservativeness due to
+%                          the use of piecewise linear approximation
 %
 % See also examples/FtCVXUnderapproxVerifyCWH.mlx*.
 %
@@ -146,6 +149,8 @@ function [underapprox_stoch_reach_avoid_polytope, ...
         concat_target_tube_A(n_ineq_init_set+1:end, sys.state_dim+1:end);
     concat_target_tube_b_rand =...
         concat_target_tube_b(n_ineq_init_set+1:end);
+    % Compute M --- the number of polytopic halfspaces to worry about
+    n_lin_const = size(concat_target_tube_A_rand,1);
 
     % Construct the constrained initial safe set
     init_safe_set = Polyhedron('H', target_tube(1).H,...
@@ -164,7 +169,7 @@ function [underapprox_stoch_reach_avoid_polytope, ...
             'SReachTools:invalidArgs', ...
             'prob_thresh_of_interest must be a scalar in [0.5,1]');
 
-    % Get the no_of_direction vectors
+    % Get the n_direction vectors
     assert( size(set_of_direction_vectors, 1) == sys.state_dim, ...
             'SReachTools:invalidArgs', ...
             ['set_of_direction_vectors should be a collection of ',...
@@ -173,7 +178,7 @@ function [underapprox_stoch_reach_avoid_polytope, ...
             'SReachTools:invalidArgs', ...
             'set_of_direction_vectors should at least have two directions.');
     % TODO: Do input handling for uniqueness
-    no_of_direction_vectors = size(set_of_direction_vectors, 2);
+    n_direction_vectors = size(set_of_direction_vectors, 2);
 
     % Compute H, mean_X_sans_input_sans_initial_state, cov_X_sans_input, and Z.
     % See @LtiSystem\getConcatMats for the notation.
@@ -185,15 +190,19 @@ function [underapprox_stoch_reach_avoid_polytope, ...
         case 'ccc'
             %% Computation of xmax and the associated opt open-loop controller
             % TODO: Translate desired_accuracy to piecewise_count
-            [invcdf_approx_m, invcdf_approx_c, lb_deltai] =...
+            [invcdf_approx_m, invcdf_approx_c, lb_deltai, max_err_pwl] =...
                 computeNormCdfInvOverApprox();
+            % Using PWL approximation introduces an artificial conservativeness.
+            % This artificial conservativeness is proportional to the number of
+            % linear constraints and the maximum of the the overapproximation
+            % error (max_err_pwl) or the closest we can get to zero for
+            % normcdfinv (lb_deltai). 
+            artificial_consv_pwl = max(max_err_pwl,lb_deltai) * n_lin_const;
 
             %% PWL code preps
             % Compute \sqrt{h_i^\top * \Sigma_X_no_input * h_i}
             sigma_vector = diag(sqrt(diag(concat_target_tube_A_rand *...
                 cov_X_sans_input * concat_target_tube_A_rand')));
-            % Compute M --- the number of polytopic halfspaces to worry about
-            no_linear_constraints = size(concat_target_tube_A_rand,1);
             
             %% Solve the optimization problem to compute a point that is deepest
             %% inside the desired set --- First find the maximum value, then
@@ -210,8 +219,8 @@ function [underapprox_stoch_reach_avoid_polytope, ...
             cvx_clear
             cvx_begin quiet
                 variable mean_X(sys.state_dim * time_horizon, 1);
-                variable deltai(no_linear_constraints, 1);
-                variable norminvover(no_linear_constraints, 1);
+                variable deltai(n_lin_const, 1);
+                variable norminvover(n_lin_const, 1);
                 variable xmax(sys.state_dim, 1);
                 variable Umax(sys.input_dim * time_horizon,1);
             
@@ -220,7 +229,7 @@ function [underapprox_stoch_reach_avoid_polytope, ...
                     % Chance-constraint reformulation of the safety prob (1-6)
                     % (1) Slack variables that are bounded below by the
                     % piecewise linear approximation of \phi^{-1}(1-\delta)
-                    for deltai_indx=1:no_linear_constraints
+                    for deltai_indx=1:n_lin_const
                         norminvover(deltai_indx) >= invcdf_approx_m.*...
                             deltai(deltai_indx) + invcdf_approx_c; 
                     end
@@ -261,8 +270,8 @@ function [underapprox_stoch_reach_avoid_polytope, ...
                     sqrt(diag(init_safe_set.A*init_safe_set.A')); 
                 cvx_begin quiet
                     variable mean_X(sys.state_dim * time_horizon, 1);
-                    variable deltai(no_linear_constraints, 1);
-                    variable norminvover(no_linear_constraints, 1);
+                    variable deltai(n_lin_const, 1);
+                    variable norminvover(n_lin_const, 1);
                     variable xmax(sys.state_dim, 1);
                     variable Umax(sys.input_dim * time_horizon,1);
                     variable R nonnegative;
@@ -272,7 +281,7 @@ function [underapprox_stoch_reach_avoid_polytope, ...
                         % Chance-constraint reformulation of safety prob (1-6)
                         % (1) Slack variables that are bounded below by the
                         % piecewise linear approximation of \phi^{-1}(1-\delta)
-                        for deltai_indx=1:no_linear_constraints
+                        for deltai_indx=1:n_lin_const
                             norminvover(deltai_indx) >= invcdf_approx_m.*...
                                 deltai(deltai_indx) + invcdf_approx_c; 
                         end
@@ -303,7 +312,7 @@ function [underapprox_stoch_reach_avoid_polytope, ...
                 % user-provided set_of_direction_vectors will span the affine
                 % hull.  Compute xmax + directions \forall directions
                 check_set_of_direction_vectors = ...
-                    repmat(xmax,1,no_of_direction_vectors)...
+                    repmat(xmax,1,n_direction_vectors)...
                         + set_of_direction_vectors;
                 % Check if all of these vectors satisfy the equality constraints
                 % of init_safe_set
@@ -320,14 +329,14 @@ function [underapprox_stoch_reach_avoid_polytope, ...
                 % R would have been >=0, and the above problem would have been
                 % feasible)
                 % % Option 1: Do nothing and return NaN
-                % max_underapprox_reach_avoid_prob = 0;
+                % max_underapprox_reach_avoid_prob = NaN;
                 % opt_input_vector_for_xmax = nan(sys.input_dim * time_horizon,1);    
                 % Option 2: Compute W_max
                 disp('Computing W_max');
                 cvx_begin quiet
                     variable mean_X(sys.state_dim * time_horizon, 1);
-                    variable deltai(no_linear_constraints, 1);
-                    variable norminvover(no_linear_constraints, 1);
+                    variable deltai(n_lin_const, 1);
+                    variable norminvover(n_lin_const, 1);
                     variable xmax(sys.state_dim, 1);
                     variable Umax(sys.input_dim * time_horizon,1);
 
@@ -336,7 +345,7 @@ function [underapprox_stoch_reach_avoid_polytope, ...
                         % Chance-constraint reformulation of the safety prob (1-6)
                         % (1) Slack variables that are bounded below by the
                         % piecewise linear approximation of \phi^{-1}(1-\delta)
-                        for deltai_indx=1:no_linear_constraints
+                        for deltai_indx=1:n_lin_const
                             norminvover(deltai_indx) >= invcdf_approx_m.*...
                                 deltai(deltai_indx) + invcdf_approx_c; 
                         end
@@ -352,17 +361,24 @@ function [underapprox_stoch_reach_avoid_polytope, ...
                         % (5) Upper bound on delta to ensure \phi^{-1}(1-\delta) is
                         % concave
                         deltai <= 0.5;
+                        % We can't go below 0.5 with this method
+                        (1-sum(deltai)) >= 0.5;
                         % Safety constraints
                         init_safe_set.A * xmax  <= init_safe_set.b
                         init_safe_set.Ae * xmax == init_safe_set.be
                         % Input constraints
                         concat_input_space_A * Umax <= concat_input_space_b;
                 cvx_end
-                max_underapprox_reach_avoid_prob = 1-sum(deltai);
-                opt_input_vector_for_xmax = Umax;    
+                if strcmpi(cvx_status, 'Solved')
+                    max_underapprox_reach_avoid_prob = 1-sum(deltai);
+                    opt_input_vector_for_xmax = Umax;    
+                else
+                    max_underapprox_reach_avoid_prob = NaN;
+                    opt_input_vector_for_xmax = nan(sys.input_dim * time_horizon,1);                    
+                end
             end
             % If non-trivial underapproximative stochastic reach-avoid polytope
-            if max_underapprox_reach_avoid_prob < prob_thresh_of_interest
+            if max_underapprox_reach_avoid_prob < prob_thresh_of_interest || isnan(max_underapprox_reach_avoid_prob)
                 % Stochastic reach-avoid underapproximation is empty and no
                 % admissible open-loop policy exists
                 fprintf(['Polytopic underapproximation does not exist for ',...
@@ -374,11 +390,11 @@ function [underapprox_stoch_reach_avoid_polytope, ...
                 underapprox_stoch_reach_avoid_polytope = Polyhedron();
                 xmax = nan(sys.state_dim, 1);
                 opt_input_vector_at_vertices =...
-                    nan(sys.input_dim * time_horizon, no_of_direction_vectors);
-                opt_theta_i = nan(1, no_of_direction_vectors);
-                opt_reachAvoid_i = nan(1, no_of_direction_vectors);
+                    nan(sys.input_dim * time_horizon, n_direction_vectors);
+                opt_theta_i = nan(1, n_direction_vectors);
+                opt_reachAvoid_i = nan(1, n_direction_vectors);
                 vertex_underapprox_polytope = nan(sys.state_dim,...
-                    no_of_direction_vectors);
+                    n_direction_vectors);
                 R = nan;
             else
                 % Stochastic reach-avoid underapproximation is non-trivial
@@ -389,17 +405,17 @@ function [underapprox_stoch_reach_avoid_polytope, ...
 
                 % Pre-allocation of relevant outputs
                 opt_input_vector_at_vertices =...
-                    zeros(sys.input_dim * time_horizon,no_of_direction_vectors);
-                opt_theta_i = zeros(1, no_of_direction_vectors);
-                opt_reachAvoid_i = zeros(1, no_of_direction_vectors);
+                    zeros(sys.input_dim * time_horizon,n_direction_vectors);
+                opt_theta_i = zeros(1, n_direction_vectors);
+                opt_reachAvoid_i = zeros(1, n_direction_vectors);
 
                 %% Iterate over all direction vectors + xmax
-                for direction_index = 1: no_of_direction_vectors
+                for direction_index = 1: n_direction_vectors
                     % Get direction_index-th direction in the hyperplane
                     direction = set_of_direction_vectors(:,direction_index);
 
                     fprintf('Analyzing direction :%2d/%2d\n',...
-                        direction_index, no_of_direction_vectors);
+                        direction_index, n_direction_vectors);
 
                     %% Solve the optimization problem to compute the boundary
                     %% point of the desired underapproximative stochastic
@@ -415,8 +431,8 @@ function [underapprox_stoch_reach_avoid_polytope, ...
                     %              risk allocation]
                     cvx_begin quiet
                         variable mean_X(sys.state_dim * time_horizon, 1);
-                        variable deltai(no_linear_constraints, 1);
-                        variable norminvover(no_linear_constraints, 1);
+                        variable deltai(n_lin_const, 1);
+                        variable norminvover(n_lin_const, 1);
                         variable theta nonnegative;
                         variable boundary_point(sys.state_dim, 1);
                         variable U_vector(sys.input_dim * time_horizon,1);
@@ -434,7 +450,7 @@ function [underapprox_stoch_reach_avoid_polytope, ...
                             % prob(1-6) (1) Slack variables that are bounded
                             % below by the piecewise linear approximation of
                             % \phi^{-1}(1-\delta)
-                            for deltai_indx=1:no_linear_constraints
+                            for deltai_indx=1:n_lin_const
                                 norminvover(deltai_indx) >= invcdf_approx_m.*...
                                     deltai(deltai_indx) + invcdf_approx_c; 
                             end
@@ -520,11 +536,11 @@ function [underapprox_stoch_reach_avoid_polytope, ...
                 underapprox_stoch_reach_avoid_polytope = Polyhedron();
                 opt_input_vector_at_vertices = nan(...
                     sys.input_dim * time_horizon, ...
-                    no_of_direction_vectors);
-                opt_theta_i = zeros(1, no_of_direction_vectors);
-                opt_reachAvoid_i = zeros(1, no_of_direction_vectors);
+                    n_direction_vectors);
+                opt_theta_i = zeros(1, n_direction_vectors);
+                opt_reachAvoid_i = zeros(1, n_direction_vectors);
                 vertex_underapprox_polytope = nan(sys.state_dim,...
-                    no_of_direction_vectors);
+                    n_direction_vectors);
             else
                 % Stochastic reach-avoid underapproximation is non-trivial
                 fprintf(['Polytopic underapproximation exists for alpha = ',...
@@ -533,19 +549,19 @@ function [underapprox_stoch_reach_avoid_polytope, ...
                          max_underapprox_reach_avoid_prob);
 
                 % For storing boundary points
-                opt_theta_i = zeros(1, no_of_direction_vectors);
-                opt_reachAvoid_i = zeros(1, no_of_direction_vectors);
+                opt_theta_i = zeros(1, n_direction_vectors);
+                opt_reachAvoid_i = zeros(1, n_direction_vectors);
                 opt_input_vector_at_vertices = nan(...
                     sys.input_dim * time_horizon, ...
-                    no_of_direction_vectors);
+                    n_direction_vectors);
 
                 %% Iterate over all direction vectors + xmax
-                for direction_index = 1: no_of_direction_vectors
+                for direction_index = 1: n_direction_vectors
                     % Get direction_index-th direction in the hyperplane
                     direction = set_of_direction_vectors(:,direction_index);
 
                     fprintf('Analyzing direction :%2d/%2d\n',...
-                        direction_index, no_of_direction_vectors);
+                        direction_index, n_direction_vectors);
 
                     %% Bounds on theta \in [lb_on_theta, ub_on_theta] 
                     %% Lower bound is always 0 as xmax could be a vertex
@@ -673,6 +689,7 @@ function [underapprox_stoch_reach_avoid_polytope, ...
     varargout{6} = vertex_underapprox_polytope;
     if strcmpi(method, 'ccc')
         varargout{7} = R;
+        varargout{8} = artificial_consv_pwl;
     end
 end
 
@@ -707,5 +724,5 @@ end
 %end
 %fprintf(['Analyzing direction (shown transposed) ', ...
 %         ':%d/%d\n'],...
-%         direction_index,no_of_direction_vectors);
+%         direction_index,n_direction_vectors);
 %disp(direction');

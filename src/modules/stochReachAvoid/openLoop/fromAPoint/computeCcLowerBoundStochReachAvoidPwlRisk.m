@@ -108,26 +108,35 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
     optimal_input_vector = nan(sys.input_dim * time_horizon,1);
     
     %% Compute M --- the number of polytopic halfspaces to worry about
-    no_linear_constraints = size(concat_target_tube_A,1);
+    n_lin_const = size(concat_target_tube_A,1);
 
     %% Compute \sqrt{h_i^\top * \Sigma_X_no_input * h_i}
     sigma_vector = diag(sqrt(diag(concat_target_tube_A *...
         cov_X_sans_input * concat_target_tube_A')));
 
     % TODO: Translate desired_accuracy to piecewise_count
-    [invcdf_approx_m, invcdf_approx_c, lb_deltai]=computeNormCdfInvOverApprox();
+    [invcdf_approx_m, invcdf_approx_c, lb_deltai, max_error_pwl]=...
+        computeNormCdfInvOverApprox();
+
+    % PWL approach introduces an artifical conservativeness of max_gap *
+    % n_lin_const
+    if max(max_error_pwl, lb_deltai) * n_lin_const > desired_accuracy 
+        SrtInvalidArgsError(error(sprintf(['Artificial conservativeness ',...
+            'introduced by piecewise linear approximation can not satisfy ',...
+            'the given desired accuracy bound (%1.3e).'], desired_accuracy))]);
+    end
     
     %% Solve the feasibility problem
     cvx_begin quiet
         variable U_vector(sys.input_dim * time_horizon,1);
         variable mean_X(sys.state_dim * time_horizon, 1);
-        variable deltai(no_linear_constraints, 1);
-        variable norminvover(no_linear_constraints, 1);
+        variable deltai(n_lin_const, 1);
+        variable norminvover(n_lin_const, 1);
         minimize sum(deltai)
         subject to
             mean_X == mean_X_sans_input + H * U_vector;
             concat_input_space_A * U_vector <= concat_input_space_b;
-            for deltai_indx=1:no_linear_constraints
+            for deltai_indx=1:n_lin_const
                 norminvover(deltai_indx) >= invcdf_approx_m.*...
                     deltai(deltai_indx) + invcdf_approx_c; 
             end
