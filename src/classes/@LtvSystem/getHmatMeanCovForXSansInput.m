@@ -101,7 +101,18 @@ function [varargout] = getHmatMeanCovForXSansInput(sys, ...
         mean_X_sans_input = Z * initial_state + G * mean_concat_disturb;
         cov_X_sans_input = G * cov_concat_disturb * G';
     end
-
+    
+    % Ensure that cov_X_sans_input is a symmetric matrix
+    if ~issymmetric(cov_X_sans_input)
+        % Compute the symmetric component of it
+        symm_cov_X = (cov_X_sans_input+cov_X_sans_input')/2;
+        % Max error element-wise
+        max_err = max(max(abs(cov_X_sans_input - symm_cov_X)));
+        warning(sprintf(['Non-symmetric covariance matrix made symmetric (max',...
+            ' elementwise error: %1.3e)!'], max_err));
+        cov_X_sans_input = symm_cov_X;        
+    end
+    
     % Optional output arguments
     varargout{1} = H;
     varargout{2} = mean_X_sans_input;
