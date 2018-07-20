@@ -316,7 +316,7 @@ classdef TargetTube
         % License for the use of this function is given in
         %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         %
-        %   
+        %  
 
             if size(X, 1) ~= length(obj) * obj.dim
                 throwAsCaller(SrtInvalidArgsError(['Concatenated state vector/matrix provided has incorrect ',...
@@ -337,6 +337,34 @@ classdef TargetTube
                 contains_flag_all(t_indx,:) = obj.tube(t_indx).contains(X_at_t_indx);
             end
             contains_flag = min(contains_flag_all);
+        end
+        
+        function v = end(obj, ~, ~)
+        % SReachTools/TargetTube/end: Overloading of MATLAB internal end 
+        % function for objects
+        % ======================================================================
+        %
+        % Overloading of MATLAB internal end function for objects. Allows
+        % for use of end in array indexing
+        % 
+        % ======================================================================
+        %
+        % v = end(obj, ~, ~);
+        % 
+        % Inputs: None
+        % Outputs:
+        % --------
+        %   v - Value of end; equal to the length of the target tube
+        %
+        % ======================================================================
+        % 
+        % This function is part of the Stochastic Optimal Control Toolbox.
+        % License for the use of this function is given in
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %
+        %
+          
+            v = length(obj);
         end
     end    
 end
