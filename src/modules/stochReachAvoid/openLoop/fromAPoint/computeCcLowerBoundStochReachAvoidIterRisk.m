@@ -48,36 +48,35 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
 % 
 % Inputs:
 % -------
-%   sys                  - LtiSystem object describing the system to be verified
-%   time_horizon         - Time horizon of the stochastic reach-avoid problem
-%   concat_input_space_A,
-%    concat_input_space_b- (A,b) Halfspace representation for the
-%                           polytope U^{time_horizon} set.        
-%   concat_target_tube_A,
-%    concat_target_tube_b- (A,b) Halfspace representation for the target tube.
-%                           For example, the terminal reach-avoid problem
-%                           requires a polytope of the form
-%                           safe_set^{time_horizon-1} x target_set.        
-%   H                    - Concatenated input matrix (see
-%                           @LtiSystem/getConcatMats for the notation used)
-%   mean_X_sans_input    - Mean of X without the influence of the input
-%   cov_X_sans_input     - Covariance of X without the influence of the input
-%   desired_accuracy     - Desired accuracy for the optimal stochastic
-%                           reach-avoid probability [If unsure, use 1e-3]
+%   sys                   - LtiSystem object
+%   time_horizon          - Time horizon
+%   concat_input_space_A, 
+%    concat_input_space_b - (A,b) Halfspace representation for the
+%                            polytope U^{time_horizon} set.        
+%   concat_target_tube_A, 
+%    concat_target_tube_b - (A,b) Halfspace representation for the target tube
+%                            from t=1 to time_horizon.  For example, the
+%                            terminal reach-avoid problem requires a polytope of
+%                            the form safe_set^{time_horizon-1} x target_set.        
+%   H                     - Concatenated input matrix (see
+%                            @LtiSystem/getConcatMats for the notation used)
+%   mean_X_sans_input     - Mean of X without the influence of the input
+%   cov_X_sans_input      - Covariance of X without the influence of the input
+%   desired_accuracy      - Desired accuracy for the optimal stochastic
+%                           reach-avoid probability
 %
 % Outputs:
 % --------
 %   lb_stoch_reach_avoid - Lower bound on the terminal-hitting stochastic
-%                          reach avoid problem computed using Fourier
-%                          transform and convex optimization
+%                          reach avoid problem computed
 %   optimal_input_vector - Optimal open-loop policy
 %                          ((sys.input_dim) * time_horizon)-dimensional 
 %                          vector U = [u_0; u_1; ...; u_N] (column vector)
 %
 % See also verificationOfCwhDynamics,
-% getFtLowerBoundStochasticReachAvoid,
-% getFtBasedUnderapproxStochReachAvoidSet and
-% reachAvoidProbAssumingValidInitialState
+% getLowerBoundStochReachAvoid, computeCcLowerBoundStochReachAvoidPwlRisk, and
+% computeFtLowerBoundStochReachAvoid.
+
 %
 % Notes:
 % ------
@@ -93,6 +92,7 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
 %                      initialization.
 % * See @LtiSystem/getConcatMats for more information about the
 %     notation used.
+% * If unsure about the accuracy, use 1e-3.
 % 
 % ============================================================================
 % 
@@ -142,7 +142,7 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
             %% Solve the feasibility problem
             % Construct the back-off (Hessem's term) in the constraints
             scaled_norminv=sigma_vector.*...
-                              norminv(ones(no_linear_constraints,1)- delta_vec);
+                norminv(ones(no_linear_constraints,1)- delta_vec);
             cvx_begin quiet
                 variable U_vector(sys.input_dim * time_horizon,1);
                 variable mean_X(sys.state_dim * time_horizon, 1);

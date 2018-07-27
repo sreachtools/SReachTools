@@ -193,16 +193,6 @@ function [lower_bound_stoch_reach_avoid, optimal_input_vector] = ...
                              exp(-optimal_negative_log_reach_avoid_prob);
     end
 end
-
-% TODO: We could have a scaling factor later discounting
-%discount_vector = 0.1.^[0:length(concat_target_tube_b)-1];
-    %minimize discount_vector*slack_variable
-
-% TODO: Approach 2: Use a convex chance-constrained formulation
-% originally proposed by K. Lesser in CDC 2013 paper but modified by A.
-% P. Vinod in a future publication.
-
-% Approach 3: Center the trajectory as close as possible
 %dual_norm_of_safe_set_A = ...
 %    sqrt(diag(concat_target_tube_A*concat_target_tube_A')); 
 %cvx_begin quiet

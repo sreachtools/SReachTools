@@ -46,23 +46,22 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
 % 
 % Inputs:
 % -------
-%   sys                  - LtiSystem object describing the system to be verified
-%   time_horizon         - Time horizon of the stochastic reach-avoid problem
-%   concat_input_space_A,
-%    concat_input_space_b- (A,b) Halfspace representation for the
-%                           polytope U^{time_horizon} set.        
-%   concat_target_tube_A,
-%    concat_target_tube_b- (A,b) Halfspace representation for the target tube.
-%                           For example, the terminal reach-avoid problem
-%                           requires a polytope of the form
-%                           safe_set^{time_horizon-1} x target_set.        
-%   H                    - Concatenated input matrix (see
-%                           @LtiSystem/getConcatMats for the notation used)
-%   mean_X_sans_input    - Mean of X without the influence of the input
-%   cov_X_sans_input     - Covariance of X without the influence of the input
-%   desired_accuracy     - (UNUSED: TODO) Desired accuracy for the optimal
-%                          stochastic reach-avoid probability [If unsure, use
-%                          1e-3]
+%   sys                   - LtiSystem object
+%   time_horizon          - Time horizon
+%   concat_input_space_A, 
+%    concat_input_space_b - (A,b) Halfspace representation for the
+%                            polytope U^{time_horizon} set.        
+%   concat_target_tube_A, 
+%    concat_target_tube_b - (A,b) Halfspace representation for the target tube
+%                            from t=1 to time_horizon.  For example, the
+%                            terminal reach-avoid problem requires a polytope of
+%                            the form safe_set^{time_horizon-1} x target_set.        
+%   H                     - Concatenated input matrix (see
+%                            @LtiSystem/getConcatMats for the notation used)
+%   mean_X_sans_input     - Mean of X without the influence of the input
+%   cov_X_sans_input      - Covariance of X without the influence of the input
+%   desired_accuracy      - Desired accuracy for the optimal stochastic
+%                           reach-avoid probability
 %
 % Outputs:
 % --------
@@ -120,9 +119,9 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
     % PWL approach introduces an artifical conservativeness of max_gap *
     % n_lin_const
     if max(max_error_pwl, lb_deltai) * n_lin_const > desired_accuracy 
-        SrtInvalidArgsError(error(sprintf(['Artificial conservativeness ',...
+        SrtInvalidArgsError(sprintf(['Artificial conservativeness ',...
             'introduced by piecewise linear approximation can not satisfy ',...
-            'the given desired accuracy bound (%1.3e).'], desired_accuracy))]);
+            'the given desired accuracy bound (%1.3e).'], desired_accuracy));
     end
     
     %% Solve the feasibility problem
@@ -144,6 +143,7 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
             deltai >= lb_deltai;
             deltai <= 0.5;
     cvx_end
+
     %% Overwrite the solutions
     if strcmpi(cvx_status, 'Solved')
         lb_stoch_reach_avoid = 1-sum(deltai);

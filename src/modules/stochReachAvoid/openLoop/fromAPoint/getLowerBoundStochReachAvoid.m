@@ -36,43 +36,44 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
 %
 % Inputs:
 % -------
-%   sys                  - LtiSystem object describing the system to be verified
-%   initial_state        - Initial state of interest
-%   target_tube          - Target tube to stay within [TargetTube object]
-%   method               - Method to compute the reach-avoid probability
-%                             'genzps' -- Genz's algorithm + Patternsearch
-%                             'cccpwl' -- Piecewise-linear conservative
-%                                         implementation for convex
-%                                         chance-constrained reformulation
-%                             'ccciter'-- Iterative risk allocation approach for
-%                                         convex chance-constrained
-%                                         reformulation
-%                          See Notes for dependencies.
+%   sys              - LtiSystem object
+%   initial_state    - Initial state
+%   target_tube      - TargetTube object
+%   method           - Method to compute the reach-avoid probability
+%                         'genzps' -- Genz's algorithm + Patternsearch
+%                         'cccpwl' -- Piecewise-linear conservative
+%                                     implementation for convex
+%                                     chance-constrained reformulation
+%                         'ccciter'-- Iterative risk allocation approach for
+%                                     convex chance-constrained
+%                                     reformulation
+%                      See Notes for dependencies.
 %   guess_optimal_input_vector
-%                        - (Optional) Provide a concatenated guess for the
-%                          optimal input policy vector in the form of U = [u_0;
-%                          u_1; ...; u_N]. [If unsure, provide []. This will
-%                          trigger a CVX-based initialization computation.]
-%   desired_accuracy     - (Optional) Accuracy  [Default 5e-3]
-%   PSoptions            - (Optional) Options for patternsearch [Default
-%                           psoptimset('Display', 'off')]
+%                    - (Optional) Provide a concatenated guess for the optimal
+%                      input policy vector in the form of U = [u_0; u_1; ...;
+%                      u_N] for patternsearch. [Default []. This will trigger a
+%                      CVX-based computation for initialization of
+%                      patternsearch.]
+%   desired_accuracy - (Optional) Accuracy for patternsearch  [Default 5e-3]
+%   PSoptions        - (Optional) Options for patternsearch [Default
+%                       psoptimset('Display', 'off')]
 %
 % Outputs:
 % --------
 %   lb_stoch_reach_avoid - Lower bound on the terminal-hitting stochastic reach
-%                          avoid problem computed using Fourier transform and
-%                          convex optimization
+%                          avoid problem
 %   optimal_input_vector - Optimal open-loop policy ((sys.input_dim) *
 %                          time_horizon)-dim.  vector U = [u_0; u_1; ...; u_N]
 %                          (column vector)
 %
-% See also computeFtLowerBoundStochReachAvoid, getCcLowerBoundStochReachAvoid.
+% See also computeFtLowerBoundStochReachAvoid,
+% computeCcLowerBoundStochReachAvoidIterRisk,
+% computeCcLowerBoundStochReachAvoidPwlRisk.
 %
 % Notes:
-% * NOT ACTIVELY TESTED: Builds on other tested functions.
 % * MATLAB DEPENDENCY : Uses MATLAB's Statistics and Machine Learning Toolbox
 %                       Needs normpdf, normcdf, norminv for Genz's algorithm
-% * EXTERNAL DEPENDENCY: Uses MPT3
+% * EXTERNAL DEPENDENCY: Uses MPT3 and CVX
 %                        Needs MPT3 for defining a controlled system and the
 %                        definition of the safe and the target (polytopic) sets
 % * Method 'genzps' has the following dependencies
@@ -167,16 +168,16 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
         % GUARANTEES: Non-empty input sets (polyhedron) and scalar
         %             time_horizon>0
         [concat_input_space_A, concat_input_space_b] = ...
-                                              getConcatInputSpace(sys, ...
-                                                                  time_horizon);
+            getConcatInputSpace(sys, ...
+                time_horizon);
         % Compute H, mean_X_sans_input, cov_X_sans_input for the
         % safety_cost_function definition
         % GUARANTEES: Gaussian-perturbed LTI system (sys) and well-defined
         % initial_state and time_horizon
         [H, mean_X_sans_input, cov_X_sans_input] = ...
-                                  getHmatMeanCovForXSansInput(sys, ...
-                                                              initial_state, ...
-                                                              time_horizon);
+            getHmatMeanCovForXSansInput(sys, ...
+                initial_state, ...
+                time_horizon);
         switch(lower(method))
             case 'genzps'
                 % Parsing the optional arguments 
@@ -301,6 +302,7 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
             otherwise
                 exc = SrtInvalidArgsError(['Unsupported method ', ...
                     'requested in getLowerBoundStochasticReachAvoid.']);
+                throw(exc);
         end
         if lb_stoch_reach_avoid<0
             lb_stoch_reach_avoid = 0;
@@ -319,15 +321,3 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
         end
     end
 end
-
-%% If an open_loop policy is desired arranged in increasing time columnwise
-% optimal_open_loop_control_policy = reshape(optimal_input_vector, ...
-%                                    sys.input_dim, ...
-%                                    time_horizon);
-
-%% Patternsearch other options
-% mesh_tolerance_for_patternsearch = 1e-6;
-% constraint_tolerance_for_patternsearch = 1e-6;
-% PSoptions = psoptimset('Display', display_string, ...
-%                 'TolMesh', mesh_tolerance_for_patternsearch, ...
-%                 'TolCon', constraint_tolerance_for_patternsearch);

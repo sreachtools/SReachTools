@@ -1,4 +1,4 @@
-function [cdf_approx_m, cdf_approx_c,varargout] = computeNormCdfInvOverApprox()
+function [cdf_approx_m, cdf_approx_c,varargout] = computeNormCdfInvOverApprox(varargin)
 % Compute a piecewise-linear overapproximation of norminv(1-x) for 
 % x \in [1e-5,0.5] to the quality of 1e-4
 % =============================================================================
@@ -35,7 +35,7 @@ function [cdf_approx_m, cdf_approx_c,varargout] = computeNormCdfInvOverApprox()
 %   results in a maximum artificial conservativeness (on top of Boolean
 %   conservativeness) of 1e-4*M.
 % 
-% =============================================================================
+% ================= ============================================================
 % 
 % This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
@@ -45,23 +45,32 @@ function [cdf_approx_m, cdf_approx_c,varargout] = computeNormCdfInvOverApprox()
     
     % Compute the sequence {lb_x, lb_x + h *gamma^{0:n_x},0.5}
     lb_x = 1e-5;
-    h = 1e-6;
-    gamma = 1.088;
+    if nargin == 0 || abs(varargin{1}-1e-4)<eps
+        max_error_estim = 1e-4;
+        h = 1e-6;
+        gamma = 1.088;
+    else
+        max_error_estim = 1e-3;
+        h = 2e-6;
+        gamma = 1.29;
+    end
     n_x = floor(log((0.5 - lb_x)/h)/log(gamma));
     x = lb_x + h.*(gamma.^(0:n_x));
     x = [lb_x,x,0.5];
+
     % Compute the midpoints of the sequence
     x_1 = x(1:end-1)/2 + x(2:end)/2;    
+
     % Add to the existing list and sort it
     x = sort([x,x_1]);                              %gamma = 1.088; n=314
-    % What is the smallest step size? Check in the beginning and the end
-    diff_val = min(diff(x([1:20,end-20:end])));
+
     % no. of lines joining n points is n-1
     n_piecewise_lin_comp = length(x)-1;
 
     % Initialize the vectors for secant information
     cdf_approx_m = zeros(n_piecewise_lin_comp, 1);
     cdf_approx_c = zeros(n_piecewise_lin_comp, 1);
+
     % Compute the secants    
     for indx_x = 1:n_piecewise_lin_comp
         y_2 = norminv(1-x(indx_x+1));
@@ -73,7 +82,7 @@ function [cdf_approx_m, cdf_approx_c,varargout] = computeNormCdfInvOverApprox()
         cdf_approx_c(indx_x) = y_1 - cdf_approx_m(indx_x) * x_1;
     end    
     varargout{1} = lb_x;
-    varargout{2} = 1e-4;     % Max error estimate
+    varargout{2} = max_error_estim;     % Max error estimate
     varargout{3} = x;
 end
 
