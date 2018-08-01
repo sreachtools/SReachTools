@@ -1,9 +1,8 @@
 function [varargout] = getHmatMeanCovForXSansInput(sys, ...
                                                    initial_state, ...
                                                    time_horizon)
-% SReachTools/LtvSystem/getHmatMeanCovForXSansInput: Get input policy-free mean
-% and covariance of the trajectory from a given initial state for a known time
-% horizon and the concatenated input matrix
+% Get input policy-free mean and covariance of the trajectory from a given 
+% initial state for a known time horizon and the concatenated input matrix
 % ============================================================================
 %
 % Helps in the computation of the mean and covariance of the concatenated

@@ -1,5 +1,5 @@
 function [a, b, c] = standardFunction(d, e, f)
-% SReachTools/standardFunction: Function documentation example
+%  Function documentation example
 % ============================================================================
 %
 % Example of standard function documentation

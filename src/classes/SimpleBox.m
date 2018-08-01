@@ -1,6 +1,5 @@
 classdef SimpleBox
-% SReachTools/SimpleBox  Class definition to obtain vertices of a n-dimensional 
-% wbox
+% Class definition to obtain vertices of a n-dimensional box
 % ===========================================================================
 %
 % Class to obtain vertices of an n-dimensional box; often used for computing
@@ -42,7 +41,7 @@ classdef SimpleBox
         vertices
         center
 
-        % SReachTools/SimpleBox/dx  Box side half-lengths
+        % Box side half-lengths
         % =================================================================
         % 
         % Array of the half-lenghs of each side of the box
@@ -73,7 +72,7 @@ classdef SimpleBox
     
     methods
         function obj = SimpleBox(vertices, dx)
-        % SReachTools/SimpleBox/SimpleBox  Class constructor for SimpleBox
+        % Class constructor for SimpleBox
         % ====================================================================
         %
         % Constructor for SimpleBox Class
@@ -210,7 +209,7 @@ classdef SimpleBox
         end
         
         function p = computeGaussianProbability(obj, vertex_probabilites)
-        % SReachTools/SimpleBox/computeGaussianProbability  Compute the likelihood
+        % Compute the likelihood
         % for Gaussian to be in box
         % =====================================================================
         % 
@@ -257,7 +256,7 @@ classdef SimpleBox
         end
         
         function poly = getPolyhedron(obj)
-        % SReachTools/SimpleBox/getPolyhedron  Get Polyhedron form of box
+        % Get Polyhedron form of box
         % ================================================================
         %
         % Class method to get the MPT Polyhedron representation of the 
@@ -292,7 +291,7 @@ classdef SimpleBox
     
     methods (Static, Access = private)
         function vertices = sortVertices(vertices)
-        % SReachTools/SimpleBox/sortVertices  Sort box vertices
+        % Sort box vertices
         % ====================================================================
         %
         % Private, static method to sort simple box vertices

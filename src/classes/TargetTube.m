@@ -1,5 +1,5 @@
 classdef TargetTube
-% SReachTools/TargetTube: Create a target tube object
+% Create a target tube object
 % ==========================================================================
 %
 % Target tube class
@@ -54,7 +54,7 @@ classdef TargetTube
 
     methods
         function obj = TargetTube(varargin)
-        % SReachTools/TargetTube/TargetTube  TargetTube constructor
+        % TargetTube constructor
         % ====================================================================
         %
         % TargetTube class constructor
@@ -148,7 +148,7 @@ classdef TargetTube
         end
 
         function varargout = subsref(obj, s)
-        % SReachTools/TargetTube/subsref  Overloading of subsref
+        % Overloading of subsref
         % ====================================================================
         %
         % Overloading of builting MATLAB subsref for the class. If the first
@@ -185,7 +185,7 @@ classdef TargetTube
         end
 
         function n_tubes = length(obj)
-        % SReachTools/TargetTube/length  Overloading of length
+        % Overloading of length
         % ====================================================================
         %
         % Function to get length of target tube, returns length of tube
@@ -211,7 +211,7 @@ classdef TargetTube
         end
 
         function disp(obj)
-        % SReachTools/TargetTube/disp  Overloading of disp
+        % Overloading of disp
         % ====================================================================
         %
         % Overloading of builting MATLAB disp for the class.
@@ -236,7 +236,7 @@ classdef TargetTube
         end
 
         function [concat_target_tube_A, concat_target_tube_b] = concat(obj)
-        % SReachTools/TargetTube/concat: Get concatenated target tube
+        %  Get concatenated target tube
         % ======================================================================
         %
         % This method computes the concatenated target tube, 
@@ -283,7 +283,7 @@ classdef TargetTube
         end
         
         function [contains_flag] = contains(obj,X)
-        % SReachTools/TargetTube/contains: Check if a given concatenates state
+        %  Check if a given concatenates state
         % trajectory lies in the target tube
         % ======================================================================
         %
@@ -340,7 +340,7 @@ classdef TargetTube
         end
         
         function v = end(obj, ~, ~)
-        % SReachTools/TargetTube/end: Overloading of MATLAB internal end 
+        %  Overloading of MATLAB internal end 
         % function for objects
         % ======================================================================
         %

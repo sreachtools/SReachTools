@@ -1,5 +1,5 @@
 classdef InputGrid
-% SReachTools/InputGrid: Create a input space grid object
+% Create a input space grid object
 % ============================================================================
 %
 % Defines an input space grid used for dynamic programming computations
@@ -163,7 +163,7 @@ classdef InputGrid
         end
         
         function ind_vector = getIndicatorVectorForSet(obj, s)
-        % SReachTools/InputGrid/getIndicatorVectorForSet Get indicator vector
+        % Get indicator vector
         % for points in grid that lie in set 
         % ====================================================================
         %
@@ -203,7 +203,7 @@ classdef InputGrid
     
     methods (Hidden)
         function grid_vector = getGridVectorFromInds(obj, inds)
-        % SReachTools/InputGrid/getGridVectorFromInds  Get grid vector
+        % Get grid vector
         % ====================================================================
         %
         % Class method returning an indicator vector (vector of zeros and ones)

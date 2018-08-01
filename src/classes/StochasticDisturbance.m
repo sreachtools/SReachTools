@@ -1,6 +1,5 @@
 classdef StochasticDisturbance < RandomVector
-% SReachTools/StochasticDisturbance: Create a stochastic disturbance object
-% (subclass of RandomVector)
+% Create a stochastic disturbance object (subclass of RandomVector)
 % ==========================================================================
 %
 % Defines a stochastic disturbance with a standard probability density function
@@ -75,7 +74,7 @@ classdef StochasticDisturbance < RandomVector
         end
 
         function disp(obj)
-        % SReachTools/StochasticDisturbance/disp  Override of MATLAB internal
+        % Override of MATLAB internal
         % display
         % ====================================================================
         % 

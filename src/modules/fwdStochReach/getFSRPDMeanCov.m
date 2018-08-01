@@ -1,8 +1,7 @@
 function [mean_x, cov_x] = getFSRPDMeanCov(sys, ...
                                            initial_state, ...
                                            target_time)
-% SReachTools/forwardStochasticReach/getFSRPDMeanCov: Compute the mean and the
-% covariance of the state at a time instant in future
+% Compute the mean and the covariance of the state at a time instant in future
 % ============================================================================
 %
 % Computes the mean and the covariance of a Gaussian-perturbed LTI uncontrolled

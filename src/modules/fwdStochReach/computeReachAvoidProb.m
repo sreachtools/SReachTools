@@ -5,8 +5,7 @@ function [reach_avoid_prob] = computeReachAvoidProb(input_vector, ...
                                                     concat_target_tube_A, ...
                                                     concat_target_tube_b, ...
                                                     desired_accuracy)
-% SReachTools/stochasticReachAvoid/computeReachAvoidProb: Compute reach avoid
-% prob using Genz's algorithm
+% Compute reach avoid prob using Genz's algorithm
 % =============================================================================
 %
 % computeReachAvoidProb computes the objective function of the Fourier

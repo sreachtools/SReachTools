@@ -1,4 +1,4 @@
-% SReachTools/testscript: Test script documentation example
+%  Test script documentation example
 % ============================================================================
 %
 % Details about the test script. Be detailed here so that users calling help can

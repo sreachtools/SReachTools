@@ -1,5 +1,5 @@
 classdef LtvSystem
-% SReachTools/LtvSystem: Create a discrete-time LTV system object
+% Create a discrete-time LTV system object
 % ============================================================================
 %
 % Defines a discrete-time LTV system that is:
@@ -81,7 +81,7 @@ classdef LtvSystem
 
     methods
         function obj = LtvSystem(varargin)
-        % SReachTools/LtvSystem/LtvSystem: Create a discrete-time LTI system 
+        %  Create a discrete-time LTI system 
         % object
         % ====================================================================
         %
@@ -345,7 +345,7 @@ classdef LtvSystem
         end
 
         function varargout = subsref(obj, s)
-        % SReachTools/LtvSystem/subsref: Overload of MATLAB internal subsref
+        %  Overload of MATLAB internal subsref
         % ====================================================================
         %
         % Overloaded method of MATLAB's internal subsref. Overloading allows
@@ -404,7 +404,7 @@ classdef LtvSystem
         end
 
         function disp(obj, varargin)
-        % SReachTools/LtvSystem/disp: Overload of MATLAB internal disp
+        %  Overload of MATLAB internal disp
         % ====================================================================
         %
         % Overloaded method of MATLAB's internal disp. 
@@ -472,7 +472,7 @@ classdef LtvSystem
         end
 
         function yn = islti(obj)
-        % SReachTools/LtvSystem/islti: Get boolean result if system is LTI
+        %  Get boolean result if system is LTI
         % ====================================================================
         %
         % Get boolean result if system is LTI. Considered LTI if state_mat, 
@@ -512,7 +512,7 @@ classdef LtvSystem
         end
 
         function yn = isltv(obj)
-        % SReachTools/LtvSystem/islti: Get boolean result if system is LTI
+        %  Get boolean result if system is LTI
         % ====================================================================
         %
         % Get boolean result if system is LTI. Considered LTI if state_mat, 

@@ -3,9 +3,8 @@ function prob = getProbReachTargetTube(sys, ...
                                        target_tube, ...
                                        desired_accuracy, ...
                                        varargin)
-% SReachTools/forwardStochasticReach/getProbReachTargetTube: Compute the
-% probability that the state will lie in a target tube. The starting point may
-% be a vector or a RandomVector object
+% Compute the probability that the state will lie in a target tube. The starting 
+% point may be a vector or a RandomVector object
 % ============================================================================
 %
 % This function uses getHmatMeanCovForXSansInput to compute the forward

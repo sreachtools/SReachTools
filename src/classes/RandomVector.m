@@ -1,5 +1,5 @@
 classdef RandomVector
-% SReachTools/RandomVector: Create a random vector object
+% Create a random vector object
 % ==========================================================================
 %
 % Defines a random vector with a standard probability density function (pdf)
@@ -82,7 +82,7 @@ classdef RandomVector
     end
     methods
         function obj = RandomVector(rv_type, varargin)
-        % SReachTools/RandomVector: Constructor for random vector class
+        %  Constructor for random vector class
         % ====================================================================
         %
         % Inputs:
@@ -151,7 +151,7 @@ classdef RandomVector
         end
         
         function disp(obj)
-        % SReachTools/RandomVector/disp  Override of MATLAB internal display
+        % Override of MATLAB internal display
         % ====================================================================
         % 
         % Overriding of MATLAB built-in display function for the class

@@ -1,6 +1,6 @@
 function sys = getCwhLtiSystem(dim, inputSpace, dist, varargin)
-% SReachTools/systemDefinitions/getCwhLtiSystem: Create a LtiSystem object for
-% the spacecraft dynamics using Clohessy-Wiltshire-Hill (CWH) dynamics
+% Create a LtiSystem object for the spacecraft dynamics using 
+% Clohessy-Wiltshire-Hill (CWH) dynamics
 % =============================================================================
 %
 % Constructs a LtiSystem object for the discrete-time linear time-invariant
@@ -175,7 +175,7 @@ function sys = getCwhLtiSystem(dim, inputSpace, dist, varargin)
 end
 
 function [state_matrix, input_matrix] = get6dCwhStateAndInputMatrices(params)
-% SReachTools/getCwhLtiSystem/get6dCwhStateAndInputMatrices: Get 6-d CWH 
+%  Get 6-d CWH 
 % matrices for discrete-time LTI CWH dynamics
 % =============================================================================
 %

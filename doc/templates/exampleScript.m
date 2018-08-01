@@ -1,4 +1,4 @@
-% SReachTools/exampleScript: Example script documentation example
+%  Example script documentation example
 % ============================================================================
 %
 % Details about the example script. Be detailed here so that users calling help

@@ -1,7 +1,6 @@
 function grid_prob = computeDynProgBackPropagation(sys, ...
     state_grid, input_grid, grid_prob, initial_set)
-% SReachTools/stochasticReachAvoid/computeDynProgBackPropagation Compute the
-% dynamic programming back propagation
+% Compute the dynamic programming back propagation
 % ============================================================================
 %
 % The function computes the one-step back propagation for the dynamic 

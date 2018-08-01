@@ -11,9 +11,8 @@ function [lower_bound_stoch_reach_avoid, optimal_input_vector] = ...
                                                 guess_optimal_input_vector, ...
                                                 desired_accuracy, ...
                                                 PSoptions)
-% SReachTools/stochasticReachAvoid/computeFtLowerBoundStochReachAvoid: Solve 
-% the stochastic reach-avoid problem (lower bound on the probability and an 
-% open-loop controller synthesis) using Fourier transform and convex 
+% Solve the stochastic reach-avoid problem (lower bound on the probability and 
+% an open-loop controller synthesis) using Fourier transform and convex
 % optimization (Internal function --- assumes arguments are all ok)
 % =============================================================================
 %

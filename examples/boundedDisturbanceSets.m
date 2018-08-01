@@ -1,4 +1,4 @@
-% SReachTools/boundedDisturbanceSets: Bounded disturbance set generation example
+%  Bounded disturbance set generation example
 % ============================================================================
 %
 % Example script for generating bounded disturbances with different methods.

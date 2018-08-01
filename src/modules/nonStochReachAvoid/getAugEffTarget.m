@@ -1,5 +1,5 @@
 function aug_eff_target = getAugEffTarget(sys, target_tube, disturbance)
-% SReachTools/getAugEffTarget
+% Get augmented effective target set
 % ============================================================================
 %
 % This function will compute the augmented effect target via the algorithm in

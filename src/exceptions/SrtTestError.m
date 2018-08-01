@@ -1,5 +1,5 @@
 classdef SrtTestError < SrtBaseException
-% SReachTools/SrtTestError: Custom exception object for Socbox setup errors
+% Custom exception object for Socbox setup errors
 % ============================================================================
 % 
 % Customized class for generating Socbox setup errors, subclass of the 

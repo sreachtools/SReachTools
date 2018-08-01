@@ -1,5 +1,5 @@
 function varargout = srtinit(varargin)
-% SReachTools/srtinit: Initialization function
+%  Initialization function
 % ======================================================================
 %
 %   Function to initialize and add source functions of the SReachTools toolbox

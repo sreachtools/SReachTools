@@ -1,5 +1,5 @@
 classdef SpaceGrid
-% SReachTools/SpaceGrid  Create a state space grid object
+% Create a state space grid object
 % =============================================================================
 %
 % Class to hold the gridding of a particular space, e.g. state or input.
@@ -63,7 +63,7 @@ classdef SpaceGrid
     end
     methods
         function obj = SpaceGrid(lb, ub, n_points, external_flag)
-        % SReachTools/SpaceGrid/SpaceGrid  Constructor
+        % Constructor
         % ====================================================================
         %
         % SpaceGrid class constructor
@@ -205,7 +205,7 @@ classdef SpaceGrid
         end
         
         function ind_vector = getIndicatorVectorForSet(obj, s)
-        % SReachTools/SpaceGrid/getIndicatorVectorForSet  Get indicator vector
+        % Get indicator vector
         % ====================================================================
         % 
         % Get indicator vector for the grid points which lie in a Polyhedron
@@ -242,7 +242,7 @@ classdef SpaceGrid
         end
 
         function sortGrid(obj)
-        % SReachTools/SpaceGrid/sortGrid  Sort space grid vectors
+        % Sort space grid vectors
         % ====================================================================
         % 
         % Sort space grid vectors, ascending
@@ -273,7 +273,7 @@ classdef SpaceGrid
         end
         
         function varargout = getMeshGrids(obj)
-        % SReachTools/SpaceGrid/getMeshGrids  Get MATLAB meshgrids
+        % Get MATLAB meshgrids
         % ====================================================================
         % 
         % Get MATLAB meshgrids for the SpaceGrid object; only works for grids 
@@ -342,7 +342,7 @@ classdef SpaceGrid
         end
         
         function plotGridProbability(obj, grid_probability)
-        % SReachTools/SpaceGrid/plotGridProbability  Plot grid probability
+        % Plot grid probability
         % ====================================================================
         % 
         % Perform surface plot of 2-dimensional grid probability
@@ -383,7 +383,7 @@ classdef SpaceGrid
     
     methods (Hidden)
         function plotGrid(obj)
-        % SReachTools/SpaceGrid/plotGridProbability  Plot grid 
+        % Plot grid 
         % ====================================================================
         % 
         % Hidden method to plot 2 or 3-dimensional grid
@@ -430,7 +430,7 @@ classdef SpaceGrid
         end
         
         function arrays = getGridArrays(obj)
-        % SReachTools/SpaceGrid/getGridArrays  Get arrays for grid vectors for each
+        % Get arrays for grid vectors for each
         % dimension
         % ====================================================================
         % 
@@ -471,7 +471,7 @@ classdef SpaceGrid
     
     methods (Access = private)
         function grid_vector = getGridVectorFromInds(obj, inds)
-        % SReachTools/SpaceGrid/getGridVectorFromInds  Get the grid vector from 
+        % Get the grid vector from 
         % indices
         % ====================================================================
         %

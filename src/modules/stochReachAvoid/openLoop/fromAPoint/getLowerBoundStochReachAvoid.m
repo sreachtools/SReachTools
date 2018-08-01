@@ -4,9 +4,8 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
                                                         target_tube,...
                                                         method,...
                                                         varargin)
-% SReachTools/stochasticReachAvoid/getLowerBoundStochReachAvoid: Solve the
-% stochastic reach-avoid problem (lower bound on the probability and an
-% open-loop controller synthesis) using Fourier transform and convex
+% Solve the stochastic reach-avoid problem (lower bound on the probability and 
+% an open-loop controller synthesis) using Fourier transform and convex
 % optimization
 % =============================================================================
 %

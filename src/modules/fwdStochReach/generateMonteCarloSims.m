@@ -4,9 +4,10 @@ function concat_state_realization = generateMonteCarloSims(...
                                                initial_state, ...
                                                time_horizon, ...
                                                varargin)
-% SReachTools/stochasticReachAvoid/generateMonteCarloSims: Generate Monte-Carlo
-% simulations for a Gaussian LTI system (controlled or uncontrolled)
+% Generate Monte-Carlo simulations for a Gaussian LTI system (controlled or 
+% uncontrolled)
 % ============================================================================
+% 
 % generateMonteCarloSims produces a required number of trajectories for a
 % Gaussian LTI system.
 %

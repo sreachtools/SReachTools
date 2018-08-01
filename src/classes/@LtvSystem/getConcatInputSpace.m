@@ -1,8 +1,8 @@
 function [concat_input_space_A, concat_input_space_b] = ...
                                          getConcatInputSpace(sys, ...
                                                              time_horizon)
-% SReachTools/LtvSystem/getConcatInputSpace: Get half space representation of
-% the concatenated (polytopic) input space for the given time horizon
+% Get half space representation of the concatenated (polytopic) input space 
+% for the given time horizon
 % ============================================================================
 % 
 % Computes the input_space^{time_horizon} corresponding to a given set, which

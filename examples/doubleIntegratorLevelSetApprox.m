@@ -1,4 +1,4 @@
-% SReachTools/doubleIntegratorLevelSetApprox  Doulbe integrator level set 
+% Doulbe integrator level set 
 % approximation
 % ============================================================================
 %

@@ -1,7 +1,6 @@
 function [cdf_approx_m, cdf_approx_c,varargout] = computeNormCdfInvOverApprox()
-% SReachTools/stochasticReachAvoid/computeNormCdfInvOverApprox: Compute a
-% piecewise-linear overapproximation of norminv(1-x) for x\in[1e-5,0.5] to the
-% quality of 1e-4
+% Compute a piecewise-linear overapproximation of norminv(1-x) for 
+% x \in [1e-5,0.5] to the quality of 1e-4
 % =============================================================================
 %
 % computeNormCdfInvOverApprox generates a piecewise-linear overapproximation of

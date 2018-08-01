@@ -1,6 +1,5 @@
 classdef SrtInvalidArgsError < SrtBaseException
-% SReachTools/SrtInvalidArgsError: Custom exception object for Socbox 
-% invalid arguments errors
+% Custom exception object for Socbox invalid arguments errors
 % ============================================================================
 % 
 % Customized class for generating Socbox invalid arguments errors, subclass 

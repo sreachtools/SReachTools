@@ -3,9 +3,8 @@ function prob = getProbReachSet(sys, ...
                                 target_set, ...
                                 target_time, ...
                                 desired_accuracy)
-% SReachTools/forwardStochasticReach/getProbReachSet: Compute the probability
-% that the state at target_time will lie in the target_set. The starting point
-% may be a vector or a RandomVector object
+% Compute the probability that the state at target_time will lie in the 
+% target_set. The starting point may be a vector or a RandomVector object
 % ============================================================================
 %
 % This function uses getFSRPDMeanCov to compute the forward stochastic

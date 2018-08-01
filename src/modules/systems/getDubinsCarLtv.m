@@ -3,7 +3,8 @@ function [sys, heading_vec] = getDubinsCarLtv(type,...
     initial_heading,...
     sampling_time,...
     varargin)
-% SReachTools/systems/getDubinsCarLtv: 
+% Get an LTV system object for the Dubins car model with known turning rate
+% sequence
 % ============================================================================
 % 
 % 

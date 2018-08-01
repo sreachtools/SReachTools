@@ -1,5 +1,5 @@
 function [Z,H,G] = getConcatMats(sys, time_horizon)
-% SReachTools/LtvSystem/getConcatMats: Get concatenated matrices
+% Get concatenated matrices
 % ============================================================================
 % 
 % Computes the matrices corresponding to the concatentated state vector X.

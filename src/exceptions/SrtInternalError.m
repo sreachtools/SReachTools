@@ -1,6 +1,5 @@
 classdef SrtInternalError < SrtBaseException
-% SReachTools/SrtInternalError: Custom exception object for Socbox 
-% internal errors
+% Custom exception object for Socbox internal errors
 % ============================================================================
 % 
 % Customized class for generating Socbox internal errors, subclass of the 

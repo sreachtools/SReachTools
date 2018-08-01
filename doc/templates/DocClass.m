@@ -1,5 +1,5 @@
 classdef DocClass
-% SReachTools/DocClass: One-sentence description of the class
+%  One-sentence description of the class
 % ===========================================================================
 %
 % More detailed description of the class. This area can have a minor paragraph
@@ -45,7 +45,7 @@ classdef DocClass
 
     methods
         function obj = DocClass(in1, in2, in3, varargin)
-        % SReachTools/DocClass/DocClass: DocClass constructor
+        %  DocClass constructor
         % ====================================================================
         %
         % Example class constructor. Follow documentation style guidelines for 
@@ -93,7 +93,7 @@ classdef DocClass
         end
 
         function a = someRandomMethod(obj)
-        % SReachTools/DocClass/someRandomMethod: Random method to return a random
+        %  Random method to return a random
         % number
         % ====================================================================
         %

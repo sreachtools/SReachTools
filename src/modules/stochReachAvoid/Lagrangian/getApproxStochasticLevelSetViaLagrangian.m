@@ -1,6 +1,5 @@
 function approx_level_set = getApproxStochasticLevelSetViaLagrangian(sys, ...
     beta, target_tube, approx_type, method, varargin)
-% SReachTools/stochasticReachAvoid/getApproxStochasticLevelSetViaLagrangian: 
 % Get approximate level set using lagrangian methods
 % ============================================================================
 %

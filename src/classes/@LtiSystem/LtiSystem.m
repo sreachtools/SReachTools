@@ -1,5 +1,5 @@
 classdef LtiSystem < LtvSystem
-% SReachTools/LtiSystem: Create a discrete-time LTI system object
+% Create a discrete-time LTI system object
 % ============================================================================
 %
 % Defines a discrete-time LTI system that is:
@@ -62,7 +62,7 @@ classdef LtiSystem < LtvSystem
     
     methods
         function obj = LtiSystem(varargin)
-        % SReachTools/LtiSystem/LtiSystem: Create a discrete-time LTI system 
+        %  Create a discrete-time LTI system 
         % object
         % ====================================================================
         %
@@ -142,7 +142,7 @@ classdef LtiSystem < LtvSystem
         end
 
         function disp(obj, varargin)
-        % SReachTools/LtiSystem/disp: Overload of MATLAB internal disp
+        %  Overload of MATLAB internal disp
         % ====================================================================
         %
         % Overloaded method of MATLAB's internal disp. 

@@ -1,7 +1,6 @@
 function grid_prob = getDynProgSolForTargetTube(sys, ...
     state_grid, input_grid, target_tube)
-% SReachTools/stochasticReachAvoid/getDynProgSolForTargetTube Get dynamic 
-% programming grid probability for reachability of target tube
+% Get dynamic programming grid probability for reachability of target tube
 % ============================================================================
 %
 % The function computes the probability of staying in a target tube defined

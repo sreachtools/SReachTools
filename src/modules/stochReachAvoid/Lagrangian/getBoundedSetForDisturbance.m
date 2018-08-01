@@ -1,7 +1,6 @@
 function bounded_set = getBoundedSetForDisturbance(disturbance, ...
     horizon_length, beta, method, varargin)
-% SReachTools/stochasticReachAvoid/getBoundedSetForDisturbance: Get bounded 
-% disturbance set for approximation
+% Get bounded disturbance set for approximation
 % ============================================================================
 %
 % This function will get a bounded disturbance set used to compute robust
@@ -173,7 +172,7 @@ end
 
 function bounded_set = boundedEllipseByRandomVectors(disturbance, ...
     horizon_length, beta, n_directions)
-% SReachTools/getBoundedSetForDisturbance/boundedEllipseByRandomVectors: Get bounded 
+%  Get bounded 
 % disturbance ellipse with random direction choices
 % ============================================================================
 %
@@ -240,7 +239,7 @@ end
 
 function poly = getOptimizationBoxForGaussian(disturbance, horizon_length, ...
     beta, center)
-% SReachTools/getBoundedSetForDisturbance/getOptimizationBoxForGaussian: Get bounded 
+%  Get bounded 
 % disturbance as box through solution of optimization problem
 % ============================================================================
 %
@@ -295,7 +294,7 @@ function poly = getOptimizationBoxForGaussian(disturbance, horizon_length, ...
 end
 
 function [c, ceq] = nonlinearOptimBoxConstraints(l, c, p)
-% SReachTools/getOptimizationBoxForGaussian/nonlinearOptimBoxConstraints: Nonlinear
+%  Nonlinear
 % constraints for getOptimizationBoxForGaussian
 % ============================================================================
 %
@@ -332,7 +331,7 @@ end
 
 function poly = getBoundingBoxForGaussian(disturbance, horizon_length, ...
     beta, err)
-% SReachTools/getBoundedSetForDisturbance/getBoundingBoxForGaussian: Get bounded 
+%  Get bounded 
 % disturbance as box through bisection
 % ============================================================================
 %

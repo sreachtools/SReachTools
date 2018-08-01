@@ -1,6 +1,5 @@
 function sys = getChainOfIntegLtiSystem(dim, T, varargin)
-% SReachTools/systems/getChainofIntegLtiSystem  Get chain of integrators Lti 
-% System
+% Get chain of integrators LTI System
 % ============================================================================
 % 
 % Get an n-d discrete chain of integrators in the form of an LtiSystem object
