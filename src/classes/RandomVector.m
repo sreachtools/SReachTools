@@ -128,6 +128,10 @@ classdef RandomVector
                     % set parameters
                     obj.parameters.mean = varargin{1};
                     obj.parameters.covariance = varargin{2};
+                    if ~issymmetric(obj.parameters.covariance)
+                        obj.parameters.covariance =...
+                            (obj.parameters.covariance + obj.parameters.covariance')/2;
+                    end
                     
                     % Check if the mean and covariance are of correct dimensions
                     if size(obj.parameters.mean, 1) ~= size(obj.parameters.covariance, 1)
