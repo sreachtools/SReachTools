@@ -59,16 +59,53 @@ function [varargout] = getHmatMeanCovForXSansInput(sys, ...
 %
 
     %% Input handling
+    inpar = inputParser();
+    inpar.addRequired('sys', @(x) validateattributes(x,...
+        {'LtiSystem','LtvSystem'}, {'nonempty'}));
+    % Ensure that the initial_state is a 
+    inpar.addRequired('initial_state', @(x) validateattributes(x, ...
+        {'RandomVector', 'numeric'}, {'nonempty'}))
+    % Ensure that the target_time is a positive scalar
+    inpar.addRequired('time_horizon', @(x) validateattributes(x, ...
+        {'numeric'}, {'scalar', 'integer', '>', 0}));
+
+    try
+        inpar.parse(sys, initial_state, time_horizon);
+    catch err
+        exc = SrtInvalidArgsError.withFunctionName();
+        exc = exc.addCause(err);
+        throwAsCaller(exc);
+    end
+
+    % Ensure that initial state is a column vector of appropriate dimension OR
+    % random vector of approriate dimension
+    if isa(initial_state,'RandomVector') &&...
+        initial_state.dim ~= sys.state_dim &&...
+        strcmp(initial_state.type, 'Gaussian')
+        exc = SrtInvalidArgsError.withFunctionName();
+        exc = exc.addCause(SrtInvalidArgsError(['Expected a ', ...
+            'sys.state_dim-dimensional Gaussian random vector for initial ',...
+            'state']));
+        throw(exc);
+    elseif isa(initial_state,'numeric') &&...
+        ~isequal(size(initial_state), [sys.state_dim 1])
+        exc = SrtInvalidArgsError.withFunctionName();
+        exc = exc.addCause(SrtInvalidArgsError(['Expected a ', ...
+            'sys.state_dim-dimensional column-vector for initial state']));
+        throw(exc);
+    end
+
     % Ensure that the given system has a Gaussian disturbance
-    assert( (strcmp(class(sys.dist),'StochasticDisturbance') ||...
-             strcmp(class(sys.dist),'RandomVector')) &&...
-            strcmp(sys.dist.type,'Gaussian'), ...
-           'SReachTools:invalidArgs', ...
-           ['getHmatMeanCovForXSansInput is for', ...
-            ' Gaussian-perturbed LTI systems only']);
+    if ~(isa(sys.dist, 'StochasticDisturbance') && ...
+            isa(sys.dist, 'RandomVector') && ...
+            strcmp(sys.dist.type, 'Gaussian'))
+        exc = SrtInvalidArgsError.withFunctionName();
+        exc = exc.addCause(SrtInvalidArgsError(['Expected a ',...
+            'Gaussian-perturbed LTI system']));
+        throw(exc);
+    end
 
     %% Compute the concatenated matrices for X
-    % GUARANTEES: Scalar time_horizon>0
     % H will be a zeros(sys.state_dim * time_horizon, 1) matrix for an
     % uncontrolled LTI system
     [Z, H, G] = getConcatMats(sys, time_horizon);
@@ -82,21 +119,14 @@ function [varargout] = getHmatMeanCovForXSansInput(sys, ...
                                  
 
     if isa(initial_state,'RandomVector')
-        % TODO: Waiting for a reference --- but essentially propagation of mean and
-        % covariance
+        % TODO: Waiting for a reference --- but essentially propagation of mean
+        % and covariance
         mean_X_sans_input = Z * initial_state.parameters.mean + G *...
             mean_concat_disturb;
         cov_X_sans_input = Z * initial_state.parameters.covariance * Z' + ...
             G * cov_concat_disturb * G';
     else
-        % Ensure that initial state is a column vector of appropriate dimension
-        assert( size(initial_state,1) == sys.state_dim &&...
-                size(initial_state,2) == 1, ...
-               'SReachTools:invalidArgs', ...
-               ['Expected a sys.state_dim-dimensional column-vector ', ...
-                'for initial state']);
-
-        % Computation of mean and covariance of X (sans input) by (17), LCSS 2017
+        % Computation of mean and covariance of X (sans input) by (17),LCSS 2017
         mean_X_sans_input = Z * initial_state + G * mean_concat_disturb;
         cov_X_sans_input = G * cov_concat_disturb * G';
     end
@@ -107,7 +137,7 @@ function [varargout] = getHmatMeanCovForXSansInput(sys, ...
         symm_cov_X = (cov_X_sans_input+cov_X_sans_input')/2;
         % Max error element-wise
         max_err = max(max(abs(cov_X_sans_input - symm_cov_X)));
-        if max_err > 1e-15
+        if max_err > eps
             warning(sprintf(['Non-symmetric covariance matrix made ',...
                 'symmetric (max elementwise error: %1.3e)!'], max_err));
         end

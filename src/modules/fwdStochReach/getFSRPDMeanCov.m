@@ -4,8 +4,8 @@ function [mean_x, cov_x] = getFSRPDMeanCov(sys, ...
 % Compute the mean and the covariance of the state at a time instant in future
 % ============================================================================
 %
-% Computes the mean and the covariance of a Gaussian-perturbed LTI uncontrolled
-% system. This function implements Proposition 1 of
+% Computes the mean and the covariance of a Gaussian-perturbed LTI/LTV
+% uncontrolled system. This function implements Proposition 1 of
 %
 % A. Vinod, B. HomChaudhuri, and M. Oishi, "Forward Stochastic Reachability
 % Analysis for Uncontrolled Linear Systems using Fourier Transforms", In
@@ -20,7 +20,7 @@ function [mean_x, cov_x] = getFSRPDMeanCov(sys, ...
 % 
 % Inputs:
 % -------
-%   sys           - An object of LtiSystem class 
+%   sys           - An object of LtiSystem/LtvSystem class 
 %   initial_state - Initial state can be a deterministic n-dimensional vector
 %                   or a RandomVector object
 %   target_time   - Time of interest (positive scalar)
@@ -45,16 +45,18 @@ function [mean_x, cov_x] = getFSRPDMeanCov(sys, ...
 %
 %
 
-    % Input handling
+    %% Input handling
+    % input handling overlapping with getHmatMeanCovForXSansInput with
+    % time_horizon replaced with target_time (positivity relaxed)
     inpar = inputParser();
-    inpar.addRequired('sys', @(x) validateattributes(x, {'LtiSystem'}, ...
-        {'nonempty'}));
+    inpar.addRequired('sys', @(x) validateattributes(x,...
+        {'LtiSystem','LtvSystem'}, {'nonempty'}));
+    % Ensure that the initial_state is a 
     inpar.addRequired('initial_state', @(x) validateattributes(x, ...
         {'RandomVector', 'numeric'}, {'nonempty'}))
-    
     % Ensure that the target_time is a positive scalar
     inpar.addRequired('target_time', @(x) validateattributes(x, ...
-        {'numeric'}, {'scalar', 'integer', '>', 0}));
+        {'numeric'}, {'scalar', 'integer', '>=', 0}));
 
     try
         inpar.parse(sys, initial_state, target_time);
@@ -64,34 +66,39 @@ function [mean_x, cov_x] = getFSRPDMeanCov(sys, ...
         throwAsCaller(exc);
     end
 
-    if ~isa(initial_state,'RandomVector')
-        % Ensure that initial state is a column vector of appropriate dim
-        if ~iscolumn(initial_state) && ...
-           length(initial_state) == sys.state_dim
-
-            exc = SrtInvalidArgsError.withFunctionName();
-            exc = exc.addCause(SrtInvalidArgsError(['Expected a ', ...
-                'sys.state_dim-dimensional column-vector for ', ...
-                'initial state']));
-            throw(exc);
-        end
+    % Ensure that initial state is a column vector of appropriate dimension OR
+    % random vector of approriate dimension
+    if isa(initial_state,'RandomVector') &&...
+        initial_state.dim ~= sys.state_dim &&...
+        strcmp(initial_state.type, 'Gaussian')
+        exc = SrtInvalidArgsError.withFunctionName();
+        exc = exc.addCause(SrtInvalidArgsError(['Expected a ', ...
+            'sys.state_dim-dimensional Gaussian random vector for initial ',...
+            'state']));
+        throw(exc);
+    elseif isa(initial_state,'numeric') &&...
+        ~isequal(size(initial_state), [sys.state_dim 1])
+        exc = SrtInvalidArgsError.withFunctionName();
+        exc = exc.addCause(SrtInvalidArgsError(['Expected a ', ...
+            'sys.state_dim-dimensional column-vector for initial state']));
+        throw(exc);
     end
 
     % Ensure that the given system has a Gaussian disturbance
     if ~(isa(sys.dist, 'StochasticDisturbance') && ...
             isa(sys.dist, 'RandomVector') && ...
             strcmp(sys.dist.type, 'Gaussian'))
-    
         exc = SrtInvalidArgsError.withFunctionName();
-        exc = exc.addCause(SrtInvalidArgsError(['getFSRPDMeanCovariance ', ...
-            'accepts only Gaussian-perturbed LTI systems']));
+        exc = exc.addCause(SrtInvalidArgsError(['Expected a ',...
+            'Gaussian-perturbed LTI system']));
         throw(exc);
     end
 
+    %% inputHandling specific to getFSRPDMeanCov
     % Ensure that the given system is uncontrolled
     if sys.input_dim ~= 0
         exc = SrtInvalidArgsError.withFunctionName();
-        exc = exc.addCause(SrtInvalidArgsError(['getFSRPDMeanCovariance ', ...
+        exc = exc.addCause(SrtInvalidArgsError(['getFSRPDMeanCov ', ...
             'accepts only uncontrolled LTI systems']));
         throw(exc);
     end
@@ -125,5 +132,19 @@ function [mean_x, cov_x] = getFSRPDMeanCov(sys, ...
         % cov_x = C * cov_{W} * C';
         cov_x = flipped_ctrb_mat_disturb * cov_concat_disturb *...
                                                       flipped_ctrb_mat_disturb';
+    end
+
+    %% Obtained from getHmatMeanCovForXSansInput
+    % Ensure that cov_x is a symmetric matrix
+    if ~issymmetric(cov_x)
+        % Compute the symmetric component of it
+        symm_cov_x = (cov_x+cov_x')/2;
+        % Max error element-wise
+        max_err = max(max(abs(cov_x - symm_cov_x)));
+        if max_err > eps
+            warning(sprintf(['Non-symmetric covariance matrix made ',...
+                'symmetric (max elementwise error: %1.3e)!'], max_err));
+        end
+        cov_x = symm_cov_x;
     end
 end
