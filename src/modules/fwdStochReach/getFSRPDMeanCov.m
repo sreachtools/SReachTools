@@ -85,12 +85,17 @@ function [mean_x, cov_x] = getFSRPDMeanCov(sys, ...
     end
 
     % Ensure that the given system has a Gaussian disturbance
-    if ~(isa(sys.dist, 'StochasticDisturbance') && ...
-            isa(sys.dist, 'RandomVector') && ...
-            strcmp(sys.dist.type, 'Gaussian'))
+    if isa(sys.dist, 'StochasticDisturbance') || isa(sys.dist, 'RandomVector')
+        if ~strcmpi(sys.dist.type, 'Gaussian')
+            exc = SrtInvalidArgsError.withFunctionName();
+            exc = exc.addCause(SrtInvalidArgsError(['Expected a ',...
+                'Gaussian-perturbed LTI system']));
+            throw(exc);
+        end
+    else
         exc = SrtInvalidArgsError.withFunctionName();
         exc = exc.addCause(SrtInvalidArgsError(['Expected a ',...
-            'Gaussian-perturbed LTI system']));
+            'stochastic LTI system']));
         throw(exc);
     end
 
