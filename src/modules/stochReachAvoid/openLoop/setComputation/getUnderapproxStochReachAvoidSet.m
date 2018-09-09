@@ -8,9 +8,8 @@ function [underapprox_stoch_reach_avoid_polytope, ...
                                            set_of_direction_vectors,...
                                            method,...
                                            varargin)
-%  Obtain an
-% open-loop controller-based underaproximative stochastic reach-avoid set using
-% Fourier transform, convex optimization, and patternsearch
+% Obtain an open-loop controller-based underaproximative stochastic reach-avoid
+% set using Fourier transform, convex optimization, and patternsearch
 % =============================================================================
 %
 % getUnderapproxStochReachAvoidSet computes the open-loop controller-based
@@ -92,8 +91,6 @@ function [underapprox_stoch_reach_avoid_polytope, ...
 %                          set_of_direction_vectors
 %   R                    - (Optional for ccc) Chebyshev radius associated with
 %                          xmax
-%   artificial_consv_pwl - (Optional for ccc) Artificial conservativeness due to
-%                          the use of piecewise linear approximation
 %
 % See also examples/FtCVXUnderapproxVerifyCWH.mlx*.
 %
@@ -189,15 +186,10 @@ function [underapprox_stoch_reach_avoid_polytope, ...
     switch(lower(method))
         case 'ccc'
             %% Computation of xmax and the associated opt open-loop controller
-            % TODO: Translate desired_accuracy to piecewise_count
-            [invcdf_approx_m, invcdf_approx_c, lb_deltai, max_err_pwl] =...
-                computeNormCdfInvOverApprox();
-            % Using PWL approximation introduces an artificial conservativeness.
-            % This artificial conservativeness is proportional to the number of
-            % linear constraints and the maximum of the the overapproximation
-            % error (max_err_pwl) or the closest we can get to zero for
-            % normcdfinv (lb_deltai). 
-            artificial_consv_pwl = max(max_err_pwl,lb_deltai) * n_lin_const;
+            desired_accuracy = 1e-3;
+
+            [invcdf_approx_m, invcdf_approx_c, lb_deltai] =...
+                computeNormCdfInvOverApprox(1-prob_thresh_of_interest, desired_accuracy, n_lin_const);
 
             %% PWL code preps
             % Compute \sqrt{h_i^\top * \Sigma_X_no_input * h_i}
@@ -689,16 +681,9 @@ function [underapprox_stoch_reach_avoid_polytope, ...
     varargout{6} = vertex_underapprox_polytope;
     if strcmpi(method, 'ccc')
         varargout{7} = R;
-        varargout{8} = artificial_consv_pwl;
     end
 end
 
-
-%method = 'best'; % 'fast'/'best'
-%tol_bisection = 1e-2;
-%desired_accuracy = 1e-2;
-%PSoptions = psoptimset('Display','off');
-%
 %%% Compute theta_upper for the given direction
 %cvx_begin quiet
     %variable theta_upper nonnegative

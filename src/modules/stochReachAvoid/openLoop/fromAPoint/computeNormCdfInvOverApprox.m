@@ -1,11 +1,13 @@
-function [cdf_approx_m, cdf_approx_c,varargout] = computeNormCdfInvOverApprox(varargin)
+function [cdf_approx_m, cdf_approx_c, lb_phiinv] =...
+    computeNormCdfInvOverApprox(max_delta, desired_accuracy, n_lin_consts)
 % Compute a piecewise-linear overapproximation of norminv(1-x) for 
 % x \in [1e-5,0.5] to the quality of 1e-4
 % =============================================================================
 %
 % computeNormCdfInvOverApprox generates a piecewise-linear overapproximation of
 % norminv(1-x) for x\in[1e-5,0.5]. Specifically, given any z\in[1e-5,0.5],
-% norm(1-z) +1e-4 > max(cdf_approx_m * z + cdf_approx_c) > norm(1-z).
+% norminv(1-x) + err_bnd > max(cdf_approx_m * x + cdf_approx_c) > norminv(1-x),
+% with err_bnd = desired_accuracy/n_lin_consts/10.
 %
 % USAGE: See getUnderapproxStochReachAvoidSet,
 % computeCcLowerBoundStochReachAvoidPwlRisk.
@@ -15,107 +17,96 @@ function [cdf_approx_m, cdf_approx_c,varargout] = computeNormCdfInvOverApprox(va
 % 
 % Inputs: None
 % -------
+%   max_delta        - This is the maximum tolerance for violation of the joint
+%                       chance constraint | risk allocation can not exceed this
+%                       value
+%   desired_accuracy - Accuracy expected from the chance constraint formulation
+%                       with n_lin_consts, no. of individual chance constraints
+%   n_lin_consts     - No. of individual chance constraints
+%   
 %
 % Outputs:
 % --------
 %   cdf_approx_m - Secant slopes that will overapproximate norminv(1-x)
 %   cdf_approx_c - Secant y-intercepts that will overapproximate norminv(1-x)
-%   lb_x         - (Optional) Lower-bound on the range of the approximation
-%   diff_val     - (Optional) Smallest step-size between the secant end points
+%   lb_phiinv    - Lower bound on x in norminv(1-x) for which the provided PWA
+%                   approximation
 %
 % Notes:
-% * NOT ACTIVELY TESTED: TODO
-% * NO INPUT HANDLING: No arguments needed
+% * Partial INPUT HANDLING: Checks only if the bounds provided are accurate
 % * MATLAB DEPENDENCY: None
-% * Max error of approximation is 0.99818e-04 (estimated to a nbd of 1e-7)
-% * The end points of the secants are obtained by the sequence 
-%       {lb_x, lb_x + h gamma^{0:n_x},0.5, and the midpoints} 
-%   where lb_x =1e-5, h=1e-6, gamma=1.088, n_x =|_log((0.5-lb_x)/h)/log(gamma)_|
-% * If we desire to optimize delta_i where i\in [1,M], then this approach
-%   results in a maximum artificial conservativeness (on top of Boolean
-%   conservativeness) of 1e-4*M.
+% * The requested desired_accuracy/n_lin_consts/10 can not be smaller than 1e-8.
 % 
-% ================= ============================================================
+% ==============================================================================
 % 
 % This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
 %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 %
+
+    % Max bounds we have tested this for
+    compute_phiinv_lb = 1E-8;
+    compute_phiinv_ub = 0.44;
     
-    % Compute the sequence {lb_x, lb_x + h *gamma^{0:n_x},0.5}
-    lb_x = 1e-5;
-    if nargin == 0 || abs(varargin{1}-1e-4)<eps
-        max_error_estim = 1e-4;
-        h = 1e-6;
-        gamma = 1.088;
-    else
-        max_error_estim = 1e-3;
-        h = 2e-6;
-        gamma = 1.29;
+    % Interested bounds are desired_accuracy/N_{ineq} and max_delta
+    lb_phiinv = desired_accuracy/n_lin_consts/10;
+    upper_bound_phiinv = max_delta; 
+
+    % Throw an error if the requested bounds are beyond the PWA parameters
+    if compute_phiinv_lb > lb_phiinv ||...
+        compute_phiinv_ub < upper_bound_phiinv
+        exc = SrtInvalidArgsError(['Requested bounds exceed limits.']);
+        throwAsCaller(exc);
     end
-    n_x = floor(log((0.5 - lb_x)/h)/log(gamma));
-    x = lb_x + h.*(gamma.^(0:n_x));
-    x = [lb_x,x,0.5];
+    
+    if ~exist('SReachTools_data.mat','file')
+        % Create the look up table for norminv pdf if none found in
+        % helperfunctions
+        create_PWAapprox_norminv(compute_phiinv_lb, compute_phiinv_ub,...
+            desired_accuracy);
+    end
 
-    % Compute the midpoints of the sequence
-    x_1 = x(1:end-1)/2 + x(2:end)/2;    
+    % This matfile will have norminv's cdf_approx_m,cdf_approx_c, and knots
+    load('SReachTools_data','norminvcdf_approx_m','norminvcdf_approx_c',...
+        'norminv_knots');
 
-    % Add to the existing list and sort it
-    x = sort([x,x_1]);                              %gamma = 1.088; n=314
-
-    % no. of lines joining n points is n-1
-    n_piecewise_lin_comp = length(x)-1;
-
-    % Initialize the vectors for secant information
-    cdf_approx_m = zeros(n_piecewise_lin_comp, 1);
-    cdf_approx_c = zeros(n_piecewise_lin_comp, 1);
-
-    % Compute the secants    
-    for indx_x = 1:n_piecewise_lin_comp
-        y_2 = norminv(1-x(indx_x+1));
-        y_1 = norminv(1-x(indx_x));
-        x_2 = x(indx_x + 1);
-        x_1 = x(indx_x);
-        % y=mx+c where m and c are computed from secant end points
-        cdf_approx_m(indx_x) = (y_2 - y_1)/(x_2 - x_1);
-        cdf_approx_c(indx_x) = y_1 - cdf_approx_m(indx_x) * x_1;
-    end    
-    varargout{1} = lb_x;
-    varargout{2} = max_error_estim;     % Max error estimate
-    varargout{3} = x;
+    % Given the desired lower bound and upper bound, find what pieces are needed
+    % -1 added to knots_ub_indx because each piece is associated with the left
+    % hand side knot.
+    knots_lb_indx = find(norminv_knots >= lb_phiinv,1);
+    knots_ub_indx = find(norminv_knots >= upper_bound_phiinv,1)-1;
+    cdf_approx_m = norminvcdf_approx_m(knots_lb_indx:knots_ub_indx);
+    cdf_approx_c = norminvcdf_approx_c(knots_lb_indx:knots_ub_indx);
 end
 
-%% Other options
-%     x_1 = x(1:end-1)/4 + x(2:end)*3/4;
-%     x_2 = x(1:end-1)/2 + x(2:end)/2;
-%     x_3 = x(1:end-1)*3/4 + x(2:end)/4; 
-%     x = sort([x,x_1,x_2,x_3]);                      %gamma = 1.175; n=332
-%     x_1 = x(1:end-1)/3 + x(2:end)*2/3;
-%     x_2 = x(1:end-1)*2/3 + x(2:end)/3;
-%     x = sort([x,x_1,x_2]);                          %gamma = 1.13;  n=327
+function create_PWAapprox_norminv(lb_phiinv,...
+    upper_bound_phiinv, maxlierror_phiinv)
+    % create_PWAapprox_norminv creates a PWA approximation of normcdfinv
 
+    % phiinv(1-x) definition: https://www.mathworks.com/help/stats/norminv.html
+    % And using erfinv instead of erfcinv since we need \Phi^{-1}(1-x)
+    phiinv = @(z) sqrt(2)* erfinv(2*(1 - z) -1 );
 
-%% Sanity check
-% See the quality of the piecewise linear approximation in the range [1e-5,0.5]
-% by running the following command
-%
-% clear;close all;
-% [cdf_approx_m, cdf_approx_c,a, max_error_pwl, x_pwl] = computeNormCdfInvOverApprox();
-% x = x_pwl(1);
-% for x_val = x_pwl(2:end)
-%     x = [x, linspace(x(end), x_val, 100)];
-% end
-% y=max(cdf_approx_m*x+cdf_approx_c);
-% y_true = norminv(1-x);
-% err=y-y_true;
-% figure(); plot(x,y,'ro-'); hold on; plot(x,y_true,'b*-'); legend('PWL','True')
-% xlabel('x'),ylabel('norminv(1-x)');title('Approximation');
-% figure(); plot(x,err,'ro-');hold on;plot(x,1e-4*ones(length(x),1)); 
-% xlim([-0.2,0.5]);ylim([-1e-5,1.5e-4]);  xlabel('x'); ylabel('PWL-true curve');
-% title('Approximation quality');
-% if max(err) > max_error_pwl
-%   disp('Predicted error is smaller than the original error');
-% end
-% fprintf(['Min error: %1.4e | Max error: %1.4e | No. of ineq: %d\n'],...
-%   min(err), max(err), length(cdf_approx_m));
+    % Concave function required: So negate phiinv and it becomes monotone inc
+    function_handle = @(z) -phiinv(z);
+    fun_hessian_monotone_phiinv = 'mono-inc';
+
+    % get PWA approximation
+    [~,~,PWA_negphiinv_underapprox_m, PWA_negphiinv_underapprox_c,...
+        norminv_knots] =...
+            getPWAOverAndUnderApprox(lb_phiinv,...
+                upper_bound_phiinv,...
+                maxlierror_phiinv,...
+                function_handle,...
+                fun_hessian_monotone_phiinv);
+
+    % negate the PWA underapproximation of the concave representation to get the
+    % PWA overapproximation of the convex function
+    norminvcdf_approx_m = - PWA_negphiinv_underapprox_m';
+    norminvcdf_approx_c = - PWA_negphiinv_underapprox_c';
+
+    % Save the data in the helperFunctions folder
+    save('../src/helperFunctions/SReachTools_data',...
+        'norminvcdf_approx_m','norminvcdf_approx_c','norminv_knots');
+end
