@@ -235,8 +235,9 @@ classdef TargetTube
             fprintf('TargetTube of %d sets\n', length(obj));
         end
 
-        function [concat_target_tube_A, concat_target_tube_b] = concat(obj)
-        %  Get concatenated target tube
+        function [concat_target_tube_A, concat_target_tube_b] =...
+            concat(obj,varargin)
+        % Get concatenated target tube
         % ======================================================================
         %
         % This method computes the concatenated target tube, 
@@ -275,16 +276,27 @@ classdef TargetTube
             %% Construction of the concatenated target tube
             tube_A_mats = cell(1, length(obj));
             [tube_A_mats{:}] = obj.tube(:).A;
-            concat_target_tube_A = blkdiag(tube_A_mats{:});
 
             tube_b_vecs = cell(1, length(obj));
             [tube_b_vecs{:}] = obj.tube(:).b;
-            concat_target_tube_b = vertcat(tube_b_vecs{:});
+
+            if nargin == 1
+                concat_target_tube_A = blkdiag(tube_A_mats{:});
+                concat_target_tube_b = vertcat(tube_b_vecs{:});
+            else
+                time_limits = varargin{1};
+                validateattributes(time_limits,{'numeric'},{'vector'});
+                if length(time_limits) == 2 && time_limits(2) >= time_limits(1) && min(time_limits) >= 1 && max(time_limits) <= length(obj)
+                    concat_target_tube_A = blkdiag(tube_A_mats{time_limits(1):time_limits(2)});
+                    concat_target_tube_b = vertcat(tube_b_vecs{time_limits(1):time_limits(2)});
+                else
+                    throwAsCaller(SrtInvalidArgsError('Invalid time range'));
+                end
+            end
         end
         
         function [contains_flag] = contains(obj,X)
-        %  Check if a given concatenates state
-        % trajectory lies in the target tube
+        % Check if a given concatenates state trajectory lies in the target tube
         % ======================================================================
         %
         % This method is a wrapper over MPT's Polyhedron/contains 
@@ -333,15 +345,19 @@ classdef TargetTube
             % Iterate over all time indexes since MPT contains will do
             % unnecessarily n_poly x n_state comparisons
             for t_indx = 1:length(obj)
+                % Parse the t^th state from X
                 X_at_t_indx = X((t_indx-1)*obj.dim + 1: t_indx*obj.dim,:);
+                % Use MPT's contains functionality
                 contains_flag_all(t_indx,:) = obj.tube(t_indx).contains(X_at_t_indx);
             end
-            contains_flag = min(contains_flag_all);
+            % Are t^th state in the appropriate polytope for all t?
+            % all for a matrix returns a row vector with checking done
+            % columnwise
+            contains_flag = all(contains_flag_all);
         end
         
         function v = end(obj, ~, ~)
-        %  Overloading of MATLAB internal end 
-        % function for objects
+        % Overloading of MATLAB internal end function for objects
         % ======================================================================
         %
         % Overloading of MATLAB internal end function for objects. Allows

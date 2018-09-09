@@ -76,5 +76,81 @@ classdef TargetTubeTests < matlab.unittest.TestCase
                     Polyhedron(1, 1)), ...
                 ?SrtInvalidArgsError);
         end
+        
+        function testConcatTube(testCase)
+            time_horizon = 10;
+            xmax = 1;
+            
+            % Target tubes has polyhedra T_0, T_1, ..., T_{time_horizon}
+            target_tube = TargetTube('viability',Polyhedron('lb',-xmax,'ub',xmax), time_horizon);
+            
+            % concat using all the time steps --- empty
+            [concat_target_tube_A, concat_target_tube_b] = target_tube.concat();            
+            obtained_polyhedron = Polyhedron('H',[concat_target_tube_A, ...
+                            concat_target_tube_b]);
+            expected_polyhedron = Polyhedron('lb', -xmax * ones(time_horizon+1,1), ...
+                       'ub',  xmax * ones(time_horizon+1,1));
+            testCase.verifyTrue(obtained_polyhedron == expected_polyhedron);
+            
+            % concat using all the time steps --- both ends
+            [concat_target_tube_A, concat_target_tube_b] = target_tube.concat([1 time_horizon+1]);            
+            obtained_polyhedron = Polyhedron('H',[concat_target_tube_A, ...
+                            concat_target_tube_b]);
+            expected_polyhedron = Polyhedron('lb', -xmax * ones(time_horizon+1,1), ...
+                       'ub',  xmax * ones(time_horizon+1,1));
+            testCase.verifyTrue(obtained_polyhedron == expected_polyhedron);
+            
+            % concat using 1 to time horizon
+            xmax = [1 10 2 3];
+            target_tube = TargetTube(Polyhedron('lb',-xmax(1),'ub',xmax(1)), ...
+                                     Polyhedron('lb',-xmax(2),'ub',xmax(2)), ...
+                                     Polyhedron('lb',-xmax(3),'ub',xmax(3)), ...
+                                     Polyhedron('lb',-xmax(4),'ub',xmax(4)));
+            [concat_target_tube_A, concat_target_tube_b] = target_tube.concat([4 4]);            
+            obtained_polyhedron = Polyhedron('H',[concat_target_tube_A, ...
+                            concat_target_tube_b]);
+            expected_polyhedron = Polyhedron('lb', -xmax(4), 'ub',  xmax(4));
+            testCase.verifyTrue(obtained_polyhedron == expected_polyhedron);
+            
+            % concat using 1 to time horizon
+            xmax = [1 10 2 3];
+            target_tube = TargetTube(Polyhedron('lb',-xmax(1),'ub',xmax(1)), ...
+                                     Polyhedron('lb',-xmax(2),'ub',xmax(2)), ...
+                                     Polyhedron('lb',-xmax(3),'ub',xmax(3)), ...
+                                     Polyhedron('lb',-xmax(4),'ub',xmax(4)));
+            [concat_target_tube_A, concat_target_tube_b] = target_tube.concat([2 4]);            
+            obtained_polyhedron = Polyhedron('H',[concat_target_tube_A, ...
+                            concat_target_tube_b]);
+            expected_polyhedron = Polyhedron('lb', -xmax(2:4), 'ub',  xmax(2:4));
+            testCase.verifyTrue(obtained_polyhedron == expected_polyhedron);
+            
+            % concat using 1 to time_horizon + 1 (will throw error)
+            testCase.verifyError(@() target_tube.concat([1 5]),'SReachTools:invalidArgs');            
+            testCase.verifyError(@() target_tube.concat([-1 5]),'SReachTools:invalidArgs');            
+            testCase.verifyError(@() target_tube.concat([-1 2 5]),'SReachTools:invalidArgs');            
+        end
+        
+        function testContains(testCase)
+            time_horizon = 10;
+            xmax = 1;
+            
+            % Target tubes has polyhedra T_0, T_1, ..., T_{time_horizon}
+            target_tube = TargetTube('viability',Polyhedron('lb',-xmax,'ub',xmax), time_horizon);
+            
+            %% Checking input handling
+            % Empty vector
+            testCase.verifyError(@() target_tube.contains(repmat(0,time_horizon+1,0)),'SReachTools:invalidArgs');            
+            % Incorrect time horizon
+            testCase.verifyError(@() target_tube.contains(repmat(0,1,2)),'SReachTools:invalidArgs');            
+            %% Checking correct behaviour
+            % Single concatenated state trajectories
+            testCase.verifyTrue(target_tube.contains(repmat(0,time_horizon+1,1)));
+            % Multiple concatenated state trajectories
+            testCase.verifyEqual(target_tube.contains(repmat([xmax/2 xmax],time_horizon+1,1)),logical([1 1]));
+            % Single concatenated state trajectory outside
+            testCase.verifyFalse(target_tube.contains(repmat(xmax*2,time_horizon+1,1)));
+            % Multiple concatenated state trajectories with one of them outside
+            testCase.verifyEqual(target_tube.contains(repmat([xmax/2 xmax 2*xmax],time_horizon+1,1)),logical([1 1 0]));            
+        end
     end
 end
