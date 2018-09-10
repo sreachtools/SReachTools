@@ -134,7 +134,9 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
         % Given Delta, construct delta_i as Delta/M
         delta_vec = Delta/no_linear_constraints * ones(no_linear_constraints,1);
 
-        % Converge to one more decimal precision
+        % Converge to one more decimal precision | We use desired_accuracy/10
+        % because the outer loop is doing bisection upto an accuracy of
+        % desired_accuracy
         while abs(opt_value - opt_value_prev) >= desired_accuracy/10
             %% Store the previous optimal value
             opt_value_prev = opt_value;
