@@ -1,13 +1,10 @@
 function prob = getProbReachTargetTube(sys, ...
                                        initial_state, ...
-                                       time_horizon, ...
-                                       safe_set, ...
-                                       target_set, ...
+                                       target_tube, ...
                                        desired_accuracy, ...
                                        varargin)
-% SReachTools/forwardStochasticReach/getProbReachTargetTube: Compute the
-% probability that the state will lie in a target tube. The starting point may
-% be a vector or a RandomVector object
+% Compute the probability that the state will lie in a target tube. The starting 
+% point may be a vector or a RandomVector object
 % ============================================================================
 %
 % This function uses getHmatMeanCovForXSansInput to compute the forward
@@ -21,19 +18,17 @@ function prob = getProbReachTargetTube(sys, ...
 % 
 % prob = getProbReachTargetTube(sys, ...
 %                               initial_state, ...
-%                               safe_set, ...
-%                               target_set, ...
-%                               desired_accuracy)
+%                               target_tube, ...
+%                               desired_accuracy, ...
+%                               varargin)
 %
 % Inputs:
 % -------
 %   sys              - An object of LtiSystem class 
 %   initial_state    - Initial state can be a deterministic n-dimensional vector
 %                      or a RandomVector object
-%   time_horizon     - Time horizon at which the target set must be reached
-%   safe_set         - Safe set (Complement of avoid set) [Polyhedron object]
-%   target_set       - Target set [Polyhedron object]
-%   desired_accuracy - (Optional) Accuracy of the integral evaluation 
+%   target_tube      - Target tube to stay within [TargetTube object]
+%   desired_accuracy - Accuracy of the integral evaluation 
 %                      [Default 1e-3 otherwise]
 %   input_policy     - (Required only for controlled systems) Input policy 
 %
@@ -46,39 +41,47 @@ function prob = getProbReachTargetTube(sys, ...
 %
 % Notes:
 % ------
-% * In case, the target set is a hyper-cuboid and the state_dimension < 25,
+% * In case, the target set is a hyper-cuboid and the state_dim < 25,
 %   then use mvncdf instead.
 % * The safe set and the target set must be Polyhedron objects.
 % ============================================================================
 %
 % This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 %
 
-    %% INPUT HANDLING
-    % Create concatenated target tube 
-    % GUARANTEES: Valid time_horizon, safe_set, and target_set
-    [concat_target_tube_A, concat_target_tube_b] = ...
-        getConcatTargetTube(safe_set, target_set, time_horizon);
+    % Target tubes has polyhedra T_0, T_1, ..., T_{time_horizon}
+    time_horizon = length(target_tube)-1;
+
+    % Get half space representation of the target tube and time horizon
+    [concat_target_tube_A, concat_target_tube_b] = target_tube.concat();
+    n_ineq_init_set = size(target_tube(1).H,1);
+    concat_target_tube_A_rand =...
+        concat_target_tube_A(n_ineq_init_set+1:end, sys.state_dim+1:end);
+    concat_target_tube_b_rand =...
+        concat_target_tube_b(n_ineq_init_set+1:end);
     
+    %% INPUT HANDLING
     % Scalar desired_accuracy
     assert(isscalar(desired_accuracy), ...
            'SReachTools:invalidArgs', ...
            'Expected a scalar value for desired_accuracy');
-
+    if desired_accuracy < 1e-2
+        warning('Accuracy of smaller than 1e-2 might be hard to enforce.');
+    end
     % Obtain the input policy
-    if sys.input_dimension > 0
+    if sys.input_dim > 0
         assert(length(varargin) == 1, ...
                'SReachTools:invalidArgs', ...
                'Expected an input policy only for a controlled system');
         input_policy = varargin{1};
     else
-        input_policy = 0;
+        input_policy = zeros(0, 1);
     end
 
-    % Compute H (zeros(sys.state_dimension*time_horizon,1)), mean_X_sans_input,
+    % Compute H (zeros(sys.state_dim*time_horizon,1)), mean_X_sans_input,
     % cov_X_sans_input for the safety_cost_function definition
     % GUARANTEES: Gaussian-perturbed LTI system (sys) and well-defined
     % initial_state and time_horizon
@@ -91,7 +94,7 @@ function prob = getProbReachTargetTube(sys, ...
                 mean_X_sans_input, ...
                 cov_X_sans_input, ...
                 H, ...
-                concat_target_tube_A, ...
-                concat_target_tube_b, ...
+                concat_target_tube_A_rand, ...
+                concat_target_tube_b_rand, ...
                 desired_accuracy);
 end

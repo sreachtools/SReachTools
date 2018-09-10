@@ -1,5 +1,5 @@
 function varargout = srtinit(varargin)
-% SReachTools/srtinit: Initialization function
+%  Initialization function
 % ======================================================================
 %
 %   Function to initialize and add source functions of the SReachTools toolbox
@@ -16,6 +16,7 @@ function varargout = srtinit(varargin)
 % srtinit('options');
 %
 % Inputs:
+% -------
 %   Available options:
 %       -v, --verbose    Have initalization function explicitly print to
 %                        console which folders are being added to the path
@@ -25,39 +26,51 @@ function varargout = srtinit(varargin)
 %                        will cancel out any other parameters, e.g. '-x', '-v'
 %
 % Outputs:
+% --------
 %   None
 %
 % Notes:
-%   - Performing a deinit and testing '-x -t' will deinit the SReachTools toolbox and
-%     then perform unit testing, causing all unit tests to fail.
+% ------
+% * Performing a deinit and testing '-x -t' will deinit the SReachTools toolbox 
+%   and then perform unit testing, causing all unit tests to fail.
 % 
 % =========================================================================
 % 
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 % 
+    
+    SRTINIT_PATH = fileparts(which('srtinit.m'));
 
     verbose   = false;
     deinit    = false;
     run_tests = false;
     
-    for i = 1:length(varargin)
-        if strcmp(varargin{i}, '-v') || strcmp(varargin{i}, '--verbose')
+    for lv = 1:length(varargin)
+        if strcmp(varargin{lv}, '-v') || strcmp(varargin{lv}, '--verbose')
             verbose = true;
-        elseif strcmp(varargin{i}, '-x') || strcmp(varargin{i}, '--deinit')
+        elseif strcmp(varargin{lv}, '-x') || strcmp(varargin{lv}, '--deinit')
             deinit = true;
-        elseif strcmp(varargin{i}, '-t') || strcmp(varargin{i}, '--test')
+        elseif strcmp(varargin{lv}, '-t') || strcmp(varargin{lv}, '--test')
             run_tests = true;
-        elseif strcmp(varargin{i}, '-T')
+        elseif strcmp(varargin{lv}, '-T')
             test_results = srttest();
             if nargout == 1
                 varargout{1} = test_results;
             end
             return;
+        elseif strcmp(varargin{lv}, '--update')
+            update_sreachtools();
+            return;
+        elseif strcmp(varargin{lv}, '--version')
+            dets = ver(SRTINIT_PATH);
+            fprintf('SReachTools version %s\n', dets.Version);
+            return;
         else
-            assert(false, 'Invalid input option, see help srtinit')
+            throwAsCaller(SrtInvalidArgsError(['Invalid input option, ', ...
+                'see help srtinit']));
         end
     end
     
@@ -125,10 +138,10 @@ end
 
 function test_results = srttest()
     % Require MPT3 to run SReachTools
-    assert(exist('mpt_init','file')==2, ...
-           'SReachTools:setup_error', ...
-           ['This toolbox uses MPT3. Please get it ', ...
-            'from http://control.ee.ethz.ch/~mpt/3/.']);
+    if exist('mpt_init', 'file') ~= 2
+        throw(SrtSetupError(['This toolbox uses MPT3. Please get it ', ...
+            'from http://control.ee.ethz.ch/~mpt/3/.']));
+    end
 
     % get the parent dir of this function
     script_path = fileparts(mfilename('fullpath'));
@@ -139,4 +152,28 @@ function test_results = srttest()
     test_results = runtests();
     disp(test_results)
     cd(current_dir);
+end
+
+function update_sreachtools()
+
+    SRTINIT_PATH = fileparts(which('srtinit.m'));
+
+    % First check current version and newest version from repository
+    % get repository tags
+    fprintf('Fetching repository data...\n')
+    tag_data = webread(['https://api.github.com/repos/unm-hscl/', ...
+        'SReachTools/tags']);
+
+    local_version = ver(SRTINIT_PATH);
+    fprintf('Current SReachTools version  :  %s\n', local_version.Version);
+
+    fprintf('Newest SReachTools version   :  %s\n', tag_data(1).name(2:end));
+
+    if strcmp(tag_data(1).name(2:end), local_version.Version)
+        fprintf('No newer version available.\n')
+    else
+        % download and insall newest version
+        fprintf('Updating...\n')
+    end
+
 end

@@ -1,6 +1,5 @@
-function sys = getChainOfIntegLtiSystem(dim, T, input_space, disturb)
-% SReachTools/systems/getChainofIntegLtiSystem  Get chain of integrators Lti 
-% System
+function sys = getChainOfIntegLtiSystem(dim, T, varargin)
+% Get chain of integrators LTI System
 % ============================================================================
 % 
 % Get an n-d discrete chain of integrators in the form of an LtiSystem object
@@ -25,8 +24,7 @@ function sys = getChainOfIntegLtiSystem(dim, T, input_space, disturb)
 % ------
 %   % 3-d chain of integrators with U = [-1,1] and no (empty) disturbance
 %   sys = getChainOfIntegLtiSystem(3, 0.2, ...
-%       Polyhedron('lb', -1, 'ub', 1), ...
-%       Polyhedron());
+%       'InputSpace', Polyhedron('lb', -1, 'ub', 1));
 %
 % ============================================================================
 % 
@@ -47,17 +45,38 @@ function sys = getChainOfIntegLtiSystem(dim, T, input_space, disturb)
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 %
 
+    inpar = inputParser();
+    inpar.addRequired('dim', @(x) validateattributes(x, ...
+        {'numeric'}, {'integer', '>', 0}));
+    inpar.addRequired('T', @(x) validateattributes(x, ...
+        {'numeric'}, {'>', 0}));
+    inpar.addRequired('inputSpace', @(x) validateattributes(x, ...
+        {'Polyhedron'}, {'nonempty'}));
+    inpar.addOptional('dist', Polyhedron(), @(x) validateattributes(x,...
+        {'Polyhedron', 'StochasticDisturbance', 'RandomVector'},{'nonempty'}));
+    inpar.addOptional('dist_mat', [], @(x) validateattributes(x, {'numeric'},...
+        {'nonempty'}));
+    
+    try
+        inpar.parse(dim, T, varargin{:})
+    catch err
+        exc = SrtInvalidArgsError.withFunctionName();
+        exc = exc.addCause(err);
+        throwAsCaller(exc);
+    end
+    
     % anonymous function for getting the necessary matrix internals
     facT = @(t, n) t^n / factorial(n);
-    
+
     % initialization
     state_mat = eye(dim);
     input_mat = zeros(dim, 1);
     
+    % Populate the upper triangle of state_mat and the entries of input_mat
     for i = 1:dim
         input_mat(i) = facT(T, dim-i+1);
         for j = i+1:dim
@@ -65,9 +84,40 @@ function sys = getChainOfIntegLtiSystem(dim, T, input_space, disturb)
         end
     end
     
-    sys = LtiSystem('StateMatrix', state_mat, ...
+    if any(strcmp('dist', inpar.UsingDefaults))
+        % Disturbance not specified (Impossible to specify dist_mat without
+        % specifying disturbance)
+        sys = LtiSystem('StateMatrix', state_mat, ...
         'InputMatrix', input_mat, ...
-        'InputSpace', input_space, ...
-        'DisturbanceMatrix', eye(dim), ...
-        'Disturbance', disturb);
+        'InputSpace', inpar.Results.inputSpace);
+    else
+        % Disturbance specified
+        if any(strcmp('dist_mat', inpar.UsingDefaults))
+            % DisturbanceMatrix not specified
+            validated_dist_mat = eye(dim);
+        else
+            % DisturbanceMatrix specified
+            validated_dist_mat = inpar.Results.dist_mat;
+        end
+        sys = LtiSystem('StateMatrix', state_mat, ...
+            'InputMatrix', input_mat, ...
+            'InputSpace', inpar.Results.inputSpace, ...
+            'DisturbanceMatrix', validated_dist_mat, ...
+            'Disturbance', inpar.Results.dist);    
+    end   
+end
+
+function boolean_res = validateInputSpace(polyt)
+    % Ensure that the input space is polytopic and one-dimensional
+    
+    validateattributes(polyt, {'Polyhedron'}, {'nonempty'});   
+
+    % if input space is defined it can only be of dimension 1
+    if polyt.Dim > 1
+        exc = SrtInvalidArgsError();
+        exc = exc.addCause(SrtInvalidArgsError(['Chain of integrator ', ...
+            'input space can only have dimension of 1']));
+        throwAsCaller(exc);
+    end
+    boolean_res = true;
 end

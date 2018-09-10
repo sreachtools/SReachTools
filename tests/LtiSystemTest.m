@@ -1,421 +1,279 @@
-% Description : Unit test script for the LtiSystem Class
-% 1/25/2018
-%   - Tests all errors, asserts, and one internal error within the class (11)
-%   - Tests clean LtiSystem definitions (8)
-%   - Skips 1 internal errors and testing disp
+classdef LtiSystemTest < matlab.unittest.TestCase
 
-% Parameter for double integrator dynamics
-T = 0.5;
+    methods (Test)
+        
+        function testIncorrectEmptyFunctionCall(testCase)
+            testCase.verifyError(@() LtiSystem(), 'SReachTools:invalidArgs');
+        end
+        
+        function testIncorrectNonSquareStateMatrix(testCase)
+            testCase.verifyError(@() LtiSystem('StateMatrix',[1,1]), 'SReachTools:invalidArgs');
+        end
+        
+        function testIncorrectNoStateMatrixInput(testCase)
+            testCase.verifyError(@() LtiSystem('InputMatrix', eye(2)), 'SReachTools:invalidArgs');
+        end
+        
+        function testIncorrectInputMatrixStringOnly(testCase)
+            testCase.verifyError(@() LtiSystem('InputMatrix'), 'SReachTools:invalidArgs');
+        end
+        
+        function testIncorrectInputMatrixBadString(testCase)
+            testCase.verifyError(@() LtiSystem('InputMatrixGoneBad', eye(2)), 'SReachTools:invalidArgs');
+        end
+        
+        function testIncorrectInputMatrixWrongRows(testCase)
+            T = 0.5;
+            testCase.verifyError(@() LtiSystem('StateMatrix', [1, T; 0, 1], ...
+                'InputMatrix', [T^2], ...
+                'InputSpace', Polyhedron('lb', -1, 'ub', 1)), 'SReachTools:invalidArgs');
+        end
+        
+        function testIncorrectInputMatrixWrongColumns(testCase)
+            T = 0.5;
+            testCase.verifyError(@() LtiSystem('StateMatrix', [1, T; 0, 1], ...
+                'InputMatrix', [T^2;T], ...
+                'InputSpace', Polyhedron('lb', [-1;-1], 'ub', [1;1])), 'SReachTools:invalidArgs');
+        end
+        
+        function testIncorrectEmptyInputPolyhedronOneDimInputMatrix(testCase)
+            T = 0.5;
+            testCase.verifyError(@() LtiSystem('StateMatrix', [1, T; 0, 1], ...
+                'InputMatrix', [T^2;T]), 'SReachTools:invalidArgs');
+        end
+        
+        function testIncorrectInputPolyhedronOnly(testCase)
+            T = 0.5;
+            testCase.verifyError(@() LtiSystem('StateMatrix', [1, T; 0, 1], ...
+                'Input', Polyhedron('lb', -1, 'ub', 1)), 'SReachTools:invalidArgs');
+        end
+        
+        function testIncorrectNoStateMatrixDisturbance(testCase)
+            testCase.verifyError(@() LtiSystem('DisturbanceMatrix', eye(2)), 'SReachTools:invalidArgs');
+        end
+        
+        function testIncorrectDisturbanceMatrixStringOnly(testCase)
+            testCase.verifyError(@() LtiSystem('DisturbanceMatrix'), 'SReachTools:invalidArgs');
+        end
+        
+        function testIncorrectDisturbanceMatrixBadString(testCase)
+            testCase.verifyError(@() LtiSystem('DisturbanceMatrixGoneBad', eye(2)), 'SReachTools:invalidArgs');
+        end
+        
+        function testIncorrectDisturbanceMatrixWrongRows(testCase)
+            T = 0.5;
+            testCase.verifyError(@() LtiSystem('StateMatrix', [1, T; 0, 1], ...
+                'DisturbanceMatrix', [T^2], ...
+                'DisturbanceSpace', Polyhedron('lb', -1, 'ub', 1)), 'SReachTools:invalidArgs');
+        end
+        
+        function testIncorrectDisturbanceMatrixWrongColumns(testCase)
+            T = 0.5;
+            testCase.verifyError(@() LtiSystem('StateMatrix', [1, T; 0, 1], ...
+                'DisturbanceMatrix', [T^2;T], ...
+                'DisturbanceSpace', Polyhedron('lb', [-1;-1], 'ub', [1;1])), 'SReachTools:invalidArgs');
+        end
+        
+        function testIncorrectEmptyDisturbancePolyhedronOneDimDisturbanceMatrix(testCase)
+            T = 0.5;
+            testCase.verifyError(@() LtiSystem('StateMatrix', [1, T; 0, 1], ...
+                'DisturbanceMatrix', [T^2;T]), 'SReachTools:invalidArgs');
+        end
+        
+        function testIncorrectStochasticDisturbanceBadDim(testCase)
+            T = 0.5;
+            mean_disturbance = zeros(5,1);
+            covariance_disturbance = eye(5);
+            GaussianDisturbance = RandomVector('Gaussian', ...
+                mean_disturbance, ...
+                covariance_disturbance);
+            testCase.verifyError(@() LtiSystem('StateMatrix', [1, T; 0, 1], ...
+                'DisturbanceMatrix', ones(2,4), ...
+                'Disturbance', GaussianDisturbance), 'SReachTools:invalidArgs');
+        end
+        
+        function testIncorrectDisturbancePolyhedronOnly(testCase)
+            T = 0.5;
+            testCase.verifyError(@() LtiSystem('StateMatrix', [1, T; 0, 1], ...
+                'Disturbance', Polyhedron('lb', -1, 'ub', 1)), 'SReachTools:invalidArgs');
+        end
+        
+        function testCorrectInputPolyhedronOnly(testCase)
+            T = 0.5;
+            testCase.verifyClass(LtiSystem('StateMatrix', [1, T; 0, 1], ...
+                'InputMatrix', [T^2;T], ...
+                'InputSpace', Polyhedron('lb', -1, 'ub', 1)), 'LtiSystem');
+        end
+        
+        function testCorrectDisturbancePolyhedronOnly(testCase)
+            T = 0.5;
+            testCase.verifyClass(LtiSystem('StateMatrix', [1, T; 0, 1], ...
+                'DisturbanceMatrix', [T^2;T], ...
+                'Disturbance', Polyhedron('lb', -1, 'ub', 1)), 'LtiSystem');
+        end
 
-%% Incorrect LtiSystem definition with invalid number of arguments
-correct_error_id_sent_out = 0;
-try
-    sys = LtiSystem('InputMatrix');
-catch ME
-    switch ME.identifier
-        case 'SReachTools:invalidArgs'
-            if strcmp(ME.message, ...
-                      'Arguments must be given as name-value pairs')
-                correct_error_id_sent_out = 1;
-            else
-                error('SReachTools:internal', ...
-                      'Unexpected message')
-            end
-        otherwise
-            disp(ME)
+        function testCorrectArbitrarySystem(testCase)
+            T = 0.5;
+            testCase.verifyClass(LtiSystem('StateMatrix', zeros(2,2), ...
+                'InputMatrix', ones(2,4), ...
+                'InputSpace', Polyhedron('lb', -ones(4,1), 'ub', ones(4,1)), ...
+                'DisturbanceMatrix', ones(2,6), ...
+                'Disturbance', Polyhedron('lb', -ones(6,1), 'ub', ones(6,1))), 'LtiSystem');
+        end
+
+        function testCorrectDoubleIntegrator(testCase)
+            T = 0.5;
+            testCase.verifyClass(LtiSystem('StateMatrix', [1, T; 0, 1], ...
+                'InputMatrix', [T^2/2;T], ...
+                'InputSpace', Polyhedron('lb', -1, 'ub', 1), ...
+                'DisturbanceMatrix', [T^2/2;T], ...
+                'Disturbance', Polyhedron('lb', -1, 'ub', 1)), 'LtiSystem');
+        end
+        
+        function testCorrectDoubleIntegratorGaussian(testCase)
+            T = 0.5;
+            mean_disturbance = 0;
+            covariance_disturbance = 1;
+            GaussianDisturbance = RandomVector('Gaussian', ...
+                mean_disturbance, ...
+                covariance_disturbance);
+            testCase.verifyClass(LtiSystem('StateMatrix', [1, T; 0, 1], ...
+                'InputMatrix', [T^2/2;T], ...
+                'InputSpace', Polyhedron('lb', -1, 'ub', 1), ...
+                'DisturbanceMatrix', [T^2/2;T], ...
+                'Disturbance', GaussianDisturbance), 'LtiSystem');
+        end
+
+        function testCorrectDoubleIntegratorGaussianNoInput(testCase)
+            T = 0.5;
+            mean_disturbance = 0;
+            covariance_disturbance = 1;
+            GaussianDisturbance = RandomVector('Gaussian', ...
+                mean_disturbance, ...
+                covariance_disturbance);
+            testCase.verifyClass(LtiSystem('StateMatrix', [1, T; 0, 1], ...
+                'DisturbanceMatrix', [T^2/2;T], ...
+                'Disturbance', GaussianDisturbance), 'LtiSystem');
+        end
+        
+        %% Test the inherited methods for sanity
+        function testgetHmatMeanCovForXSansInput(testCase)
+            % Input handling tests in LtvSystemTest
+            time_horizon = 10;
+            T = 0.25;
+            umax = 0.75;
+            mean_disturbance = 0;
+            covariance_disturbance = 4;
+            GaussianDisturbance = StochasticDisturbance('Gaussian', ...
+                                                         mean_disturbance, ...
+                                                         covariance_disturbance);                                                     
+            sys = LtiSystem(...
+                'StateMatrix', [1, T; 0, 1], ...
+                'InputMatrix', [T^2; T], ...
+                'InputSpace', Polyhedron('lb', -umax, 'ub', umax), ...
+                'DisturbanceMatrix', [T^2; T], ...
+                'Disturbance', GaussianDisturbance);
+            % Load Abar_saved, H_saved, G_matrix_saved expected
+            load('./data/getConcatMatsData.mat');
+            
+            %% Test for a non-stochastic initial state
+            initial_state = [2;0];
+            [H, mean_X_sans_input, cov_X_sans_input, Z, G] = ...
+               getHmatMeanCovForXSansInput(sys, ...
+                                           initial_state, ...
+                                           time_horizon);
+            testCase.verifyLessThanOrEqual(sum(sum(abs(Z - Abar_saved))),1e-8);
+            testCase.verifyLessThanOrEqual(sum(sum(abs(H - H_matrix_saved))),1e-8);
+            testCase.verifyLessThanOrEqual(sum(sum(abs(G - G_matrix_saved))),1e-8);
+            testCase.verifyLessThanOrEqual(sum(sum(abs(mean_X_sans_input - repmat(initial_state,time_horizon,1)))),1e-8);
+            testCase.verifyLessThanOrEqual(sum(sum(abs(...
+                cov_X_sans_input - covariance_disturbance * G_matrix_saved * G_matrix_saved'))),...
+                1e-8);
+            
+            %% Test for a stochastic initial state
+            initial_state = RandomVector('Gaussian',[2;0],eye(2));
+            [H, mean_X_sans_input, cov_X_sans_input, Z, G] = ...
+               getHmatMeanCovForXSansInput(sys, ...
+                                           initial_state, ...
+                                           time_horizon);
+            testCase.verifyLessThanOrEqual(sum(sum(abs(Z - Abar_saved))),1e-8);
+            testCase.verifyLessThanOrEqual(sum(sum(abs(H - H_matrix_saved))),1e-8);
+            testCase.verifyLessThanOrEqual(sum(sum(abs(G - G_matrix_saved))),1e-8);
+            testCase.verifyLessThanOrEqual(sum(sum(abs(mean_X_sans_input - repmat([2;0],time_horizon,1)))),1e-8);
+            testCase.verifyLessThanOrEqual(sum(sum(abs(...
+                cov_X_sans_input - Abar_saved * Abar_saved'- covariance_disturbance * G_matrix_saved * G_matrix_saved'))),...
+                1e-8);
+        end
+        
+        function testgetConcatMats(testCase)
+            % Input handling tests in LtvSystemTest
+            time_horizon = 10;
+            T = 0.25;
+            umax = 0.75;
+            dmax = 1;
+            mean_disturbance = 0;
+            covariance_disturbance = 4;
+            GaussianDisturbance = StochasticDisturbance('Gaussian', ...
+                                                         mean_disturbance, ...
+                                                         covariance_disturbance);                                                     
+            % Load Abar_saved, H_saved, G_matrix_saved expected
+            load('./data/getConcatMatsData.mat');
+            
+            sys = LtiSystem(...
+                'StateMatrix', [1, T; 0, 1], ...
+                'InputMatrix', [T^2; T], ...
+                'InputSpace', Polyhedron('lb', -umax, 'ub', umax), ...
+                'DisturbanceMatrix', [T^2; T], ...
+                'Disturbance', GaussianDisturbance);
+            [Z,H,G] = getConcatMats(sys,time_horizon);
+            testCase.verifyLessThanOrEqual(sum(sum(abs(Z - Abar_saved))),1e-8);
+            testCase.verifyLessThanOrEqual(sum(sum(abs(H - H_matrix_saved))),1e-8);
+            testCase.verifyLessThanOrEqual(sum(sum(abs(G - G_matrix_saved))),1e-8);
+            % Gave a non-stochastic LtiSystem
+            sys = LtiSystem(...
+                'StateMatrix', [1, T; 0, 1], ...
+                'InputMatrix', [T^2; T], ...
+                'InputSpace', Polyhedron('lb', -umax, 'ub', umax), ...
+                'DisturbanceMatrix', [T^2; T], ...
+                'Disturbance', Polyhedron('lb', -dmax, 'ub', dmax));
+            [Z,H,G] = getConcatMats(sys,time_horizon);
+            testCase.verifyLessThanOrEqual(sum(sum(abs(Z - Abar_saved))),1e-8);
+            testCase.verifyLessThanOrEqual(sum(sum(abs(H - H_matrix_saved))),1e-8);
+            testCase.verifyLessThanOrEqual(sum(sum(abs(G - G_matrix_saved))),1e-8);
+            % Disturbance-free
+            sys = LtiSystem(...
+                'StateMatrix', [1, T; 0, 1], ...
+                'InputMatrix', [T^2; T], ...
+                'InputSpace', Polyhedron('lb', -umax, 'ub', umax));
+            [Z,H,G] = getConcatMats(sys,time_horizon);
+            testCase.verifyLessThanOrEqual(sum(sum(abs(Z - Abar_saved))),1e-8);
+            testCase.verifyLessThanOrEqual(sum(sum(abs(H - H_matrix_saved))),1e-8);
+            testCase.verifyEqual(size(G),[2*time_horizon 0]);            
+            % Control-free
+            sys = LtiSystem(...
+                'StateMatrix', [1, T; 0, 1], ...
+                'DisturbanceMatrix', [T^2; T], ...
+                'Disturbance', GaussianDisturbance);
+            [Z,H,G] = getConcatMats(sys,time_horizon);
+            testCase.verifyLessThanOrEqual(sum(sum(abs(Z - Abar_saved))),1e-8);
+            testCase.verifyLessThanOrEqual(sum(sum(abs(G - G_matrix_saved))),1e-8);
+            testCase.verifyEqual(size(H),[2*time_horizon 0]);            
+        end       
+        
+        function testgetConcatInputSpace(testCase)
+            % Input handling tests in LtvSystemTest
+            time_horizon = 10;
+            umax = 1;
+            sys = LtiSystem('StateMatrix', eye(2), ...
+                            'InputMatrix', ones(2,1), ...
+                            'InputSpace', Polyhedron('lb', -umax, 'ub', umax));
+            [concat_input_space_A, concat_input_space_b] = ...
+                getConcatInputSpace(sys,time_horizon);
+            obtained_polyhedron = Polyhedron('H',[concat_input_space_A, ...
+                            concat_input_space_b]);
+            expected_polyhedron = Polyhedron('lb', -umax * ones(time_horizon,1), ...
+                       'ub',  umax * ones(time_horizon,1));
+            testCase.verifyTrue(obtained_polyhedron == expected_polyhedron);
+        end
     end
 end
-assert(correct_error_id_sent_out == 1, ...
-       'Trying an invalid number of arguments succeeded');
-
-%% Incorrect empty LtiSystem definition is not allowed
-correct_error_id_sent_out = 0;
-try
-    sys = LtiSystem();
-catch ME
-    switch ME.identifier
-        case 'SReachTools:invalidArgs'
-            if strcmp(ME.message, ...
-                      'State matrix can not be empty')
-                correct_error_id_sent_out = 1;
-            else
-                error('SReachTools:internal', ...
-                      'Unexpected message')
-            end
-        otherwise
-            disp(ME)
-    end
-end
-assert(correct_error_id_sent_out == 1, ...
-       'Trying empty system definition (not allowed) succeeded');
-
-%% Incorrect LtiSystem definition without state matrix
-correct_error_id_sent_out = 0;
-try
-    sys = LtiSystem('InputMatrix',eye(2));
-catch ME
-    switch ME.identifier
-        case 'SReachTools:invalidArgs'
-            if strcmp(ME.message, ...
-                      'State matrix can not be empty')
-                correct_error_id_sent_out = 1;
-            else
-                error('SReachTools:internal', ...
-                      'Unexpected message')
-            end
-        otherwise
-            disp(ME)
-    end
-end
-assert(correct_error_id_sent_out == 1, ...
-       'Trying system definition without state_matrix succeeded');
-
-%% Incorrect LtiSystem definition with unhandled argument
-correct_error_id_sent_out = 0;
-try
-    sys = LtiSystem('InputMatrixGoneBad',eye(2));
-catch ME
-    switch ME.identifier
-        case 'SReachTools:invalidArgs'
-            if strcmp(ME.message, ...
-                      'Unhandled argument given')
-                correct_error_id_sent_out = 1;
-            else
-                error('SReachTools:internal', ...
-                      'Unexpected message')
-            end
-        otherwise
-            disp(ME)
-    end
-end
-assert(correct_error_id_sent_out == 1, ...
-       'Trying an unhandled argument succeeded');
-
-%% Incorrect LtiSystem definition with invalid input matrix (wrong rows)
-correct_error_id_sent_out = 0;
-try
-    sys = LtiSystem('StateMatrix', [1, T; 0, 1], ...
-                    'InputMatrix', [T^2], ...
-                    'InputSpace', Polyhedron('lb', -1, 'ub', 1));
-catch ME
-    switch ME.identifier
-        case 'SReachTools:invalidArgs'
-            if strcmp(ME.message, ...
-                      'Input matrix does not have correct row numbers')
-                correct_error_id_sent_out = 1;
-            else
-                error('SReachTools:internal', ...
-                      'Unexpected message')
-            end
-        otherwise
-            disp(ME)
-    end
-end
-assert(correct_error_id_sent_out == 1, ...
-       'Trying an invalid input matrix (incorrect rows) succeeded');
-
-%% Incorrect LtiSystem definition with invalid input matrix (wrong columns)
-correct_error_id_sent_out = 0;
-try
-    sys = LtiSystem('StateMatrix', [1, T; 0, 1], ...
-                    'InputMatrix', [T^2;T], ...
-                    'InputSpace', Polyhedron('lb', [-1;-1], 'ub', [1;1]));
-catch ME
-    switch ME.identifier
-        case 'SReachTools:invalidArgs'
-            if strcmp(ME.message, ...
-                      'Input matrix does not have correct column numbers')
-                correct_error_id_sent_out = 1;
-            else
-                error('SReachTools:internal', ...
-                      'Unexpected message')
-            end
-        otherwise
-            disp(ME)
-    end
-end
-assert(correct_error_id_sent_out == 1, ...
-       'Trying an invalid input matrix (incorrect columns) succeeded');
-
-%% Incorrect LtiSystem definition with invalid input property combination
-correct_error_id_sent_out = 0;
-try
-    sys = LtiSystem('StateMatrix', [1, T; 0, 1], ...
-                    'InputMatrix', ones(2,4));
-catch ME
-    switch ME.identifier
-        case 'SReachTools:invalidArgs'
-            if strcmp(ME.message, ...
-                      'Empty input space: But non-column input matrix')
-                correct_error_id_sent_out = 1;
-            else
-                error('SReachTools:internal', ...
-                      'Unexpected message')
-            end
-        otherwise
-            disp(ME)
-    end
-end
-assert(correct_error_id_sent_out == 1, ...
-       'Trying a empty input space with non-column input matrix succeeded');
-
-
-%% Incorrect LtiSystem definition with invalid disturbance matrix (wrong rows)
-correct_error_id_sent_out = 0;
-try
-    sys = LtiSystem('StateMatrix', [1, T; 0, 1], ...
-                    'DisturbanceMatrix', [T^2], ...
-                    'Disturbance', Polyhedron('lb', -1, 'ub', 1));
-catch ME
-    switch ME.identifier
-        case 'SReachTools:invalidArgs'
-            if strcmp(ME.message, ...
-                      'Disturbance matrix does not have correct row numbers')
-                correct_error_id_sent_out = 1;
-            else
-                error('SReachTools:internal', ...
-                      'Unexpected message')
-            end
-        otherwise
-            disp(ME)
-    end
-end
-assert(correct_error_id_sent_out == 1, ...
-       'Trying an invalid disturbance matrix (incorrect rows) succeeded');
-
-%% Incorrect LtiSystem definition with invalid disturbance matrix (wrong columns)
-correct_error_id_sent_out = 0;
-try
-    sys = LtiSystem('StateMatrix', [1, T; 0, 1], ...
-                    'DisturbanceMatrix', [T^2;T], ...
-                    'Disturbance', Polyhedron('lb', [-1,-1], 'ub', [1,1]));
-catch ME
-    switch ME.identifier
-        case 'SReachTools:invalidArgs'
-            if strcmp(ME.message, ...
-                      'Disturbance matrix does not have correct column numbers')
-                correct_error_id_sent_out = 1;
-            else
-                error('SReachTools:internal', ...
-                      'Unexpected message')
-            end
-        otherwise
-            disp(ME)
-    end
-end
-assert(correct_error_id_sent_out == 1, ...
-       'Trying an invalid disturbance matrix (incorrect columns) succeeded');
-
-%% Incorrect LtiSystem definition with non-square state matrix
-correct_error_id_sent_out = 0;
-try
-    sys = LtiSystem('StateMatrix', [1; 1]);
-catch ME
-    switch ME.identifier
-        case 'SReachTools:invalidArgs'
-            if strcmp(ME.message, ...
-                      'State matrix is not square')
-                correct_error_id_sent_out = 1;
-            else
-                error('SReachTools:internal', ...
-                      'Unexpected message')
-                %fprintf('Wrong error message\nExpected: ')
-                %disp(ME.message)
-            end
-        otherwise
-            disp(ME)
-    end
-end
-assert(correct_error_id_sent_out == 1, ...
-       'Trying a non-square state matrix succeeded');
-
-
-%% Incorrect LtiSystem definition with invalid disturbance property combination
-correct_error_id_sent_out = 0;
-try
-    sys = LtiSystem('StateMatrix', [1, T; 0, 1], ...
-                    'DisturbanceMatrix', ones(2,4));
-catch ME
-    switch ME.identifier
-        case 'SReachTools:invalidArgs'
-            if strcmp(ME.message, ...
-                      'Empty disturbance: But non-column disturbance matrix')
-                correct_error_id_sent_out = 1;
-            else
-                error('SReachTools:internal', ...
-                      'Unexpected message')
-            end
-        otherwise
-            disp(ME)
-    end
-end
-assert(correct_error_id_sent_out == 1, ...
-       ['Trying a empty disturbance space with non-column distubance matrix', ...
-       ' succeeded']);
-
-%% Incorrect LtiSystem definition with a invalid stochastic disturbance (Gauss)
-correct_error_id_sent_out = 0;
-mean_disturbance = zeros(5,1);
-covariance_disturbance = eye(5);
-GaussianDisturbance = StochasticDisturbance('Gaussian', ...
-                                             mean_disturbance, ...
-                                             covariance_disturbance);
-try
-    sys = LtiSystem('StateMatrix', [1, T; 0, 1], ...
-                    'DisturbanceMatrix', ones(2,4), ...
-                    'Disturbance', GaussianDisturbance);
-catch ME
-    switch ME.identifier
-        case 'SReachTools:invalidArgs'
-            if strcmp(ME.message, ...
-                      'Disturbance matrix does not have correct column numbers')
-                correct_error_id_sent_out = 1;
-            else
-                error('SReachTools:internal', ...
-                      'Unexpected message')
-            end
-        otherwise
-            disp(ME)
-    end
-end
-assert(correct_error_id_sent_out == 1, ...
-       ['Trying an invalid Gaussian disturbance (dimension mismatch) succeeded']);
-
-%% Partially Correct LtiSystem definition (Interval disturbance
-%permitted without specifying input_matrix)
-incorrect_error_id_sent_out = 0;
-try
-    sys = LtiSystem('StateMatrix', [1, T; 0, 1], ...
-                    'Disturbance', Polyhedron('lb', -1, 'ub', [1]));
-catch ME
-    incorrect_error_id_sent_out = 1;
-    error('SReachTools:internal', ...
-          'Was not expecting an error')
-    throw(ME)
-end
-assert(incorrect_error_id_sent_out == 0, ...
-       'Raised error when given a valid LtiSystem definition');
-
-%% Partially Correct LtiSystem definition (Interval input
-%permitted without specifying input_matrix)
-incorrect_error_id_sent_out = 0;
-try
-    sys = LtiSystem('StateMatrix', [1, T; 0, 1], ...
-                    'InputSpace', Polyhedron('lb', -1, 'ub', [1]));
-catch ME
-    incorrect_error_id_sent_out = 1;
-    error('SReachTools:internal', ...
-          'Was not expecting an error')
-    throw(ME)
-end
-assert(incorrect_error_id_sent_out == 0, ...
-       'Raised error when given a valid LtiSystem definition');
-
-%% Correct LtiSystem definition (only input)
-incorrect_error_id_sent_out = 0;
-try
-    sys = LtiSystem('StateMatrix', [1, T; 0, 1], ...
-                    'InputMatrix', [T^2;T], ...
-                    'InputSpace', Polyhedron('lb', -1, 'ub', 1));
-catch ME
-    incorrect_error_id_sent_out = 1;
-    error('SReachTools:internal', ...
-          'Was not expecting an error')
-    throw(ME)
-end
-assert(incorrect_error_id_sent_out == 0, ...
-       'Raised error when given a valid disturbance-free LtiSystem definition');
-
-
-%% Correct LtiSystem definition (only disturbance)
-incorrect_error_id_sent_out = 0;
-try
-    sys = LtiSystem('StateMatrix', [1, T; 0, 1], ...
-                    'DisturbanceMatrix', [T^2;T], ...
-                    'Disturbance', Polyhedron('lb', -1, 'ub', 1));
-catch ME
-    incorrect_error_id_sent_out = 1;
-    error('SReachTools:internal', ...
-          'Was not expecting an error')
-    throw(ME)
-end
-assert(incorrect_error_id_sent_out == 0, ...
-       'Raised error when given a valid input-free LtiSystem definition');
-
-
-%% Correct LtiSystem definition --- arbitrary system
-incorrect_error_id_sent_out = 0;
-try
-    sys = LtiSystem('StateMatrix', zeros(2,2), ...
-                    'InputMatrix', ones(2,4), ...
-                    'InputSpace', Polyhedron('lb', -ones(4,1), 'ub', ones(4,1)), ...
-                    'DisturbanceMatrix', ones(2,6), ...
-                    'Disturbance', Polyhedron('lb', -ones(6,1), 'ub', ones(6,1)));
-catch ME
-    incorrect_error_id_sent_out = 1;
-    error('SReachTools:internal', ...
-          'Was not expecting an error')
-    throw(ME)
-end
-assert(incorrect_error_id_sent_out == 0, ...
-       'Raised error when given a valid LtiSystem definition');
-
-
-%% Correct LtiSystem definition --- double integrator
-incorrect_error_id_sent_out = 0;
-try
-    sys = LtiSystem('StateMatrix', [1, T; 0, 1], ...
-                    'InputMatrix', [T^2/2;T], ...
-                    'InputSpace', Polyhedron('lb', -1, 'ub', 1), ...
-                    'DisturbanceMatrix', [T^2/2;T], ...
-                    'Disturbance', Polyhedron('lb', -1, 'ub', 1));
-catch ME
-    incorrect_error_id_sent_out = 1;
-    error('SReachTools:internal', ...
-          'Was not expecting an error')
-    throw(ME)
-end
-assert(incorrect_error_id_sent_out == 0, ...
-       'Raised error when given a valid LtiSystem definition');
-
-%% Correct LtiSystem definition (Gauss)
-incorrect_error_id_sent_out = 0;
-mean_disturbance = zeros(5,1);
-covariance_disturbance = eye(5);
-GaussianDisturbance = StochasticDisturbance('Gaussian', ...
-                                             mean_disturbance, ...
-                                             covariance_disturbance);
-try
-    sys = LtiSystem('StateMatrix', [1, T; 0, 1], ...
-                    'DisturbanceMatrix', ones(2,5), ...
-                    'Disturbance', GaussianDisturbance);
-catch ME
-    incorrect_error_id_sent_out = 1;
-    error('SReachTools:internal', ...
-          'Was not expecting an error')
-    throw(ME)
-end
-assert(incorrect_error_id_sent_out == 0, ...
-       'Raised error when given a valid LtiSystem definition');
-
-%% Correct LtiSystem definition --- double integrator Gaussian perturbed
-incorrect_error_id_sent_out = 0;
-mean_disturbance = 0;
-covariance_disturbance = 1;
-GaussianDisturbance = StochasticDisturbance('Gaussian', ...
-                                             mean_disturbance, ...
-                                             covariance_disturbance);
-try
-    sys = LtiSystem('StateMatrix', [1, T; 0, 1], ...
-                    'InputMatrix', [T^2/2;T], ...
-                    'InputSpace', Polyhedron('lb', -1, 'ub', 1), ...
-                    'DisturbanceMatrix', [T^2/2;T], ...
-                    'Disturbance', GaussianDisturbance);
-catch ME
-    incorrect_error_id_sent_out = 1;
-    error('SReachTools:internal', ...
-          'Was not expecting an error')
-    throw(ME)
-end
-assert(incorrect_error_id_sent_out == 0, ...
-       'Raised error when given a valid LtiSystem definition');

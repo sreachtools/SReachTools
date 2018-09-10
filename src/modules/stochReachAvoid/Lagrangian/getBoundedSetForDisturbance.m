@@ -1,7 +1,6 @@
 function bounded_set = getBoundedSetForDisturbance(disturbance, ...
     horizon_length, beta, method, varargin)
-% SReachTools/stochasticReachAvoid/getBoundedSetForDisturbance: Get bounded 
-% disturbance set for approximation
+% Get bounded disturbance set for approximation
 % ============================================================================
 %
 % This function will get a bounded disturbance set used to compute robust
@@ -68,17 +67,18 @@ function bounded_set = getBoundedSetForDisturbance(disturbance, ...
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 
     % only need to validate attributes if not loading from file
     if ~strcmp(method, 'load')
         % validate that the disturbance is a StochasticDisturbance object
         % then ensure that the disturbance is Gaussian
-        validateattributes(disturbance, {'StochasticDisturbance'}, ...
+        validateattributes(disturbance, {'RandomVector'}, ...
             {'nonempty'})
         if ~strcmpi(disturbance.type, 'Gaussian')
-            error('SReachTools:invalidArgs', 'Disturbance must be of type Gaussian');
+            exc = SrtInvalidArgsError('Disturbance must be of type Gaussian');
+            throwAsCaller(exc);
         end
 
         % check that the horizon is some nonzero integer
@@ -136,8 +136,9 @@ function bounded_set = getBoundedSetForDisturbance(disturbance, ...
             validateattributes(varargin{1}, {'char'}, {'nonempty'})
             
             if exist(varargin{1}, 'file') ~= 2
-                error('SReachTools:internal', ['Mat file to load does not ', ...
+                exc = SrtInternalError(['Mat file to load does not ', ...
                     'exist on the path.']);
+                throw(exc);
             end
             
             % load the mat file, loads as a struct
@@ -146,10 +147,11 @@ function bounded_set = getBoundedSetForDisturbance(disturbance, ...
             % look for the Polyhedron
             fnames = fields(ls);
             if length(fnames) > 1
-                error('SReachTools:internal', ['Mat file contains more than ', ...
+                exc = SrtInternalError(['Mat file contains more than ', ...
                     'saved object. Please see Notes section of the help ', ...
                     'for details about how mat files used for loading ', ...
                     'must be structured.']);
+                throw(exc);
             else
                 bounded_set = ls.(fnames{1});
             end
@@ -160,15 +162,17 @@ function bounded_set = getBoundedSetForDisturbance(disturbance, ...
             
             
         otherwise
-            error('SReachTools:invalidArgs', ['Invalid method provided, see ', ...
-                'help for available methods']);
+            exc = SrtInvalidArgsError(['Invalid method provided, see ', ...
+                'help for available methods'])
+            throwAsCaller(exc);
+            
     end
 
 end
 
 function bounded_set = boundedEllipseByRandomVectors(disturbance, ...
     horizon_length, beta, n_directions)
-% SReachTools/getBoundedSetForDisturbance/boundedEllipseByRandomVectors: Get bounded 
+%  Get bounded 
 % disturbance ellipse with random direction choices
 % ============================================================================
 %
@@ -197,12 +201,12 @@ function bounded_set = boundedEllipseByRandomVectors(disturbance, ...
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 
     % should probably provide a warning about the use of random direction for
     % 2-dimensional system
-    % if disturbance.dimension <= 2)
+    % if disturbance.dim <= 2)
     %     warning(['For disturbances with dimension less than 2 random ', ...
     %         'there are more direct solutions for obtaining the ellipse. ', ...
     %         'Using ''lowdim'' option will provide faster and likely better ', ...
@@ -235,7 +239,7 @@ end
 
 function poly = getOptimizationBoxForGaussian(disturbance, horizon_length, ...
     beta, center)
-% SReachTools/getBoundedSetForDisturbance/getOptimizationBoxForGaussian: Get bounded 
+%  Get bounded 
 % disturbance as box through solution of optimization problem
 % ============================================================================
 %
@@ -265,7 +269,7 @@ function poly = getOptimizationBoxForGaussian(disturbance, horizon_length, ...
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 
     center = disturbance.parameters.covariance^(-1/2)*(center - ...
@@ -276,7 +280,7 @@ function poly = getOptimizationBoxForGaussian(disturbance, horizon_length, ...
     
     perimeter_func = @(l) sum(l);
     
-    l0 = ones(disturbance.dimension, 1);
+    l0 = ones(disturbance.dim, 1);
     
     l = fmincon(perimeter_func, l0, [], [], [], [], ...
         zeros(size(l0)), [], ...
@@ -290,7 +294,7 @@ function poly = getOptimizationBoxForGaussian(disturbance, horizon_length, ...
 end
 
 function [c, ceq] = nonlinearOptimBoxConstraints(l, c, p)
-% SReachTools/getOptimizationBoxForGaussian/nonlinearOptimBoxConstraints: Nonlinear
+%  Nonlinear
 % constraints for getOptimizationBoxForGaussian
 % ============================================================================
 %
@@ -317,7 +321,7 @@ function [c, ceq] = nonlinearOptimBoxConstraints(l, c, p)
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 
     c = p - mvncdf(c'-l'/2, c'+l'/2, zeros(size(l')), eye(length(l)));
@@ -327,7 +331,7 @@ end
 
 function poly = getBoundingBoxForGaussian(disturbance, horizon_length, ...
     beta, err)
-% SReachTools/getBoundedSetForDisturbance/getBoundingBoxForGaussian: Get bounded 
+%  Get bounded 
 % disturbance as box through bisection
 % ============================================================================
 %
@@ -356,7 +360,7 @@ function poly = getBoundingBoxForGaussian(disturbance, horizon_length, ...
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 
     MAX_ITERS = 10000;
@@ -364,11 +368,11 @@ function poly = getBoundingBoxForGaussian(disturbance, horizon_length, ...
     a = 0;
     b = 1;
     
-    mu = zeros(1, disturbance.dimension);
-    sigma = eye(disturbance.dimension);
+    mu = zeros(1, disturbance.dim);
+    sigma = eye(disturbance.dim);
     
-    center = zeros(1, disturbance.dimension);
-    dx_ones = ones(1, disturbance.dimension);
+    center = zeros(1, disturbance.dim);
+    dx_ones = ones(1, disturbance.dim);
     
     box = SimpleBox(center, b*dx_ones);
     p = box.computeGaussianProbability(mvncdf(box.vertices, mu, sigma));

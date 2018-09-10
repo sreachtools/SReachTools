@@ -2,12 +2,14 @@ function robust_eff_target = getRobustEffTarget(sys, ...
                                                 target_tube, ...
                                                 disturbance, ...
                                                 varargin)
-% SReachTools/getRobustEffTarget Get robust Effective Target Set
+% Get robust Effective Target Set
 % =========================================================================
 %
 % This function will compute the augmented effect target via the algorithm in
 % the paper:
 %      [[Will fill out this once paper is actually submitted]]
+%
+% TODO
 %
 % Usage: See examples/lagrangianApproximations.m
 %
@@ -20,7 +22,8 @@ function robust_eff_target = getRobustEffTarget(sys, ...
 % Inputs:
 % -------
 %   sys          - LtiSystem object
-%   target_tube  - Cell array of Polyhedron objects 
+%   target_tube  - Target tube of length N+1 where N is the time_horizon. It should have
+%                  polyhedrons T_0, T_1,...,T_N.
 %   disturbance  - Polyhedron object (bounded disturbance set)
 % 
 %   Name       | Value
@@ -32,34 +35,51 @@ function robust_eff_target = getRobustEffTarget(sys, ...
 %   robust_eff_target - Polyhedron object
 %
 % Notes:
-%   - From computational geometry, intersections and Minkowski differences are
-%     best performed in facet representation and Minkowski sums are best
-%     performed in vertex representation. However, since in this computation,
-%     all three operations are required, scalability of the algorithm is severly
-%     hampered, despite theoretical elgance.
+% * From computational geometry, intersections and Minkowski differences are
+%   best performed in facet representation and Minkowski sums are best
+%   performed in vertex representation. However, since in this computation,
+%   all three operations are required, scalability of the algorithm is severly
+%   hampered, despite theoretical elegance.
 %   
 % =========================================================================
 % 
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 % 
 
     % validate the inputs
     inpar = inputParser();
     inpar.addRequired('sys', @(x) validateattributes(x, ...
-        {'LtiSystem'}, {'nonempty'}));
+        {'LtiSystem', 'LtvSystem'}, {'nonempty'}));
     inpar.addRequired('target_tube', @(x) validateattributes(x, ...
-        {'cell'}, {'nonempty'}));
+        {'TargetTube'}, {'nonempty'}));
     inpar.addRequired('disturbance', @(x) validateattributes(x, ...
         {'Polyhedron'}, {'nonempty'}));
-    inpar.addParameter('style', 'standard', @(x) validatestring(x, ...
-        {'standard', 'vrep'}));
-
-    inpar.parse(sys, target_tube, disturbance, varargin{:});
-
-    if sys.state_dimension > 4
+    inpar.addOptional('style', 'standard', @(x) validatestring(x, ...
+        {'standard','vrep'}));
+    
+    % Expecting at most one extra argument
+    if length(varargin) > 1
+        exc = SrtInvalidArgsError.withFunctionName();
+        exc = addCause(exc, error('Too many input arguments'));
+        throwAsCaller(exc);
+    end
+    
+    try
+        if length(varargin) == 1
+            inpar.parse(sys, target_tube, disturbance, varargin{1});
+        else
+            inpar.parse(sys, target_tube, disturbance);
+        end
+    catch cause_exc
+        exc = SrtInvalidArgsError.withFunctionName();
+        exc = addCause(exc, cause_exc);
+        throwAsCaller(exc);
+    end
+    
+    if sys.state_dim > 4
         warning(['Because both vertex and facet representation of ', ...
             'polyhedra aer required for the necessary set recursion ', ...
             'operations computing for systems greater than 4 dimensions', ...
@@ -67,84 +87,79 @@ function robust_eff_target = getRobustEffTarget(sys, ...
             'of the need to solve the vertex-facet enumeration problem.'])
     end
     
-    % validate that all elements of the target_tube are polyhedron
-    for i = 1:length(target_tube)
-        validateattributes(target_tube{i}, {'Polyhedron'}, {'nonempty'});
-    end
-    
-    horizon_length = length(target_tube);
+    tube_length = length(target_tube);
     n_disturbances = length(disturbance);
 
     % MPT does not support A \ P or P / A (P is Polyhedron and A is matrix)
     % so we must invert prior
-    inverted_state_matrix = inv(sys.state_matrix);
-    minus_bu = - sys.input_matrix * sys.input_space;
-    effective_target_temp = target_tube{horizon_length};
-    if horizon_length > 1
-        if n_disturbances > 1
-            if sys.state_dimension > 2
-                % warning(['The convex hull operation may produce ', ...
-                %     'inconsistent or inaccurate results for systems with ', ...
-                %     'dimensions greater than 2. See [[url once note has ', ...
-                %     'been added to the google group]].'])
-                warning(['The convex hull operation may produce ', ...
-                    'inconsistent or inaccurate results for systems with ', ...
-                    'dimensions greater than 2.'])
+    if sys.islti()
+        inverted_state_matrix = inv(sys.state_mat);
+        minus_bu = - sys.input_mat * sys.input_space;
+    end
+
+    if tube_length > 1
+        if sys.state_dim > 2
+            % warning(['The convex hull operation may produce ', ...
+            %     'inconsistent or inaccurate results for systems with ', ...
+            %     'dimensions greater than 2. See [[url once note has ', ...
+            %     'been added to the google group]].'])
+            warning(['The convex hull operation may produce ', ...
+                'inconsistent or inaccurate results for systems with ', ...
+                'dimensions greater than 2.'])
+        end
+        
+        effective_target_tube = repmat(Polyhedron(), tube_length, 1);
+        effective_target_tube(end) = target_tube(end);
+        for itt = tube_length-1:-1:1
+            % Computing effective target tube for current_time
+            current_time = itt - 1;
+            if ~sys.islti()
+                inverted_state_matrix = inv(sys.state_mat(current_time));
+                minus_bu = sys.input_mat(current_time) * sys.input_space;
             end
-            effective_target_tube = target_tube;
-            for i = horizon_length-1:-1:1
-                eff_target_stopwatch = tic;
 
-                vertices = [];
-                for j = 1: n_disturbances
-                    effective_dist = sys.disturbance_matrix * disturbance{j};
-                    single_dist_stopwatch = tic;
-                    effective_target = performRobustEffectiveTargetRecursion(...
-                        effective_target_tube{i+1}, ...
-                        effective_target_tube{i}, ...
-                        minus_bu, ...
-                        inverted_state_matrix, ....
-                        effective_dist, ...
-                        inpar.Results.style);
-                    
-                    single_dist_comptime = toc(single_dist_stopwatch);
-
-                    vertices = [vertices; effective_target.V];
+            vertices = [];
+            for idist = 1: n_disturbances
+                if n_disturbances > 1
+                    effective_dist = sys.dist_mat(current_time) * ...
+                        disturbance{idist};
+                else
+                    effective_dist = sys.dist_mat * disturbance;
                 end
-                
-                effective_target_tube{i} = Polyhedron(vertices);
-                
-                eff_target_comptime = toc(eff_target_stopwatch);                
+
+                effective_target = computeRobusteEffTargetRecursion(...
+                    effective_target_tube(itt+1), ...
+                    target_tube(itt), ...
+                    minus_bu, ...
+                    inverted_state_matrix, ....
+                    effective_dist, ...
+                    inpar.Results.style);
+
+                if n_disturbances > 1
+                    % Don't trigger conversion unless you really have to
+                    vertices = [vertices; effective_target.V];                
+                end
             end
-            effective_target_temp = effective_target_tube{1};
-        else
-            effective_dist = sys.disturbance_matrix * disturbance;
-            for i = horizon_length-1:-1:1
-                eff_target_stopwatch = tic;
-                effective_target_temp = ...
-                    performRobustEffectiveTargetRecursion(...
-                        effective_target_temp, ...
-                        target_tube{i}, ...
-                        minus_bu, ...
-                        inverted_state_matrix, ...
-                        effective_dist, ...
-                        inpar.Results.style);
-                
-                eff_target_comptime = toc(eff_target_stopwatch);
-            end 
+
+            if n_disturbances > 1
+                effective_target_tube(itt) = Polyhedron(vertices);
+            else
+                effective_target_tube(itt) = effective_target;
+            end
         end
     end
-    robust_eff_target = effective_target_temp;
+
+    robust_eff_target = effective_target_tube(1);
 end
 
-function back_recursion_set = performRobustEffectiveTargetRecursion(...
+function back_recursion_set = computeRobusteEffTargetRecursion(...
     effective_target, ...
     target_tube_set, ...
     minus_bu, ...
     inverted_state_matrix, ...
     effective_dist, ...
     style)
-% SReachTools/performRobustEffectiveTargetRecursion  Do the 
+% Do the 
 % one set backward recursion to obtain the effective target
 % =========================================================================
 %
@@ -152,13 +167,11 @@ function back_recursion_set = performRobustEffectiveTargetRecursion(...
 % effective target set. See recursion from
 %   [[Will fill out this once paper is actually submitted]]
 % 
-% Usage
-% -----
-% Nested function in getRobustEffTarget
+% Usage: Nested function in getRobustEffTarget
 %
 % =========================================================================
 % 
-% back_recursion_set = performRobustEffectiveTargetRecursion(...
+% back_recursion_set = computeRobusteEffTargetRecursion(...
 %     effective_target, ...
 %     target_tube_set, ...
 %     minus_bu, ...
@@ -188,7 +201,7 @@ function back_recursion_set = performRobustEffectiveTargetRecursion(...
 % 
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 % 
     
@@ -248,7 +261,7 @@ function back_recursion_set = performRobustEffectiveTargetRecursion(...
             % here because of the vertex-facet enumeration
             back_recursion_set = intersect(reach_set, target_tube_set);
         otherwise
-            assert(false, 'Unhandled option')
+            throw(SrtInternalError('Unhandled option'));
     end
 
 end

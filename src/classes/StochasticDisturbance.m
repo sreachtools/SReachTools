@@ -1,6 +1,5 @@
 classdef StochasticDisturbance < RandomVector
-% SReachTools/StochasticDisturbance: Create a stochastic disturbance object
-% (subclass of RandomVector)
+% Create a stochastic disturbance object (subclass of RandomVector)
 % ==========================================================================
 %
 % Defines a stochastic disturbance with a standard probability density function
@@ -29,7 +28,7 @@ classdef StochasticDisturbance < RandomVector
 % ------------------------
 %   type       - Stochastic disturbance type (string)
 %   parameters - System parameters (struct)
-%   dimension  - Stochastic disturbance dimension (scalar)
+%   dim        - Stochastic disturbance dimension (scalar)
 %   pdf        - Probability density function (function handle)
 %
 % StochasticDisturbance Methods:
@@ -46,35 +45,36 @@ classdef StochasticDisturbance < RandomVector
 % * The anonymous function used for the definition of obj.pdf transposes the
 %   accepted column vector for using mvnpdf.
 % * StochasticDisturbance.pdf takes in arguments of the form N_points x
-%   stochastic_disturbance_dimension
+%   stochastic_disturbance_dim
 % 
 % =========================================================================
 % 
 % This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 % 
     methods
         function obj = StochasticDisturbance(rv_type, varargin)
             switch(lower(rv_type))
                 case 'gaussian'
-                    assert(length(varargin) == 2, ...
-                           'SReachTools:invalidArgs', ...
-                           ['Gaussian disturbance needs the mean vector ', ...
-                           'and covariance matrix']);
+                    if length(varargin) ~= 2
+                        throwAsCaller(SrtInvalidArsError(['Gaussian disturbance needs the mean vector ', ...
+                           'and covariance matrix']));
+                    end
+                    
                     args{1} = varargin{1};
                     args{2} = varargin{2};
                 otherwise
-                    error('SReachTools:internal', ...
-                          'Unsupported disturbance type');
+                    exc = SrtInvalidArgsError('Unsupported disturbance type');
+                    throw(exc);
             end
             % Call to superclass constructor must be unconditional
             obj = obj@RandomVector(rv_type, args{:});
         end
 
         function disp(obj)
-        % SReachTools/StochasticDisturbance/disp  Override of MATLAB internal
+        % Override of MATLAB internal
         % display
         % ====================================================================
         % 
@@ -84,12 +84,12 @@ classdef StochasticDisturbance < RandomVector
         % 
         % This function is part of the Stochastic Reachability Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
         %
             
             disp(sprintf('%s-dimensional %s stochastic disturbance', ...
-                         num2str(obj.dimension), ...
+                         num2str(obj.dim), ...
                          obj.type));
         end
     end

@@ -1,6 +1,5 @@
 function [lower_bound_stoch_reach_avoid, optimal_input_vector] = ...
              computeFtLowerBoundStochReachAvoid(sys, ...
-                                                initial_state, ...
                                                 time_horizon, ...
                                                 concat_input_space_A, ... 
                                                 concat_input_space_b, ...
@@ -12,9 +11,8 @@ function [lower_bound_stoch_reach_avoid, optimal_input_vector] = ...
                                                 guess_optimal_input_vector, ...
                                                 desired_accuracy, ...
                                                 PSoptions)
-% SReachTools/stochasticReachAvoid/computeFtLowerBoundStochReachAvoid: Solve 
-% the stochastic reach-avoid problem (lower bound on the probability and an 
-% open-loop controller synthesis) using Fourier transform and convex 
+% Solve the stochastic reach-avoid problem (lower bound on the probability and 
+% an open-loop controller synthesis) using Fourier transform and convex
 % optimization (Internal function --- assumes arguments are all ok)
 % =============================================================================
 %
@@ -33,7 +31,6 @@ function [lower_bound_stoch_reach_avoid, optimal_input_vector] = ...
 % =============================================================================
 % [lower_bound_stoch_reach_avoid, optimal_input_vector] = ...
 %              computeFtLowerBoundStochReachAvoid(sys, ...
-%                                                 initial_state, ...
 %                                                 time_horizon, ...
 %                                                 concat_input_space_A, ... 
 %                                                 concat_input_space_b, ...
@@ -50,7 +47,6 @@ function [lower_bound_stoch_reach_avoid, optimal_input_vector] = ...
 % -------
 %   sys                         - LtiSystem object describing the system to be
 %                                 verified
-%   initial_state               - Initial state of interest
 %   time_horizon                - Time horizon of the stochastic reach-avoid
 %                                 problem
 %   concat_input_space_A,       
@@ -80,7 +76,7 @@ function [lower_bound_stoch_reach_avoid, optimal_input_vector] = ...
 %                                   using Fourier transform and convex 
 %                                   optimization
 %   optimal_input_vector          - Optimal open-loop policy
-%                                   ((sys.input_dimension) *
+%                                   ((sys.input_dim) *
 %                                   time_horizon)-dimensional vector 
 %                                   U = [u_0; u_1; ...; u_N] (column vector)
 %
@@ -103,13 +99,13 @@ function [lower_bound_stoch_reach_avoid, optimal_input_vector] = ...
 %   Statistics and Machine Learning Toolbox's mvncdf to compute the integral of
 %   the Gaussian over a polytope
 % * See @LtiSystem/getConcatMats for more information about the
-%     notation used.
+%   notation used.
 % 
 % ============================================================================
 % 
 % This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 %
 
@@ -130,8 +126,8 @@ function [lower_bound_stoch_reach_avoid, optimal_input_vector] = ...
         % To account for the case where the mean state can not be held within
         % the reach-avoid tube, we use slack variables which should ideally be
         % zero but if positive then should be as least positive as possible
-        length_input_vector = sys.input_dimension * time_horizon;
-        length_state_vector = sys.state_dimension * time_horizon;
+        length_input_vector = sys.input_dim * time_horizon;
+        length_state_vector = sys.state_dim * time_horizon;
         % minimize |s|
         % subject to 
         %                                  X = mean_X_sans_input + \mathscr{H} U
@@ -185,7 +181,7 @@ function [lower_bound_stoch_reach_avoid, optimal_input_vector] = ...
         %        concat_input_space_A * U \leq concat_input_space_b
         % Given x_0
         [optimal_input_vector, optimal_negative_log_reach_avoid_prob]= ...
-              patternsearch(negativeLogReachAvoidProbabilityGivenInputVector, ...
+              patternsearch(negativeLogReachAvoidProbabilityGivenInputVector,...
                             guess_concatentated_input_vector, ...
                             concat_input_space_A, ...
                             concat_input_space_b, ...
@@ -197,16 +193,6 @@ function [lower_bound_stoch_reach_avoid, optimal_input_vector] = ...
                              exp(-optimal_negative_log_reach_avoid_prob);
     end
 end
-
-% TODO: We could have a scaling factor later discounting
-%discount_vector = 0.1.^[0:length(concat_target_tube_b)-1];
-    %minimize discount_vector*slack_variable
-
-% TODO: Approach 2: Use a convex chance-constrained formulation
-% originally proposed by K. Lesser in CDC 2013 paper but modified by A.
-% P. Vinod in a future publication.
-
-% Approach 3: Center the trajectory as close as possible
 %dual_norm_of_safe_set_A = ...
 %    sqrt(diag(concat_target_tube_A*concat_target_tube_A')); 
 %cvx_begin quiet

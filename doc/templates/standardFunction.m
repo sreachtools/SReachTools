@@ -1,5 +1,5 @@
 function [a, b, c] = standardFunction(d, e, f)
-% SReachTools/standardFunction: Function documentation example
+%  Function documentation example
 % ============================================================================
 %
 % Example of standard function documentation
@@ -48,7 +48,7 @@ function [a, b, c] = standardFunction(d, e, f)
 % 
 % This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 % 
 

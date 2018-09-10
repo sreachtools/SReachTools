@@ -8,7 +8,8 @@
 T = 0.25;
 
 % Safe set K |x1| < 1, |x2| < 1
-K = Polyhedron('lb', [-1; -1], 'ub', [1; 1]);
+safe_set = Polyhedron('lb', [-1; -1], 'ub', [1; 1]);
+time_horizon = 6;
 
 % Input Space
 U = Polyhedron('lb', -0.1, 'ub', 0.1);
@@ -17,10 +18,10 @@ sys = LtiSystem('StateMatrix', [1, T; 0, 1], ...
     'InputMatrix', [T^2/2; T], ...
     'InputSpace', U, ...
     'DisturbanceMatrix', eye(2), ...
-    'Disturbance', StochasticDisturbance('Gaussian', zeros(2,1), 5e-3*eye(2)));
+    'Disturbance', RandomVector('Gaussian', zeros(2,1), 5e-3*eye(2)));
 
 % target_tube = {K, K, K, K, K, K};
-target_tube = {K, K, K, K, K, K};
+target_tube = TargetTube('viability', safe_set, time_horizon);
 
 successful = true;
 try

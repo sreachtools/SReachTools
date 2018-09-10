@@ -1,8 +1,8 @@
 function [concat_input_space_A, concat_input_space_b] = ...
                                          getConcatInputSpace(sys, ...
                                                              time_horizon)
-% SReachTools/LtiSystem/getConcatInputSpace: Get half space representation of
-% the concatenated (polytopic) input space for the given time horizon
+% Get half space representation of the concatenated (polytopic) input space 
+% for the given time horizon
 % ============================================================================
 % 
 % Computes the input_space^{time_horizon} corresponding to a given set, which
@@ -13,9 +13,9 @@ function [concat_input_space_A, concat_input_space_b] = ...
 % ------
 %
 % % Compute the (matrix form) set of admissible open-loop control policies given
-% % a LtiSystem and a time horizon
+% % a LtvSystem and a time horizon
 %
-% sys = LtiSystem(...
+% sys = LtvSystem(...
 %     'StateMatrix', eye(2), ...
 %     'InputMatrix', ones(2,1), ...
 %     'InputSpace', Polyhedron('lb', -umax, 'ub', umax));
@@ -32,7 +32,7 @@ function [concat_input_space_A, concat_input_space_b] = ...
 % 
 % Inputs:
 % -------
-%   sys                  - An object of LtiSystem class 
+%   sys                  - An object of LtvSystem class 
 %   time_horizon         - Time horizon
 %
 % Outputs:
@@ -44,19 +44,20 @@ function [concat_input_space_A, concat_input_space_b] = ...
 %
 % This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 %
 
     %% Input handling
     % Ensure that the system has a non-empty input space
-    assert(~sys.input_space.isEmptySet, ...
-           'SReachTools:invalidArgs', ...
-           'Expected a non-empty polyhedral input space');
+    if sys.input_space.isEmptySet
+      throwAsCaller(SrtInvalidArgsError('Expected a non-empty polyhedral input space'));
+    end
+
     % Ensure that time horizon is a scalar and positive
-    assert( isscalar(time_horizon) && time_horizon > 0, ...
-           'SReachTools:invalidArgs', ...
-           'Expected a scalar positive time_horizon');
+    if ~isscalar(time_horizon) || time_horizon <= 0
+      throwAsCaller(SrtInvalidArgsError('Expected a scalar positive time_horizon'));
+    end
 
     %% Construction of the concatenated input space (input_space^{time_horizon})
     concat_input_space_A = kron(eye(time_horizon), sys.input_space.A);

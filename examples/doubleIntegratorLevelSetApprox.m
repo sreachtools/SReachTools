@@ -1,4 +1,4 @@
-% SReachTools/doubleIntegratorLevelSetApprox  Doulbe integrator level set 
+% Doulbe integrator level set 
 % approximation
 % ============================================================================
 %
@@ -15,7 +15,7 @@
 % 
 % This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 % 
 
@@ -35,14 +35,9 @@ safe_set = Polyhedron('lb', [-1, -1], 'ub', [1, 1]);
 
 % in target tube for the viability problem is equivalent to a tube of repeating
 % safe sets
-target_tube = {safe_set, ...
-    safe_set, ...
-    safe_set, ...
-    safe_set, ...
-    safe_set, ...
-    safe_set};
+N = 6;
+target_tube = TargetTube('viability', safe_set, N);
 
-N = length(target_tube);
 
 % want to solve for the approximate level set for 1--5 total time steps, this is
 % done by repeatedly calling the function to get the approximate level set since
@@ -57,10 +52,7 @@ for i = 2:N
     % going to use the random vector method for obtaining the approximation of
     % the ellipse for the gaussian disturbance
     approx_level_set = getApproxStochasticLevelSetViaLagrangian(sys, ...
-        0.8, ...
-        target_tube(1:i), ...
-        'underapproximation', ...
-        'random', 100);
+        0.8, target_tube, 'underapproximation', 'random', 100);
     
     % some plotting functions
     subplot(1, N-1, i-1)
