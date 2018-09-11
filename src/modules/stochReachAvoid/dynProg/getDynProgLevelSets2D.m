@@ -99,8 +99,8 @@ function poly_array = getDynProgLevelSets2D(cell_of_grid_x, prob_x,...
             tempPolytope = Polyhedron('V',[originalVertices;
                                            corners(corner_indx,:)]);
             tempPolytope.minVRep();
-            if size(tempPolytope.V,1) == n_orig_vertices + 1
-                warning('MATLAB''s contour matrix missed a corner');
+            if (size(tempPolytope.V,1) == n_orig_vertices + 1) || (size(tempPolytope.V,1) == n_orig_vertices)
+                warning('MATLAB''s contour matrix missed a corner!\nAdding (%d, %d) to polytope vertex list for level=%1.2f.', corners(corner_indx,:)',prob_lvls(poly_indx));
                 poly_array_vertices{poly_indx} = [poly_array_vertices{poly_indx}, corners(corner_indx,:)'];
             end
         end
