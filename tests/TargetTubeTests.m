@@ -152,5 +152,35 @@ classdef TargetTubeTests < matlab.unittest.TestCase
             % Multiple concatenated state trajectories with one of them outside
             testCase.verifyEqual(target_tube.contains(repmat([xmax/2 xmax 2*xmax],time_horizon+1,1)),logical([1 1 0]));            
         end
+        
+        function testIntersect(testCase)
+            time_horizon = 3;
+            xmax = [1 2];
+            
+            % Target tubes has polyhedra T_0, T_1, ..., T_{time_horizon}
+            orig_tube = TargetTube('viability',Polyhedron('lb',-xmax,'ub',xmax), time_horizon);
+            
+            %% Checking input handling
+            % Wrong input type
+            testCase.verifyError(@() TargetTube('intersect',orig_tube, ' '),'MATLAB:invalidType');            
+            testCase.verifyError(@() TargetTube('intersect',' ', Polyhedron()),'MATLAB:invalidType');            
+            % Mismatch dimension
+            int_polytope = Polyhedron('lb',1,'ub',2);
+            testCase.verifyError(@() TargetTube('intersect',orig_tube, int_polytope),'SReachTools:invalidArgs');            
+            %% Checking correct behaviour
+            % Intersecting with a subset
+            int_polytope = Polyhedron('lb',[0 0],'ub',xmax/2);
+            ttn = TargetTube('intersect',orig_tube, int_polytope);
+            testCase.verifyTrue(ttn(1)==int_polytope);
+            testCase.verifyTrue(ttn(2)==int_polytope);
+            testCase.verifyTrue(ttn(3)==int_polytope);
+            % Time-varying tube intersecting with a non-trivial overlap
+            orig_tube = TargetTube(Polyhedron('lb',-[10 10],'ub',-xmax), Polyhedron('lb',-2*xmax,'ub',xmax/3),Polyhedron('V',[-1 1;-1,-1;0,1]));
+            int_polytope = Polyhedron('lb',[0 0],'ub',xmax/2);
+            ttn = TargetTube('intersect',orig_tube, int_polytope);
+            testCase.verifyTrue(ttn(1)==Polyhedron.emptySet(2));
+            testCase.verifyTrue(ttn(2)==Polyhedron('lb',[0 0],'ub',xmax/3));
+            testCase.verifyTrue(ttn(3)==Polyhedron('V',[-1 1;-1,-1;0,1]).intersect(int_polytope));            
+        end
     end
 end

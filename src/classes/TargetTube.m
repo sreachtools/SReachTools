@@ -19,6 +19,11 @@ classdef TargetTube
 % % Can use general Polyhedron objects, for self-containment of the 
 % % usage example will use empty Polyhedron objects
 % tt = TargetTube(Polyhedron(), Polyhedron(), Polyhedron());
+%
+% Given a target tube 'orig_tube' and a polytope 'int_polytope', you can also 
+% construct a target tube that is the result of the intersection of the polytope 
+% and sets in the target tube as
+% tt = TargetTube('intersect', orig_tube, int_polytope);
 %   
 % ==========================================================================
 %
@@ -72,11 +77,17 @@ classdef TargetTube
         % % usage example will use empty Polyhedron objects
         % tt = TargetTube(Polyhedron(), Polyhedron(), Polyhedron());
         % 
+        % Given a target tube 'orig_tube' and a polytope 'int_polytope', you can also 
+        % construct a target tube that is the result of the intersection of the polytope 
+        % and sets in the target tube as
+        % tt = TargetTube('intersect', orig_tube, int_polytope);
+        %   
         % ====================================================================
         %
         % obj = TargetTube('reach-avoid', safe_set, target_set, time_horizon)
         % obj = TargetTube('viability', safe_set, time_horizon)
         % obj = TargetTube(poly1, ..., polyN)
+        % obj = TargetTube('intersect', orig_tube, int_polytope);
         % 
         % Inputs:
         % -------
@@ -84,6 +95,9 @@ classdef TargetTube
         %   target_set        - Polyhedron object for set of target states
         %   time_hoizon       - Time horizon of target tube/reach-avoid problem
         %   poly1, ..., polyN - Polyhedron objects
+        %   orig_tube         - A target tube object that needs to be
+        %                       intersected
+        %   int_polytope      - Polyhedron object that is used for intersection
         % 
         % Outputs:
         % --------
@@ -98,35 +112,61 @@ classdef TargetTube
 
             if ischar(varargin{1})
                 % first argument character, specifying reach-avoid or viability
-                switch(lower(varargin{1}))
+                tube_type = lower(varargin{1});
+                switch(tube_type)
                     case 'reach-avoid'
                         safe_set     = varargin{2};
                         target_set   = varargin{3};
                         time_horizon = varargin{4};
+
+                        validateattributes(target_set, {'Polyhedron'}, {'nonempty'});
+                        validateattributes(safe_set, {'Polyhedron'}, {'nonempty'});
+                        validateattributes(time_horizon, {'numeric'}, ...
+                            {'integer', '>', 0});
+                        
+                        if safe_set.Dim ~= target_set.Dim
+                            throwAsCaller(SrtInvalidArgsError(['Safe and target ', ...
+                                'sets must be of the same dimension']));
+                        end
                     case 'viability'
                         safe_set     = varargin{2};
                         time_horizon = varargin{3};
                         target_set   = safe_set;
+                        
+                        validateattributes(safe_set, {'Polyhedron'}, {'nonempty'});
+                        validateattributes(time_horizon, {'numeric'}, ...
+                            {'integer', '>', 0});
+
+                    case 'intersect'
+                        orig_tube = varargin{2};
+                        int_polytope = varargin{3};
+                        
+                        validateattributes(orig_tube, {'TargetTube'}, {'nonempty'});
+                        validateattributes(int_polytope, {'Polyhedron'}, {'nonempty'});                        
+                        if orig_tube.dim ~= int_polytope.Dim
+                            throw(SrtInvalidArgsError(['Dimension mismatch ',...
+                                'between intersecting polytope and target tube.']));
+                        end
                     otherwise
                         exc = SrtInvalidArgsError(['Invalid arguments, ', ...
                             'see help.']);
                         throwAsCaller(exc);
                 end
 
-                validateattributes(target_set, {'Polyhedron'}, {'nonempty'});
-                validateattributes(safe_set, {'Polyhedron'}, {'nonempty'});
-                validateattributes(time_horizon, {'numeric'}, ...
-                    {'integer', '>', 0});
-
-                if safe_set.Dim ~= target_set.Dim
-                    throwAsCaller(SrtInvalidArgsError(['Safe and target ', ...
-                        'sets must be of the same dimension']));
-                end
-
-                obj.tube(1, time_horizon+1) = target_set;
-                obj.dim = safe_set.Dim;
-                for itt = 1:time_horizon
-                    obj.tube(itt) = safe_set;
+                if strcmpi(tube_type,'viability') || strcmpi(tube_type,'reach-avoid')
+                    obj.tube(1, time_horizon+1) = target_set;
+                    obj.dim = safe_set.Dim;
+                    for itt = 1:time_horizon
+                        obj.tube(itt) = safe_set;
+                    end
+                elseif strcmpi(tube_type,'intersect')                    
+                    for itt = 1:length(orig_tube)
+                        obj.tube(itt) = intersect(orig_tube.tube(itt),int_polytope);
+                    end
+                else
+                    exc = SrtInvalidArgsError(['Invalid arguments, ', ...
+                            'see help.']);
+                        throwAsCaller(exc);
                 end
             else
                 validateattributes(varargin{nargin}, {'Polyhedron'}, ...
