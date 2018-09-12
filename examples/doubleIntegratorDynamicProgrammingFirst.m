@@ -49,7 +49,7 @@ sys = LtiSystem('StateMatrix', [1, T; 0, 1], ...
     'InputMatrix', [T^2/2; T], ...
     'InputSpace', Polyhedron('lb', -0.1, 'ub', 0.1), ...
     'DisturbanceMatrix', eye(2), ...
-    'Disturbance', StochasticDisturbance('Gaussian', zeros(2,1), 0.01*eye(2)));
+    'Disturbance', StochasticDisturbance('Gaussian', zeros(2,1), 0.001*eye(2)));
 %% Setup the dynamic programming and visualization parameters
 
 dyn_prog_xinc = 0.05;
@@ -117,3 +117,52 @@ box on
 axis(axis_vec1)
 axis equal
 legend(legend_str,'interpreter','latex');
+
+
+%% Case 2: Hyperplane target set
+N=5;
+safe_set2 = Polyhedron('lb', [-1, -1], 'ub', [1, 1]);
+% -x -y <- 1 => x + y > 1
+target_hyperplane = Polyhedron('H',[-1 -1 -1]);
+axis_vec2 = [-1 1 -1 1];
+safety_tube2 = TargetTube('viability', safe_set2, N);
+[prob_x2, cell_of_xvec_x2, grid_x] = getDynProgSolForTargetTubeFirst(sys, dyn_prog_xinc/2, dyn_prog_uinc, safety_tube2, target_hyperplane);
+
+% getLowerBoundStochReachAvoidFirst(sys,...
+%                                 initial_state,...
+%                                 safety_tube,...
+%                                 target_hyperplane,...
+%                                 varargin)
+
+%% Plot it
+figure();
+x1vec = cell_of_xvec_x2{1};
+x2vec = cell_of_xvec_x2{2};
+surf(x1vec,x2vec,reshape(prob_x2,length(x2vec),length(x1vec)));
+axis([axis_vec2 0 1])
+xlabel('$x_1$','interpreter','latex');
+ylabel('$x_2$','interpreter','latex');
+zlabel('Safety probability')
+box on
+view(45, 45)
+
+%% Chance constrained underapproximation
+l_xmax = 0.15;
+xvec_for_plot = l_xmax+dyn_prog_xinc/2:dyn_prog_xinc/2:1;
+dyn_soln = prob_x2(min(grid_x')>=l_xmax);
+useful_grid_x = grid_x(min(grid_x')>=l_xmax,:);
+lb_stoch_reach = zeros(length(useful_grid_x),1);
+for ix = 1:length(useful_grid_x)
+    initial_state = useful_grid_x(ix,:)';
+    [lb_stoch_reach(ix)]=getLowerBoundStochReachAvoidFirst(sys,...
+                                    initial_state,...
+                                    safety_tube2,...
+                                    target_hyperplane,...
+                                    1e-3);
+    disp([ix/length(useful_grid_x) sum(initial_state)-1 dyn_soln(ix)-lb_stoch_reach(ix)]);    
+end                          
+%% Plot
+figure()
+surf(xvec_for_plot,xvec_for_plot,reshape(lb_stoch_reach,length(xvec_for_plot),[]))
+hold on;
+surf(xvec_for_plot,xvec_for_plot,reshape(dyn_soln,length(xvec_for_plot),[]))

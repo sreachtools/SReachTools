@@ -47,7 +47,7 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
 % Inputs:
 % -------
 %   sys                   - LtiSystem object
-%   time_horizon          - Time horizon
+%   time_horizon          - Time horizon (N) with the control provided from 0 to N-1
 %   concat_input_space_A, 
 %    concat_input_space_b - (A,b) Halfspace representation for the
 %                            polytope U^{time_horizon} set.        
@@ -138,6 +138,7 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
                 <= concat_target_tube_b;
             deltai >= lb_deltai;
             deltai <= 0.5;
+            sum(deltai) <= 0.5;
     cvx_end
 
     %% Overwrite the solutions
