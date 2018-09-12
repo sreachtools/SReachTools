@@ -77,27 +77,23 @@ classdef TargetTubeTests < matlab.unittest.TestCase
                 ?SrtInvalidArgsError);
         end
         
-        function testConcatTube(testCase)
+        function testConcat(testCase)
             time_horizon = 10;
             xmax = 1;
             
             % Target tubes has polyhedra T_0, T_1, ..., T_{time_horizon}
             target_tube = TargetTube('viability',Polyhedron('lb',-xmax,'ub',xmax), time_horizon);
             
-            % concat using all the time steps --- empty
+            % concat using all the time steps --- empty and both ends
             [concat_target_tube_A, concat_target_tube_b] = target_tube.concat();            
             obtained_polyhedron = Polyhedron('H',[concat_target_tube_A, ...
                             concat_target_tube_b]);
             expected_polyhedron = Polyhedron('lb', -xmax * ones(time_horizon+1,1), ...
                        'ub',  xmax * ones(time_horizon+1,1));
             testCase.verifyTrue(obtained_polyhedron == expected_polyhedron);
-            
-            % concat using all the time steps --- both ends
             [concat_target_tube_A, concat_target_tube_b] = target_tube.concat([1 time_horizon+1]);            
             obtained_polyhedron = Polyhedron('H',[concat_target_tube_A, ...
                             concat_target_tube_b]);
-            expected_polyhedron = Polyhedron('lb', -xmax * ones(time_horizon+1,1), ...
-                       'ub',  xmax * ones(time_horizon+1,1));
             testCase.verifyTrue(obtained_polyhedron == expected_polyhedron);
             
             % concat using 1 to time horizon
@@ -124,10 +120,28 @@ classdef TargetTubeTests < matlab.unittest.TestCase
             expected_polyhedron = Polyhedron('lb', -xmax(2:4), 'ub',  xmax(2:4));
             testCase.verifyTrue(obtained_polyhedron == expected_polyhedron);
             
+            % concat using 1 to 1
+            [concat_target_tube_A, concat_target_tube_b] = target_tube.concat([2 2]);            
+            obtained_polyhedron = Polyhedron('H',[concat_target_tube_A, ...
+                            concat_target_tube_b]);
+            expected_polyhedron = Polyhedron('lb', -xmax(2:2), 'ub',  xmax(2:2));
+            testCase.verifyTrue(obtained_polyhedron == expected_polyhedron);
+            
+            % concat using 1 to 0 --- yields empty
+            [concat_target_tube_A, concat_target_tube_b] = target_tube.concat([2 1]);            
+            obtained_polyhedron = Polyhedron('H',[concat_target_tube_A, ...
+                            concat_target_tube_b]);
+            expected_polyhedron = Polyhedron.emptySet(0);
+            testCase.verifyTrue(obtained_polyhedron == expected_polyhedron);
+            
+            %% Checking input handling
             % concat using 1 to time_horizon + 1 (will throw error)
             testCase.verifyError(@() target_tube.concat([1 5]),'SReachTools:invalidArgs');            
-            testCase.verifyError(@() target_tube.concat([-1 5]),'SReachTools:invalidArgs');            
+            % concat using -1 to time_horizon + 1 (will throw error)
+            testCase.verifyError(@() target_tube.concat([-1 4]),'SReachTools:invalidArgs');            
+            % concat using too many time arguments (will throw error)
             testCase.verifyError(@() target_tube.concat([-1 2 5]),'SReachTools:invalidArgs');            
+            
         end
         
         function testContains(testCase)

@@ -277,24 +277,42 @@ classdef TargetTube
 
         function [concat_target_tube_A, concat_target_tube_b] =...
             concat(obj,varargin)
-        % Get concatenated target tube
+        % Get concatenated target tube (Cartesian product of the polytopes)
         % ======================================================================
         %
-        % This method computes the concatenated target tube, 
-        % safe_set^{time_horizon -1 } x target_set, a huge polyhedron in the
+        % This method computes the half-space representation of the concatenated 
+        % target tube. When no arguments are provided, it returns 
+        % safe_set^{time_horizon} x target_set, a huge polyhedron in the
         % (obj.dim x time_horizon)-dimensional Euclidean space.
-        % The output matrices satisfy the relation that the a concatenated 
-        % state vector X lies in the reach-avoid tube if and only if
-        % 
-        % concat_target_tube_A * X <= concat_target_tube_b 
-        %
-        % Usage: See getFtLowerBoundTargetTube.
-        %
-        % ======================================================================
         %
         % [concat_target_tube_A, concat_target_tube_b] = concat(obj);
+        %
+        % The output matrices satisfy the relation that the a concatenated 
+        % state vector X lies in the reach-avoid tube if and only if
+        % concat_target_tube_A * [initial_state;X] <= concat_target_tube_b 
+        %
+        % When arguments are specified, it provides the Cartesian of
+        % specific time splice mentioned. Specifically, if the half space
+        % representation of sets from t=3 to 5 is desired for a given
+        % target tube of length 10 (sets are defined for t=0 to 9), we
+        % provide
+        %
+        % [concat_target_tube_A, concat_target_tube_b] = concat(obj, [4 6]);
         % 
-        % Inputs: None
+        % The +1 added is to account for MATLAB's indexing which begins
+        % from 1. In other words, provide the starting and ending index of
+        % interest with respect to the TargetTube array of polyhedrons.
+        %
+        % Usage: See getLowerBoundStochReachAvoid.
+        %
+        % ======================================================================
+        %
+        % [concat_target_tube_A, concat_target_tube_b] = concat(obj,varagin);
+        %
+        % Inputs:
+        % -------
+        %   time_limits - A 1x2 vector [a b] with the 1 <= a,b <= length(obj).
+        %                 If a>b, then empty matrices are returned.
         %    
         % Outputs:
         % --------
@@ -320,16 +338,28 @@ classdef TargetTube
             tube_b_vecs = cell(1, length(obj));
             [tube_b_vecs{:}] = obj.tube(:).b;
 
+            %% Do we send out everything or was a slice requested?
             if nargin == 1
+                % Send out everything
                 concat_target_tube_A = blkdiag(tube_A_mats{:});
                 concat_target_tube_b = vertcat(tube_b_vecs{:});
             else
+                % Send out a slice
                 time_limits = varargin{1};
                 validateattributes(time_limits,{'numeric'},{'vector'});
-                if length(time_limits) == 2 && time_limits(2) >= time_limits(1) && min(time_limits) >= 1 && max(time_limits) <= length(obj)
-                    concat_target_tube_A = blkdiag(tube_A_mats{time_limits(1):time_limits(2)});
-                    concat_target_tube_b = vertcat(tube_b_vecs{time_limits(1):time_limits(2)});
+                if length(time_limits) == 2 && min(time_limits) >= 1 && max(time_limits) <= length(obj)
+                    if time_limits(2) >= time_limits(1)
+                        % a <= b => send out the appropriate slices
+                        concat_target_tube_A = blkdiag(tube_A_mats{time_limits(1):time_limits(2)});
+                        concat_target_tube_b = vertcat(tube_b_vecs{time_limits(1):time_limits(2)});
+                    else
+                        % a > b => send out empty sets
+                        concat_target_tube_A = [];
+                        concat_target_tube_b = [];
+                    end
                 else
+                    % time_limits = [a,b] is not a 2x1/1x2 vector OR it does not
+                    % satisfy 1<= a,b <= length(obj)
                     throwAsCaller(SrtInvalidArgsError('Invalid time range'));
                 end
             end

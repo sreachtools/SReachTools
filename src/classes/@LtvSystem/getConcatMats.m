@@ -61,10 +61,11 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
 % =============================================================================
 %
 % [Z,H,G] = getConcatMats(sys, time_horizon)
+%
 % Inputs:
 % -------
 %   sys          - An object of LtvSystem class 
-%   time_horizon - Time of interest (N)
+%   time_horizon - Time horizon (N) with the control provided from 0 to N-1
 %
 % Outputs:
 % --------
@@ -74,15 +75,11 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
 %
 % Notes:
 % ------
-% * For control-free and/or disturbance-free LTI systems, H and G are set to
+% * For control-free and/or disturbance-free LTI/LTV systems, H and G are set to
 %   zeros( sys.state_dim * time_horizon, 1) as appropriate.
 % * Deviation from Skaf and Boyd's definition,
-%     * Concatenated state is X=[x_1 x_2 ... x_{N}].
-%     * Z definition excludes the initial state x_0 in contrast to Skaf and
-%       Boyd's definition of x_0.
-%     * H, G does include the first row since initial state is not there.
-%     * This function computes for a LTI system instead of the original LTV
-%       formulation.
+%     * Concatenated state is X=[x_1 x_2 ... x_{N}], with the initial state
+%     x_0 EXCLUDED in contrast to Skaf and Boyd's TAC 2010 definitions.
 % * Computes the extended controllability matrix via for loops. (suboptimal way)
 % * This function also serves as a delegatee for input handling
 % 
@@ -153,6 +150,7 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
 end
 
 function prod_state_mat = computeMatProductsStateMat(sys, t, tau)
+    % To handle time-varying setup
     prod_state_mat = eye(sys.state_dim);
     if sys.islti()
         if t<tau

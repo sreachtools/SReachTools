@@ -30,7 +30,7 @@ function [varargout] = getHmatMeanCovForXSansInput(sys, ...
 %   sys           - An object of LtvSystem class 
 %   initial_state - Initial state can be a deterministic n-dimensional vector
 %                   x_0 or a RandomVector object
-%   time_horizon  - Time of interest (N)
+%   time_horizon  - Time horizon (N) with the control provided from 0 to N-1
 %
 % Outputs:
 % --------
