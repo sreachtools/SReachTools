@@ -360,7 +360,7 @@ classdef TargetTube
                 else
                     % time_limits = [a,b] is not a 2x1/1x2 vector OR it does not
                     % satisfy 1<= a,b <= length(obj)
-                    throwAsCaller(SrtInvalidArgsError('Invalid time range'));
+                    throw(SrtInvalidArgsError('Invalid time range'));
                 end
             end
         end
@@ -401,12 +401,12 @@ classdef TargetTube
         %  
 
             if size(X, 1) ~= length(obj) * obj.dim
-                throwAsCaller(SrtInvalidArgsError(['Concatenated state vector/matrix provided has incorrect ',...
-                    'number of rows']));
+                throw(SrtInvalidArgsError(sprintf(['Concatenated state vector/matrix provided has ',...
+                    'incorrect number of rows. Expected: %d | Got: %d'],length(obj) * obj.dim,size(X, 1))));
             end
 
             if size(X, 2) <= 0
-                throwAsCaller(SrtInvalidArgsError(['Concatenated state vector/matrix provided should have at ',...
+                throw(SrtInvalidArgsError(['Concatenated state vector/matrix provided should have at ',...
                  'least one column']));
             end
             

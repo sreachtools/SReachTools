@@ -126,8 +126,9 @@ safe_set2 = Polyhedron('lb', [-1, -1], 'ub', [1, 1]);
 target_hyperplane = Polyhedron('H',[-1 -1 -1]);
 axis_vec2 = [-1 1 -1 1];
 safety_tube2 = TargetTube('viability', safe_set2, N);
+tic
 [prob_x2, cell_of_xvec_x2, grid_x] = getDynProgSolForTargetTubeFirst(sys, dyn_prog_xinc/2, dyn_prog_uinc, safety_tube2, target_hyperplane);
-
+toc
 % getLowerBoundStochReachAvoidFirst(sys,...
 %                                 initial_state,...
 %                                 safety_tube,...
@@ -139,7 +140,7 @@ figure();
 x1vec = cell_of_xvec_x2{1};
 x2vec = cell_of_xvec_x2{2};
 surf(x1vec,x2vec,reshape(prob_x2,length(x2vec),length(x1vec)));
-axis([axis_vec2 0 1])
+axis([axis_vec2 0 1 ])
 xlabel('$x_1$','interpreter','latex');
 ylabel('$x_2$','interpreter','latex');
 zlabel('Safety probability')
@@ -152,6 +153,7 @@ xvec_for_plot = l_xmax+dyn_prog_xinc/2:dyn_prog_xinc/2:1;
 dyn_soln = prob_x2(min(grid_x')>=l_xmax);
 useful_grid_x = grid_x(min(grid_x')>=l_xmax,:);
 lb_stoch_reach = zeros(length(useful_grid_x),1);
+tic;
 for ix = 1:length(useful_grid_x)
     initial_state = useful_grid_x(ix,:)';
     [lb_stoch_reach(ix)]=getLowerBoundStochReachAvoidFirst(sys,...
@@ -160,7 +162,8 @@ for ix = 1:length(useful_grid_x)
                                     target_hyperplane,...
                                     1e-3);
     disp([ix/length(useful_grid_x) sum(initial_state)-1 dyn_soln(ix)-lb_stoch_reach(ix)]);    
-end                          
+end
+toc
 %% Plot
 figure()
 surf(xvec_for_plot,xvec_for_plot,reshape(lb_stoch_reach,length(xvec_for_plot),[]))

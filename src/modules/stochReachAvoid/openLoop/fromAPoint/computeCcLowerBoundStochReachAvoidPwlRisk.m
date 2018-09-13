@@ -147,3 +147,45 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
         optimal_input_vector = U_vector;    
     end
 end
+
+%% YALMIP formulation --- Takes more time than CVX. Not sure why!
+% U_vector = sdpvar(sys.input_dim * time_horizon,1);
+% mean_X = sdpvar(sys.state_dim * time_horizon, 1);
+% deltai = sdpvar(n_lin_const, 1);
+% %% Using YALMIP's efficient LP formulation    
+% objective = sum(deltai);
+% 
+% norminvover = interp1(useful_knots,norminv(1-useful_knots),deltai,'lp');
+% constraints = [mean_X == mean_X_sans_input + H * U_vector,...
+%                concat_input_space_A * U_vector <= concat_input_space_b,...
+%                concat_target_tube_A * mean_X + sigma_vector * norminvover <= concat_target_tube_b,...
+%                lb_deltai <= deltai <= 0.5,...
+%                sum(deltai) <= 0.5];
+% 
+% %% Our implementation using a for loop
+% % norminvover = sdpvar(n_lin_const, 1);
+% % 
+% % objective = sum(deltai);
+% % constraints = [mean_X == mean_X_sans_input + H * U_vector,...
+% %            concat_input_space_A * U_vector <= concat_input_space_b,...
+% %            concat_target_tube_A * mean_X + sigma_vector * norminvover <= concat_target_tube_b,...
+% %            deltai >= lb_deltai,...
+% %            deltai <= 0.5,...
+% %            sum(deltai) <= 0.5];
+% % for deltai_indx=1:n_lin_const
+% %     constraints = [constraints,...
+% %                    norminvover(deltai_indx) >= invcdf_approx_m.* deltai(deltai_indx) + invcdf_approx_c]; 
+% % end
+% 
+% % Set some options for YALMIP and solver
+% options = sdpsettings('verbose',0);
+% 
+% % Solve the problem
+% sol = optimize(constraints,objective,options);
+% 
+% % Analyze error flags
+% if sol.problem == 0
+%     % Extract and display value
+%     lb_stoch_reach_avoid = 1-sum(value(deltai));
+%     optimal_input_vector = value(U_vector);
+% end

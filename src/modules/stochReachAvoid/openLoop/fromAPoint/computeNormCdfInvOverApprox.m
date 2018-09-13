@@ -1,4 +1,4 @@
-function [cdf_approx_m, cdf_approx_c, lb_phiinv] =...
+function [cdf_approx_m, cdf_approx_c, lb_phiinv, useful_knots] =...
     computeNormCdfInvOverApprox(max_delta, desired_accuracy, n_lin_consts)
 % Compute a piecewise-linear overapproximation of norminv(1-x) for 
 % x \in [1e-5,0.5] to the quality of 1e-4
@@ -31,6 +31,9 @@ function [cdf_approx_m, cdf_approx_c, lb_phiinv] =...
 %   cdf_approx_c - Secant y-intercepts that will overapproximate norminv(1-x)
 %   lb_phiinv    - Lower bound on x in norminv(1-x) for which the provided PWA
 %                   approximation
+%   useful_knots - Breakpoints of the PWA overapproximation, i.e., points
+%                   at which the PWA overapproximation coincides with the 
+%                   norminv curve
 %
 % Notes:
 % * Partial INPUT HANDLING: Checks only if the bounds provided are accurate
@@ -78,6 +81,7 @@ function [cdf_approx_m, cdf_approx_c, lb_phiinv] =...
     knots_ub_indx = find(norminv_knots >= upper_bound_phiinv,1)-1;
     cdf_approx_m = norminvcdf_approx_m(knots_lb_indx:knots_ub_indx);
     cdf_approx_c = norminvcdf_approx_c(knots_lb_indx:knots_ub_indx);
+    useful_knots = norminv_knots(knots_lb_indx:knots_ub_indx);
 end
 
 function create_PWAapprox_norminv(lb_phiinv,...

@@ -121,8 +121,9 @@ function [lb_stoch_reach_avoid, optimal_input_vector] =...
     time_horizon = length(target_tube)-1;
 
     % Get half space representation of the target tube and time horizon
+    % skipping the first time step
     [concat_target_tube_A, concat_target_tube_b] =...
-        target_tube.concat([1 time_horizon]+1);
+        target_tube.concat([2 time_horizon+1]);
     n_ineq_init_set = size(target_tube(1).H,1);
 
     % Check if safe set contains the initial state
