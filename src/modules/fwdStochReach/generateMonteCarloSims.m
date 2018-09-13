@@ -1,4 +1,4 @@
-function concat_state_realization = generateMonteCarloSims(...
+function [concat_state_realization, concat_disturb_realizations]= generateMonteCarloSims(...
                                                n_monte_carlo_sims, ...
                                                sys, ...
                                                initial_state, ...
@@ -34,9 +34,12 @@ function concat_state_realization = generateMonteCarloSims(...
 %
 % Outputs:
 % --------
-%   concat_state_realization- Matrix of concatenate state (row) vectors
+%   concat_state_realization  - Matrix of concatenate state (row) vectors
 %                                   stacked columnwise. Each row comprises of
 %                                   the state trajectory as [x_1; x_2; ...; x_N]
+%   concat_disturb_realization- Matrix of concatenate disturbance (row) vectors
+%                                   stacked columnwise. Each row comprises of
+%                                   the state trajectory as [w_0; w_1; ...; w_{N-1}]
 %
 % See also checkViaMonteCarloSims
 %
