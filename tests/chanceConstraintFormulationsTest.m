@@ -45,7 +45,6 @@ classdef chanceConstraintFormulationsTest < matlab.unittest.TestCase
 %             end
 %             testCase.verifyTrue(all(lb_safe_prob<=true_probability),'Not a lower bound?');
 %             testCase.verifyTrue(all(lb_safe_prob>=0),'Shouldn''t be infeasible!');
-            get
         end
     end
 end

@@ -54,13 +54,16 @@ function [PWA_overapprox_m,...
 %
 % Notes:
 % ------
-% * NOT ACTIVELY TESTED: TODO
-% * NO INPUT HANDLING: TODO
 % * MATLAB DEPENDENCY: Uses MATLAB's Symbolic toolbox for ease in implementation
 % * Requires the concave function to have a monotone hessian. This enables easy
 %       implementation of the error bound via linear Lagrange interpolation
 % * Can be used for convex functions as well by negating the input function and
 %   negating the output affine functions
+% * The overapproximation part of the code assumes a gradient at the upper bound
+%   if the curvature is not sufficient enough for the mean value theorem to
+%   guarantee a point whose gradient matches the underapproximation slope.
+% * This function is implicitly covered in testing in
+%   computeNormCdfInvOverApproxTest.m
 %
 % ============================================================================
 %
@@ -95,9 +98,10 @@ function [PWA_overapprox_m,...
             % If monotone increasing,
             % min_{y\in[x_j,x_j+h]} d^2/dh^2 g(y) = d^2/dh^2 g(x_j)
             % Solve for h very easily 
-            hval = sqrt(-8*desired_accuracy/...
-                double(subs(g2diff,x,knots_underapprox(j))));
-            knots_underapprox(j+1) = knots_underapprox(j) + hval;
+            % Added abs to allow for x^2
+            hval = sqrt(abs(-8*desired_accuracy/...
+                double(subs(g2diff,x,knots_underapprox(j)))));
+            knots_underapprox(j+1) = min([knots_underapprox(j) + hval,ub]);
         elseif strcmpi(hessian_monotone,'mono-dec')
             % If monotone decreasing, 
             % min_{y\in[x_j,x_j+h]} d^2/dh^2 g(y) = d^2/dh^2 g(x_j + h)
@@ -110,7 +114,7 @@ function [PWA_overapprox_m,...
             % Solve for h
             try
                 hval = fzero(g_maxerror_at_j_mf,search_interval,fzero_options);
-                knots_underapprox(j+1) = min(knots_underapprox(j) + hval,ub);
+                knots_underapprox(j+1) = knots_underapprox(j) + hval;
             catch
                 % If errored, then the search interval doesn't see a sign flip
                 % => we have reached the end
@@ -143,12 +147,23 @@ function [PWA_overapprox_m,...
         search_interval = [x_1  x_2];
         % Search for hvalgrad such that f'(x(j)+hvalgrad) = c_{j} ---
         % existence guaranteed by mean value theorem
-        [x_grad_match] = fzero(g1diff_at_j_mf,search_interval,fzero_options);
-        %cdf_underapprox_m(j) is the same as double(subs(g1diff,x_grad_match));
-        PWA_overapprox_m(j) = PWA_underapprox_m(j);
-        PWA_overapprox_c(j) = double(subs(g,x_grad_match)) -...
-            PWA_overapprox_m(j) * x_grad_match;        
-        
+        try
+            [x_grad_match] = fzero(g1diff_at_j_mf,search_interval,fzero_options);
+            %cdf_underapprox_m(j) is the same as double(subs(g1diff,x_grad_match));
+            PWA_overapprox_m(j) = PWA_underapprox_m(j);
+            PWA_overapprox_c(j) = double(subs(g,x_grad_match)) -...
+                PWA_overapprox_m(j) * x_grad_match;        
+        catch
+            if x_2 < ub
+                exc = SrtInternalError('Was expecting the endpoint! Internal error?!');
+                throw(exc)
+            else
+                % Towards the endpoint, the curve may not accommodate MVT
+                PWA_overapprox_m(j) = double(subs(g1diff,x_2));
+                PWA_overapprox_c(j) = double(subs(g,x_2)) -...
+                    PWA_overapprox_m(j) * x_2;        
+            end
+        end        
         %% Increment j
         j = j+1;       
     end

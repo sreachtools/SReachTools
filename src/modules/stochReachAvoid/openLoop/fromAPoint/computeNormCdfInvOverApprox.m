@@ -47,33 +47,39 @@ function [cdf_approx_m, cdf_approx_c, lb_phiinv, useful_knots] =...
 %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 %
-
+    
     % Max bounds we have tested this for
     compute_phiinv_lb = 1E-8;
-    compute_phiinv_ub = 0.44;
+    compute_phiinv_ub = 0.5;
+    err_ranges = [1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 5e-3, 1e-2];
+
+    % Pick the largest lower bound to the desired accuracy
+    err_indx = find(desired_accuracy>=err_ranges,1,'last');
+    if isempty(err_indx)
+        warning('Requested accuracy of %1.2e, but using %1.0e',desired_accuracy, err_ranges(1));
+        err_indx = 1;
+    end
     
     % Interested bounds are desired_accuracy/N_{ineq} and max_delta
     lb_phiinv = desired_accuracy/n_lin_consts/10;
-    upper_bound_phiinv = max_delta; 
-
+    upper_bound_phiinv = max_delta;
+    
     % Throw an error if the requested bounds are beyond the PWA parameters
-    if compute_phiinv_lb > lb_phiinv ||...
-        compute_phiinv_ub < upper_bound_phiinv
+    if compute_phiinv_lb > lb_phiinv || compute_phiinv_ub < upper_bound_phiinv
         exc = SrtInvalidArgsError(['Requested bounds exceed limits.']);
-        throwAsCaller(exc);
+        throw(exc);
     end
     
-    if ~exist('SReachTools_data.mat','file')
-        % Create the look up table for norminv pdf if none found in
-        % helperfunctions
-        create_PWAapprox_norminv(compute_phiinv_lb, compute_phiinv_ub,...
-            desired_accuracy);
+    mat_identifier = replace(replace(num2str(err_ranges(err_indx),'%1.0e'),'.','x'),'-','_');
+    mat_str = [getSReachToolsHome() 'src/helperFunctions/SReachTools_norminvcdf_' mat_identifier '.mat'];
+    if exist(mat_str,'file')
+        % This matfile will have norminv's cdf_approx_m,cdf_approx_c, and knots
+        load(mat_str,'norminvcdf_approx_m','norminvcdf_approx_c', 'norminv_knots');
+    else
+        normCdfLookUpTables(0);
+        % This matfile will have norminv's cdf_approx_m,cdf_approx_c, and knots
+        load(mat_str,'norminvcdf_approx_m','norminvcdf_approx_c', 'norminv_knots');
     end
-
-    % This matfile will have norminv's cdf_approx_m,cdf_approx_c, and knots
-    load('SReachTools_data','norminvcdf_approx_m','norminvcdf_approx_c',...
-        'norminv_knots');
-
     % Given the desired lower bound and upper bound, find what pieces are needed
     % -1 added to knots_ub_indx because each piece is associated with the left
     % hand side knot.
@@ -84,33 +90,4 @@ function [cdf_approx_m, cdf_approx_c, lb_phiinv, useful_knots] =...
     useful_knots = norminv_knots(knots_lb_indx:knots_ub_indx);
 end
 
-function create_PWAapprox_norminv(lb_phiinv,...
-    upper_bound_phiinv, maxlierror_phiinv)
-    % create_PWAapprox_norminv creates a PWA approximation of normcdfinv
 
-    % phiinv(1-x) definition: https://www.mathworks.com/help/stats/norminv.html
-    % And using erfinv instead of erfcinv since we need \Phi^{-1}(1-x)
-    phiinv = @(z) sqrt(2)* erfinv(2*(1 - z) -1 );
-
-    % Concave function required: So negate phiinv and it becomes monotone inc
-    function_handle = @(z) -phiinv(z);
-    fun_hessian_monotone_phiinv = 'mono-inc';
-
-    % get PWA approximation
-    [~,~,PWA_negphiinv_underapprox_m, PWA_negphiinv_underapprox_c,...
-        norminv_knots] =...
-            getPWAOverAndUnderApprox(lb_phiinv,...
-                upper_bound_phiinv,...
-                maxlierror_phiinv,...
-                function_handle,...
-                fun_hessian_monotone_phiinv);
-
-    % negate the PWA underapproximation of the concave representation to get the
-    % PWA overapproximation of the convex function
-    norminvcdf_approx_m = - PWA_negphiinv_underapprox_m';
-    norminvcdf_approx_c = - PWA_negphiinv_underapprox_c';
-
-    % Save the data in the helperFunctions folder
-    save('../src/helperFunctions/SReachTools_data',...
-        'norminvcdf_approx_m','norminvcdf_approx_c','norminv_knots');
-end
