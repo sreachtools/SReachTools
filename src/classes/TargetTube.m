@@ -110,6 +110,10 @@ classdef TargetTube
         %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         %   
 
+            if isempty(varargin)
+                err = SrtInvalidArgsError('Expected at least one input');
+                throwAsCaller(err);
+            end
             if ischar(varargin{1})
                 % first argument character, specifying reach-avoid or viability
                 tube_type = lower(varargin{1});
@@ -148,9 +152,9 @@ classdef TargetTube
                                 'between intersecting polytope and target tube.']));
                         end
                     otherwise
-                        exc = SrtInvalidArgsError(['Invalid arguments, ', ...
+                        err = SrtInvalidArgsError(['Invalid arguments, ', ...
                             'see help.']);
-                        throwAsCaller(exc);
+                        throwAsCaller(err);
                 end
 
                 if strcmpi(tube_type,'viability') || strcmpi(tube_type,'reach-avoid')
@@ -164,9 +168,9 @@ classdef TargetTube
                         obj.tube(itt) = intersect(orig_tube.tube(itt),int_polytope);
                     end
                 else
-                    exc = SrtInvalidArgsError(['Invalid arguments, ', ...
+                    err = SrtInvalidArgsError(['Invalid arguments, ', ...
                             'see help.']);
-                        throwAsCaller(exc);
+                        throwAsCaller(err);
                 end
             else
                 validateattributes(varargin{nargin}, {'Polyhedron'}, ...

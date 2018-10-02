@@ -1,4 +1,4 @@
-function sys = getChainOfIntegLtiSystem(dim, T, varargin)
+function sys = getChainOfIntegLtiSystem(dim, T, inputSpace, varargin)
 % Get chain of integrators LTI System
 % ============================================================================
 % 
@@ -62,7 +62,7 @@ function sys = getChainOfIntegLtiSystem(dim, T, varargin)
         {'nonempty'}));
     
     try
-        inpar.parse(dim, T, varargin{:})
+        inpar.parse(dim, T, inputSpace, varargin{:})
     catch err
         exc = SrtInvalidArgsError.withFunctionName();
         exc = exc.addCause(err);
@@ -84,12 +84,18 @@ function sys = getChainOfIntegLtiSystem(dim, T, varargin)
         end
     end
     
+    
     if any(strcmp('dist', inpar.UsingDefaults))
         % Disturbance not specified (Impossible to specify dist_mat without
         % specifying disturbance)
-        sys = LtiSystem('StateMatrix', state_mat, ...
-        'InputMatrix', input_mat, ...
-        'InputSpace', inpar.Results.inputSpace);
+        if isEmptySet(inputSpace)
+            % If empty input space provided, produce an uncontrolled system
+            sys = LtiSystem('StateMatrix', state_mat);
+        else
+            sys = LtiSystem('StateMatrix', state_mat, ...
+            'InputMatrix', input_mat, ...
+            'InputSpace', inputSpace);    
+        end        
     else
         % Disturbance specified
         if any(strcmp('dist_mat', inpar.UsingDefaults))
@@ -99,11 +105,18 @@ function sys = getChainOfIntegLtiSystem(dim, T, varargin)
             % DisturbanceMatrix specified
             validated_dist_mat = inpar.Results.dist_mat;
         end
-        sys = LtiSystem('StateMatrix', state_mat, ...
-            'InputMatrix', input_mat, ...
-            'InputSpace', inpar.Results.inputSpace, ...
-            'DisturbanceMatrix', validated_dist_mat, ...
-            'Disturbance', inpar.Results.dist);    
+        if isEmptySet(inputSpace)
+            % If empty input space provided, produce an uncontrolled system
+            sys = LtiSystem('StateMatrix', state_mat,...
+                'DisturbanceMatrix', validated_dist_mat, ...
+                'Disturbance', inpar.Results.dist);    
+        else
+            sys = LtiSystem('StateMatrix', state_mat, ...
+                'InputMatrix', input_mat, ...
+                'InputSpace', inputSpace, ...
+                'DisturbanceMatrix', validated_dist_mat, ...
+                'Disturbance', inpar.Results.dist);    
+        end
     end   
 end
 
