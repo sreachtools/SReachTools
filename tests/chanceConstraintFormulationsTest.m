@@ -26,7 +26,7 @@ classdef chanceConstraintFormulationsTest < matlab.unittest.TestCase
             % target tube definition
             target_tube = TargetTube('viability', safe_set, time_horizon);
 
-            [prob_x, ~, grid_x] = getDynProgSolForTargetTube(sys, dyn_prog_xinc, dyn_prog_uinc, target_tube);
+            [prob_x, ~, grid_x] = SReachDynProg('term', sys, dyn_prog_xinc, dyn_prog_uinc, target_tube);
             
             % No. of grid points
             n_grid_x = length(grid_x);
@@ -35,6 +35,7 @@ classdef chanceConstraintFormulationsTest < matlab.unittest.TestCase
             rand_indices = datasample(find(max(abs(grid_x'))<xmax(1)/3 == 1),n_test_pts,'Replace',false);
             true_probability = prob_x(rand_indices);
             
+            throw(SrtInternalError('Fixme!'));
 %             lb_safe_prob = zeros(n_test_pts,1);
 %             for indx=1:n_test_pts
 %                 initial_state = grid_x(indx,:)';

@@ -85,11 +85,15 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time,varargi
         throwAsCaller(exc);
     end
 
+    % Decide the approach to take
+    prob_str_splits = split(prob_str, '-');
+    
     % Ensure that:
     % 1. Initial state is a column vector of dimension sys.state_dim OR
     %    a RandomVector (Gaussian) object of dimension sys.state_dim
     % 2. Given system is an uncontroller LTI/LTV system with Gaussian disturbance
-    otherInputHandling(sys, initial_state);
+    % 3. For prob computation, ensure the optional arguments are all ok
+    otherInputHandling(sys, initial_state, prob_str_splits, varargin, target_time);
 
     % IID assumption allows to compute the mean and covariance of the
     % concatenated disturbance vector W
@@ -99,9 +103,6 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time,varargi
     % Compute the state_trans_matrix and controllability matrix for
     % disturbance
     [Z,~,G] = sys.getConcatMats(target_time);
-
-    % Decide the approach to take
-    prob_str_splits = split(prob_str, '-');
 
     if strcmpi(prob_str_splits{1},'state')
         state_trans_mat = Z(end-sys.state_dim+1:end,...
@@ -151,31 +152,11 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time,varargi
         cov_mat = symm_cov_mat;
     end
     if strcmpi(prob_str_splits{2},'prob')
-        if length(varargin)~=2
-            err=SrtInvalidArgsError(['Expected a target set or target tube ',...
-                'and a desired accuracy']);
-            throw(err);
-        end
         desired_accuracy = varargin{2};
-        validateattributes(desired_accuracy, {'numeric'}, {'scalar', '>', 0})
-        % TODO-Test: Triggers costly computations
-        if sys.state_dim <=3 && desired_accuracy < 1e-8
-            warning('SReachTools:desiredAccuracy','desired_accuracy< 1e-8 might be hard to enforce');
-        elseif sys.state_dim >3 && desired_accuracy < 1e-4
-            warning('SReachTools:desiredAccuracy','desired_accuracy< 1e-4 might be hard to enforce');
-        end
-
+        
         if strcmpi(prob_str_splits{1},'state')
             % Compute probability at time target_time of x \in target_set
             target_set = varargin{1};
-
-            % Ensure target_set is a non-empty Polyhedron
-            if ~(isa(target_set, 'Polyhedron') && ~target_set.isEmptySet()... 
-                && target_set.Dim == sys.state_dim)
-                err=SrtInvalidArgsError(['Expected a non-empty polyhedron ',...
-                    'of dimension sys.state_dim as target set']);
-                throw(err);
-            end
 
             % Construct the half-space representation for qscmvnv
             qscmvnv_lb = repmat(-Inf, [size(target_set.A, 1), 1]);
@@ -185,15 +166,6 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time,varargi
         elseif strcmpi(prob_str_splits{1},'concat')
             target_tube = varargin{1};
 
-            % Ensure target_set is a non-empty Polyhedron
-            if ~(isa(target_tube, 'TargetTube') &&...
-                target_tube.tube(1).Dim == sys.state_dim &&...
-                length(target_tube) == target_time + 1) 
-                err=SrtInvalidArgsError(['Expected a target tube of length',...
-                    ' target_time+1 and dimension sys.state_dim']);
-                throw(err);
-            end
-            
             % Get half space representation of the target tube and time horizon
             [concat_target_tube_A, concat_target_tube_b] = target_tube.concat();
             n_ineq_init_set = size(target_tube(1).H,1);
@@ -233,7 +205,7 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time,varargi
     end
 end
 
-function otherInputHandling(sys, initial_state)
+function otherInputHandling(sys, initial_state, prob_str_splits, optional_args, target_time)
     % Ensure that initial state is a column vector of appropriate dimension OR
     % random vector of approriate dimension
     if isa(initial_state,'RandomVector') && initial_state.dim~=sys.state_dim...
@@ -264,4 +236,42 @@ function otherInputHandling(sys, initial_state)
         err = SrtInvalidArgsError('Expected an uncontrolled LTI/LTV systems');
         throw(err);
     end
+    
+    % Ensure the optional arguments for prob computation are all ok
+    if strcmpi(prob_str_splits{2},'prob')
+        if length(optional_args)~=2
+            err=SrtInvalidArgsError(['Expected a target set or target tube ',...
+                'and a desired accuracy']);
+            throw(err);
+        end   
+        desired_accuracy = optional_args{2};
+        validateattributes(desired_accuracy, {'numeric'}, {'scalar', '>', 0})
+        % TODO-Test: Triggers costly computations
+        if sys.state_dim <=3 && desired_accuracy < 1e-8
+            warning('SReachTools:desiredAccuracy','desired_accuracy< 1e-8 might be hard to enforce');
+        elseif sys.state_dim >3 && desired_accuracy < 1e-4
+            warning('SReachTools:desiredAccuracy','desired_accuracy< 1e-4 might be hard to enforce');
+        end
+        % Ensure target_set is a non-empty Polyhedron
+        switch prob_str_splits{1}
+            case 'state'
+                target_set = optional_args{1};
+                % Ensure target_set is a non-empty Polyhedron
+                if ~(isa(target_set, 'Polyhedron') && ~target_set.isEmptySet()... 
+                    && target_set.Dim == sys.state_dim)
+                    err=SrtInvalidArgsError(['Expected a non-empty polyhedron ',...
+                        'of dimension sys.state_dim as target set']);
+                    throw(err);
+                end
+            case 'concat'
+                target_tube = optional_args{1};
+                if ~(isa(target_tube, 'TargetTube') &&...
+                    target_tube.tube(1).Dim == sys.state_dim &&...
+                    length(target_tube) == target_time + 1) 
+                    err=SrtInvalidArgsError(['Expected a target tube of length',...
+                        ' target_time+1 and dimension sys.state_dim']);
+                    throw(err);
+                end     
+        end
+    end    
 end
