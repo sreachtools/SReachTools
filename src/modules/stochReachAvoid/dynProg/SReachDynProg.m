@@ -69,9 +69,9 @@ function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc,...
 %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 
     % Input parsing
-    validProbStr = {'first','term'};
+    valid_prob_str = {'first','term'};
     inpar = inputParser();
-    inpar.addRequired('prob_str', @(x) any(validatestring(x,validProbStr)));
+    inpar.addRequired('prob_str', @(x) any(validatestring(x,valid_prob_str)));
     inpar.addRequired('sys', @(x) validateattributes(x, {'LtiSystem'},...
         {'nonempty'}));
     inpar.addRequired('x_inc', @(x) validateattributes(x, {'numeric'},...

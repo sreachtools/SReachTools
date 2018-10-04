@@ -67,9 +67,9 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time,varargi
 %
 
     % Input parsing
-    validProbStr = {'state-stoch','state-prob','concat-stoch','concat-prob'};
+    valid_prob_str = {'state-stoch','state-prob','concat-stoch','concat-prob'};
     inpar = inputParser();
-    inpar.addRequired('prob_str', @(x) any(validatestring(x,validProbStr)));
+    inpar.addRequired('prob_str', @(x) any(validatestring(x,valid_prob_str)));
     inpar.addRequired('sys', @(x) validateattributes(x,...
         {'LtiSystem','LtvSystem'}, {'nonempty'}));
     inpar.addRequired('initial_state', @(x) validateattributes(x, ...
@@ -166,20 +166,16 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time,varargi
         elseif strcmpi(prob_str_splits{1},'concat')
             target_tube = varargin{1};
 
-            % Get half space representation of the target tube and time horizon
-            [concat_target_tube_A, concat_target_tube_b] = target_tube.concat();
-            n_ineq_init_set = size(target_tube(1).H,1);
-            concat_target_tube_A_rand =...
-                concat_target_tube_A(n_ineq_init_set+1:end, sys.state_dim+1:end);
-            concat_target_tube_b_rand =...
-                concat_target_tube_b(n_ineq_init_set+1:end);
+            % Get half space representation of the target tube until the
+            % target_time of interest (guaranteed to be smaller than the length
+            % of the target tube)
+            [concat_target_tube_A, concat_target_tube_b] =...
+                target_tube.concat([2 target_time+1]);
 
             % Construct the half-space representation for qscmvnv
-            qscmvnv_lb  = repmat(-Inf, ...
-                                          [size(concat_target_tube_A_rand, 1), 1]);
-            qscmvnv_coeff_matrix = concat_target_tube_A_rand;
-            qscmvnv_ub  = concat_target_tube_b_rand -...
-                                        concat_target_tube_A_rand * mean_vec;
+            qscmvnv_lb  = repmat(-Inf, [size(concat_target_tube_A, 1), 1]);
+            qscmvnv_coeff_matrix = concat_target_tube_A;
+            qscmvnv_ub  = concat_target_tube_b -concat_target_tube_A * mean_vec;
 
         end
         % Call Genz's algorithm in an iterative approach to compute the
@@ -267,9 +263,10 @@ function otherInputHandling(sys, initial_state, prob_str_splits, optional_args, 
                 target_tube = optional_args{1};
                 if ~(isa(target_tube, 'TargetTube') &&...
                     target_tube.tube(1).Dim == sys.state_dim &&...
-                    length(target_tube) == target_time + 1) 
+                    length(target_tube) >= target_time + 1) 
                     err=SrtInvalidArgsError(['Expected a target tube of length',...
-                        ' target_time+1 and dimension sys.state_dim']);
+                        ' not smaller than target_time+1 and dimension ',...
+                        ' sys.state_dim']);
                     throw(err);
                 end     
         end
