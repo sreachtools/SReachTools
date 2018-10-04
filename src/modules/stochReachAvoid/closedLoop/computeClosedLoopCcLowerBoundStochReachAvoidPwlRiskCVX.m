@@ -1,4 +1,4 @@
-function [lb_stoch_reach_avoid, optimal_input_vector, optimal_input_gain, input_satisfaction_prob, risk_alloc] =...
+function [lb_stoch_reach_avoid, optimal_input_vector, optimal_input_gain, risk_alloc_state, risk_alloc_input] =...
     computeClosedLoopCcLowerBoundStochReachAvoidPwlRiskCVX( ...
         sys,...
         time_horizon,...
@@ -121,13 +121,19 @@ function [lb_stoch_reach_avoid, optimal_input_vector, optimal_input_gain, input_
     n_pwa = length(invcdf_approx_m);
     
 
+        
+%     cov_concat_disturb = kron(eye(time_horizon), ...
+%                             sys.dist.parameters.covariance);
+
+
+    
     %% Difference of convex penalty approach
     tau_initial = 1;     % Weight for the DC constraint violation
     scaling_tau = 2;     % Multiplying factor for the weight
     tau_max = 1e5;       % Saturation for the weight to avoid numerical issues
     iter_max = 100;       % Max number of DC iterations
     iter_count = 0;      % Counter for the iterations
-    dc_conv_tol = 1e-6;  % DC convergence threshold
+    dc_conv_tol = 1e-4;  % DC convergence threshold
 
     % Initializations for DC iterative algorithm
     obj_curr = Inf;      
@@ -275,9 +281,9 @@ function [lb_stoch_reach_avoid, optimal_input_vector, optimal_input_gain, input_
         warning('DC program converged, but slack variables does not respect the chance constraints!');
     end
     % Extract and display value
-    risk_alloc = deltai;
     lb_stoch_reach_avoid = 1-sum(deltai);
-    input_satisfaction_prob = 1-sum(gammai);
     optimal_input_vector = d_vector;
     optimal_input_gain = M_matrix;
+    risk_alloc_state = deltai;
+    risk_alloc_input = gammai;
 end
