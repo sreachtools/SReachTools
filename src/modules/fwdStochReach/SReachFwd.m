@@ -242,11 +242,13 @@ function otherInputHandling(sys, initial_state, prob_str_splits, optional_args, 
         end   
         desired_accuracy = optional_args{2};
         validateattributes(desired_accuracy, {'numeric'}, {'scalar', '>', 0})
-        % TODO-Test: Triggers costly computations
+        % TODO-Test: Triggers costly computations in testing
         if sys.state_dim <=3 && desired_accuracy < 1e-8
-            warning('SReachTools:desiredAccuracy','desired_accuracy< 1e-8 might be hard to enforce');
+            warning('SReachTools:desiredAccuracy',...
+                'desired_accuracy < 1e-8 might be hard to enforce');
         elseif sys.state_dim >3 && desired_accuracy < 1e-4
-            warning('SReachTools:desiredAccuracy','desired_accuracy< 1e-4 might be hard to enforce');
+            warning('SReachTools:desiredAccuracy',...
+                'desired_accuracy < 1e-4 might be hard to enforce');
         end
         % Ensure target_set is a non-empty Polyhedron
         switch prob_str_splits{1}

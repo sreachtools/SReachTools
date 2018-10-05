@@ -9,8 +9,7 @@ cc_affine_run = 1;
 %% Monte-Carlo simulation parameters
 n_mcarlo_sims = 1e5;
 n_sims_to_plot = 5;
-max_state_violation_prob = 0.01;
-max_input_violation_prob = 0.01;
+max_input_viol_prob = 0.01;
 %% CWH system params
 umax=0.1;
 mean_disturbance = zeros(4,1);
@@ -52,8 +51,8 @@ target_set = Polyhedron('lb', [-0.1; -0.1; -0.01; -0.01],...
 target_tube = TargetTube('reach-avoid',safe_set, target_set, time_horizon);                    
 
 %% Initial state definition
-initial_state = [-0.75;         % Initial x relative position
-                 -0.75;         % Initial y relative position
+initial_state = [-1.15;         % Initial x relative position
+                 -1.15;         % Initial y relative position
                  0;             % Initial x relative velocity
                  0];            % Initial y relative velocity
 slice_at_vx_vy = initial_state(3:4);             
@@ -61,7 +60,7 @@ slice_at_vx_vy = initial_state(3:4);
 desired_accuracy = 1e-3;        % Decrease for a more accurate lower 
                                 % bound at the cost of higher 
                                 % computation time
-desired_accuracy_cc_closed = 5e-3;
+desired_accuracy_cc_affine = 1e-2;
 PSoptions = psoptimset('Display','off');
 
 %% Generate matrices for optimal mean trajectory generation
@@ -123,14 +122,23 @@ end
 if cc_affine_run
     timer_cc_pwl_closed = tic;
     disp('Piecewise-linear single shot (closed-loop-dc) risk allocation technique');
-    [lb_stoch_reach_avoid_cc_pwl_closed, optimal_input_vector_cc_pwl_closed, optimal_input_gain, input_satisfaction_prob, risk_alloc] =...
-                             getLowerBoundStochReachAvoid(sys,...
-                                                          initial_state,...
-                                                          target_tube,...
-                                                          'cccpwl-closed',...
-                                                          desired_accuracy_cc_closed,...
-                                                          max_state_violation_prob,...
-                                                          max_input_violation_prob);  
+    options.prob_str = 'term';
+    options.method_str = 'chance-affine';
+    options.desired_accuracy = desired_accuracy_cc_affine;
+    options.max_input_viol_prob = max_input_viol_prob;
+    options.bisect_lb = 0;
+    options.bisect_ub = 1;
+    options.tau_initial = 1;     % Weight for the DC constraint viol
+    options.scaling_tau = 2;     % Multiplying factor for the weight
+    options.tau_max = 1e5;       % Saturation for the weight to avoid numerical issues
+    options.iter_max = 20;       % Max number of DC iterations
+    options.dc_conv_tol = 1e-4;  % DC convergence threshold
+    options.slack_tol = 1e-8;    % When is the slack variable == to the norm values?
+    options.verbose = 1;
+
+    [lb_stoch_reach_avoid_cc_pwl_closed, optimal_input_vector_cc_pwl_closed, optimal_input_gain, risk_alloc_state, risk_alloc_input] =...
+         SReachPoint('term','chance-affine', sys, initial_state, target_tube,...
+            options);  
     elapsed_time_cc_pwl_closed = toc(timer_cc_pwl_closed);            
     if lb_stoch_reach_avoid_cc_pwl_closed > 0
         % This function returns the concatenated state vector stacked columnwise
@@ -255,12 +263,12 @@ fprintf('FT: %1.3f | CC (Open): %1.3f | CC (Affine): %1.3f\n',...
     lb_stoch_reach_avoid_ft,...
     lb_stoch_reach_avoid_cc_pwl,...
     lb_stoch_reach_avoid_cc_pwl_closed); 
-fprintf('MC (%1.0e particles): %1.3f, %1.3f, %1.3f, %1.3f\n',...
+fprintf('MC (%1.0e particles): %1.3f, %1.3f, %1.3f\n',...
     n_mcarlo_sims,...
     sum(mcarlo_result_ft)/n_mcarlo_sims, ...
     sum(mcarlo_result_cc_pwl)/n_mcarlo_sims,...
     sum(mcarlo_result_cc_pwl_closed)/n_mcarlo_sims);
-fprintf('Elapsed time: %1.3f, %1.3f, %1.3fseconds\n',...
+fprintf('Elapsed time: %1.3f, %1.3f, %1.3f seconds\n',...
     elapsed_time_ft, elapsed_time_cc_pwl, elapsed_time_cc_pwl_closed);
 
 %%

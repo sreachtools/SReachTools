@@ -206,7 +206,7 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
         stoch_reach_prob = 0;
         opt_input_vec = nan(sys.input_dim * time_horizon, 1);
         opt_input_gain = [];        
-    else
+    elseif strcmpi(prob_str,'term')
         % Ensure that options are provided are appropriate
         options = otherInputHandling(prob_str,method_str, varargin);
         
@@ -238,49 +238,121 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
                 % approximations to compute affine-loop controller (SOC program)
                 [stoch_reach_prob_affine, opt_input_vec, opt_input_gain,...
                     risk_alloc_state, risk_alloc_input] = SReachPointCcA(sys,...
-                        initial_state, safety_tube, ...
-                        options.max_input_violation_prob,...
-                        options.desired_accuracy);
-                stoch_reach_prob = stoch_reach_prob_affine; %TODO
+                        initial_state, safety_tube, options);
+                stoch_reach_prob = stoch_reach_prob_affine; %TODO: Do transform
                 varargout{1} = risk_alloc_state;
                 varargout{2} = risk_alloc_input;
         end
         if stoch_reach_prob<0
             stoch_reach_prob = 0;
-            opt_input_vec = nan(sys.input_dim * time_horizon, 1);
+            opt_input_vec = opt_input_vec;
             opt_input_gain = [];
             if strcmpi(method_str,'chance-open') ||...
-                    strcmpi(method_str,'chance-affine')    %TODO
-                warn_str = ['''chance-open/chance-affine'' works only',...
-                    ' if the maximal reach probability is above 0.5.'];
+                    strcmpi(method_str,'chance-affine')    %TODO: Do MILP
+                warn_str = ['Note that ''chance-open/chance-affine'' works ',...
+                    'only if the maximal reach probability is above 0.5.'];
             else
                 warn_str = 'The problem may be infeasible';
             end
             % Need to add sprintf (despite MATLAB's editor warning) for new line
-            warning(sprintf(method_str,' returned a trivial lower bound.\n',...
-                warn_str));             
+            warning('SReachTools:runtime',sprintf(['%s returned a ',...
+                'trivial lower bound.\n%s'], method_str, warn_str));             
         end
+    elseif strcmpi(prob_str,'first')
+        % Ensure that options, target_hyperplane are provided are appropriate
+        [options, target_hyperplane] =otherInputHandling(prob_str,method_str,... 
+            varargin, sys.state_dim);
+        
+        % No need to do any control, the probability is strictly one
+        if target_hyperplane.contains(initial_state)
+            stoch_reach_prob = 1;
+            opt_input_vec = nan(sys.input_dim * time_horizon, 1);
+            opt_input_gain = [];
+        else
+            stoch_reach_prob_vec = zeros(1,time_horizon);
+            opt_input_vec_cells = cell(1,time_horizon);
+            opt_input_gain_cells = cell(1,time_horizon);
+            
+            % Safety tube intersection with the hyperplane:
+            % Complement of ax <= b is ax > b is -ax <-b
+            target_hyperplane_complement = Polyhedron('H',-target_hyperplane.H);
+            safety_tube_minus_target_set = TargetTube('intersect',...
+                safety_tube, target_hyperplane_complement);
+
+            % Compute the series of terminal problems (stochastic
+            % reachability of a target tube of appropriate lengths)
+            prev_warning_state = getSrtWarnings();
+            setSrtWarnings('off');
+            for t=1:time_horizon
+                % Collect all the safe set \setminus target_hyperplane into
+                % a cell array of polyhedra (TODO: obtain a cell array)
+                safe_sets = safety_tube_minus_target_set.extract([1 t]);
+                % Construct the reach tube up to t-1 (count in theory starts 
+                % from 0) and set the target set at t
+                reach_tube_at_t = TargetTube(safe_sets{:}, target_hyperplane);
+                options.prob_str = 'term';
+                % The terminal subproblem that is to solved for each t
+                [stoch_reach_prob_vec(t), opt_input_vec_cells{t},...
+                    opt_input_gain_cells{t}] = SReachPoint('term',...
+                        method_str,sys,initial_state,reach_tube_at_t, options);
+            end
+            setSrtWarnings(prev_warning_state);
+            
+            % Find the time horizon that does the best
+            [stoch_reach_prob, opt_time_indx] = max(stoch_reach_prob_vec);
+            opt_input_vec = opt_input_vec_cells{opt_time_indx};
+            opt_input_gain = opt_input_gain_cells{opt_time_indx};            
+        end
+    else
+        % Exhausted all options => prob_str can be first or term only due
+        % to input handling
+        throw(SrtDevError('Dealing with an unknown problem configuration'));
     end
 end
 
-function options = otherInputHandling(prob_str,method_str, additional_args)
-    % input handling for options
+function [options, varargout] = otherInputHandling(prob_str,method_str,...
+    additional_args, varargin)
+    % input handling for options, [target_hyperplane]
+    % for term, all arguments are explicit and output is input santizied options
+    % for first, an additional input argument of sys is required, and the
+    % output includes an input santizied target_hyperplane
 
-    % Check if options provided is appropriate or generate
-    if isempty(additional_args)
-        % No options provided! Create one.
-        options = SReachPointOptions(prob_str,method_str);
-    elseif length(additional_args)==1
-        % Options provided! Check if prob_str and method_str are consistent
-        options = additional_args{1};
-        if ~strcmpi(options.prob_str,prob_str)
-            throwAsCaller(SrtInvalidArgsError('Mismatch in prob_str in the options'));
+    if strcmpi(prob_str,'term') && length(additional_args) <= 1        
+        if isempty(additional_args) || isempty(additional_args{1})
+            % No options provided! Create one.
+            options = SReachPointOptions(prob_str,method_str);
+        else
+            % Options provided
+            options = additional_args{1};        
         end
-        if ~strcmpi(options.method_str,method_str)
-            throwAsCaller(SrtInvalidArgsError('Mismatch in method_str in the options'));
-        end        
+    elseif strcmpi(prob_str,'first') && length(additional_args)<= 2
+        state_dim = varargin{1};
+        if length(additional_args)<= 1
+            throwAsCaller(SrtInvalidArgsError(['Expected options (should be',...
+                ' left empty for default options) and a target hyperplane']));
+        elseif isempty(additional_args{1})
+            % No options provided! Create one.
+            options = SReachPointOptions(prob_str,method_str);
+        else
+            options = additional_args{1};
+            target_hyperplane = additional_args{2};
+            target_hyperplane.minHRep();
+        end
+        if ~isequal(size(target_hyperplane.H),[1 state_dim+1])
+            throwAsCaller(SrtInvalidArgsError(['Inconsistent target ',...
+                'hyperplane provided. target_hyperplane.H should be a 1 x ',...
+                'sys.state_dim dimensional row vector']));    
+        end
+        varargout{1} = target_hyperplane;
     else
         % Lots more than needed!
         throwAsCaller(SrtInvalidArgsError('Too many input arguments'));
     end
+    %Check if prob_str and method_str are consistent        
+    if ~strcmpi(options.prob_str,'term')
+        throwAsCaller(SrtInvalidArgsError('Mismatch in prob_str in the options'));
+    end
+    if ~strcmpi(options.method_str,method_str)
+        throwAsCaller(SrtInvalidArgsError('Mismatch in method_str in the options'));
+    end        
 end
