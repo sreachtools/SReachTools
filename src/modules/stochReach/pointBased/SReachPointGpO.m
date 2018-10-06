@@ -20,13 +20,13 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state,...
 %
 % Inputs:
 % -------
-%   sys         - System description (LtvSystem/LtiSystem object)
-%   init_state  - Initial state for which the maximal reach probability must be
-%                 evaluated (A numeric vector of dimension sys.state_dim)
-%   safety_tube - Collection of (potentially time-varying) safe sets that define
-%                 the safe states (TargetTube object)
-%   options     - Collection of user-specified options for 'genzps-open'
-%                 (Matlab struct created using SReachPointOptions)
+%   sys          - System description (LtvSystem/LtiSystem object)
+%   initial_state- Initial state for which the maximal reach probability must be
+%                  evaluated (A numeric vector of dimension sys.state_dim)
+%   safety_tube  - Collection of (potentially time-varying) safe sets that
+%                  define the safe states (TargetTube object)
+%   options      - Collection of user-specified options for 'genzps-open'
+%                  (Matlab struct created using SReachPointOptions)
 %
 % Outputs:
 % --------
@@ -47,8 +47,7 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state,...
 % * Uses Genz's algorithm (see in src/helperFunctions) instead of MATLAB's
 %   Statistics and Machine Learning Toolbox's mvncdf to compute the integral of
 %   the Gaussian over a polytope
-% * See @LtiSystem/getConcatMats for more information about the
-%   notation used.
+% * See @LtiSystem/getConcatMats for more information about the notation used.
 % 
 % ============================================================================
 % 
@@ -63,7 +62,7 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state,...
     optionsCc.desired_accuracy = options.desired_accuracy;
     [guess_lb_stoch_reach, guess_opt_input_vec, ~, extra_info] =...
         SReachPointCcO(sys, initial_state, safety_tube, optionsCc);
-    
+
     % Unpack the other necessary data from SReachPointCcO
     concat_safety_tube_A = extra_info.concat_safety_tube_A;
     concat_safety_tube_b = extra_info.concat_safety_tube_b;
@@ -72,7 +71,10 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state,...
     H = extra_info.H;
     mean_X_sans_input = extra_info.mean_X_sans_input;
     cov_X_sans_input = extra_info.cov_X_sans_input;
-        
+
+    % Ensure options is good
+    otherInputHandling(options);
+    
     if guess_lb_stoch_reach < 0
         % Chance constrained approach failed to find an optimal open-loop
         % controller => Try just getting the mean to be as safe as possible
@@ -135,5 +137,12 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state,...
         
         % Compute the lower bound and the optimal open_loop_control_policy
         lb_stoch_reach = exp(-opt_neg_log_reach_prob);
+    end
+end
+
+function otherInputHandling(options)
+    if ~(strcmpi(options.prob_str, 'term') &&...
+            strcmpi(options.method_str, 'genzps-open'))
+        throwAsCaller(SrtInvalidArgsError('Invalid options provided'));
     end
 end

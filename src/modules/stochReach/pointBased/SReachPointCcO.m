@@ -24,13 +24,13 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
 %
 % Inputs:
 % -------
-%   sys         - System description (LtvSystem/LtiSystem object)
-%   init_state  - Initial state for which the maximal reach probability must be
-%                 evaluated (A numeric vector of dimension sys.state_dim)
-%   safety_tube - Collection of (potentially time-varying) safe sets that define
-%                 the safe states (TargetTube object)
-%   options     - Collection of user-specified options for 'chance-open'
-%                 (Matlab struct created using SReachPointOptions)
+%   sys          - System description (LtvSystem/LtiSystem object)
+%   initial_state- Initial state for which the maximal reach probability must be
+%                  evaluated (A numeric vector of dimension sys.state_dim)
+%   safety_tube  - Collection of (potentially time-varying) safe sets that
+%                  define the safe states (TargetTube object)
+%   options      - Collection of user-specified options for 'chance-open'
+%                  (Matlab struct created using SReachPointOptions)
 %
 % Outputs:
 % --------
@@ -54,9 +54,7 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
 % See also SReachPoint.
 %
 % Notes:
-% ------
-% * See @LtiSystem/getConcatMats for more information about the
-%     notation used.
+% * See @LtiSystem/getConcatMats for more information about the notation used.
 % 
 % ============================================================================
 % 
@@ -100,7 +98,7 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
     % GUARANTEES: Compute the input concat and disturb concat transformations
     [~, H, ~] = getConcatMats(sys, time_horizon);
     % GUARANTEES: Gaussian-perturbed LTI system (sys) and well-defined
-    % init_state and time_horizon
+    % initial_state and time_horizon
     sysnoi = LtvSystem('StateMatrix',sys.state_mat,'DisturbanceMatrix',...
         sys.dist_mat,'Disturbance',sys.dist);
     [mean_X_sans_input, cov_X_sans_input] = SReachFwd('concat-stoch', sysnoi,...

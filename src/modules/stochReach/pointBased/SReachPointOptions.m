@@ -1,11 +1,104 @@
-function options = SReachPointOptions(prob_str, method_str)
-    options.prob_str = prob_str;
-    options.method_str = method_str;            
-    v = ver;            
+function options = SReachPointOptions(prob_str, method_str, varargin)
+% Create user-specifiable options for use with SReachPoint()
+% =============================================================================
+%
+% SReachPointOptions creates a MATLAB struct that contains user-specifiable
+% options that may be used with SReachPoint
+%
+% =============================================================================
+%
+%   options = SReachPointOptions(prob_str, method_str, varargin)
+% 
+% Inputs:
+% -------
+%   prob_str    - String specifying the problem of interest. For each case, we
+%                 compute the optimal value function that maps initial states
+%                 to different maximal reach probabilities
+%                     1. 'first' : Stay within the safety_tube and reach the
+%                                  target set early if possible
+%                     2. 'term' : Stay within the safety_tube
+%   method_str  - Solution technique to be used (user-specifiable
+%                 options associated with each technique is enumerated)
+%                     'chance-open'  -- Convex chance-constrained approach for
+%                                       an open-loop controller synthesis
+%                                       1. pwa_accuracy: 
+%                                               Accuracy of the piecewise affine 
+%                                               approximation of norminvcdf
+%                                               used
+%                     'chance-affine'-- Convex chance-constrained approach for
+%                                       an affine controller synthesis
+%                                       1. verbose: Verbosity of the 
+%                                               implementation (feedback for the 
+%                                               user)
+%                                       2. desired_accuracy: Accuracy of the
+%                                               result
+%                                       3. pwa_accuracy: 
+%                                               Accuracy of the piecewise affine 
+%                                               approximation of norminvcdf
+%                                               used
+%                                       4. max_input_viol_prob:
+%                                               Probabilistic relaxation of the 
+%                                               hard input constraints
+%                                       5. bisect_lb: Bisection lower bound
+%                                       6. bisect_lb: Bisection upper bound
+%                                       Difference-of-convex parameters: 
+%                                       7. tau_initial: Initialization of the 
+%                                               slack multiplier
+%                                       8. scaling_tau: Scaling factor to the 
+%                                               slack multiplier
+%                                       9. tau_max: Maximum value for the 
+%                                               scaling factor
+%                                      10. iter_max: Maximum number of
+%                                               iterations for the difference of
+%                                               convex iterative algorithm
+%                                      11. dc_conv_tol: Tolerance for exiting 
+%                                               the iterative algorithm
+%                                      12. slack_tol: Tolerance within which the
+%                                               the slack variable is declared 
+%                                               to be equal to the norm they are 
+%                                               replacing
+%                     'genzps-open'  -- Genz's algorithm + Patternsearch
+%                                       1. desired_accuracy: 
+%                                               Accuracy of Gaussian
+%                                               integral => Accuracy of the
+%                                               result
+%                                       2. PSoptions: 
+%                                               MATLAB struct generated
+%                                               using psoptimset()
+%                     'scenario-open'-- Scenario-based 
+%
+% Outputs:
+% --------
+%   options     - Collection of user-specified options for 'chance-affine'
+%                 (Matlab struct created using SReachPointOptions)
+%
+% See also SReachPoint.
+%
+% Notes:
+% * SReachPoint() will call this function internally using the default
+%     values if SReachPointOptions()-based options is not explicitly provided
+%     to SReachPoint().
+% ============================================================================
+% 
+% This function is part of the Stochastic Reachability Toolbox.
+% License for the use of this function is given in
+%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+% 
+%
+
+    % Input parsing
+    inpar = inputParser();
+    inpar.addRequired('prob_str');
+    inpar.addRequired('method_str');
+
     switch lower(method_str)
         case 'genzps-open'            
-            options.desired_accuracy = 1e-3;
-            options.PSoptions = psoptimset('display','off');
+            inpar.addParameter('desired_accuracy',1e-3, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0}));
+            inpar.addParameter('PSoptions',psoptimset('display','off'));
+            
+            % Ensure that patternsearch is installed
+            v = ver;            
             has_patternsearch = any(strcmp(cellstr(char(v.Name)),...
                 'Global Optimization Toolbox'));
             if ~has_patternsearch
@@ -14,150 +107,48 @@ function options = SReachPointOptions(prob_str, method_str)
                 throw(exc);
             end
         case 'chance-open'
-            options.pwa_accuracy = 1e-3;                
+            % Accuracy of piecewise-affine approximation of norminvcdf
+            inpar.addParameter('pwa_accuracy',1e-3, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0}));
         case 'chance-affine'
-            options.desired_accuracy = 1e-2;
-            options.pwa_accuracy = 1e-2;                
-            options.max_input_viol_prob = 1e-2;
-            options.bisect_lb = 0;
-            options.bisect_ub = 1;
-            options.tau_initial = 1;     % Weight for the DC constraint viol
-            options.scaling_tau = 2;     % Multiplying factor for the weight
-            options.tau_max = 1e5;       % Saturation for the weight to avoid numerical issues
-            options.iter_max = 20;       % Max number of DC iterations
-            options.dc_conv_tol = 1e-4;  % DC convergence threshold
-            options.slack_tol = 1e-6;    % When is the slack variable == to the norm values?
-            options.verbose = 1;
+            % Verbosity of the implementation
+            inpar.addParameter('verbose', 0, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar', 'integer',...
+                    '>=',0,'<=',2}));            
+            % Bisection tolerance
+            inpar.addParameter('desired_accuracy',1e-2, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0}));
+            % Accuracy of piecewise-affine approximation of norminvcdf
+            inpar.addParameter('pwa_accuracy',1e-2, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0}));
+            % Probabilistic relaxation of the hard input constraints
+            inpar.addParameter('max_input_viol_prob',1e-2, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0}));
+            % Bisection bounds
+            inpar.addParameter('bisect_lb',0, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>=',0,'<=', 1}));
+            inpar.addParameter('bisect_ub',1, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>=',0,'<=', 1}));
+            % Difference-of-convex: Initialization of the slack multiplier
+            inpar.addParameter('tau_initial',1, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0}));
+            % Difference-of-convex: Scaling factor to the slack multiplier
+            inpar.addParameter('scaling_tau',2, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0}));
+            % Difference-of-convex: Max scaling factor
+            inpar.addParameter('tau_max',1e5, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0}));
+            % Difference-of-convex: Max iterations
+            inpar.addParameter('iter_max',20, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0}));
+            % Difference-of-convex: Exit condition tolerance for dc iterations
+            inpar.addParameter('dc_conv_tol',1e-4, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0}));
+            % Difference-of-convex: When is the slack variable declared to
+            % be equal to the norm they were replacing?
+            inpar.addParameter('slack_tol',1e-6, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0}));
     end
+    inpar.parse(prob_str, method_str, varargin{:});
+    options = inpar.Results;
 end
-
-%   guess_optimal_input_vector
-%                    - (Optional) Provide a concatenated guess for the optimal
-%                      input policy vector in the form of U = [u_0; u_1; ...;
-%                      u_N] for patternsearch. [Default []. This will trigger a
-%                      CVX-based computation for initialization of
-%                      patternsearch.]
-%   desired_accuracy - (Optional) Accuracy for patternsearch  [Default 5e-3]
-%   PSoptions        - (Optional) Options for patternsearch [Default
-%                       psoptimset('Display', 'off')]
-
-% * Method 'genzps' has the following dependencies
-%       * EXTERNAL DEPENDENCY: Uses CVX (optional)
-%                              Needs CVX to setup a convex optimization problem
-%                              that initializes the patternsearch-based
-%                              optimization. If CVX is unavailable, the user may
-%                              provide a guess for the initialization.
-%       * Specify both desired_accuracy and PSoptions or neither to use the
-%         defaults 
-%       * Specify an optional guess_optimal_input_vector to skip the use of CVX
-% * Method 'cccpwl' has the following dependencies
-%       * EXTERNAL DEPENDENCY: Uses CVX 
-%                              Needs CVX to setup the convex chance-constrained
-%                              problems
-%       * Specify a desired_accuracy if required. Else, a default value of 1e-3
-%           is used.
-% * Method 'ccciter' has the following dependencies
-%       * EXTERNAL DEPENDENCY: Uses CVX 
-%                              Needs CVX to setup the convex chance-constrained
-%                              problems
-%       * Specify a desired_accuracy if required. Else, a default value of 1e-3
-%           is used.
-
-        % Stochastic reach-avoid probability may be non-trivial
-        % EXTERNAL DEPENDENCY CHECK
-% 
-% 
-% 
-% 
-%             case 'genzps-open'
-%                 % Parsing the optional arguments 
-%                 if length(varargin) == 3
-%                     % First optional argument is the guess_opt_controller
-%                     if ~isempty(varargin{1})
-%                         assert(isvector(varargin{1}) &&...
-%                                length(varargin{1}) == ...
-%                                sys.input_dim * time_horizon, ...
-%                                'SReachTools:invalidArgs', ...
-%                                ['Expected a well-dimensioned row vector ', ...
-%                                 'guess_opt_controller']);
-%                         guess_opt_controller = varargin{1};
-%                     else
-%                         guess_opt_controller = [];
-%                     end
-%                     % Second optional argument is the desired_accuracy
-%                     assert(isscalar(varargin{2}), ...
-%                            'SReachTools:invalidArgs', ...
-%                            'Expected a scalar value for desired_accuracy');
-%                     desired_accuracy = varargin{2};
-%                     % Third optional argument is the options for patternsearch,
-%                     % PSoptions (TODO: No validation being done here)
-%                     PSoptions = varargin{3};
-%                 elseif length(varargin) == 1
-%                     % First optional argument is the guess_opt_controller
-%                     if ~isempty(varargin{1})
-%                         assert(isvector(varargin{1}) &&...
-%                                length(varargin{1}) == ...
-%                                sys.input_dim * time_horizon, ...
-%                                'SReachTools:invalidArgs', ...
-%                                ['Expected a well-dimensioned row vector ', ...
-%                                 'guess_opt_controller']);
-%                         guess_opt_controller = varargin{1};
-%                     else
-%                         guess_opt_controller = [];
-%                     end
-%                     desired_accuracy = 1e-3;
-%                     PSoptions = psoptimset('Display', 'off');
-%                 elseif isempty(varargin)
-%                     guess_opt_controller = [];
-%                     desired_accuracy = 1e-3;
-%                     PSoptions = psoptimset('Display', 'off');
-%                 else
-%                     exc = SrtInvalidArgsError([...
-%                         'guess_opt_controller, desired_accuracy, ', ...
-%                         'and PSoptions are the only additional options.']);
-%                     throw(exc);
-%                 end
-% 
-%             case 'chance-open'
-%                 if length(varargin) == 1
-%                     % Optional argument is the desired_accuracy
-%                     assert(isscalar(varargin{1}), ...
-%                            'SReachTools:invalidArgs', ...
-%                            'Expected a scalar value for desired_accuracy');
-%                     desired_accuracy = varargin{1};
-%                 elseif isempty(varargin)
-%                     desired_accuracy = 1e-3;
-%                 else
-%                     exc = SrtInvalidArgsError(['More inputs provided to ',...
-%                            'getLowerBoundStochasticReachAvoid than expected.']);
-%                     throw(exc);
-%                 end
-%             case 'chance-affine'
-%                 switch length(varargin)
-%                     case 3
-%                         desired_accuracy = varargin{1};
-%                         max_state_violation_prob = varargin{2};
-%                         max_input_violation_prob = varargin{3};
-%                     case 2
-%                         desired_accuracy = varargin{1};
-%                         max_state_violation_prob = varargin{2};
-%                         max_input_violation_prob = 0.001;
-%                     case 1
-%                         desired_accuracy = varargin{1};
-%                         max_state_violation_prob = 0.1;
-%                         max_input_violation_prob = 0.001;
-%                     case 0
-%                         desired_accuracy = 5e-3;
-%                         max_state_violation_prob = 0.1;
-%                         max_input_violation_prob = 0.001;
-%                     otherwise
-%                         exc = SrtInvalidArgsError(['More inputs provided to ',...
-%                                'getLowerBoundStochasticReachAvoid than expected.']);
-%                         throw(exc);
-%                 end
-%         % EXTERNAL DEPENDENCY CHECK --- CVX
-%         assert(exist('cvx_begin','file')==2, ...
-%                'SReachTools:setup_error', ...
-%                ['This function uses CVX if no initial guess (input ', ...
-%                 'policy) for the solver is provided. Please get CVX from ', ...
-%                 'http://cvxr.com.']);

@@ -51,7 +51,7 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %                         input bounds 
 %    Optimality         : Optimal open-loop controller for the
 %                         underapproximation problem due to convexity guarantees
-%    SReachTool function: getCcOpenPoint
+%    SReachTool function: SReachPointCcO
 %    Dependency (EXT)   : CVX
 %    Dependency (MATLAB): Symbolic toolbox
 %    Paper              : a. Lesser, Oishi, Erwin TODO.
@@ -73,7 +73,7 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %                         underapproximation problem due to the use of
 %                         difference-of-convex
 %    Approximation      : Guaranteed underapproximation
-%    SReachTool function: getCcClosedPoint
+%    SReachTool function: SReachPointCcA
 %    Dependency (EXT)   : CVX
 %    Dependency (MATLAB): Symbolic toolbox
 %    Paper              : A. Vinod and M. Oishi, HSCC 2018 TODO
@@ -90,7 +90,7 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %    Optimality         : Optimal open-loop controller for the
 %                         underapproximation problem due to convexity guarantees
 %    Dependency (MATLAB): Global Optimization toolbox (for patternsearch)
-%    SReachTool function: getFtOpenPoint
+%    SReachTool function: SReachPointGpO
 %    Paper              : A. Vinod and M. Oishi, "Scalable Underapproximation
 %                         for Stochastic Reach-Avoid Problem for
 %                         High-Dimensional LTI Systems using Fourier
@@ -108,7 +108,7 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %    Optimality         : Optimal (w.r.t scenarios drawn) open-loop controller
 %                         for the underapproximation problem 
 %    Dependency (EXT)   : CVX
-%    SReachTool function: getScenarioPoint
+%    SReachTool function: SReachPointScO TODO
 %    Paper              : Lesser, Oishi, Erwin TODO.
 %
 %
@@ -117,30 +117,30 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 % =============================================================================
 %
 % [stoch_reach_prob, opt_controller, varargout] = SReachPoint(prob_str,...
-%    method_str, sys, init_state, safety_tube, options)
+%    method_str, sys, initial_state, safety_tube, options)
 % 
 % Inputs:
 % -------
-%   prob_str    - String specifying the problem of interest. For each case, we
-%                 compute the optimal value function that maps initial states
-%                 to different maximal reach probabilities
-%                     1. 'first' : Stay within the safety_tube and reach the
-%                                  target set early if possible
-%                     2. 'term' : Stay within the safety_tube
-%   method_str  - Solution technique to be used.
-%                     'chance-open'  -- Convex chance-constrained approach for
-%                                       an open-loop controller synthesis
-%                     'chance-affine'-- Convex chance-constrained approach for
-%                                       an affine controller synthesis
-%                     'genzps-open'  -- Genz's algorithm + Patternsearch
-%                     'scenario-open'-- Scenario-based 
-%   sys         - System description (LtvSystem/LtiSystem object)
-%   init_state  - Initial state for which the maximal reach probability must be
-%                 evaluated (A numeric vector of dimension sys.state_dim)
-%   safety_tube - Collection of (potentially time-varying) safe sets that define
-%                 the safe states (TargetTube object)
-%   options     - Collection of user-specified options for each of the solution
-%                 (Matlab struct created using SReachPointOptions)
+%   prob_str     - String specifying the problem of interest. For each case, we
+%                  compute the optimal value function that maps initial states
+%                  to different maximal reach probabilities
+%                      1. 'first' : Stay within the safety_tube and reach the
+%                                   target set early if possible
+%                      2. 'term' : Stay within the safety_tube
+%   method_str   - Solution technique to be used.
+%                      'chance-open'  -- Convex chance-constrained approach for
+%                                        an open-loop controller synthesis
+%                      'chance-affine'-- Convex chance-constrained approach for
+%                                        an affine controller synthesis
+%                      'genzps-open'  -- Genz's algorithm + Patternsearch
+%                      'scenario-open'-- Scenario-based 
+%   sys          - System description (LtvSystem/LtiSystem object)
+%   initial_state- Initial state for which the maximal reach probability must be
+%                  evaluated (A numeric vector of dimension sys.state_dim)
+%   safety_tube  - Collection of (potentially time-varying) safe sets that
+%                  define the safe states (TargetTube object)
+%   options      - Collection of user-specified options for each of the solution
+%                  (Matlab struct created using SReachPointOptions)
 %
 % Outputs:
 % --------
@@ -166,12 +166,13 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %                 input constraints
 %
 % Notes:
-% * See @LtiSystem/getConcatMats for more information about the
-%   notation used.
+% * SReachPoint() will call this function internally using the default
+%     values if SReachPointOptions()-based options is not explicitly provided
+%     to SReachPoint().
+% * See @LtiSystem/getConcatMats for more information about the notation used.
 % * If an open_loop policy is desired arranged in increasing time columnwise,
-%   use the following command
-%   TODO
-%   >>> optimal_open_loop_control_policy = reshape(opt_controller,...
+%   use the following command:
+%       optimal_open_loop_control_policy = reshape(opt_controller,...
 %           sys.input_dim, time_horizon);
 % 
 % =============================================================================
@@ -191,8 +192,8 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
     inpar.addRequired('method_str', @(x) any(validatestring(x,valid_method)));
     inpar.addRequired('sys', @(x) validateattributes(x,...
         {'LtiSystem','LtvSystem'}, {'nonempty'}));
-    inpar.addRequired('init_state', @(x) validateattributes(x, {'numeric'},...
-        {'vector'}));
+    inpar.addRequired('initial_state', @(x) validateattributes(x,...
+        {'numeric'}, {'vector'}));
     inpar.addRequired('safety_tube',@(x) validateattributes(x,{'TargetTube'},...
         {'nonempty'}));
 
