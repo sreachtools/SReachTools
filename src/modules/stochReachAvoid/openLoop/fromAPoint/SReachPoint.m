@@ -140,25 +140,30 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %   safety_tube - Collection of (potentially time-varying) safe sets that define
 %                 the safe states (TargetTube object)
 %   options     - Collection of user-specified options for each of the solution
-%                 (Matlab struct created using SReachOptions)
+%                 (Matlab struct created using SReachPointOptions)
 %
 % Outputs:
 % --------
 %   stoch_reach_prob 
 %               - Approximation (underapproximation, in some cases) to the
 %                 first/terminal stochastic reach problem
-%   opt_controller 
+%   opt_input_vec, 
+%     opt_input_gain
 %               - Controller U=MW+d for a concatenated input vector 
 %                   U = [u_0; u_1; ...; u_{N-1}] and concatenated disturbance
 %                   vector W=[w_0; w_1; ...; w_{N-1}]. 
-%                 MATLAB struct with the following members:
-%                   - M: Affine controller gain matrix of dimension
+%                   - opt_input_gain: Affine controller gain matrix of dimension
 %                       (sys.input_dim*N) x (sys.dist_dim*N)
-%                   - d: Open-loop controller: column vector dimension
+%                   - opt_input_vec: Open-loop controller: column vector dimension
 %                       (sys.input_dim*N) x 1
 %                 The feedback gain matrix M is set to [] for methods that look
 %                 for open-loop controllers. 
-%   TODO: Optional outputs
+%   risk_alloc_state 
+%               - [Available only for 'chance-X'] Risk allocation for the
+%                 state constraints
+%   risk_alloc_input
+%               - [Available only for 'chance-affine'] Risk allocation for the
+%                 input constraints
 %
 % Notes:
 % * See @LtiSystem/getConcatMats for more information about the
@@ -216,22 +221,20 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
                 % Patternsearch and Fourier transform-based open-loop
                 % underapproximation of the stochastic reach-avoid problem
                 [stoch_reach_prob, opt_input_vec] = SReachPointGpO(sys,...
-                    initial_state, safety_tube, options.desired_accuracy,...
-                    options.PSoptions);
+                    initial_state, safety_tube, options);
                  opt_input_gain = [];
             case 'chance-open'
                 % Chance-constrained formulation with piecewise-linear 
                 % approximations to compute open-loop controller (LP)
                 [stoch_reach_prob, opt_input_vec, risk_alloc_state] =...
-                    SReachPointCcO(sys, initial_state, safety_tube,...
-                        options.desired_accuracy);
+                    SReachPointCcO(sys, initial_state, safety_tube, options);
                  opt_input_gain = [];
                  varargout{1} = risk_alloc_state;
             case 'scenario-open'
                 % Chance-constrained formulation with piecewise-linear 
                 % approximations to compute open-loop controller (LP)
                 [stoch_reach_prob, opt_input_vec] = SReachPointCcO(sys,...
-                    initial_state, safety_tube, options.desired_accuracy);
+                    initial_state, safety_tube, options);
                  opt_input_gain = [];
             case 'chance-affine'
                 % Chance-constrained formulation with piecewise-linear 
@@ -350,9 +353,11 @@ function [options, varargout] = otherInputHandling(prob_str,method_str,...
     end
     %Check if prob_str and method_str are consistent        
     if ~strcmpi(options.prob_str,'term')
-        throwAsCaller(SrtInvalidArgsError('Mismatch in prob_str in the options'));
+        throwAsCaller(...
+            SrtInvalidArgsError('Mismatch in prob_str in the options'));
     end
     if ~strcmpi(options.method_str,method_str)
-        throwAsCaller(SrtInvalidArgsError('Mismatch in method_str in the options'));
+        throwAsCaller(...
+            SrtInvalidArgsError('Mismatch in method_str in the options'));
     end        
 end

@@ -14,9 +14,10 @@ function options = SReachPointOptions(prob_str, method_str)
                 throw(exc);
             end
         case 'chance-open'
-            options.desired_accuracy = 1e-3;                
+            options.pwa_accuracy = 1e-3;                
         case 'chance-affine'
             options.desired_accuracy = 1e-2;
+            options.pwa_accuracy = 1e-2;                
             options.max_input_viol_prob = 1e-2;
             options.bisect_lb = 0;
             options.bisect_ub = 1;
@@ -25,7 +26,7 @@ function options = SReachPointOptions(prob_str, method_str)
             options.tau_max = 1e5;       % Saturation for the weight to avoid numerical issues
             options.iter_max = 20;       % Max number of DC iterations
             options.dc_conv_tol = 1e-4;  % DC convergence threshold
-            options.slack_tol = 1e-8;    % When is the slack variable == to the norm values?
+            options.slack_tol = 1e-6;    % When is the slack variable == to the norm values?
             options.verbose = 1;
     end
 end

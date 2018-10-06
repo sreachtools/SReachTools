@@ -2,84 +2,58 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain,...
     risk_alloc_state, risk_alloc_input] = SReachPointCcA(sys, initial_state,...
         safety_tube, options)
 % Solve the stochastic reach-avoid problem (lower bound on the probability and
-% an open-loop controller synthesis) using chance-constrained convex
-% optimization optimization (Internal function --- assumes arguments are all ok)
+% an affine controller synthesis) using chance-constrained convex optimization
 % =============================================================================
 %
-% computeCcLowerBoundStochReachAvoidPwlRisk implements the chance-constrained
-% convex underapproximation to the terminal hitting-time stochastic reach-avoid
-% problem discussed in
+% SReachPointCcA implements the chance-constrained convex underapproximation to 
+% the problem of stochastic reachability of a target tube
 %
-% K. Lesser, M. Oishi, and R. Erwin, "Stochastic reachability for control of
-% spacecraft relative motion," in IEEE Conference on Decision and Control (CDC),
-% 2013.
+% A. Vinod and M. Oishi, HSCC, 2019 (TODO)
 %
-% and reformulated in
-%
-% A. Vinod, V. Sivaramakrishnan, and M. Oishi, CSS-L, 2018 (submitted) TODO
-%
-% USAGE: This function is intended for internal use as it does not sanitize the
-% inputs. Please use getLowerBoundStochReachAvoid instead.
+% This function uses difference-of-convex algorithm (also known as the 
+% convex-concave procedure) to compute a local optima for the risk
+% allocation and an associated affine controller.
 %
 % =============================================================================
-%   [stoch_reach_prob, opt_input_vec] =...
-%       computeCcLowerBoundStochReachAvoidPwlRisk( ...
-%           sys, ...
-%           time_horizon, ...
-%           concat_input_space_A, ... 
-%           concat_input_space_b, ...
-%           concat_safety_tube_A, ... 
-%           concat_safety_tube_b, ...
-%           H, ...
-%           mean_X_sans_input, ...
-%           cov_X_sans_input, ...
-%           desired_accuracy)
+%
+%   [stoch_reach_prob, opt_input_vec, opt_input_gain,...
+%       risk_alloc_state, risk_alloc_input] = SReachPointCcA(sys,...
+%        initial_state, safety_tube, options)
 % 
 % Inputs:
 % -------
-%   sys                   - LtiSystem object
-%   time_horizon          - Time horizon (N) with the control provided from 0 to N-1
-%   concat_input_space_A, 
-%    concat_input_space_b - (A,b) Halfspace representation for the
-%                            polytope U^{time_horizon} set.        
-%   concat_safety_tube_A, 
-%    concat_safety_tube_b - (A,b) Halfspace representation for the target tube
-%                            from t=1 to time_horizon.  For example, the
-%                            terminal reach-avoid problem requires a polytope of
-%                            the form safe_set^{time_horizon-1} x safety_set.        
-%   H                     - Concatenated input matrix (see
-%                            @LtiSystem/getConcatMats for the notation used)
-%   mean_X_sans_input     - Mean of X without the influence of the input
-%   cov_X_sans_input      - Covariance of X without the influence of the input
-%   desired_accuracy      - Desired accuracy for the optimal stochastic
-%                           reach-avoid probability
+%   sys         - System description (LtvSystem/LtiSystem object)
+%   init_state  - Initial state for which the maximal reach probability must be
+%                 evaluated (A numeric vector of dimension sys.state_dim)
+%   safety_tube - Collection of (potentially time-varying) safe sets that define
+%                 the safe states (TargetTube object)
+%   options     - Collection of user-specified options for 'chance-affine'
+%                 (Matlab struct created using SReachPointOptions)
 %
 % Outputs:
 % --------
-%   stoch_reach_prob - Lower bound on the terminal-hitting stochastic
-%                          reach avoid problem computed using Fourier
-%                          transform and convex optimization
-%   opt_input_vec - Optimal open-loop policy
-%                          ((sys.input_dim) *
-%                          time_horizon)-dimensional vector 
-%                          U = [u_0; u_1; ...; u_N] (column vector)
+%   stoch_reach_prob 
+%               - Lower bound on the stochastic reachability of a target 
+%                 tube problem computed using convex chance
+%                      constraints and difference-of-convex techniques
+%   opt_input_vec, 
+%     opt_input_gain
+%               - Controller U=MW+d for a concatenated input vector 
+%                   U = [u_0; u_1; ...; u_{N-1}] and concatenated disturbance
+%                   vector W=[w_0; w_1; ...; w_{N-1}]. 
+%                   - opt_input_gain: Affine controller gain matrix of dimension
+%                       (sys.input_dim*N) x (sys.dist_dim*N)
+%                   - opt_input_vec: Open-loop controller: column vector dimension
+%                       (sys.input_dim*N) x 1
+%   risk_alloc_state 
+%               - Risk allocation for the state constraints
+%   risk_alloc_input
+%               - Risk allocation for the input constraints
 %
-% See also getLowerBoundStochReachAvoid,
-% computeCcLowerBoundStochReachAvoidIterRisk, and
-% computeFtLowerBoundStochReachAvoid.
+% See also SReachPoint.
 %
 % Notes:
 % ------
-% * NOT ACTIVELY TESTED: Builds on other tested functions.
-% * MATLAB DEPENDENCY: Uses MATLAB's Statistics and Machine Learning Toolbox.
-%                      Needs norminv
-% * EXTERNAL DEPENDENCY: Uses MPT3 and CVX (optional)
-%                      Needs MPT3 for defining a controlled system and the
-%                      definition of the safe and the target (polytopic) sets
-%                      Needs CVX to setup a convex optimization problem that
-%                      initializes the patternsearch-based optimization. If CVX
-%                      is unavailable, the user may provide a guess for the
-%                      initialization.
 % * See @LtiSystem/getConcatMats for more information about the
 %     notation used.
 % 
@@ -95,8 +69,8 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain,...
     inpar = inputParser();
     inpar.addRequired('sys', @(x) validateattributes(x,...
         {'LtiSystem','LtvSystem'}, {'nonempty'}));
-    inpar.addRequired('initial_state', @(x) validateattributes(x, {'numeric'},...
-        {'vector'}));
+    inpar.addRequired('initial_state', @(x) validateattributes(x,...
+        {'numeric'}, {'vector'}));
     inpar.addRequired('safety_tube',@(x) validateattributes(x,{'TargetTube'},...
         {'nonempty'}));
     
@@ -107,6 +81,9 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain,...
         exc = exc.addCause(err);
         throwAsCaller(exc);
     end
+    
+    % Ensure options is good
+    otherInputHandling(options);
 
     % Target tubes has polyhedra T_0, T_1, ..., T_{time_horizon}
     time_horizon = length(safety_tube) - 1;
@@ -116,17 +93,18 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain,...
     [concat_safety_tube_A, concat_safety_tube_b] = safety_tube.concat(...
         [2 time_horizon+1]);
 
-    % Construct U^N 
+    %% Halfspace-representation of U^N, H, G,mean_X_sans_input, cov_X_sans_input
     % GUARANTEES: Non-empty input sets (polyhedron)
-    [concat_input_space_A, concat_input_space_b] = getConcatInputSpace(sys, time_horizon);
+    [concat_input_space_A, concat_input_space_b] = getConcatInputSpace(sys,...
+        time_horizon);
     % GUARANTEES: Compute the input concat and disturb concat transformations
     [~, H, G] = getConcatMats(sys, time_horizon);
     % GUARANTEES: Gaussian-perturbed LTI system (sys) and well-defined
     % init_state and time_horizon
-    [H, mean_X_sans_input, ~]=getHmatMeanCovForXSansInput(sys, initial_state,...
+    sysnoi = LtvSystem('StateMatrix',sys.state_mat,'DisturbanceMatrix',...
+        sys.dist_mat,'Disturbance',sys.dist);
+    [mean_X_sans_input, ~] = SReachFwd('concat-stoch', sysnoi, initial_state,...
         time_horizon);
-%     sysnoi = LtvSystem('StateMatrix',sys.state_mat,'DisturbanceMatrix',sys.dist_mat,'Disturbance',sys.dist);
-%     [mean_X_sans_input,~] = SReachFwd('concat-stoch', sysnoi, initial_state, time_horizon);
     
     %% Compute M --- the number of polytopic halfspaces to worry about
     n_lin_state = size(concat_safety_tube_A,1);
@@ -156,7 +134,7 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain,...
         % phiinv
         [invcdf_approx_m, invcdf_approx_c, lb_deltai] =...
             computeNormCdfInvOverApprox(max_state_viol_prob,...
-                options.desired_accuracy,...
+                options.pwa_accuracy,...
                 n_lin_state);
         
         [sol_struct_temp, dc_feas] = differenceOfConvexApproach(...
@@ -184,7 +162,8 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain,...
             % Update the sol_struct
             sol_struct = sol_struct_temp;
             if options.verbose >= 1
-                disp('Feasible solution found! Decreasing (tightening) Delta_x');
+                disp(['Feasible solution found! Decreasing Delta_x ',...
+                      '(tightening state violation probability threshold)']);
             end
         elseif abs(ub_max_state_viol_prob - 1) < eps
             % Infeasible for 0.5 itself
@@ -203,7 +182,8 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain,...
             % Increase the lower bound
             lb_max_state_viol_prob = max_state_viol_prob;
             if options.verbose >= 1
-                disp('Infeasible! Increasing (relaxing) Delta_x');
+                disp(['Infeasible! Increasing Delta_x ',...
+                      '(relaxing state violation probability threshold)']);
             end
         end
     end
@@ -247,6 +227,14 @@ function [sol_struct, dc_feas] = differenceOfConvexApproach(...
     % First solve 
     n_pwa = length(invcdf_approx_m);
     slack_cc_sqrt_state_iter = zeros(n_lin_state, n_pwa);
+    for approx_indx = 1:length(invcdf_approx_m)
+        positive_c_value = invcdf_approx_c(approx_indx);
+        % a^T * \mu - b + c|| || <= s := c|| ||
+        slack_cc_sqrt_state_iter(:,approx_indx) = ...
+            positive_c_value .* norms(concat_safety_tube_A * G *...
+                    sqrt_cov_concat_disturb,2,2);
+    end
+
     slack_cc_sqrt_input_iter = zeros(n_lin_input, n_pwa);            
     tau_iter = options.tau_initial;
 
@@ -369,7 +357,7 @@ function [sol_struct, dc_feas] = differenceOfConvexApproach(...
                                 'tau_iter: %d\n',...
                              'DC slack-total sum --- state: %1.2e | ',...
                                 'input: %1.2e\n\n'],...
-                            solver_status,  obj_curr, options.max_iter,...
+                            solver_status,  options.iter_max, obj_curr,...
                             tau_iter, sum(sum(slack_reverse_state)),...
                             sum(sum(slack_reverse_input)));    
                 end
@@ -389,7 +377,7 @@ function [sol_struct, dc_feas] = differenceOfConvexApproach(...
                              'DC slack-total sum --- state: %1.2e | ',...
                                 'input: %1.2e\n',...
                              'DC convergence error: %1.2e\n\n'],...
-                             iter_count, solver_status, options.max_iter,...
+                             iter_count, solver_status, options.iter_max,...
                              obj_curr, tau_iter,... 
                              dc_slack_with_tau_prev - dc_slack_with_tau_curr,...
                              obj_prev - obj_curr,...
@@ -409,20 +397,43 @@ function [sol_struct, dc_feas] = differenceOfConvexApproach(...
             % Converged to an infeasible solution => Quit!
             continue_condition = -1;
             if options.verbose >= 2
-                disp('Converged to an infeasible solution!');
+                fprintf('CVX had trouble solving this subproblem: %s\n',...
+                    cvx_status);
             end
         end
     end
-
+    norm_state_gain = norms(concat_safety_tube_A * (H * M_matrix + G) *...
+                        sqrt_cov_concat_disturb,2,2);
+    norm_input_gain = norms(concat_input_space_A * M_matrix *...
+                        sqrt_cov_concat_disturb,2,2);
+    slack_equal_norm = (max(norm_state_replace_slack - norm_state_gain)...
+                      < options.slack_tol) && (max(norm_input_replace_slack -...
+                     norm_input_gain) < options.slack_tol);
     if sum(sum(slack_reverse_state))>= options.dc_conv_tol ||...
             sum(sum(slack_reverse_input)) >= options.dc_conv_tol ||...
-            continue_condition == -1 ||...
-            any(abs(norm_state_replace_slack - norms(concat_safety_tube_A *...
-                (H * M_matrix + G) * sqrt_cov_concat_disturb,2,2)) >...
-                    options.slack_tol) ||...
-            any(abs(norm_input_replace_slack - norms(concat_input_space_A *...
-                 M_matrix * sqrt_cov_concat_disturb,2,2)) > options.slack_tol)            
+            continue_condition == -1 || ~slack_equal_norm                        
         dc_feas = false;                
+        if options.verbose >= 1
+            if slack_equal_norm
+                fprintf(['Slack variables of the difference-of-convex is ',...
+                         'not small enough\nDC sum-total slack --- state:',...
+                         '%1.3e | input: %1.3e | Acceptable: <%1.1e\n'],...
+                         sum(sum(slack_reverse_state)),...
+                         sum(sum(slack_reverse_input)),...
+                         options.dc_conv_tol);
+            else
+                fprintf(['Increasing the maximum number of iterations might',...
+                         ' help! Slack variables is not equal to norms.\n',...
+                         'Max error in slack --- state: %1.3e | input: ',...
+                         '%1.3e | Acceptable: <%1.1e\nMin error in slack --',...
+                         '- state: %1.3e | input: %1.3e (must be +ve)\n'],...
+                         max(norm_state_replace_slack - norm_state_gain),...
+                         max(norm_input_replace_slack - norm_input_gain),...
+                         options.slack_tol,...
+                         min(norm_state_replace_slack - norm_state_gain),...
+                         min(norm_input_replace_slack - norm_input_gain));                
+            end
+        end
     else    
         dc_feas = true;
     end
@@ -432,4 +443,11 @@ function [sol_struct, dc_feas] = differenceOfConvexApproach(...
     sol_struct.input_satisfaction_prob = 1-sum(gammai);
     sol_struct.opt_input_vec = d_vector;
     sol_struct.opt_input_gain = M_matrix;
+end
+
+function otherInputHandling(options)
+    if ~(strcmpi(options.prob_str, 'term') &&...
+            strcmpi(options.method_str, 'chance-affine'))
+        throwAsCaller(SrtInvalidArgsError('Invalid options provided'));
+    end
 end
