@@ -118,6 +118,17 @@ function varargout = srtinit(varargin)
                 addpath(new_paths{i});
             end
         end
+        
+        %% Dependency checks                
+        check_must_have_dependencies();
+        prev_warn_state = getSrtWarning('SReachTools:setup');
+        if verbose
+            setSrtWarning('SReachTools:setup','on');
+        else
+            setSrtWarning('SReachTools:setup','off');
+        end
+        check_recommended_dependencies();
+        setSrtWarning('SReachTools:setup',prev_warn_state);        
     else
         % remove paths
         for i = 1:length(new_paths) - 1
@@ -133,16 +144,9 @@ function varargout = srtinit(varargin)
     if run_tests
         srttest();
     end
-
 end
 
 function test_results = srttest()
-    % Require MPT3 to run SReachTools
-    if exist('mpt_init', 'file') ~= 2
-        throw(SrtSetupError(['This toolbox uses MPT3. Please get it ', ...
-            'from http://control.ee.ethz.ch/~mpt/3/.']));
-    end
-
     % get the parent dir of this function
     script_path = fileparts(mfilename('fullpath'));
     
@@ -176,4 +180,59 @@ function update_sreachtools()
         fprintf('Updating...\n')
     end
 
+end
+
+function check_must_have_dependencies()
+    v = ver;    
+    %% Check for Gaussian pdf/cdf etc in Statistics and Machine Learning Toolbox
+    has_normcdf = any(strcmp(cellstr(char(v.Name)),...
+        'Statistics and Machine Learning Toolbox'));
+    if ~has_normcdf
+        exc = SrtSetupError(['SReachTools needs MATLAB''s ', ...
+            'Statistics and Machine Learning Toolbox.']);
+        throw(exc);
+    end
+    %% Check for MPT3
+    has_mpt3 = any(strcmp(cellstr(char(v.Name)),'Multi-Parametric Toolbox'));
+    if ~has_mpt3
+        exc = SrtSetupError(['SReachTools needs Multi-Parameteric Toolbox ',...
+            '(MPT3). See https://www.mpt3.org/Main/Installation for ',...
+            'installation instructions.']);
+        throw(exc);
+    end
+    %% Check for CVX
+    has_cvx = (exist('cvx_begin', 'file') == 2) &&...
+        (exist('cvx_end', 'file') == 2) && (exist('cvx_setup', 'file') == 2); 
+    if ~has_cvx
+        exc = SrtSetupError(['SReachTools needs CVX. See ',...
+            'http://cvxr.com/cvx/download/ for installation instructions.']);
+        throw(exc);
+    end
+end
+
+function check_recommended_dependencies()
+    v = ver;    
+    %% Check for Symbolic Math Toolbox for PWA
+    has_syms = any(strcmp(cellstr(char(v.Name)), 'Symbolic Math Toolbox'));
+    if ~has_syms
+        warning('SReachTools:setup',['Piecewise approximation ',...
+            'construction getPWAOverAndUnderApprox() in SReachTools ',...
+            'requires MATLAB''s Symbolic Math Toolbox.']);
+    end    
+    %% Check for Global Optimization Toolbox
+    has_patternsearch = any(strcmp(cellstr(char(v.Name)),... 
+        'Global Optimization Toolbox'));
+    if ~has_patternsearch
+        warning('SReachTools:setup',['''genzps-open'' option of ',...
+            'SReachPoint() function in SReachTools requires MATLAB''s ',...
+            'Global Optimization Toolbox.']);
+    end    
+    %% Check for Gurobi
+    [default_solver, solvers_cvx] = cvx_solver;
+    options_mpt = mptopt;
+    if ~(contains(default_solver,'Gurobi') &&...
+            any(contains(options_mpt.solvers_list.MIQP,'GUROBI')))    
+        warning('SReachTools:setup',['Gurobi is the recommended backend ',...
+            'solver for MPT3 and CVX when using SReachTools.']);
+    end
 end
