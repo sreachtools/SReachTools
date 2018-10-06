@@ -70,10 +70,7 @@ PSoptions = psoptimset('Display','off');
 if ft_run
     timer_ft = tic;
     disp('Genz-algorithm+patternsearch technique');
-    options.prob_str = 'term';
-    options.method_str = 'genzps-open';
-    options.desired_accuracy = desired_accuracy;
-    options.PSoptions = psoptimset('display','off');
+    options = SReachPointOptions('term','genzps-open');
     [lb_stoch_reach_avoid_ft, optimal_input_vector_ft] = SReachPoint(...
         'term','genzps-open', sys, initial_state, target_tube, options);  
     elapsed_time_ft = toc(timer_ft);
@@ -95,9 +92,7 @@ end
 if cc_open_run
     timer_cc_pwl = tic;
     disp('Piecewise-linear single shot risk allocation technique');
-    options.prob_str = 'term';
-    options.method_str = 'chance-open';
-    options.desired_accuracy = desired_accuracy;
+    options = SReachPointOptions('term','chance-open');
     [lb_stoch_reach_avoid_cc_pwl, optimal_input_vector_cc_pwl] = SReachPoint(...
         'term','chance-open', sys, initial_state, target_tube, options);  
     elapsed_time_cc_pwl = toc(timer_cc_pwl);
@@ -122,20 +117,7 @@ end
 if cc_affine_run
     timer_cc_pwl_closed = tic;
     disp('Piecewise-linear single shot (closed-loop-dc) risk allocation technique');
-    options.prob_str = 'term';
-    options.method_str = 'chance-affine';
-    options.desired_accuracy = desired_accuracy_cc_affine;
-    options.max_input_viol_prob = max_input_viol_prob;
-    options.bisect_lb = 0;
-    options.bisect_ub = 1;
-    options.tau_initial = 1;     % Weight for the DC constraint viol
-    options.scaling_tau = 2;     % Multiplying factor for the weight
-    options.tau_max = 1e5;       % Saturation for the weight to avoid numerical issues
-    options.iter_max = 20;       % Max number of DC iterations
-    options.dc_conv_tol = 1e-4;  % DC convergence threshold
-    options.slack_tol = 1e-8;    % When is the slack variable == to the norm values?
-    options.verbose = 1;
-
+    options = SReachPointOptions('term','chance-affine');
     [lb_stoch_reach_avoid_cc_pwl_closed, optimal_input_vector_cc_pwl_closed, optimal_input_gain, risk_alloc_state, risk_alloc_input] =...
          SReachPoint('term','chance-affine', sys, initial_state, target_tube,...
             options);  

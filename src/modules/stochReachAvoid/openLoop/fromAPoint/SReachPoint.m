@@ -282,7 +282,7 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
             % Compute the series of terminal problems (stochastic
             % reachability of a target tube of appropriate lengths)
             prev_warning_state = getSrtWarnings();
-            setSrtWarnings('off');
+            setSrtWarnings('all','off');
             for t=1:time_horizon
                 % Collect all the safe set \setminus target_hyperplane into
                 % a cell array of polyhedra (TODO: obtain a cell array)
@@ -296,7 +296,7 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
                     opt_input_gain_cells{t}] = SReachPoint('term',...
                         method_str,sys,initial_state,reach_tube_at_t, options);
             end
-            setSrtWarnings(prev_warning_state);
+            setSrtWarnings('all',prev_warning_state);
             
             % Find the time horizon that does the best
             [stoch_reach_prob, opt_time_indx] = max(stoch_reach_prob_vec);

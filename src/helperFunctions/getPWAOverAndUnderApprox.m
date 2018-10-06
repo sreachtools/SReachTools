@@ -78,6 +78,13 @@ function [PWA_overapprox_m,...
     j = 1;
     fzero_options = optimset('Display','off'); % show iterations
                 
+    has_syms = any(strcmp(cellstr(char(v.Name)), 'Symbolic Math Toolbox'));
+    if ~has_syms
+        exc = SrtSetupError(['This function needs MATLAB''s ', ...
+            'Symbolic Math Toolbox.']);
+        throw(exc);
+    end
+
     %% Symbolic function definitions
     syms x;
     syms h;
