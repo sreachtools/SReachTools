@@ -86,7 +86,7 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state,...
         %
         % Here, mean_X_sans_input is concatenated_A_matrix * x_0 + G_matrix *
         % concatenated_mean_vector_for_the_disturbance (see 
-        % getHmatMeanCovForXSansInput)        
+        % @LtiSystem/getConcatMats for more information on the notation)
         %
         % OVERWRITE the guess_opt_input_vec solution from SReachPointCcO
         cvx_begin quiet

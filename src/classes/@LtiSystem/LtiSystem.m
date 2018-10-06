@@ -43,10 +43,6 @@ classdef LtiSystem < LtvSystem
 %   getConcatInputSpace   - Get concatenated input space
 %   getConcatMats         - Get concatenated state, input, and disturbance
 %                           matrices
-%   getHmatMeanCovForXSansInput
-%                         - Get input policy-free mean and covariance of the
-%                           trajectory from a given initial state for a known
-%                           time horizon and the concatenated input matrix
 % 
 % Notes:
 % ------
@@ -221,16 +217,6 @@ classdef LtiSystem < LtvSystem
 
             [concat_input_space_A, concat_input_space_b] =...
                 getConcatInputSpace@LtvSystem(sys, time_horizon);
-
-        end
-
-        function varargout = getHmatMeanCovForXSansInput(sys,...
-            initial_state, time_horizon)
-
-            [varargout{1:nargout}] = getHmatMeanCovForXSansInput@LtvSystem(...
-                sys,...
-                initial_state,...
-                time_horizon);
 
         end
     end

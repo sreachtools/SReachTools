@@ -50,8 +50,6 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time,varargi
 %   cov_mat       - ['state/concat-stoch'] Covariance of the stochastic disturbance
 %   prob          - ['state/concat-prob'] Probability of occurence
 %
-% See also getHmatMeanCovForXSansInput
-%
 % Notes:
 % ------
 % * Requires Gaussian-perturbed LTI/LTV system

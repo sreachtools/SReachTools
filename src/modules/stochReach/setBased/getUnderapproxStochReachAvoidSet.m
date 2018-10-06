@@ -150,12 +150,6 @@ function [underapprox_stoch_reach_avoid_polytope, ...
     init_safe_set = Polyhedron('H', target_tube(1).H,...
         'He',[target_tube(1).He;init_safe_set_affine_const]);
     
-    % Construct U^N 
-    % GUARANTEES: Non-empty input sets (polyhedron) and scalar
-    %             time_horizon>0
-    [concat_input_space_A, concat_input_space_b] = ...
-        getConcatInputSpace(sys, time_horizon);
-
     % Check prob_thresh_of_interest is a scalar in [0.5,1]
     assert( isscalar(prob_thresh_of_interest) &&...
                 prob_thresh_of_interest >= 0.5 &&...
@@ -174,11 +168,18 @@ function [underapprox_stoch_reach_avoid_polytope, ...
     % TODO: Do input handling for uniqueness
     n_direction_vectors = size(set_of_direction_vectors, 2);
 
-    % Compute H, mean_X_sans_input_sans_initial_state, cov_X_sans_input, and Z.
-    % See @LtiSystem\getConcatMats for the notation.
-    % GUARANTEES: Gaussian-perturbed LTI system (sys)
-    [H, mean_X_sans_input_sans_initial_state, cov_X_sans_input, Z] = ...
-        getHmatMeanCovForXSansInput(sys,zeros(sys.state_dim,1),time_horizon);
+    %% Halfspace-representation of U^N, H, G,mean_X_sans_input, cov_X_sans_input
+    % GUARANTEES: Non-empty input sets (polyhedron)
+    [concat_input_space_A, concat_input_space_b] = getConcatInputSpace(sys,...
+        time_horizon);
+    % GUARANTEES: Compute the input concat and disturb concat transformations
+    [Z, H, G] = getConcatMats(sys, time_horizon);
+    % GUARANTEES: Gaussian-perturbed LTI system (sys) and well-defined
+    % init_state and time_horizon
+    sysnoi = LtvSystem('StateMatrix',sys.state_mat,'DisturbanceMatrix',...
+        sys.dist_mat,'Disturbance',sys.dist);
+    [mean_X_sans_input, ~] = SReachFwd('concat-stoch', sysnoi, initial_state,...
+        time_horizon);
 
     switch(lower(method))
         case 'ccc'

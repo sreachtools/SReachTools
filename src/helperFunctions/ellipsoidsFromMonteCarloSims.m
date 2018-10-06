@@ -40,10 +40,8 @@ function varargout = ellipsoidsFromMonteCarloSims(...
 % Notes:
 % ------
 % * Requires CVX for solving the convex optimization problem using SDPT3
-% * Requires ELlipsoidal toolbox for construction of the ellipsoid
 % * Uses code obtained from
 %   http://web.cvxr.com/cvx/examples/cvxbook/Ch08_geometric_probs/min_vol_elp_finite_set.m
-% * We will have to use SDPT3 to do the computation
 % 
 % ============================================================================
 % 
@@ -107,4 +105,6 @@ function varargout = ellipsoidsFromMonteCarloSims(...
         end
     end    
     varargout{1} = set_of_ellipsoids;
+    % Silently reevaluate cvx_setup to reset the solver
+    evalc('cvx_setup');
 end

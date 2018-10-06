@@ -64,8 +64,12 @@ desired_accuracy_cc_affine = 1e-2;
 PSoptions = psoptimset('Display','off');
 
 %% Generate matrices for optimal mean trajectory generation
-[H_matrix, mean_X_sans_input, ~] =...
-       getHmatMeanCovForXSansInput(sys, initial_state, time_horizon);
+% Get H and mean_X_sans_input
+[~, H, ~] = getConcatMats(sys, time_horizon);
+sysnoi = LtvSystem('StateMatrix',sys.state_mat,'DisturbanceMatrix',...
+    sys.dist_mat,'Disturbance',sys.dist);
+[mean_X_sans_input, ~] = SReachFwd('concat-stoch', sysnoi, initial_state,...
+    time_horizon);
 
 if ft_run
     timer_ft = tic;
@@ -83,7 +87,7 @@ if ft_run
             [repmat(initial_state,1,n_mcarlo_sims);
              concat_state_realization_ft]);
         % Optimal mean trajectory generation                         
-        optimal_mean_X_ft = mean_X_sans_input +H_matrix*optimal_input_vector_ft;
+        optimal_mean_X_ft = mean_X_sans_input + H * optimal_input_vector_ft;
         optimal_mean_trajectory_ft=reshape(optimal_mean_X_ft,sys.state_dim,[]);                                              
     end
 end
@@ -107,7 +111,7 @@ if cc_open_run
              concat_state_realization_cc_pwl]);
         % Optimal mean trajectory generation                         
         optimal_mean_X_cc_pwl = mean_X_sans_input +...
-            H_matrix * optimal_input_vector_cc_pwl;
+            H * optimal_input_vector_cc_pwl;
         optimal_mean_trajectory_cc_pwl=reshape(optimal_mean_X_cc_pwl,...
             sys.state_dim,[]);
     end
@@ -139,7 +143,7 @@ if cc_affine_run
         mcarlo_result_cc_pwl_closed_input = any(concat_input_space_A * (optimal_input_gain * concat_disturb_realization_cc_pwl_closed + optimal_input_vector_cc_pwl_closed)<=concat_input_space_b);
         
         % Optimal mean trajectory generation                         
-        optimal_mean_X_cc_pwl_closed = mean_X_sans_input + H_matrix * optimal_input_vector_cc_pwl_closed;
+        optimal_mean_X_cc_pwl_closed = mean_X_sans_input + H * optimal_input_vector_cc_pwl_closed;
         optimal_mean_trajectory_cc_pwl_closed=reshape(optimal_mean_X_cc_pwl_closed,sys.state_dim,[]);
     end
 end
