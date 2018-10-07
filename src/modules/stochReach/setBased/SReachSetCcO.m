@@ -159,10 +159,10 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube,...
     [Z, H, ~] = getConcatMats(sys, time_horizon);
     % GUARANTEES: Gaussian-perturbed LTI system (sys) and well-defined
     % init_state and time_horizon
-    sysnoi = LtvSystem('StateMatrix',sys.state_mat,'DisturbanceMatrix',...
+    sys_no_input = LtvSystem('StateMatrix',sys.state_mat,'DisturbanceMatrix',...
         sys.dist_mat,'Disturbance',sys.dist);
     % zero-input and zero state response
-    [mean_X_zizs, cov_X_sans_input] = SReachFwd('concat-stoch', sysnoi,...
+    [mean_X_zizs, cov_X_sans_input] = SReachFwd('concat-stoch', sys_no_input,...
         zeros(sys.state_dim,1), time_horizon);
 
     [invcdf_approx_m, invcdf_approx_c, lb_deltai] =...
@@ -173,68 +173,49 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube,...
     scaled_sigma_mat = diag(sqrt(diag(concat_safety_tube_A *...
         cov_X_sans_input * concat_safety_tube_A')));
 
-    %% Step 1: Find xmax --- initial state with maximum open-loop stochastic
-    %% reach probability
-    % Maximum value for the open-loop-based control
-    % maximize W_0(x,U) 
-    % subject to
-    %   W_0(x,U) >= prob_thresh  [Computation of W_0(x,U) is done via
-    %                             chance-constraint reformulation and risk
-    %                             allocation]
-    %   x\in InitState
-    %   U\in U^N
-    cvx_begin quiet
-        variable mean_X(sys.state_dim * time_horizon, 1);
-        variable deltai(n_lin_const, 1);
-        variable norminvover(n_lin_const, 1);
-        variable xmax(sys.state_dim, 1);
-        variable Umax(sys.input_dim * time_horizon,1);
-
-        maximize (1-sum(deltai))
-        subject to
-            % Chance-constraint reformulation of the safety prob (1-6)
-            % (1) Slack variables that are bounded below by the piecewise linear
-            % approximation of \phi^{-1}(1-\delta)
-            for deltai_indx=1:n_lin_const
-                norminvover(deltai_indx) >= invcdf_approx_m.*...
-                    deltai(deltai_indx) + invcdf_approx_c; 
-            end
-            % (2) Trajectory
-            mean_X == Z * xmax + H * Umax + mean_X_zizs;
-            % (3) Ono's type of reformulation of chance constraints
-            concat_safety_tube_A* mean_X + scaled_sigma_mat * norminvover...  
-                    <= concat_safety_tube_b;
-            % (4) Lower bound on delta due to pwl's domain
-            deltai >= lb_deltai;
-                % (5) Upper bound on delta to make \phi^{-1}(1-\delta) concave
-            deltai <= 0.5;
-            % (6) Safety constraints on the initial state
-            init_safe_set.A * xmax  <= init_safe_set.b
-            init_safe_set.Ae * xmax == init_safe_set.be
-            % (7) Input constraints
-            concat_input_space_A * Umax <= concat_input_space_b;
-    cvx_end
-    if ~strcmpi(cvx_status, 'Solved')
-        xmax_soln = [];
-    elseif 1-sum(deltai) < prob_thresh
-        xmax_soln.stoch_reach_prob = 1-sum(deltai);
-        xmax_soln.xmax = xmax;
-        xmax_soln.Umax = Umax;
-        % TODO: Prepare for empty set
+    %% Step 1: Find initial state (xmax) w/ max open-loop stochastic reach prob
+    xmax_soln = computeWmax(sys, options, init_safe_set, prob_thresh,...
+                    safety_tube, mean_X_zizs, scaled_sigma_mat);
+    if ~strcmpi(xmax_soln.cvx_status, 'Solved') ||...
+            xmax_soln.stoch_reach_prob < prob_thresh
     else
-        xmax_soln.stoch_reach_prob = 1-sum(deltai);
-        xmax_soln.xmax = xmax;
-        xmax_soln.Umax = Umax;
-        polytopeWmax = computePolytopeFromXmax(xmax_soln, sys, options,...
+        % Step 2: Check if user-provided set_of_dir_vecs are in affine hull  
+        % Step 2a: Compute xmax + directions \forall directions
+        n_dir_vecs = size(options.set_of_dir_vecs,2);
+        check_set_of_dir_vecs = repmat(xmax_soln.xmax,1,n_dir_vecs) +...
+            options.set_of_dir_vecs;
+        % Step 2b: Does it satisfy the equality constraints of init_safe_set
+        xmaxPlusdirs_within_init_safe_set_eq = abs(init_safe_set.Ae *...
+            check_set_of_dir_vecs - init_safe_set.be)<eps;
+        % Step 2c: If they don't, throw error
+        if ~all(all(xmaxPlusdirs_within_init_safe_set_eq))
+            throwAsCaller(SrtInvalidArgsError(['set_of_dir_vecs+xmax does ',... 
+                'not lie in the affine hull intersecting safe_set.']));
+        end
+
+        %% Step 3: Compute convex hull of rel. boundary points by ray-shooting
+        % Step 3a: Shoot rays from xmax
+        polytope_wmax = computePolytopeFromXmax(xmax_soln, sys, options,...
                         init_safe_set, prob_thresh, safety_tube, mean_X_zizs,...
                         scaled_sigma_mat);
-%        chebyshevCenter_soln = computeChebyshev();
-%        polytopeChebyshev = computePolytopeFromXmax();
-%        polytope = fusePolytopes();
+        % Step 3b: Shoot rays from Chebyshev center of init_safe_set with
+        % W_0^\ast(x_cheby) >= prob_thresh
+        % Step 3b-i: Find the Chebyshev center
+        cheby_soln = computeChebyshev(sys, options, init_safe_set,...
+                       prob_thresh, safety_tube, mean_X_zizs, scaled_sigma_mat);
+        % Step 3b-ii: Find the polytope                           
+%         polytope_cheby = Polyhedron.emptySet(2);
+        polytope_cheby = computePolytopeFromXmax(cheby_soln, sys,...
+                            options, init_safe_set, prob_thresh, safety_tube,...
+                            mean_X_zizs, scaled_sigma_mat);
+        % Step 4: Convex hull of the vertices
+        polytope = Polyhedron('V',[polytope_cheby.V;
+                                   polytope_wmax.V]);
     end
-    extra_info.xmax_soln_Wmax = xmax_soln;
-    varargout{1} = polytopeWmax;
-    varargout{2} = extra_info;
+    varargout{1} = polytope;
+    
+%     extra_info.xmax_soln_Wmax = xmax_soln;
+%     varargout{2} = extra_info;
 end
 
 function otherInputHandling(method_str, sys, options)
@@ -254,12 +235,13 @@ function otherInputHandling(method_str, sys, options)
     end        
 end
 
-
 function polytope = computePolytopeFromXmax(xmax_soln, sys, options,...
     init_safe_set, prob_thresh, safety_tube, mean_X_zizs, scaled_sigma_mat)
 
     %% Repeat of above lines --- get time_horizon, concat_XXX_A, concat_XXX_b, 
     %% n_lin_const, Z, H, invcdf_approx_{m,c}, lb_deltai
+    % This entire section evaluation took only 0.05 seconds on a 2.10 GHz
+    % i7 laptop
     time_horizon = length(safety_tube)-1;
     [concat_safety_tube_A, concat_safety_tube_b] =...
         safety_tube.concat([1 time_horizon]+1);
@@ -270,10 +252,9 @@ function polytope = computePolytopeFromXmax(xmax_soln, sys, options,...
     [invcdf_approx_m, invcdf_approx_c, lb_deltai] =...
         computeNormCdfInvOverApprox(1-prob_thresh, options.pwa_accuracy,...
             n_lin_const);
-
-    n_dir_vecs = size(options.set_of_dir_vecs, 2);
-
+    
     % Pre-allocation of relevant outputs
+    n_dir_vecs = size(options.set_of_dir_vecs,2);
     opt_input_vector_at_vertices = zeros(sys.input_dim*time_horizon,n_dir_vecs);
     opt_theta_i = zeros(1, n_dir_vecs);
     opt_reachAvoid_i = zeros(1, n_dir_vecs);
@@ -347,77 +328,151 @@ function polytope = computePolytopeFromXmax(xmax_soln, sys, options,...
     polytope = Polyhedron('V', vertex_underapprox_polytope');
 end
 
-% function chebyshevCenter_soln = computeChebyshev()
-%     %% Step 2: Compute the Chebyshev center of the init_safe_set radius
-%     %% possible. This will ensure that W_0(x,U) can be given more importance
-%     %% than the radius in the next optimization problem
-%     % maximize R 
-%     % subject to
-%     %   W_0(x,U) >= W_0(x_max,U_max)
-%     %   x\in InitState and and admits a radius R ball fit inside the
-%     %       inequalities
-%     %   U\in U^N
-%     % Dual norm of a_i in init_safe_set for chebyshev-centering
-%     % constraint
-%     dual_norm_of_init_safe_set_A =...
-%         sqrt(diag(init_safe_set.A*init_safe_set.A')); 
-%     cvx_begin quiet
-%         variable mean_X(sys.state_dim * time_horizon, 1);
-%         variable deltai(n_lin_const, 1);
-%         variable norminvover(n_lin_const, 1);
-%         variable xmax(sys.state_dim, 1);
-%         variable Umax(sys.input_dim * time_horizon,1);
-%         variable R nonnegative;
-%     
-%         maximize R
-%         subject to
-%             % Chance-constraint reformulation of safety prob (1-6)
-%             % (1) Slack variables that are bounded below by the
-%             % piecewise linear approximation of \phi^{-1}(1-\delta)
-%             for deltai_indx=1:n_lin_const
-%                 norminvover(deltai_indx) >= invcdf_approx_m.*...
-%                     deltai(deltai_indx) + invcdf_approx_c; 
-%             end
-%             % (2) Trajectory
-%             mean_X == Z * xmax + H * Umax +...
-%                 mean_X_sans_input_sans_initial_state;
-%             % (3) Ono's type of reformulation of chance constraints
-%             concat_safety_tube_A* mean_X +...
-%                 scaled_sigma_mat * norminvover...
-%                     <= concat_safety_tube_b;
-%             % (4) Lower bound on delta due to pwl's domain
-%             deltai >= lb_deltai;
-%             % (5) Upper bound on delta to ensure \phi^{-1}(1-\delta) is
-%             % concave
-%             deltai <= 0.5;
-%             % (6) W_0(x,U) >= W_0(x_max,U_max)
-%             1-sum(deltai) >= max_underapprox_reach_avoid_prob
-%             % Chebyshev-centering constraints-based safety
-%             init_safe_set.A * xmax + ...
-%                     R * dual_norm_of_init_safe_set_A...
-%                         <= init_safe_set.b
-%             init_safe_set.Ae * xmax == init_safe_set.be
-%             % Input constraints
-%             concat_input_space_A * Umax <= concat_input_space_b;
-%     cvx_end
-%     opt_input_vector_for_xmax = Umax;
-%     % Now that we have computed xmax, make sure that the
-%     % user-provided set_of_dir_vecs will span the affine
-%     % hull.  Compute xmax + directions \forall directions
-%     check_set_of_dir_vecs = ...
-%         repmat(xmax,1,n_dir_vecs)...
-%             + set_of_dir_vecs;
-%     % Check if all of these vectors satisfy the equality constraints
-%     % of init_safe_set
-%     xmaxPlusdirs_within_init_safe_set_eq =...
-%         abs(init_safe_set.Ae * check_set_of_dir_vecs -...
-%             init_safe_set.be)<eps;
-%     assert(all(all(xmaxPlusdirs_within_init_safe_set_eq)),...
-%         'SReachTools:invalidArgs', ...
-%         ['set_of_dir_vecs+xmax should lie in the',...
-%          '  affine hull intersecting safe_set.']);
-% end
-% 
+
+function xmax_soln = computeWmax(sys, options, init_safe_set, prob_thresh,...
+    safety_tube, mean_X_zizs, scaled_sigma_mat)
+
+    %% Repeat of above lines --- get time_horizon, concat_XXX_A, concat_XXX_b, 
+    %% n_lin_const, Z, H, invcdf_approx_{m,c}, lb_deltai
+    % This entire section evaluation took only 0.05 seconds on a 2.10 GHz
+    % i7 laptop
+    time_horizon = length(safety_tube)-1;
+    [concat_safety_tube_A, concat_safety_tube_b] =...
+        safety_tube.concat([1 time_horizon]+1);
+    n_lin_const = size(concat_safety_tube_A,1);
+    [concat_input_space_A, concat_input_space_b] = getConcatInputSpace(sys,...
+        time_horizon);
+    [Z, H, ~] = getConcatMats(sys, time_horizon);    
+    [invcdf_approx_m, invcdf_approx_c, lb_deltai] =...
+        computeNormCdfInvOverApprox(1-prob_thresh, options.pwa_accuracy,...
+            n_lin_const);
+
+
+    % Maximum value for the open-loop-based control
+    % maximize W_0(x,U) 
+    % subject to
+    %   W_0(x,U) >= prob_thresh  [Computation of W_0(x,U) is done via
+    %                             chance-constraint reformulation and risk
+    %                             allocation]
+    %   x\in InitState
+    %   U\in U^N
+    cvx_begin quiet
+        variable mean_X(sys.state_dim * time_horizon, 1);
+        variable deltai(n_lin_const, 1);
+        variable norminvover(n_lin_const, 1);
+        variable xmax(sys.state_dim, 1);
+        variable Umax(sys.input_dim * time_horizon,1);
+
+        maximize (1-sum(deltai))
+        subject to
+            % Chance-constraint reformulation of the safety prob (1-6)
+            % (1) Slack variables that are bounded below by the piecewise linear
+            % approximation of \phi^{-1}(1-\delta)
+            for deltai_indx=1:n_lin_const
+                norminvover(deltai_indx) >= invcdf_approx_m.*...
+                    deltai(deltai_indx) + invcdf_approx_c; 
+            end
+            % (2) Trajectory
+            mean_X == Z * xmax + H * Umax + mean_X_zizs;
+            % (3) Ono's type of reformulation of chance constraints
+            concat_safety_tube_A* mean_X + scaled_sigma_mat * norminvover...  
+                    <= concat_safety_tube_b;
+            % (4) Lower bound on delta due to pwl's domain
+            deltai >= lb_deltai;
+                % (5) Upper bound on delta to make \phi^{-1}(1-\delta) concave
+            deltai <= 0.5;
+            % (6) Safety constraints on the initial state
+            init_safe_set.A * xmax  <= init_safe_set.b
+            init_safe_set.Ae * xmax == init_safe_set.be
+            % (7) Input constraints
+            concat_input_space_A * Umax <= concat_input_space_b;
+    cvx_end
+    xmax_soln.stoch_reach_prob = 1-sum(deltai);
+    xmax_soln.xmax = xmax;
+    xmax_soln.Umax = Umax; 
+    xmax_soln.cvx_status = cvx_status;
+end
+
+function cheby_soln = computeChebyshev(sys, options, init_safe_set,...
+    prob_thresh, safety_tube, mean_X_zizs, scaled_sigma_mat)
+    %% Repeat of above lines --- get time_horizon, concat_XXX_A, concat_XXX_b, 
+    %% n_lin_const, Z, H, invcdf_approx_{m,c}, lb_deltai
+    % This entire section evaluation took only 0.05 seconds on a 2.10 GHz
+    % i7 laptop
+    time_horizon = length(safety_tube)-1;
+    [concat_safety_tube_A, concat_safety_tube_b] =...
+        safety_tube.concat([1 time_horizon]+1);
+    n_lin_const = size(concat_safety_tube_A,1);
+    [concat_input_space_A, concat_input_space_b] = getConcatInputSpace(sys,...
+        time_horizon);
+    [Z, H, ~] = getConcatMats(sys, time_horizon);    
+    [invcdf_approx_m, invcdf_approx_c, lb_deltai] =...
+        computeNormCdfInvOverApprox(1-prob_thresh, options.pwa_accuracy,...
+            n_lin_const);
+
+    %% Compute the Chebyshev center of the W_0(x,U)>= prob_thresh
+    % maximize R 
+    % subject to
+    %   W_0(x,U) >= W_0(x_max,U_max)
+    %   x\in InitState and and admits a radius R ball fit inside the
+    %       inequalities
+    %   U\in U^N
+    % Dual norm of a_i in init_safe_set for chebyshev-centering
+    % constraint
+    dual_norm_of_init_safe_set_A = sqrt(diag(init_safe_set.A*init_safe_set.A')); 
+    cvx_begin quiet
+        variable mean_X(sys.state_dim * time_horizon, 1);
+        variable deltai(n_lin_const, 1);
+        variable norminvover(n_lin_const, 1);
+        variable xmax(sys.state_dim, 1);
+        variable Umax(sys.input_dim * time_horizon,1);
+        variable R nonnegative;
+    
+        maximize R
+        subject to
+            % Chance-constraint reformulation of safety prob (1-6)
+            % (1) Slack variables that are bounded below by the
+            % piecewise linear approximation of \phi^{-1}(1-\delta)
+            for deltai_indx=1:n_lin_const
+                norminvover(deltai_indx) >= invcdf_approx_m.*...
+                    deltai(deltai_indx) + invcdf_approx_c; 
+            end
+            % (2) Trajectory
+            mean_X == Z * xmax + H * Umax + mean_X_zizs;
+            % (3) Ono's type of reformulation of chance constraints
+            concat_safety_tube_A* mean_X + scaled_sigma_mat * norminvover...
+                    <= concat_safety_tube_b;
+            % (4) Lower bound on delta due to pwl's domain
+            deltai >= lb_deltai;
+            % (5) Upper bound on delta to ensure \phi^{-1}(1-\delta) is
+            % concave
+            deltai <= 0.5;
+            % (6) W_0(x,U) >= W_0(x_max,U_max)  %TODO: Or should we use Wmax?
+            1-sum(deltai) >= prob_thresh
+            % Chebyshev-centering constraints-based safety
+            init_safe_set.A * xmax + R * dual_norm_of_init_safe_set_A...
+                        <= init_safe_set.b
+            init_safe_set.Ae * xmax == init_safe_set.be
+            % Input constraints
+            concat_input_space_A * Umax <= concat_input_space_b;
+    cvx_end
+    cheby_soln.stoch_reach_prob = 1-sum(deltai);
+    cheby_soln.xmax = xmax;
+    cheby_soln.Umax = Umax; 
+    cheby_soln.R = R;
+    cheby_soln.cvx_status = cvx_status;
+end
+
+
+
+
+
+
+
+
+
+
+
 % %%% Compute theta_upper for the given direction
 % %cvx_begin quiet
 %     %variable theta_upper nonnegative

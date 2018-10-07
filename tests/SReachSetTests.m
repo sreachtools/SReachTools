@@ -44,8 +44,9 @@ classdef SReachSetTests < matlab.unittest.TestCase
             theta = linspace(0,2*pi,11);
             options = SReachSetOptions('term','chance-open',...
                 'set_of_dir_vecs',[cos(theta);sin(theta)]);
-            level_set = SReachSet('term','chance-open', sys, 0.8, safety_tube,...
-                options);
+            level_set = SReachSet('term','chance-open', sys, 0.8,...
+                safety_tube, options);
+%             figure();
 %             plot(safety_tube(1),'alpha',0.3);
 %             hold on
 %             plot(level_set);
