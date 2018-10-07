@@ -136,40 +136,23 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube,...
     otherInputHandling(method_str, sys, options);
 
 
-    % Target tubes has polyhedra T_0, T_1, ..., T_{time_horizon}
-    time_horizon = length(safety_tube)-1;
-
-    % Get half space representation of the target tube and time horizon
-    [concat_safety_tube_A, concat_safety_tube_b] =...
-        safety_tube.concat([1 time_horizon]+1);
-    
-    % Compute M --- the number of polytopic halfspaces to worry about
-    n_lin_const = size(concat_safety_tube_A,1);
-
     % Construct the constrained initial safe set
     init_safe_set = Polyhedron('H', safety_tube(1).H,...
                                'He',[safety_tube(1).He;
                                      options.init_safe_set_affine.He]);
     
     %% Halfspace-representation of U^N, H, G,mean_X_sans_input, cov_X_sans_input
-    % GUARANTEES: Non-empty input sets (polyhedron)
-    [concat_input_space_A, concat_input_space_b] = getConcatInputSpace(sys,...
-        time_horizon);
-    % GUARANTEES: Compute the input concat and disturb concat transformations
-    [Z, H, ~] = getConcatMats(sys, time_horizon);
     % GUARANTEES: Gaussian-perturbed LTI system (sys) and well-defined
     % init_state and time_horizon
     sys_no_input = LtvSystem('StateMatrix',sys.state_mat,'DisturbanceMatrix',...
         sys.dist_mat,'Disturbance',sys.dist);
+    time_horizon = length(safety_tube)-1;
     % zero-input and zero state response
     [mean_X_zizs, cov_X_sans_input] = SReachFwd('concat-stoch', sys_no_input,...
         zeros(sys.state_dim,1), time_horizon);
 
-    [invcdf_approx_m, invcdf_approx_c, lb_deltai] =...
-        computeNormCdfInvOverApprox(1-prob_thresh, options.pwa_accuracy,...
-            n_lin_const);
-
     % Compute \sqrt{h_i^\top * \Sigma_X_no_input * h_i}
+    [concat_safety_tube_A, ~] = safety_tube.concat([1 time_horizon]+1);
     scaled_sigma_mat = diag(sqrt(diag(concat_safety_tube_A *...
         cov_X_sans_input * concat_safety_tube_A')));
 
@@ -195,27 +178,39 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube,...
 
         %% Step 3: Compute convex hull of rel. boundary points by ray-shooting
         % Step 3a: Shoot rays from xmax
-        polytope_wmax = computePolytopeFromXmax(xmax_soln, sys, options,...
-                        init_safe_set, prob_thresh, safety_tube, mean_X_zizs,...
-                        scaled_sigma_mat);
+        if nargout > 1
+            [polytope_wmax, extra_info_wmax] = computePolytopeFromXmax(...
+                xmax_soln, sys, options, init_safe_set, prob_thresh,...
+                safety_tube, mean_X_zizs, scaled_sigma_mat);
+        else
+            polytope_wmax = computePolytopeFromXmax(xmax_soln, sys, options,...
+                init_safe_set, prob_thresh, safety_tube, mean_X_zizs,...
+                scaled_sigma_mat);
+        end
         % Step 3b: Shoot rays from Chebyshev center of init_safe_set with
         % W_0^\ast(x_cheby) >= prob_thresh
         % Step 3b-i: Find the Chebyshev center
         cheby_soln = computeChebyshev(sys, options, init_safe_set,...
                        prob_thresh, safety_tube, mean_X_zizs, scaled_sigma_mat);
         % Step 3b-ii: Find the polytope                           
-%         polytope_cheby = Polyhedron.emptySet(2);
-        polytope_cheby = computePolytopeFromXmax(cheby_soln, sys,...
-                            options, init_safe_set, prob_thresh, safety_tube,...
-                            mean_X_zizs, scaled_sigma_mat);
+        if nargout > 1
+            [polytope_cheby, extra_info_cheby] = computePolytopeFromXmax(...
+                cheby_soln, sys, options, init_safe_set, prob_thresh,...
+                safety_tube, mean_X_zizs, scaled_sigma_mat);
+        else
+            polytope_cheby = computePolytopeFromXmax(cheby_soln, sys, ....
+                options,init_safe_set, prob_thresh, safety_tube, mean_X_zizs,...
+                scaled_sigma_mat);
+        end
         % Step 4: Convex hull of the vertices
         polytope = Polyhedron('V',[polytope_cheby.V;
                                    polytope_wmax.V]);
     end
     varargout{1} = polytope;
-    
-%     extra_info.xmax_soln_Wmax = xmax_soln;
-%     varargout{2} = extra_info;
+    if nargout > 1
+        varargout{2} = extra_info_wmax;
+        varargout{3} = extra_info_cheby;
+    end
 end
 
 function otherInputHandling(method_str, sys, options)
@@ -235,8 +230,9 @@ function otherInputHandling(method_str, sys, options)
     end        
 end
 
-function polytope = computePolytopeFromXmax(xmax_soln, sys, options,...
-    init_safe_set, prob_thresh, safety_tube, mean_X_zizs, scaled_sigma_mat)
+function [polytope, extra_info] = computePolytopeFromXmax(xmax_soln, sys,...
+    options, init_safe_set, prob_thresh, safety_tube, mean_X_zizs,...
+    scaled_sigma_mat)
 
     %% Repeat of above lines --- get time_horizon, concat_XXX_A, concat_XXX_b, 
     %% n_lin_const, Z, H, invcdf_approx_{m,c}, lb_deltai
@@ -255,10 +251,10 @@ function polytope = computePolytopeFromXmax(xmax_soln, sys, options,...
     
     % Pre-allocation of relevant outputs
     n_dir_vecs = size(options.set_of_dir_vecs,2);
-    opt_input_vector_at_vertices = zeros(sys.input_dim*time_horizon,n_dir_vecs);
+    opt_input_vec_at_vertices = zeros(sys.input_dim*time_horizon,n_dir_vecs);
     opt_theta_i = zeros(1, n_dir_vecs);
-    opt_reachAvoid_i = zeros(1, n_dir_vecs);
-    vertex_underapprox_polytope = zeros(sys.state_dim, n_dir_vecs);
+    opt_reach_prob_i = zeros(1, n_dir_vecs);
+    vertices_underapprox_polytope = zeros(sys.state_dim, n_dir_vecs);
     
     %% Iterate over all direction vectors + xmax
     for direction_index = 1: n_dir_vecs
@@ -321,11 +317,20 @@ function polytope = computePolytopeFromXmax(xmax_soln, sys, options,...
                 1-sum(deltai) >= prob_thresh
         cvx_end
         opt_theta_i(direction_index) = theta;
-        opt_input_vector_at_vertices(:,direction_index) = U_vector;
-        opt_reachAvoid_i(direction_index) = 1 - sum(deltai);
-        vertex_underapprox_polytope(:, direction_index)= boundary_point;
+        opt_input_vec_at_vertices(:,direction_index) = U_vector;
+        opt_reach_prob_i(direction_index) = 1 - sum(deltai);
+        vertices_underapprox_polytope(:, direction_index)= boundary_point;
     end
-    polytope = Polyhedron('V', vertex_underapprox_polytope');
+    polytope = Polyhedron('V', vertices_underapprox_polytope');
+    if nargout > 1
+        extra_info.xmax = xmax_soln.xmax;
+        extra_info.Umax = xmax_soln.Umax;
+        extra_info.xmax_reach_prob = xmax_soln.stoch_reach_prob;
+        extra_info.opt_theta_i = opt_theta_i;
+        extra_info.opt_input_vec_at_vertices = opt_input_vec_at_vertices;
+        extra_info.opt_reach_prob_i = opt_reach_prob_i;
+        extra_info.vertices_underapprox_polytope = vertices_underapprox_polytope;
+    end
 end
 
 

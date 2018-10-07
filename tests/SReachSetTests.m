@@ -51,6 +51,8 @@ classdef SReachSetTests < matlab.unittest.TestCase
 %             hold on
 %             plot(level_set);
             test_case.verifyInstanceOf(level_set, 'Polyhedron');
+            [level_set, extra_info_wmax, extra_info_cheby] = SReachSet(...
+                'term','chance-open', sys, 0.8, safety_tube, options);
         end
     end
     methods (Static)
