@@ -86,10 +86,13 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 % 
 %
 
+    valid_prob = {'first','term'};
+    valid_method= {'chance-open','chance-affine','genzps-open','scenario-open'};
+
     % Input parsing
     inpar = inputParser();
-    inpar.addRequired('prob_str');
-    inpar.addRequired('method_str');
+    inpar.addRequired('prob_str', @(x) any(validatestring(x,valid_prob)));
+    inpar.addRequired('method_str', @(x) any(validatestring(x,valid_method)));
 
     switch lower(method_str)
         case 'genzps-open'            
