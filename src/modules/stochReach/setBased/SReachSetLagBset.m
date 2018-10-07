@@ -1,5 +1,5 @@
-function bounded_set = getBoundedSetForDisturbance(disturbance, ...
-    horizon_length, beta, method, varargin)
+function bounded_set = SReachSetLagBset(disturbance, time_horizon,...
+    prob_thresh, options)
 % Get bounded disturbance set for approximation
 % ============================================================================
 %
@@ -10,50 +10,34 @@ function bounded_set = getBoundedSetForDisturbance(disturbance, ...
 %
 % ============================================================================
 % 
-% bounded_set = getBoundedSetForDisturbance(disturbance, ...
-%     horizon_length, beta, method, varargin)
-% 
-% Inputs:
-% -------
-%   disturbance    - StochasticDisturbance object
-%   horizon_length - Length of the time horizon
-%   beta           - Probability threshold
-%   method         - Method for computing bounded set
-%   varargin       - Dependent upon method chosen, see below
-%
-%   Available methods:
-%       'random' - Get an approximation of the ellipsoid using random
-%                  direction choices; only usable for Gaussian-type
-%                  disturbances; varargin must be an integer for the
-%                  number of random directions to be used; e.g.
+% bounded_set = getBoundedSetForDisturbance(disturbance, time_horizon,...
+%   prob_thresh, option)
+%                                        e.g.
 %           bounded_set = getBoundedSetForDisturbance(...
-%               StochasticDisturbance('Gaussian', zeros(2,1), eye(2)), ...
+%               RandomVector('Gaussian', zeros(2,1), eye(2)), ...
 %               4, ...
 %               0.8, ...
 %               'random', ...
 %               100);
-%
-%       'box'    - Get an n-dimensional cuboid that satisfies the
-%                  probability threshold; does not accept varargins;
-%                  currenlty not implemented; e.g.
 %           bounded_set = getBoundedSetForDisturbance(...
-%               StochasticDisturbance('Gaussian', zeros(2,1), eye(2)), ...
+%               RandomVector('Gaussian', zeros(2,1), eye(2)), ...
 %               4, ...
 %               0.8, ...
 %               'box');
-%
-%       'load'   - Load a predefined polyhedron bounding set; primarily
-%                  used for comparison and repeatability testing; varargin
-%                  must be a character array of the path to the file to
-%                  load; mat files to be loaded must have specific design,
-%                  see Notes section; when using load method all other 
-%                  inputs are irrelevant; e.g.
 %           bounded_set = getBoundedSetForDisturbance(...
 %               [], ...
 %               [], ...
 %               [], ...
 %               'load', ...
 %               '/path/to/the/file/to/load/file.mat');
+%
+% 
+% Inputs:
+% -------
+%   disturbance - RandomVector object
+%   time_horizon- Length of the time horizon
+%   prob_thresh - Probability threshold
+%   option      - TODO
 %
 % Outputs:
 % --------
@@ -70,9 +54,12 @@ function bounded_set = getBoundedSetForDisturbance(disturbance, ...
 %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 
+    valid_bound_set_methods = {'load','random','box','optim-box'};
+    validatestring(options.bound_set_method, valid_bound_set_methods);
+
     % only need to validate attributes if not loading from file
-    if ~strcmp(method, 'load')
-        % validate that the disturbance is a StochasticDisturbance object
+    if ~strcmpi(options.bound_set_method, 'load')
+        % validate that the disturbance is a RandomVector object
         % then ensure that the disturbance is Gaussian
         validateattributes(disturbance, {'RandomVector'}, ...
             {'nonempty'})
@@ -82,76 +69,65 @@ function bounded_set = getBoundedSetForDisturbance(disturbance, ...
         end
 
         % check that the horizon is some nonzero integer
-        validateattributes(horizon_length, {'numeric'}, ...
+        validateattributes(time_horizon, {'numeric'}, ...
             {'nonzero', 'positive', 'integer'});
 
-        % check that beta is a value in [0,1]
-        validateattributes(beta, {'double'}, {'>=', 0, '<=', 1})
+        % check that prob_thresh is a value in [0,1]
+        validateattributes(prob_thresh, {'double'}, {'>=', 0, '<=', 1})
 
-        % check that the method is a character or string array
-        validateattributes(method, {'char', 'string'}, {'nonempty'})
+        % check that the option.bound_set_method is a character or string array
+        validateattributes(options.bound_set_method, {'char', 'string'},...
+            {'nonempty'})
     end
 
-    % check the method and call appropriate sub-function
-    switch(method)
+    % check the option.bound_set_method and call appropriate sub-function
+    switch(options.bound_set_method)
         case 'random'
             % when choosing random direction need to specify the number of 
             % vectors to use
-            validateattributes(varargin{1}, {'numeric'}, {'scalar', 'integer'});
+            validateattributes(options.num_dirs, {'numeric'},...
+                {'scalar', 'integer'});
 
-            bounded_set = boundedEllipseByRandomVectors(...
-                disturbance, ...
-                horizon_length, ...
-                beta, ...
-                varargin{1});
+            bounded_set = boundedEllipseByRandomVectors(disturbance,...
+                time_horizon, prob_thresh, options.num_dirs);
 
         case 'box'
-            if strcmpi(disturbance.type, 'gaussian')
-                validateattributes(varargin{1}, {'numeric'}, ...
-                    {'scalar', 'positive'});
+            % Has to be Gaussian
+            validateattributes(options.err_thresh, {'numeric'}, ...
+                {'scalar', 'positive'});
 
-                bounded_set = getBoundingBoxForGaussian(...
-                    disturbance, ...
-                    horizon_length, ...
-                    beta, ...
-                    varargin{1});
-            end
+            bounded_set = getBoundingBoxForGaussian(disturbance, ...
+                time_horizon, prob_thresh, options.err_thresh);
         case 'optim-box'
-            if strcmpi(disturbance.type, 'gaussian')
-                validateattributes(varargin{1}, {'numeric'}, ...
-                    {'nonempty'});
-
-                bounded_set = getOptimizationBoxForGaussian(...
-                    disturbance, ...
-                    horizon_length, ...
-                    beta, ...
-                    varargin{1});
-            end
-        case 'optimization'
+            % Has to be Gaussian
+            validateattributes(options.box_center, {'numeric'}, {'nonempty',...
+                'vector','size', [disturbance.dim 1]});
+            
+            bounded_set = getOptimizationBoxForGaussian(disturbance, ...
+                time_horizon, prob_thresh, options.box_center);
         case 'load'
             % load a predefined bounded set, primarily used for comparison with
             % previous works
             
             % variable argument should be the file location
-            validateattributes(varargin{1}, {'char'}, {'nonempty'})
+            validateattributes(options.load_str, {'char'}, {'nonempty'})
             
-            if exist(varargin{1}, 'file') ~= 2
-                exc = SrtInternalError(['Mat file to load does not ', ...
-                    'exist on the path.']);
-                throw(exc);
+            if exist(options.load_str, 'file') ~= 2
+                throwAsCaller(SrtInvalidArgsError(['Mat file to load does ',...
+                    'not exist on the path.']));
             end
             
             % load the mat file, loads as a struct
-            ls = load(varargin{1});
+            ls = load(options.load_str);
             
             % look for the Polyhedron
             fnames = fields(ls);
             if length(fnames) > 1
-                exc = SrtInternalError(['Mat file contains more than ', ...
+                exc = SrtInvalidArgsError(['Mat file contains more than ', ...
                     'saved object. Please see Notes section of the help ', ...
                     'for details about how mat files used for loading ', ...
                     'must be structured.']);
-                throw(exc);
+                throwAsCaller(exc);
             else
                 bounded_set = ls.(fnames{1});
             end
@@ -159,19 +135,20 @@ function bounded_set = getBoundedSetForDisturbance(disturbance, ...
             % validate that what was loaded from the mat is actually a
             % polyhedron
             validateattributes(bounded_set, {'Polyhedron'}, {'nonempty'});
-            
-            
+%           TODO-Test: Need to check for disturbance dimension            
+%             if bounded_set.Dim ~= disturbance.dim
+%                 throw(SrtInvalidArgsError(['Mat file did not contain a ',...
+%                     'polyhedron of the desired type']));
+%             end            
         otherwise
-            exc = SrtInvalidArgsError(['Invalid method provided, see ', ...
-                'help for available methods'])
-            throwAsCaller(exc);
-            
+            exc = SrtInvalidArgsError('Invalid option.bound_set_method');
+            throwAsCaller(exc);            
     end
 
 end
 
 function bounded_set = boundedEllipseByRandomVectors(disturbance, ...
-    horizon_length, beta, n_directions)
+    time_horizon, prob_thresh, n_directions)
 %  Get bounded 
 % disturbance ellipse with random direction choices
 % ============================================================================
@@ -184,13 +161,13 @@ function bounded_set = boundedEllipseByRandomVectors(disturbance, ...
 % ============================================================================
 % 
 % bounded_set = boundedEllipseByRandomVectors(disturbance, ...
-%     horizon_length, beta, n_directions)
+%     time_horizon, prob_thresh, n_directions)
 % 
 % Inputs:
 % -------
-%   disturbance    - StochasticDisturbance object
-%   horizon_length - Length of the time horizon
-%   beta           - Probability threshold
+%   disturbance    - RandomVector object
+%   time_horizon - Length of the time horizon
+%   prob_thresh           - Probability threshold
 %   n_directions   - Number or directions for the approximation
 %
 % Outputs:
@@ -209,12 +186,12 @@ function bounded_set = boundedEllipseByRandomVectors(disturbance, ...
     % if disturbance.dim <= 2)
     %     warning(['For disturbances with dimension less than 2 random ', ...
     %         'there are more direct solutions for obtaining the ellipse. ', ...
-    %         'Using ''lowdim'' option will provide faster and likely better ', ...
-    %         'results.']);
+    %         'Using ''lowdim'' option will provide faster and likely ',...
+    %         'better results.']);
     % end
 
     % compute the ellipsoid radii needed for obtaining desired probability
-    r2 = chi2inv(beta^(1/horizon_length), 2);
+    r2 = chi2inv(prob_thresh^(1/time_horizon), 2);
     ellipse_rads = disturbance.parameters.covariance * r2;
 
     n = size(ellipse_rads,1);
@@ -237,8 +214,8 @@ function bounded_set = boundedEllipseByRandomVectors(disturbance, ...
 
 end
 
-function poly = getOptimizationBoxForGaussian(disturbance, horizon_length, ...
-    beta, center)
+function poly = getOptimizationBoxForGaussian(disturbance, time_horizon, ...
+    prob_thresh, center)
 %  Get bounded 
 % disturbance as box through solution of optimization problem
 % ============================================================================
@@ -251,14 +228,14 @@ function poly = getOptimizationBoxForGaussian(disturbance, horizon_length, ...
 %
 % ============================================================================
 % 
-% poly = getOptimizationBoxForGaussian(disturbance, horizon_length, ...
-%     beta, center)
+% poly = getOptimizationBoxForGaussian(disturbance, time_horizon, ...
+%     prob_thresh, center)
 % 
 % Inputs:
 % -------
-%   disturbance    - StochasticDisturbance object
-%   horizon_length - Length of the time horizon
-%   beta           - Probability threshold
+%   disturbance    - RandomVector object
+%   time_horizon - Length of the time horizon
+%   prob_thresh           - Probability threshold
 %   center         - Center position of the box
 %
 % Outputs:
@@ -274,9 +251,8 @@ function poly = getOptimizationBoxForGaussian(disturbance, horizon_length, ...
 
     center = disturbance.parameters.covariance^(-1/2)*(center - ...
         disturbance.parameters.mean);
-    center = center;
-
-    prob_threshold = beta^(1/horizon_length);
+    
+    xi2_prob_thresh = prob_thresh^(1/time_horizon);
     
     perimeter_func = @(l) sum(l);
     
@@ -284,7 +260,7 @@ function poly = getOptimizationBoxForGaussian(disturbance, horizon_length, ...
     
     l = fmincon(perimeter_func, l0, [], [], [], [], ...
         zeros(size(l0)), [], ...
-        @(l) nonlinearOptimBoxConstraints(l, center, prob_threshold), ...
+        @(l) nonlinearOptimBoxConstraints(l, center, xi2_prob_thresh), ...
         optimoptions(@fmincon, 'Display', 'final'));
 
     poly = Polyhedron('lb', center-l/2, 'ub', center+l/2);
@@ -329,8 +305,8 @@ function [c, ceq] = nonlinearOptimBoxConstraints(l, c, p)
 
 end
 
-function poly = getBoundingBoxForGaussian(disturbance, horizon_length, ...
-    beta, err)
+function poly = getBoundingBoxForGaussian(disturbance, time_horizon, ...
+    prob_thresh, err)
 %  Get bounded 
 % disturbance as box through bisection
 % ============================================================================
@@ -342,14 +318,14 @@ function poly = getBoundingBoxForGaussian(disturbance, horizon_length, ...
 %
 % ============================================================================
 % 
-% poly = getBoundingBoxForGaussian(disturbance, horizon_length, ...
-%     beta, err)
+% poly = getBoundingBoxForGaussian(disturbance, time_horizon, ...
+%     prob_thresh, err)
 % 
 % Inputs:
 % -------
-%   disturbance    - StochasticDisturbance object
-%   horizon_length - Length of the time horizon
-%   beta           - Probability threshold
+%   disturbance    - RandomVector object
+%   time_horizon - Length of the time horizon
+%   prob_thresh           - Probability threshold
 %   err            - Error threshold
 %
 % Outputs:
@@ -364,7 +340,7 @@ function poly = getBoundingBoxForGaussian(disturbance, horizon_length, ...
 %
 
     MAX_ITERS = 10000;
-    prob_threshold = beta^(1/horizon_length);
+    xi2_prob_thresh = prob_thresh^(1/time_horizon);
     a = 0;
     b = 1;
     
@@ -377,14 +353,14 @@ function poly = getBoundingBoxForGaussian(disturbance, horizon_length, ...
     box = SimpleBox(center, b*dx_ones);
     p = box.computeGaussianProbability(mvncdf(box.vertices, mu, sigma));
     
-    while p < prob_threshold + err
+    while p < xi2_prob_thresh + err
         b = 2 * b;
         box = SimpleBox(center, b*dx_ones);
         p = box.computeGaussianProbability(mvncdf(box.vertices, mu, sigma));
     end
     
     do_search = @(prob, i) ...
-        (prob - prob_threshold > err || prob - prob_threshold < 0) && ...
+        (prob - xi2_prob_thresh > err || prob - xi2_prob_thresh < 0) && ...
         i < MAX_ITERS;
     iters = 0;
     while do_search(p, iters)
@@ -392,7 +368,7 @@ function poly = getBoundingBoxForGaussian(disturbance, horizon_length, ...
         box = SimpleBox(center, b_new * dx_ones);
         p = box.computeGaussianProbability(mvncdf(box.vertices, mu, sigma));
         
-        if p > prob_threshold + err
+        if p > xi2_prob_thresh + err
             b = b_new;
         else
             a = a + (b - a) / 2;
