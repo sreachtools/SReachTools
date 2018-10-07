@@ -38,6 +38,19 @@ classdef SReachSetTests < matlab.unittest.TestCase
 %                 safety_tube_cwh, options);
 %             test_case.verifyInstanceOf(level_set, 'Polyhedron');                        
         end
+        
+        function testPointBased(test_case)
+            [sys, safety_tube] = test_case.getDI();
+            theta = linspace(0,2*pi,11);
+            options = SReachSetOptions('term','chance-open',...
+                'set_of_dir_vecs',[cos(theta);sin(theta)]);
+            level_set = SReachSet('term','chance-open', sys, 0.8, safety_tube,...
+                options);
+%             plot(safety_tube(1),'alpha',0.3);
+%             hold on
+%             plot(level_set);
+            test_case.verifyInstanceOf(level_set, 'Polyhedron');
+        end
     end
     methods (Static)
         function [sys, safety_tube] = getDI()

@@ -1,5 +1,5 @@
-function [stoch_reach_set] =...
-    SReachSet(prob_str, method_str, sys, prob_thresh, safety_tube, options)
+function stoch_reach_set = SReachSet(prob_str, method_str, sys, prob_thresh,...
+    safety_tube, options)
 % Compute the stochastic reach set corresponding to the stochastic reachability 
 % problem of a target tube using a host of techniques
 % =============================================================================
@@ -140,7 +140,7 @@ function [stoch_reach_set] =...
 %                           the vertices of the polytope
 %                 7. vertex_i    
 %                         - Vertices of the polytope: xmax + opt_theta_i *
-%                           set_of_direction_vectors
+%                           set_of_dir_vecs
 %                 8. R    - Chebyshev radius associated with xmax
 %   other_info_lag
 %               - [Available for 'lag-X'] TODO
@@ -183,12 +183,16 @@ function [stoch_reach_set] =...
         
     % Check if safe set contains the initial state
     if prob_thresh <= 0
-        stoch_reach_set = safety_tube{1};
+        stoch_reach_set = safety_tube(1);
     elseif strcmpi(prob_str,'term')        
-        % Dependig on method_str call the appropriate solution technique
+        % Depending on method_str, call the appropriate solution technique
         switch(lower(method_str))
             case 'genzps-open'
+                stoch_reach_set = SReachSetGpO(method_str, sys, prob_thresh,...
+    safety_tube, options);
             case 'chance-open'
+                stoch_reach_set = SReachSetCcO(method_str, sys, prob_thresh,...
+    safety_tube, options);
             case 'lag-under'
                 stoch_reach_set = SReachSetLag(method_str, sys, prob_thresh,...
     safety_tube, options);

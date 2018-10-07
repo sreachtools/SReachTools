@@ -90,7 +90,7 @@ function approx_level_set = SReachSetLag(method_str, sys, prob_thresh,...
         end
     elseif time_horizon == 0 || prob_thresh == 0
         % return set in target tube if length is 1
-        approx_level_set = safety_tube{1};
+        approx_level_set = safety_tube(1);
     else
         throw(SrtDevError('Unknown problem configuration'));
     end
