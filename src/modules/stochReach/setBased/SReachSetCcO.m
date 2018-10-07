@@ -160,7 +160,14 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube,...
     xmax_soln = computeWmax(sys, options, init_safe_set, prob_thresh,...
                     safety_tube, mean_X_zizs, scaled_sigma_mat);
     if ~strcmpi(xmax_soln.cvx_status, 'Solved') ||...
-            xmax_soln.stoch_reach_prob < prob_thresh
+            xmax_soln.reach_prob < prob_thresh
+        polytope = Polyhedron.emptySet(2);
+        if nargout > 1
+            extra_info_wmax.xmax = xmax_soln.xmax;
+            extra_info_wmax.Umax = xmax_soln.Umax;
+            extra_info_wmax.xmax_reach_prob = xmax_soln.reach_prob;
+            extra_info_cheby = [];
+        end
     else
         % Step 2: Check if user-provided set_of_dir_vecs are in affine hull  
         % Step 2a: Compute xmax + directions \forall directions
@@ -325,7 +332,7 @@ function [polytope, extra_info] = computePolytopeFromXmax(xmax_soln, sys,...
     if nargout > 1
         extra_info.xmax = xmax_soln.xmax;
         extra_info.Umax = xmax_soln.Umax;
-        extra_info.xmax_reach_prob = xmax_soln.stoch_reach_prob;
+        extra_info.xmax_reach_prob = xmax_soln.reach_prob;
         extra_info.opt_theta_i = opt_theta_i;
         extra_info.opt_input_vec_at_vertices = opt_input_vec_at_vertices;
         extra_info.opt_reach_prob_i = opt_reach_prob_i;
@@ -392,7 +399,7 @@ function xmax_soln = computeWmax(sys, options, init_safe_set, prob_thresh,...
             % (7) Input constraints
             concat_input_space_A * Umax <= concat_input_space_b;
     cvx_end
-    xmax_soln.stoch_reach_prob = 1-sum(deltai);
+    xmax_soln.reach_prob = 1-sum(deltai);
     xmax_soln.xmax = xmax;
     xmax_soln.Umax = Umax; 
     xmax_soln.cvx_status = cvx_status;
@@ -461,7 +468,7 @@ function cheby_soln = computeChebyshev(sys, options, init_safe_set,...
             % Input constraints
             concat_input_space_A * Umax <= concat_input_space_b;
     cvx_end
-    cheby_soln.stoch_reach_prob = 1-sum(deltai);
+    cheby_soln.reach_prob = 1-sum(deltai);
     cheby_soln.xmax = xmax;
     cheby_soln.Umax = Umax; 
     cheby_soln.R = R;

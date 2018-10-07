@@ -1,4 +1,4 @@
-function [stoch_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
+function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
     SReachPoint(prob_str, method_str, sys, initial_state, safety_tube, varargin)
 % Solve the stochastic (first/terminal) reach problem approximately from a given
 % initial state using a host of techniques
@@ -116,7 +116,7 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %
 % =============================================================================
 %
-% [stoch_reach_prob, opt_controller, varargout] = SReachPoint(prob_str,...
+% [approx_reach_prob, opt_controller, varargout] = SReachPoint(prob_str,...
 %    method_str, sys, initial_state, safety_tube, options)
 % 
 % Inputs:
@@ -144,7 +144,7 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %
 % Outputs:
 % --------
-%   stoch_reach_prob 
+%   approx_reach_prob 
 %               - Approximation (underapproximation, in some cases) to the
 %                 first/terminal stochastic reach problem
 %   opt_input_vec, 
@@ -209,7 +209,7 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
     if ~safety_tube(1).contains(initial_state)
         % Stochastic reach-avoid probability is zero and no admissible open-loop
         % policy exists, if given an unsafe initial state
-        stoch_reach_prob = 0;
+        approx_reach_prob = 0;
         opt_input_vec = nan(sys.input_dim * time_horizon, 1);
         opt_input_gain = [];        
     elseif strcmpi(prob_str,'term')
@@ -221,34 +221,34 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
             case 'genzps-open'
                 % Patternsearch and Fourier transform-based open-loop
                 % underapproximation of the stochastic reach-avoid problem
-                [stoch_reach_prob, opt_input_vec] = SReachPointGpO(sys,...
+                [approx_reach_prob, opt_input_vec] = SReachPointGpO(sys,...
                     initial_state, safety_tube, options);
                  opt_input_gain = [];
             case 'chance-open'
                 % Chance-constrained formulation with piecewise-linear 
                 % approximations to compute open-loop controller (LP)
-                [stoch_reach_prob, opt_input_vec, risk_alloc_state] =...
+                [approx_reach_prob, opt_input_vec, risk_alloc_state] =...
                     SReachPointCcO(sys, initial_state, safety_tube, options);
                  opt_input_gain = [];
                  varargout{1} = risk_alloc_state;
             case 'scenario-open'
                 % Chance-constrained formulation with piecewise-linear 
                 % approximations to compute open-loop controller (LP)
-                [stoch_reach_prob, opt_input_vec] = SReachPointCcO(sys,...
+                [approx_reach_prob, opt_input_vec] = SReachPointCcO(sys,...
                     initial_state, safety_tube, options);
                  opt_input_gain = [];
             case 'chance-affine'
                 % Chance-constrained formulation with piecewise-linear 
                 % approximations to compute affine-loop controller (SOC program)
-                [stoch_reach_prob_affine, opt_input_vec, opt_input_gain,...
+                [approx_reach_prob_affine, opt_input_vec, opt_input_gain,...
                     risk_alloc_state, risk_alloc_input] = SReachPointCcA(sys,...
                         initial_state, safety_tube, options);
-                stoch_reach_prob = stoch_reach_prob_affine; %TODO: Do transform
+                approx_reach_prob = approx_reach_prob_affine; %TODO: Do transform
                 varargout{1} = risk_alloc_state;
                 varargout{2} = risk_alloc_input;
         end
-        if stoch_reach_prob<0
-            stoch_reach_prob = 0;
+        if approx_reach_prob<0
+            approx_reach_prob = 0;
             opt_input_vec = opt_input_vec;
             opt_input_gain = [];
             if strcmpi(method_str,'chance-open') ||...
@@ -269,11 +269,11 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
         
         % No need to do any control, the probability is strictly one
         if target_hyperplane.contains(initial_state)
-            stoch_reach_prob = 1;
+            approx_reach_prob = 1;
             opt_input_vec = nan(sys.input_dim * time_horizon, 1);
             opt_input_gain = [];
         else
-            stoch_reach_prob_vec = zeros(1,time_horizon);
+            approx_reach_prob_vec = zeros(1,time_horizon);
             opt_input_vec_cells = cell(1,time_horizon);
             opt_input_gain_cells = cell(1,time_horizon);
             
@@ -296,14 +296,14 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
                 reach_tube_at_t = TargetTube(safe_sets{:}, target_hyperplane);
                 options.prob_str = 'term';
                 % The terminal subproblem that is to solved for each t
-                [stoch_reach_prob_vec(t), opt_input_vec_cells{t},...
+                [approx_reach_prob_vec(t), opt_input_vec_cells{t},...
                     opt_input_gain_cells{t}] = SReachPoint('term',...
                         method_str,sys,initial_state,reach_tube_at_t, options);
             end
             setSrtWarnings('all',prev_warning_state);
             
             % Find the time horizon that does the best
-            [stoch_reach_prob, opt_time_indx] = max(stoch_reach_prob_vec);
+            [approx_reach_prob, opt_time_indx] = max(approx_reach_prob_vec);
             opt_input_vec = opt_input_vec_cells{opt_time_indx};
             opt_input_gain = opt_input_gain_cells{opt_time_indx};            
         end

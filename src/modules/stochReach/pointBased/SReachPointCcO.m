@@ -34,7 +34,7 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
 %
 % Outputs:
 % --------
-%   stoch_reach_prob 
+%   lb_stoch_reach 
 %               - Lower bound on the stochastic reachability of a target tube
 %                   problem computed using convex chance constraints and
 %                   piecewise affine approximation

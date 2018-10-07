@@ -1,4 +1,4 @@
-function [stoch_reach_prob, opt_input_vec, opt_input_gain,...
+function [lb_stoch_reach, opt_input_vec, opt_input_gain,...
     risk_alloc_state, risk_alloc_input] = SReachPointCcA(sys, initial_state,...
         safety_tube, options)
 % Solve the stochastic reach-avoid problem (lower bound on the probability and
@@ -16,7 +16,7 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain,...
 %
 % =============================================================================
 %
-%   [stoch_reach_prob, opt_input_vec, opt_input_gain,...
+%   [lb_stoch_reach, opt_input_vec, opt_input_gain,...
 %       risk_alloc_state, risk_alloc_input] = SReachPointCcA(sys,...
 %        initial_state, safety_tube, options)
 % 
@@ -32,7 +32,7 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain,...
 %
 % Outputs:
 % --------
-%   stoch_reach_prob 
+%   lb_stoch_reach 
 %               - Lower bound on the stochastic reachability of a target 
 %                 tube problem computed using convex chance
 %                      constraints and difference-of-convex techniques
@@ -365,7 +365,7 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain,...
                 % Exit from the while loop by setting the gap to be zero
                 ub_max_state_viol_prob = lb_max_state_viol_prob;
                 % Tell SReachPoint that no solution was found
-                stoch_reach_prob = -1;
+                lb_stoch_reach = -1;
                 opt_input_vec = nan(sys.input_dim * time_horizon,1);
                 opt_input_gain = [];
                 risk_alloc_state = nan(n_lin_state,1);
@@ -385,7 +385,7 @@ function [stoch_reach_prob, opt_input_vec, opt_input_gain,...
             % Decrease the upper bound
             ub_max_state_viol_prob = max_state_viol_prob;
             % Update the solution
-            stoch_reach_prob = 1 - sum(deltai);
+            lb_stoch_reach = 1 - sum(deltai);
             opt_input_vec = d_vector;
             opt_input_gain = M_matrix;
             risk_alloc_state = deltai;
