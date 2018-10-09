@@ -121,7 +121,7 @@ end
 if cc_affine_run
     timer_cc_pwl_closed = tic;
     disp('Piecewise-linear single shot (closed-loop-dc) risk allocation technique');
-    options = SReachPointOptions('term','chance-affine', 'verbose', 2);
+    options = SReachPointOptions('term','chance-affine', 'verbose', 1);
     [lb_stoch_reach_avoid_cc_pwl_closed, optimal_input_vector_cc_pwl_closed, optimal_input_gain, risk_alloc_state, risk_alloc_input] =...
          SReachPoint('term','chance-affine', sys, initial_state, target_tube,...
             options);  
