@@ -26,7 +26,7 @@ classdef SrtSetupError < SrtBaseException
     
     methods
         function obj = SrtSetupError(varargin)
-            obj@SrtBaseException(SrtInvalidArgsError.mnemonic, varargin{:});
+            obj@SrtBaseException(SrtSetupError.mnemonic, varargin{:});
        end
     end
     
