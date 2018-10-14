@@ -1,4 +1,5 @@
-function varargout = SReachFwd(prob_str, sys, initial_state, target_time,varargin)
+function varargout = SReachFwd(prob_str, sys, initial_state, target_time, ...
+    varargin)
 % Perform forward stochastic reachability analysis of a Gaussian-perturbed
 % linear system
 % ============================================================================

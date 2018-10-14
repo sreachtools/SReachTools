@@ -128,7 +128,7 @@ function varargout = srtinit(varargin)
             setSrtWarning('SReachTools:setup','off');
         end
         check_recommended_dependencies();
-        setSrtWarning('SReachTools:setup',prev_warn_state);        
+        setSrtWarning('SReachTools:setup', prev_warn_state);        
     else
         % remove paths
         for i = 1:length(new_paths) - 1

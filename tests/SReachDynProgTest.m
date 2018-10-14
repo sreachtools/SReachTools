@@ -4,7 +4,7 @@ classdef SReachDynProgTest < matlab.unittest.TestCase
 %
 % This function is part of the Stochastic Optimal Control Toolbox.
 % License for the use of this function is given in
-%      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
+%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 %
 

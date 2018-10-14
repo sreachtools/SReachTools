@@ -1,5 +1,5 @@
 classdef StochasticDisturbanceTests < matlab.unittest.TestCase
-% Socbox/StochasticDisturbanceTests: Unit tests for bounded disturbances
+% SReachTools/StochasticDisturbanceTests: Unit tests for bounded disturbances
 % ===========================================================================
 %
 % Unit testing for bounded disturbances
@@ -13,25 +13,25 @@ classdef StochasticDisturbanceTests < matlab.unittest.TestCase
 %
 % This function is part of the Stochastic Optimal Control Toolbox.
 % License for the use of this function is given in
-%      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
+%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 %
 
     methods (Test)
         function testIncompleteGaussianDisturbance(test_case)
-        % Socbox/StochasticDisturbanceTests/testIncompleteGaussianDisturbance: 
+        % SReachTools/StochasticDisturbanceTests/testIncompleteGaussianDisturbance: 
         % Unit test for imcompletely specified Gaussian disturbance
         % =====================================================================
         %
         % Unit test for imcompletely specified Gaussian disturbance
         %
-        % Should throw a 'Socbox:invalidArgs' error
+        % Should throw a 'SReachTools:invalidArgs' error
         %
         % =====================================================================
         %
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         %
         %
 
@@ -42,20 +42,20 @@ classdef StochasticDisturbanceTests < matlab.unittest.TestCase
         end
 
         function testGaussianDisturbanceDimensionMismatch(test_case)
-        % Socbox/StochasticDisturbanceTests/testGaussianDisturbanceDimensionMismatch: 
+        % SReachTools/StochasticDisturbanceTests/testGaussianDisturbanceDimensionMismatch: 
         % Unit test for mistmatch in Gaussian disturbance
         % =====================================================================
         %
         % Unit test for mistmatch in Gaussian disturbance, i.e. mean and
         % covariance are not equally sized
         %
-        % Should throw a 'Socbox:invalidArgs' error
+        % Should throw a 'SReachTools:invalidArgs' error
         %
         % =====================================================================
         %
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         %
         %
         

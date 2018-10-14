@@ -1,8 +1,8 @@
 classdef SrtSetupError < SrtBaseException
-% Custom exception object for Socbox setup errors
+% Custom exception object for SReachTools setup errors
 % ============================================================================
 % 
-% Customized class for generating Socbox setup errors, subclass of the 
+% Customized class for generating SReachTools setup errors, subclass of the 
 % standard MATLAB SrtBaseException class
 %
 % Usage:
@@ -26,7 +26,7 @@ classdef SrtSetupError < SrtBaseException
     
     methods
         function obj = SrtSetupError(varargin)
-            obj@SrtBaseException(SrtInvalidArgsError.mnemonic, varargin{:});
+            obj@SrtBaseException(SrtSetupError.mnemonic, varargin{:});
        end
     end
     

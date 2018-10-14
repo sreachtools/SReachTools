@@ -1,5 +1,5 @@
-function bounded_set = SReachSetLagBset(disturbance, time_horizon,...
-    prob_thresh, options)
+function bounded_set = SReachSetLagBset(disturbance, onestep_prob_thresh, ...
+    options)
 % Get bounded disturbance set for approximation
 % ============================================================================
 %
@@ -11,7 +11,7 @@ function bounded_set = SReachSetLagBset(disturbance, time_horizon,...
 % ============================================================================
 % 
 % bounded_set = getBoundedSetForDisturbance(disturbance, time_horizon,...
-%   prob_thresh, option)
+%   onestep_prob_thresh, option)
 %                                        e.g.
 %           bounded_set = getBoundedSetForDisturbance(...
 %               RandomVector('Gaussian', zeros(2,1), eye(2)), ...
@@ -36,7 +36,7 @@ function bounded_set = SReachSetLagBset(disturbance, time_horizon,...
 % -------
 %   disturbance - RandomVector object
 %   time_horizon- Length of the time horizon
-%   prob_thresh - Probability threshold
+%   onestep_prob_thresh - Probability threshold
 %   option      - TODO
 %
 % Outputs:
@@ -69,11 +69,11 @@ function bounded_set = SReachSetLagBset(disturbance, time_horizon,...
         end
 
         % check that the horizon is some nonzero integer
-        validateattributes(time_horizon, {'numeric'}, ...
-            {'nonzero', 'positive', 'integer'});
+        % validateattributes(time_horizon, {'numeric'}, ...
+        %     {'nonzero', 'positive', 'integer'});
 
-        % check that prob_thresh is a value in [0,1]
-        validateattributes(prob_thresh, {'double'}, {'>=', 0, '<=', 1})
+        % check that onestep_prob_thresh is a value in [0,1]
+        validateattributes(onestep_prob_thresh, {'double'}, {'>=', 0, '<=', 1})
 
         % check that the option.bound_set_method is a character or string array
         validateattributes(options.bound_set_method, {'char', 'string'},...
@@ -89,7 +89,7 @@ function bounded_set = SReachSetLagBset(disturbance, time_horizon,...
                 {'scalar', 'integer'});
 
             bounded_set = boundedEllipseByRandomVectors(disturbance,...
-                time_horizon, prob_thresh, options.num_dirs);
+                onestep_prob_thresh, options.num_dirs);
 
         case 'box'
             % Has to be Gaussian
@@ -97,14 +97,14 @@ function bounded_set = SReachSetLagBset(disturbance, time_horizon,...
                 {'scalar', 'positive'});
 
             bounded_set = getBoundingBoxForGaussian(disturbance, ...
-                time_horizon, prob_thresh, options.err_thresh);
+                onestep_prob_thresh, options.err_thresh);
         case 'optim-box'
             % Has to be Gaussian
             validateattributes(options.box_center, {'numeric'}, {'nonempty',...
                 'vector','size', [disturbance.dim 1]});
             
             bounded_set = getOptimizationBoxForGaussian(disturbance, ...
-                time_horizon, prob_thresh, options.box_center);
+                onestep_prob_thresh, options.box_center);
         case 'load'
             % load a predefined bounded set, primarily used for comparison with
             % previous works
@@ -147,8 +147,65 @@ function bounded_set = SReachSetLagBset(disturbance, time_horizon,...
 
 end
 
+function bounded_set = boxBisection(disturbance, onestep_onestep_prob_thresh, err)
+
+    MAX_ITERS = 10000;
+    % xi2_onestep_prob_thresh = onestep_prob_thresh^(1/time_horizon);
+    a = 0;
+    b = 1;
+    
+    mu = zeros(1, disturbance.dim);
+    sigma = eye(disturbance.dim);
+    
+    center = zeros(1, disturbance.dim);
+    dx_ones = ones(1, disturbance.dim);
+
+    bx = Polyhedron('A', [eye(size(c, 1)), -eye(size(c, 1))], ...
+                    'b', b * ones(2 * size(c, 1), 1));
+    bx = disturbance.parameters.covariance^(1/2) * bx + ...
+        disturbance.parameters.mean;
+    p = computeProb(disturbance, bx);
+    
+    while p < onestep_onestep_prob_thresh + err
+        b = 2 * b;
+        bx = Polyhedron('A', [eye(size(c, 1)), -eye(size(c, 1))], ...
+                        'b', b * ones(2 * size(c, 1), 1));
+        bx = disturbance.parameters.covariance^(1/2) * bx + ...
+            disturbance.parameters.mean;
+        p = computeProb(disturbance, bx);
+    end
+    
+    do_search = @(prob, i) ...
+        (prob - onestep_onestep_prob_thresh > err || prob - onestep_onestep_prob_thresh < 0) && ...
+        i < MAX_ITERS;
+    iters = 0;
+    while (p - onestep_onestep_prob_thresh > err || ...
+           p - onestep_onestep_prob_thresh < 0 ) && ...
+           iters < MAX_ITERS
+
+        % bisect 
+        b_new = b - (b - a) / 2;
+        bx = Polyhedron('A', [eye(size(c, 1)), -eye(size(c, 1))], ...
+                        'b', b * ones(2 * size(c, 1), 1));
+        bx = disturbance.parameters.covariance^(1/2) * bx + ...
+            disturbance.parameters.mean;
+        p = computeProb(disturbance, bx);
+        
+        if p > onestep_onestep_prob_thresh + err
+            b = b_new;
+        else
+            a = a + (b - a) / 2;
+        end
+        
+        iters = iters + 1;
+    end
+    
+    bounded_set = bx;
+
+end
+
 function bounded_set = boundedEllipseByRandomVectors(disturbance, ...
-    time_horizon, prob_thresh, n_directions)
+    onestep_prob_thresh, n_directions)
 %  Get bounded 
 % disturbance ellipse with random direction choices
 % ============================================================================
@@ -161,13 +218,13 @@ function bounded_set = boundedEllipseByRandomVectors(disturbance, ...
 % ============================================================================
 % 
 % bounded_set = boundedEllipseByRandomVectors(disturbance, ...
-%     time_horizon, prob_thresh, n_directions)
+%     time_horizon, onestep_prob_thresh, n_directions)
 % 
 % Inputs:
 % -------
 %   disturbance    - RandomVector object
 %   time_horizon - Length of the time horizon
-%   prob_thresh           - Probability threshold
+%   onestep_prob_thresh           - Probability threshold
 %   n_directions   - Number or directions for the approximation
 %
 % Outputs:
@@ -191,7 +248,7 @@ function bounded_set = boundedEllipseByRandomVectors(disturbance, ...
     % end
 
     % compute the ellipsoid radii needed for obtaining desired probability
-    r2 = chi2inv(prob_thresh^(1/time_horizon), 2);
+    r2 = chi2inv(onestep_prob_thresh, 2);
     ellipse_rads = disturbance.parameters.covariance * r2;
 
     n = size(ellipse_rads,1);
@@ -214,8 +271,8 @@ function bounded_set = boundedEllipseByRandomVectors(disturbance, ...
 
 end
 
-function poly = getOptimizationBoxForGaussian(disturbance, time_horizon, ...
-    prob_thresh, center)
+function poly = getOptimizationBoxForGaussian(disturbance, ...
+    onestep_prob_thresh, center)
 %  Get bounded 
 % disturbance as box through solution of optimization problem
 % ============================================================================
@@ -229,13 +286,13 @@ function poly = getOptimizationBoxForGaussian(disturbance, time_horizon, ...
 % ============================================================================
 % 
 % poly = getOptimizationBoxForGaussian(disturbance, time_horizon, ...
-%     prob_thresh, center)
+%     onestep_prob_thresh, center)
 % 
 % Inputs:
 % -------
 %   disturbance    - RandomVector object
 %   time_horizon - Length of the time horizon
-%   prob_thresh           - Probability threshold
+%   onestep_prob_thresh           - Probability threshold
 %   center         - Center position of the box
 %
 % Outputs:
@@ -252,7 +309,7 @@ function poly = getOptimizationBoxForGaussian(disturbance, time_horizon, ...
     center = disturbance.parameters.covariance^(-1/2)*(center - ...
         disturbance.parameters.mean);
     
-    xi2_prob_thresh = prob_thresh^(1/time_horizon);
+    xi2_onestep_prob_thresh = onestep_prob_thresh;
     
     perimeter_func = @(l) sum(l);
     
@@ -260,7 +317,7 @@ function poly = getOptimizationBoxForGaussian(disturbance, time_horizon, ...
     
     l = fmincon(perimeter_func, l0, [], [], [], [], ...
         zeros(size(l0)), [], ...
-        @(l) nonlinearOptimBoxConstraints(l, center, xi2_prob_thresh), ...
+        @(l) nonlinearOptimBoxConstraints(l, center, xi2_onestep_prob_thresh), ...
         optimoptions(@fmincon, 'Display', 'final'));
 
     poly = Polyhedron('lb', center-l/2, 'ub', center+l/2);
@@ -305,8 +362,8 @@ function [c, ceq] = nonlinearOptimBoxConstraints(l, c, p)
 
 end
 
-function poly = getBoundingBoxForGaussian(disturbance, time_horizon, ...
-    prob_thresh, err)
+function poly = getBoundingBoxForGaussian(disturbance, ...
+    onestep_prob_thresh, err)
 %  Get bounded 
 % disturbance as box through bisection
 % ============================================================================
@@ -319,13 +376,13 @@ function poly = getBoundingBoxForGaussian(disturbance, time_horizon, ...
 % ============================================================================
 % 
 % poly = getBoundingBoxForGaussian(disturbance, time_horizon, ...
-%     prob_thresh, err)
+%     onestep_prob_thresh, err)
 % 
 % Inputs:
 % -------
 %   disturbance    - RandomVector object
 %   time_horizon - Length of the time horizon
-%   prob_thresh           - Probability threshold
+%   onestep_prob_thresh           - Probability threshold
 %   err            - Error threshold
 %
 % Outputs:
@@ -340,7 +397,7 @@ function poly = getBoundingBoxForGaussian(disturbance, time_horizon, ...
 %
 
     MAX_ITERS = 10000;
-    xi2_prob_thresh = prob_thresh^(1/time_horizon);
+    xi2_onestep_prob_thresh = onestep_prob_thresh;
     a = 0;
     b = 1;
     
@@ -350,17 +407,19 @@ function poly = getBoundingBoxForGaussian(disturbance, time_horizon, ...
     center = zeros(1, disturbance.dim);
     dx_ones = ones(1, disturbance.dim);
     
-    box = SimpleBox(center, b*dx_ones);
-    p = box.computeGaussianProbability(mvncdf(box.vertices, mu, sigma));
+    bx = boxFromCenterAndHalfLength(center, b);
+    bx = disturbance.parameters.covariance^(1/2) * bx + ...
+        disturbance.parameters.mean;
+    p = computeProb(disturbance, bx);
     
-    while p < xi2_prob_thresh + err
+    while p < xi2_onestep_prob_thresh + err
         b = 2 * b;
         box = SimpleBox(center, b*dx_ones);
         p = box.computeGaussianProbability(mvncdf(box.vertices, mu, sigma));
     end
     
     do_search = @(prob, i) ...
-        (prob - xi2_prob_thresh > err || prob - xi2_prob_thresh < 0) && ...
+        (prob - xi2_onestep_prob_thresh > err || prob - xi2_onestep_prob_thresh < 0) && ...
         i < MAX_ITERS;
     iters = 0;
     while do_search(p, iters)
@@ -368,7 +427,7 @@ function poly = getBoundingBoxForGaussian(disturbance, time_horizon, ...
         box = SimpleBox(center, b_new * dx_ones);
         p = box.computeGaussianProbability(mvncdf(box.vertices, mu, sigma));
         
-        if p > xi2_prob_thresh + err
+        if p > xi2_onestep_prob_thresh + err
             b = b_new;
         else
             a = a + (b - a) / 2;
@@ -385,3 +444,90 @@ function poly = getBoundingBoxForGaussian(disturbance, time_horizon, ...
     poly = disturbance.parameters.covariance^(1/2) * poly + ...
         disturbance.parameters.mean;
 end   
+
+
+function prob = computeProb(dist, bset)
+
+    % Construct the half-space representation for qscmvnv
+    cov_mat = (dist.parameters.covariance +...
+        dist.parameters.covariance')/2; 
+    qscmvnv_lb = repmat(-Inf, [size(bset.A, 1), 1]);
+    qscmvnv_coeff_matrix = bset.A;
+    qscmvnv_ub = bset.b - bset.A * dist.parameters.mean;
+    prob = iteratedQscmvnv(cov_mat, ...
+                           qscmvnv_lb, ...
+                           qscmvnv_coeff_matrix, ...
+                           qscmvnv_ub, ...
+                           1e-3, ...
+                           10);            
+end
+
+function b = boxFromCenterAndHalfLength(c, hl)
+
+    v = zeros(2^size(c, 1), size(c, 1));
+
+    if size(c, 1) == 2
+        P = [ hl(1),  hl(2); ...
+             -hl(1),  hl(2); ...
+              hl(1), -hl(2); ...
+             -hl(1), -hl(2)];
+
+        v = c + P;
+    elseif size(c, 1) == 3
+        P = [ hl(1),  hl(2),  hl(3); ...
+              hl(1), -hl(2),  hl(3); ...
+              hl(1),  hl(2), -hl(3); ...
+              hl(1), -hl(2), -hl(3); ...
+             -hl(1),  hl(2),  hl(3); ...
+             -hl(1), -hl(2),  hl(3); ...
+             -hl(1),  hl(2), -hl(3); ...
+             -hl(1), -hl(2), -hl(3)];
+
+        v = c + P;
+    elseif size(c, 1) == 4
+        P = [ hl(1),  hl(2),  hl(3),  hl(4); ...
+              hl(1),  hl(2),  hl(3), -hl(4); ...
+              hl(1),  hl(2), -hl(3),  hl(4); ...
+              hl(1),  hl(2), -hl(3), -hl(4); ...
+              hl(1), -hl(2),  hl(3),  hl(4); ...
+              hl(1), -hl(2),  hl(3), -hl(4); ...
+              hl(1), -hl(2), -hl(3),  hl(4); ...
+              hl(1), -hl(2), -hl(3), -hl(4); ...
+             -hl(1),  hl(2),  hl(3),  hl(4); ...
+             -hl(1),  hl(2),  hl(3), -hl(4); ...
+             -hl(1),  hl(2), -hl(3),  hl(4); ...
+             -hl(1),  hl(2), -hl(3), -hl(4); ...
+             -hl(1), -hl(2),  hl(3),  hl(4); ...
+             -hl(1), -hl(2),  hl(3), -hl(4); ...
+             -hl(1), -hl(2), -hl(3),  hl(4); ...
+             -hl(1), -hl(2), -hl(3), -hl(4)];
+
+        v = c + P;
+    else
+        sv = -ones(1, size(c, 1));
+        lv = 1;
+        while true
+            done = false;
+            v(lv, :) = c + hl .* p;
+
+            for rv = size(c, 1):-1:1
+                if sv(rv) < -1;
+                    sv(rv) == 1;
+
+                    if rv == 1
+                        done = true;
+                    else
+                        sv(rv - 1) = sv(rv - 1) - 1;
+                    end
+                end
+            end
+
+            if done
+                break;
+            end
+        end
+    end
+
+    b = Polyhedron(v);
+    b = minHRep();
+end
