@@ -1,5 +1,5 @@
 classdef TargetTubeTests < matlab.unittest.TestCase
-% Socbox/TargetTubeTests: Unit tests for bounded disturbances
+% SReachTools/TargetTubeTests: Unit tests for bounded disturbances
 % ===========================================================================
 %
 % Unit testing for bounded disturbances
@@ -13,7 +13,7 @@ classdef TargetTubeTests < matlab.unittest.TestCase
 %
 % This function is part of the Stochastic Optimal Control Toolbox.
 % License for the use of this function is given in
-%      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
+%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 %
 

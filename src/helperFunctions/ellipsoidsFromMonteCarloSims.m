@@ -40,10 +40,8 @@ function varargout = ellipsoidsFromMonteCarloSims(...
 % Notes:
 % ------
 % * Requires CVX for solving the convex optimization problem using SDPT3
-% * Requires ELlipsoidal toolbox for construction of the ellipsoid
 % * Uses code obtained from
 %   http://web.cvxr.com/cvx/examples/cvxbook/Ch08_geometric_probs/min_vol_elp_finite_set.m
-% * We will have to use SDPT3 to do the computation
 % 
 % ============================================================================
 % 
@@ -57,19 +55,9 @@ function varargout = ellipsoidsFromMonteCarloSims(...
     n_mcarlo_sims = size(concat_state_realization,2);
     time_horizon = size(concat_state_realization,1)/state_dim;
     set_of_ellipsoids = cell(1,time_horizon);
-    plot_handles = zeros(1,time_horizon);
     n_angles = 200;
     angles   = linspace( 0, 2 * pi, n_angles );
     
-    % CVX solver setup --- Gurobi can't handle this
-    try
-        cvx_solver SDPT3
-    catch
-        % Redefine the cvx problem to enable switching solvers
-        evalc('cvx_clear');
-        cvx_solver SDPT3
-    end
-       
     % How many MC simulations?
     max_limit_sims = 1e2;
     if n_mcarlo_sims > max_limit_sims
@@ -88,11 +76,12 @@ function varargout = ellipsoidsFromMonteCarloSims(...
     % Angles for the ellipsoid            
     for tindx = 1:time_horizon
         % Extract the points
-        x_points =...
-            relv_concat_state_realization(2*(tindx-1)+1 : 2*tindx,:);
+        x_points = relv_concat_state_realization(2*(tindx-1)+1 : 2*tindx,:);
         
         % Problem 8.11 in CVX optimization textbook
         cvx_begin quiet
+            % Gurobi can't handle this! So use SDPT3
+            cvx_solver SDPT3
             variable A(2, 2) symmetric;
             variable b(2, 1);
             
@@ -116,4 +105,6 @@ function varargout = ellipsoidsFromMonteCarloSims(...
         end
     end    
     varargout{1} = set_of_ellipsoids;
+    % Silently reevaluate cvx_setup to reset the solver
+    evalc('cvx_setup');
 end

@@ -9,8 +9,7 @@ cc_affine_run = 1;
 %% Monte-Carlo simulation parameters
 n_mcarlo_sims = 1e5;
 n_sims_to_plot = 5;
-max_state_violation_prob = 0.01;
-max_input_violation_prob = 0.01;
+max_input_viol_prob = 0.01;
 %% CWH system params
 umax=0.1;
 mean_disturbance = zeros(4,1);
@@ -52,8 +51,8 @@ target_set = Polyhedron('lb', [-0.1; -0.1; -0.01; -0.01],...
 target_tube = TargetTube('reach-avoid',safe_set, target_set, time_horizon);                    
 
 %% Initial state definition
-initial_state = [-0.75;         % Initial x relative position
-                 -0.75;         % Initial y relative position
+initial_state = [-1.15;         % Initial x relative position
+                 -1.15;         % Initial y relative position
                  0;             % Initial x relative velocity
                  0];            % Initial y relative velocity
 slice_at_vx_vy = initial_state(3:4);             
@@ -61,20 +60,21 @@ slice_at_vx_vy = initial_state(3:4);
 desired_accuracy = 1e-3;        % Decrease for a more accurate lower 
                                 % bound at the cost of higher 
                                 % computation time
-desired_accuracy_cc_closed = 5e-3;
+desired_accuracy_cc_affine = 1e-2;
 PSoptions = psoptimset('Display','off');
 
 %% Generate matrices for optimal mean trajectory generation
-[H_matrix, mean_X_sans_input, ~] =...
-       getHmatMeanCovForXSansInput(sys, initial_state, time_horizon);
+% Get H and mean_X_sans_input
+[~, H, ~] = getConcatMats(sys, time_horizon);
+sysnoi = LtvSystem('StateMatrix',sys.state_mat,'DisturbanceMatrix',...
+    sys.dist_mat,'Disturbance',sys.dist);
+[mean_X_sans_input, ~] = SReachFwd('concat-stoch', sysnoi, initial_state,...
+    time_horizon);
 
 if ft_run
     timer_ft = tic;
     disp('Genz-algorithm+patternsearch technique');
-    options.prob_str = 'term';
-    options.method_str = 'genzps-open';
-    options.desired_accuracy = desired_accuracy;
-    options.PSoptions = psoptimset('display','off');
+    options = SReachPointOptions('term','genzps-open');
     [lb_stoch_reach_avoid_ft, optimal_input_vector_ft] = SReachPoint(...
         'term','genzps-open', sys, initial_state, target_tube, options);  
     elapsed_time_ft = toc(timer_ft);
@@ -87,7 +87,7 @@ if ft_run
             [repmat(initial_state,1,n_mcarlo_sims);
              concat_state_realization_ft]);
         % Optimal mean trajectory generation                         
-        optimal_mean_X_ft = mean_X_sans_input +H_matrix*optimal_input_vector_ft;
+        optimal_mean_X_ft = mean_X_sans_input + H * optimal_input_vector_ft;
         optimal_mean_trajectory_ft=reshape(optimal_mean_X_ft,sys.state_dim,[]);                                              
     end
 end
@@ -96,9 +96,7 @@ end
 if cc_open_run
     timer_cc_pwl = tic;
     disp('Piecewise-linear single shot risk allocation technique');
-    options.prob_str = 'term';
-    options.method_str = 'chance-open';
-    options.desired_accuracy = desired_accuracy;
+    options = SReachPointOptions('term','chance-open');
     [lb_stoch_reach_avoid_cc_pwl, optimal_input_vector_cc_pwl] = SReachPoint(...
         'term','chance-open', sys, initial_state, target_tube, options);  
     elapsed_time_cc_pwl = toc(timer_cc_pwl);
@@ -113,7 +111,7 @@ if cc_open_run
              concat_state_realization_cc_pwl]);
         % Optimal mean trajectory generation                         
         optimal_mean_X_cc_pwl = mean_X_sans_input +...
-            H_matrix * optimal_input_vector_cc_pwl;
+            H * optimal_input_vector_cc_pwl;
         optimal_mean_trajectory_cc_pwl=reshape(optimal_mean_X_cc_pwl,...
             sys.state_dim,[]);
     end
@@ -123,14 +121,10 @@ end
 if cc_affine_run
     timer_cc_pwl_closed = tic;
     disp('Piecewise-linear single shot (closed-loop-dc) risk allocation technique');
-    [lb_stoch_reach_avoid_cc_pwl_closed, optimal_input_vector_cc_pwl_closed, optimal_input_gain, input_satisfaction_prob, risk_alloc] =...
-                             getLowerBoundStochReachAvoid(sys,...
-                                                          initial_state,...
-                                                          target_tube,...
-                                                          'cccpwl-closed',...
-                                                          desired_accuracy_cc_closed,...
-                                                          max_state_violation_prob,...
-                                                          max_input_violation_prob);  
+    options = SReachPointOptions('term','chance-affine', 'verbose', 1);
+    [lb_stoch_reach_avoid_cc_pwl_closed, optimal_input_vector_cc_pwl_closed, optimal_input_gain, risk_alloc_state, risk_alloc_input] =...
+         SReachPoint('term','chance-affine', sys, initial_state, target_tube,...
+            options);  
     elapsed_time_cc_pwl_closed = toc(timer_cc_pwl_closed);            
     if lb_stoch_reach_avoid_cc_pwl_closed > 0
         % This function returns the concatenated state vector stacked columnwise
@@ -149,7 +143,7 @@ if cc_affine_run
         mcarlo_result_cc_pwl_closed_input = any(concat_input_space_A * (optimal_input_gain * concat_disturb_realization_cc_pwl_closed + optimal_input_vector_cc_pwl_closed)<=concat_input_space_b);
         
         % Optimal mean trajectory generation                         
-        optimal_mean_X_cc_pwl_closed = mean_X_sans_input + H_matrix * optimal_input_vector_cc_pwl_closed;
+        optimal_mean_X_cc_pwl_closed = mean_X_sans_input + H * optimal_input_vector_cc_pwl_closed;
         optimal_mean_trajectory_cc_pwl_closed=reshape(optimal_mean_X_cc_pwl_closed,sys.state_dim,[]);
     end
 end
@@ -255,12 +249,12 @@ fprintf('FT: %1.3f | CC (Open): %1.3f | CC (Affine): %1.3f\n',...
     lb_stoch_reach_avoid_ft,...
     lb_stoch_reach_avoid_cc_pwl,...
     lb_stoch_reach_avoid_cc_pwl_closed); 
-fprintf('MC (%1.0e particles): %1.3f, %1.3f, %1.3f, %1.3f\n',...
+fprintf('MC (%1.0e particles): %1.3f, %1.3f, %1.3f\n',...
     n_mcarlo_sims,...
     sum(mcarlo_result_ft)/n_mcarlo_sims, ...
     sum(mcarlo_result_cc_pwl)/n_mcarlo_sims,...
     sum(mcarlo_result_cc_pwl_closed)/n_mcarlo_sims);
-fprintf('Elapsed time: %1.3f, %1.3f, %1.3fseconds\n',...
+fprintf('Elapsed time: %1.3f, %1.3f, %1.3f seconds\n',...
     elapsed_time_ft, elapsed_time_cc_pwl, elapsed_time_cc_pwl_closed);
 
 %%

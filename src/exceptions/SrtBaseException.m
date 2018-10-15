@@ -1,8 +1,8 @@
 classdef SrtBaseException < MException
-% Custom exception object for Socbox internal errors
+% Custom exception object for SReachTools internal errors
 % ============================================================================
 % 
-% Customized class for generating Socbox internal errors, subclass of the 
+% Customized class for generating SReachTools internal errors, subclass of the 
 % standard MATLAB MException class
 %
 % Usage:

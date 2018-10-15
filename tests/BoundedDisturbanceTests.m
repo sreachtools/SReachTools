@@ -1,5 +1,5 @@
 classdef BoundedDisturbanceTests < matlab.unittest.TestCase
-% Socbox/BoundedDisturbanceTests: Unit tests for bounded disturbances
+% SReachTools/BoundedDisturbanceTests: Unit tests for bounded disturbances
 % ===========================================================================
 %
 % Unit testing for bounded disturbances
@@ -13,13 +13,13 @@ classdef BoundedDisturbanceTests < matlab.unittest.TestCase
 %
 % This function is part of the Stochastic Optimal Control Toolbox.
 % License for the use of this function is given in
-%      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
+%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 %
 
     methods (Test)
         function testBoundedEllipseRandomDirections(test_case)
-        % Socbox/BoundedDisturbanceTests/testBoundedEllipseRandomDirections: 
+        % SReachTools/BoundedDisturbanceTests/testBoundedEllipseRandomDirections: 
         % Unit test for getBoundedSetForDisturbance for random ellipsoid 
         % generation
         % ====================================================================
@@ -31,7 +31,7 @@ classdef BoundedDisturbanceTests < matlab.unittest.TestCase
         %
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         %
         %   
 
@@ -61,7 +61,7 @@ classdef BoundedDisturbanceTests < matlab.unittest.TestCase
         end
 
         function testLoadBoundedDisturbance(test_case)
-        % Socbox/BoundedDisturbanceTests/testBoundedEllipseRandomDirections: 
+        % SReachTools/BoundedDisturbanceTests/testBoundedEllipseRandomDirections: 
         % Unit test for getBoundedSetForDisturbance for random ellipsoid 
         % generation
         % ====================================================================
@@ -72,7 +72,7 @@ classdef BoundedDisturbanceTests < matlab.unittest.TestCase
         %
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/unm-hscl/Socbox/blob/master/LICENSE
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         %
         %
 
