@@ -34,7 +34,7 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
 %
 % Outputs:
 % --------
-%   stoch_reach_prob 
+%   lb_stoch_reach 
 %               - Lower bound on the stochastic reachability of a target tube
 %                   problem computed using convex chance constraints and
 %                   piecewise affine approximation
@@ -135,7 +135,6 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
                 <= concat_safety_tube_b;
             deltai >= lb_deltai;
             deltai <= 0.5;
-            sum(deltai) <= 0.5;
     cvx_end
 
     %% Overwrite the solutions

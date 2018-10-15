@@ -1,5 +1,5 @@
-function stoch_reach_set = SReachSet(prob_str, method_str, sys, prob_thresh,...
-    safety_tube, options)
+function [stoch_reach_set, varargout] = SReachSet(prob_str, method_str, sys,...
+    prob_thresh, safety_tube, options)
 % Compute the stochastic reach set corresponding to the stochastic reachability 
 % problem of a target tube using a host of techniques
 % =============================================================================
@@ -191,8 +191,21 @@ function stoch_reach_set = SReachSet(prob_str, method_str, sys, prob_thresh,...
                 stoch_reach_set = SReachSetGpO(method_str, sys, prob_thresh, ...
                     safety_tube, options);
             case 'chance-open'
+<<<<<<< HEAD
                 stoch_reach_set = SReachSetCcO(method_str, sys, prob_thresh, ...
                     safety_tube, options);
+=======
+                if nargout > 1
+                    [stoch_reach_set, extra_info_wmax, extra_info_cheby] =...
+                        SReachSetCcO(method_str, sys, prob_thresh,...
+                        safety_tube, options);
+                    varargout{1} = extra_info_wmax;
+                    varargout{2} = extra_info_cheby;
+                else
+                    stoch_reach_set = SReachSetCcO(method_str, sys, prob_thresh,...
+    safety_tube, options);
+                end
+>>>>>>> e3f04816f429697a0eeb1a40f80a34abd12a9831
             case 'lag-under'
                 stoch_reach_set = SReachSetLag(method_str, sys, prob_thresh, ...
                     safety_tube, options);
