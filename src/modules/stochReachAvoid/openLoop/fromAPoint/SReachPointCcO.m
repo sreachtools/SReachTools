@@ -1,5 +1,5 @@
 function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
-    SReachPointCcO(sys, initial_state, safety_tube, desired_accuracy)
+    SReachPointCcO(sys, initial_state, safety_tube, pwa_accuracy)
 % Solve the stochastic reach-avoid problem (lower bound on the probability and
 % an open-loop controller synthesis) using chance-constrained convex
 % optimization optimization (Internal function --- assumes arguments are all ok)
@@ -95,11 +95,11 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
         {'vector'}));
     inpar.addRequired('safety_tube',@(x) validateattributes(x,{'TargetTube'},...
         {'nonempty'}));
-    inpar.addRequired('desired_accuracy', @(x) validateattributes(x,...
+    inpar.addRequired('pwa_accuracy', @(x) validateattributes(x,...
         {'numeric'}, {'scalar','>',0}));
 
     try
-        inpar.parse(sys, initial_state, safety_tube, desired_accuracy);
+        inpar.parse(sys, initial_state, safety_tube, pwa_accuracy);
     catch err
         exc = SrtInvalidArgsError.withFunctionName();
         exc = exc.addCause(err);
@@ -116,12 +116,13 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
     % Construct U^N 
     % GUARANTEES: Non-empty input sets (polyhedron)
     [concat_input_space_A, concat_input_space_b] = getConcatInputSpace(sys, time_horizon);
-    % Compute H, mean_X_sans_input, cov_X_sans_input, G for the
-    % safety_cost_function definition
-    % GUARANTEES: Gaussian-perturbed LTI system (sys) and well-defined
-    % init_state and time_horizon
-    [H, mean_X_sans_input, cov_X_sans_input] = ...
-        getHmatMeanCovForXSansInput(sys, initial_state, time_horizon);
+    % Compute H, mean_X_sans_input, cov_X_sans_input
+    [~,H,~] = sys.getConcatMats(time_horizon);
+    sys_no_input = LtvSystem('StateMatrix',sys.state_mat,'DisturbanceMatrix',...
+        sys.dist_mat,'Disturbance',sys.dist);
+    % zizs - zero-input and zero state response
+    [mean_X_sans_input, cov_X_sans_input] = SReachFwd('concat-stoch', sys_no_input,...
+        initial_state, time_horizon);
 
     
     %% Compute M --- the number of polytopic halfspaces to worry about
@@ -134,7 +135,7 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
 
     %% Obtain the piecewise linear overapproximation of norminvcdf in [0,0.5]
     [invcdf_approx_m, invcdf_approx_c, lb_deltai] =...
-        computeNormCdfInvOverApprox(0.5, desired_accuracy, n_lin_state);
+        computeNormCdfInvOverApprox(0.5, pwa_accuracy, n_lin_state);
 
     %% Solve the feasibility problem
     cvx_begin quiet

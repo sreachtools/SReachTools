@@ -138,7 +138,9 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain,...
     while continue_condition == 1
         % Store previous iterations
         obj_prev = obj_curr;
-
+        if options.verbose >= 2
+            disp('Setting up the CVX problem');
+        end
         % The iteration values are updated at the end of the problem
         cvx_begin quiet
             variable M_matrix(sys.input_dim*time_horizon,sys.dist_dim*time_horizon);

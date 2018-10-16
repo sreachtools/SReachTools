@@ -108,15 +108,15 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
             inpar.addParameter('pwa_accuracy',1e-3, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
         case 'chance-affine'
+            % Probabilistic relaxation of the hard input constraints
+            inpar.addParameter('max_input_viol_prob',1e-2, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0}));
             % Verbosity of the implementation
             inpar.addParameter('verbose', 0, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar', 'integer',...
                     '>=',0,'<=',2}));            
             % Accuracy of piecewise-affine approximation of norminvcdf
             inpar.addParameter('pwa_accuracy',1e-2, @(x)...
-                validateattributes(x, {'numeric'}, {'scalar','>',0}));
-            % Probabilistic relaxation of the hard input constraints
-            inpar.addParameter('max_input_viol_prob',1e-2, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
             % Difference-of-convex: Initialization of the slack multiplier
             inpar.addParameter('tau_initial',1, @(x)...
@@ -139,4 +139,14 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
     end
     inpar.parse(prob_str, method_str, varargin{:});
     options = inpar.Results;
+    
+    switch lower(method_str)
+        case 'chance-affine'
+            if any(strcmp(inpar.UsingDefaults, 'max_input_viol_prob'))
+                 throw(SrtInvalidArgsError(['Expected max_input_viol_prob, ',...
+                     'the maximum allowed likelihood of violating the input',...
+                     ' constraints.']));
+            end
+    end
 end
+
