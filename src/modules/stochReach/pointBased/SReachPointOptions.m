@@ -49,6 +49,8 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 %                                               convex iterative algorithm
 %                                       8. dc_conv_tol: Tolerance for exiting 
 %                                               the iterative algorithm
+%                                       9. slack_tol: Tolerance for the sum
+%                                               of slack vars for penalty DC
 %                     'genzps-open'  -- Genz's algorithm + Patternsearch
 %                                       1. desired_accuracy: 
 %                                               Accuracy of Gaussian
@@ -130,6 +132,9 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
             % Difference-of-convex: Exit condition tolerance for dc iterations
             inpar.addParameter('dc_conv_tol',1e-4, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0}));
+            % Difference-of-convex: Slack tolerance requirements
+            inpar.addParameter('slack_tol',1e-8, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
     end
     inpar.parse(prob_str, method_str, varargin{:});
