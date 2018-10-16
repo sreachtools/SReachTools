@@ -141,13 +141,11 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube,...
                                'He',[safety_tube(1).He;
                                      options.init_safe_set_affine.He]);
     
-    %% Halfspace-representation of U^N, H, G,mean_X_sans_input, cov_X_sans_input
-    % GUARANTEES: Gaussian-perturbed LTI system (sys) and well-defined
-    % init_state and time_horizon
+    % Compute mean_X_sans_input, cov_X_sans_input
     sys_no_input = LtvSystem('StateMatrix',sys.state_mat,'DisturbanceMatrix',...
         sys.dist_mat,'Disturbance',sys.dist);
     time_horizon = length(safety_tube)-1;
-    % zero-input and zero state response
+    % zizs - zero-input and zero state response
     [mean_X_zizs, cov_X_sans_input] = SReachFwd('concat-stoch', sys_no_input,...
         zeros(sys.state_dim,1), time_horizon);
 
@@ -221,6 +219,9 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube,...
 end
 
 function otherInputHandling(method_str, sys, options)
+    % Input handling for SReachSetCcO
+    
+    % Consider updating SReachSetGpO.m if any changes are made here
     
     % Ensure Gaussian-perturbed system
     validateattributes(sys.dist, {'RandomVector'}, {'nonempty'});
@@ -228,14 +229,32 @@ function otherInputHandling(method_str, sys, options)
     
     % Check if prob_str and method_str are consistent        
     if ~strcmpi(options.prob_str,'term')
-        throwAsCaller(...
-            SrtInvalidArgsError('Mismatch in prob_str in the options'));
+        throwAsCaller(SrtInvalidArgsError(['Mismatch in prob_str in the ',...
+            'options']));
     end
     if ~strcmpi(options.method_str,method_str)
-        throwAsCaller(...
-            SrtInvalidArgsError('Mismatch in method_str in the options'));
+        throwAsCaller(SrtInvalidArgsError(['Mismatch in method_str in the ',...
+            'options']));
     end        
+    
+    % Make sure the user specified set_of_dir_vecs is valid
+    if size(options.set_of_dir_vecs, 1) == sys.state_dim
+        throwAsCaller(SrtInvalidArgsError(['set_of_dir_vecs should be a ',...
+            'collection of n-dimensional column vectors.']));
+    end
+    if size(set_of_dir_vecs, 2) >= 2, ...
+        throwAsCaller(SrtInvalidArgsError(['set_of_dir_vecs should at least',...
+            'have two directions.']));
+    end
+    % Make sure the user specified init_safe_set_affine is of the correct
+    % dimension
+    if options.init_safe_set_affine.Dim ~= sys.state_dim &&...
+            isempty(options.init_safe_set.affine.H)
+        throwAsCaller(SrtInvalidArgsError(['init_safe_set_affine must be ',...
+            'an sys.state_dim-dimensional affine set']));
+    end    
 end
+
 
 function [polytope, extra_info] = computePolytopeFromXmax(xmax_soln, sys,...
     options, init_safe_set, prob_thresh, safety_tube, mean_X_zizs,...
@@ -474,80 +493,3 @@ function cheby_soln = computeChebyshev(sys, options, init_safe_set,...
     cheby_soln.R = R;
     cheby_soln.cvx_status = cvx_status;
 end
-
-
-
-
-
-
-
-
-
-
-
-% %%% Compute theta_upper for the given direction
-% %cvx_begin quiet
-%     %variable theta_upper nonnegative
-% 
-%     %maximize theta_upper
-%     %subject to
-%         %init_safe_set.A * (xmax + theta_upper * direction) <=...
-%           %init_safe_set.b
-%         %theta_upper >= theta
-% %cvx_end
-% %theta_lower = theta;
-% %%% Did ccc reach the boundary of init_safe_set or is the method set
-% %%% to fast (skip genz+ps-based improvement)?
-% %if (theta_upper - theta_lower) < tol_bisection ||...
-%     %strcmpi(method,'fast')
-%     %%% No point doing Genz+ps because ccc found the boundary of
-%     %%% init_safe_set
-%     %vertex_underapprox_polytope(:, direction_index)= boundary_point;
-% %else
-%     %%% Do bisection in the remaining gap using Genz+ps
-%     %disp('Chance constraint formulation did not reach boundary');
-%     
-% %end
-% %fprintf(['Analyzing direction (shown transposed) ', ...
-% %         ':%d/%d\n'],...
-% %         direction_index,n_dir_vecs);
-% %disp(direction');
-% 
-% 
-% %     % Check prob_thresh is a scalar in [0.5,1]
-% %     assert( isscalar(prob_thresh) &&...
-% %                 prob_thresh >= 0.5 &&...
-% %                 prob_thresh <= 1, ...
-% %             'SReachTools:invalidArgs', ...
-% %             'prob_thresh must be a scalar in [0.5,1]');
-% % 
-% %     % Get the n_direction vectors
-% %     assert( size(set_of_dir_vecs, 1) == sys.state_dim, ...
-% %             'SReachTools:invalidArgs', ...
-% %             ['set_of_dir_vecs should be a collection of ',...
-% %              ' n-dimensional column vectors.']);
-% %     assert( size(set_of_dir_vecs, 2) >= 2, ...
-% %             'SReachTools:invalidArgs', ...
-% %             'set_of_dir_vecs should at least have two directions.');
-% %     % TODO: Do input handling for uniqueness
-% 
-%     % If non-trivial underapproximative stochastic reach-avoid polytope
-% %     if max_underapprox_reach_avoid_prob < prob_thresh || isnan(max_underapprox_reach_avoid_prob)
-% %         % Stochastic reach-avoid underapproximation is empty and no
-% %         % admissible open-loop policy exists
-% %         fprintf(['Polytopic underapproximation does not exist for ',...
-% %                  'alpha = %1.2f since maximum reach probability ',...
-% %                  '(%1.3f) with open-loop is below alpha.\n\n'], ...
-% %                  prob_thresh,...
-% %                  max_underapprox_reach_avoid_prob);
-% %         % Assigning the outputs to trivial results
-% %         underapprox_stoch_reach_avoid_polytope = Polyhedron();
-% %         xmax = nan(sys.state_dim, 1);
-% %         opt_input_vector_at_vertices =...
-% %             nan(sys.input_dim * time_horizon, n_dir_vecs);
-% %         opt_theta_i = nan(1, n_dir_vecs);
-% %         opt_reachAvoid_i = nan(1, n_dir_vecs);
-% %         vertex_underapprox_polytope = nan(sys.state_dim,...
-% %             n_dir_vecs);
-% %         R = nan;
-% %     end

@@ -22,10 +22,17 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %                     'chance-open':
 %                          Convex chance-constrained approach for an open-loop
 %                          controller synthesis
+%                          1. init_safe_set_affine: 
+%                          1. set_of_dir_vecs: 
+%                          1. verbose: 
 %                          1. pwa_accuracy: Accuracy of the piecewise affine
 %                               approximation of norminvcdf used
 %                     'genzps-open':
 %                          Genz's algorithm + Patternsearch
+%                          1. init_safe_set_affine: 
+%                          1. set_of_dir_vecs: 
+%                          1. verbose:
+%                          1. tol_bisect
 %                          1. desired_accuracy: Accuracy of Gaussian integral =>
 %                               Accuracy of the result
 %                          2. PSoptions: MATLAB struct from psoptimset()
@@ -104,16 +111,26 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
         inpar.addParameter('load_str', ' ', @(x) validateattributes(x,...
             {'char'}, {'nonempty'}));
     else
-%         % TODO: Required
-%         init_safe_set_affine_const, ...
-%         set_of_dir_vecs,...
-                                           
+        % Hyperplane intersecting the stochastic reach set underapprox.
+        inpar.addParameter('init_safe_set_affine', Polyhedron(),...
+            @(x) validateattributes(x, {'Polyhedron'}, {'nonempty'}));
+        % Direction vectors to be used for line-search for vertices
+        inpar.addParameter('set_of_dir_vecs', [], @(x) validateattributes(x,...
+            {'numeric'}, {'nonempty'}));
+        % Verbosity
+        inpar.addParameter('verbose',0, @(x) validateattributes(x,...
+            {'numeric'}, {'scalar','>=',0,'<=',1}));
+
         switch lower(method_str)
-            case 'genzps-open'            
+            case 'genzps-open'  
+                % Tolerance for bisection for the line search
+                inpar.addParameter('tol_bisect',1e-2, @(x)...
+                    validateattributes(x, {'numeric'}, {'scalar','>',0}));
+                % Accuracy for Genz's algorithm to compute integral of Gaussian
                 inpar.addParameter('desired_accuracy',1e-3, @(x)...
                     validateattributes(x, {'numeric'}, {'scalar','>',0}));
+                % Patternsearch options
                 inpar.addParameter('PSoptions',psoptimset('display','off'));
-
                 % Ensure that patternsearch is installed
                 v = ver;            
                 has_fmincon = any(strcmp(cellstr(char(v.Name)),...
@@ -127,13 +144,6 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
                 % Accuracy of piecewise-affine approximation of norminvcdf
                 inpar.addParameter('pwa_accuracy',1e-3, @(x)...
                     validateattributes(x, {'numeric'}, {'scalar','>',0}));
-                inpar.addParameter('init_safe_set_affine',Polyhedron(), @(x)...
-                    validateattributes(x, {'Polyhedron'}, {'nonempty'}));
-                inpar.addParameter('set_of_dir_vecs',[], @(x)...
-                    validateattributes(x, {'numeric'}, {'nonempty'}));
-                inpar.addParameter('verbose',0, @(x)...
-                    validateattributes(x, {'numeric'},...
-                    {'scalar','>=',0,'<=',1}));
         end
     end
     
@@ -182,8 +192,12 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
                         'bound_set_method: load']));
                 end
         end
+    elseif strcmpi(method_str,'chance-open') || strcmpi(method_str,'genzps-open')
+        % Must have for non-lag options: init_safe_set_affine, set_of_dir_vecs
+        if any(strcmp(inpar.UsingDefaults, 'init_safe_set_affine')) ||...
+                any(strcmp(inpar.UsingDefaults, 'set_of_dir_vecs'))
+             throw(SrtInvalidArgsError(['Expected init_safe_set_affine and ',...
+                 'set_of_dir_vecs']));
+        end            
     end
 end
-
-
-
