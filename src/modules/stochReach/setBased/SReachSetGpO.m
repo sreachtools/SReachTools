@@ -46,7 +46,7 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube,...
 %                          vertices. Its span is the affine hull whose slice of
 %                          the stochastic reach-avoid set is of interest.
 %   method               - TODO
-%   options.desired_accuracy     - (Optional for 'genzps') Accuracy expected for the
+%   desired_accuracy     - (Optional for 'genzps') Accuracy expected for the
 %                          integral of the Gaussian random vector X over the
 %                          concatenated_safety_tube [Default 5e-3]
 %   PSoptions            - (Optional for 'genzps') Options for patternsearch 
@@ -100,7 +100,7 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube,...
 %                      Needs CVX to setup convex optimization problems that
 %                      1) initializes the patternsearch-based optimization, and
 %                      2) computes the upper bound for the bisection
-% * Specify both options.desired_accuracy and PSoptions or neither to use the defaults 
+% * Specify both desired_accuracy and PSoptions or neither to use the defaults 
 % * max_underapprox_reach_avoid_prob is the highest thresh
 %   that may be given while obtaining a non-trivial underapproximation
 % * See @LtiSystem/getConcatMats for more information about the
@@ -157,9 +157,8 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube,...
         zeros(sys.state_dim,1), time_horizon);
 
     % Construct the constrained initial safe set
-    init_safe_set = Polyhedron('H', target_tube(1).H,...
-        'He',[target_tube(1).He;
-              options.init_safe_set_affine.He]);
+    init_safe_set = Polyhedron('H', safety_tube(1).H,...
+                      'He',[safety_tube(1).He;options.init_safe_set_affine.He]);
     
     %% Step 1: Find xmax
     % Compute the chebyshev center of the initial safe set and seek the
@@ -169,14 +168,14 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube,...
     % subject to
     %   X = Abar x_0 + H * U + G_matrix * \mu_W 
     %   U \in \mathcal{U}^N
-    %   X \in concatenated_target_tube
+    %   X \in concatenated_safety_tube
     %   x_0\in AffineHull
     %   init_safe_set.A_i * x_0 + R* || init_safe_set.A_i || \leq b_i 
     %                                      (see Boyd's CVX textbook, pg. 418,
     %                                       Chebyshev centering for a polytope)
     cvx_begin quiet
-        variable resulting_X_for_xmax(length_state_vector) 
-        variable guess_concatentated_input_vector(length_input_vector)
+        variable resulting_X_for_xmax(sys.state_dim * time_horizon) 
+        variable guess_concatentated_input_vector(sys.input_dim * time_horizon)
         variable initial_x_for_xmax(sys.state_dim)
         variable R
 
@@ -189,8 +188,8 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube,...
                             + mean_X_zizs)
             concat_input_space_A * guess_concatentated_input_vector <= ...
                                                       concat_input_space_b 
-            concat_target_tube_A * resulting_X_for_xmax <= ...
-                            concat_target_tube_b
+            concat_safety_tube_A * resulting_X_for_xmax <= ...
+                            concat_safety_tube_b
             init_safe_set.Ae * initial_x_for_xmax == ...
                                                    init_safe_set.be
             for i = 1:length(init_safe_set.A)
@@ -213,7 +212,7 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube,...
                 H, ...
                 concat_safety_tube_A, ...
                 concat_safety_tube_b, ...
-                desired_accuracy));
+                options.desired_accuracy));
     
     % Constraint generation --- decision variable [input_vector;xmax]
     input_vector_augmented_affine_hull_Aeq = ...
@@ -236,7 +235,7 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube,...
                 input_vector_augmented_affine_hull_Aeq, ...
                 input_vector_augmented_affine_hull_beq, ...
                 [],[],[], ...
-                PSoptions);
+                options.PSoptions);
     
     %% Parse the output of patternsearch
     % Maximum attainable terminal hitting-time stochastic reach-avoid
@@ -251,13 +250,13 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube,...
     n_dir_vecs = size(options.set_of_dir_vecs, 2);
     
     % If non-trivial underapproximative stochastic reach-avoid polytope
-    if max_underapprox_reach_prob < prob_thresh_of_interest
+    if max_underapprox_reach_prob < prob_thresh
         % Stochastic reach-avoid underapproximation is empty and no
         % admissible open-loop policy exists
         if options.verbose >= 1
             fprintf(['Polytopic underapproximation does not exist for ',...
                  'alpha = %1.2f since W(x_max) = %1.3f.\n\n'], ...
-                 prob_thresh_of_interest, max_underapprox_reach_prob);
+                 prob_thresh, max_underapprox_reach_prob);
         end
 
         % Assigning the outputs to trivial results
@@ -271,7 +270,7 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube,...
             % Stochastic reach-avoid underapproximation is non-trivial
             fprintf(['Polytopic underapproximation exists for alpha = ',...
                      '%1.2f since W(x_max) = %1.3f.\n\n'], ...
-                     prob_thresh_of_interest, max_underapprox_reach_prob);
+                     prob_thresh, max_underapprox_reach_prob);
         end
 
         % For storing boundary points
@@ -283,9 +282,11 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube,...
         %% via bisection
         for dir_index = 1: n_dir_vecs
             % Get direction_index-th direction in the hyperplane
-            dir_vec = options.set_of_direction_vectors(:,dir_index);
-
-            fprintf('Analyzing direction :%2d/%2d\n',dir_index, n_dir_vecs);
+            dir_vec = options.set_of_dir_vecs(:,dir_index);
+            
+            if options.verbose >= 1
+                fprintf('Analyzing direction :%2d/%2d\n',dir_index, n_dir_vecs);
+            end
 
             % Bounds on theta \in [lb_theta, ub_theta] 
             % Lower bound is always 0 as xmax could be a vertex
@@ -308,8 +309,8 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube,...
             if options.verbose >= 1
                 fprintf('\b | Upper bound of theta: %1.2f\n',ub_theta);
 
-                fprintf(['OptRAProb | OptTheta | LB_theta | UB_theta | ',...
-                            'OptInp^2 | Exit reason\n']); %10 characters b/n | |
+                fprintf(['OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  ',...
+                          '|  OptInp^2  | Exit reason\n']); %10 characters b/n | |
             end
             %% Bisection-based computation of the maximum extension of
             %% the ray originating from xmax                
@@ -328,23 +329,23 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube,...
                 % Compute the maximum reach-avoid prob and the
                 % associated open-loop opt controller starting from
                 % candidate_initial_state using Genz+patternsearch
-                % Add desired_accuracy to prob_thresh_of_interest so that we
+                % Add desired_accuracy to prob_thresh so that we
                 % are guaranteed to meet the desired thresh 
                 negLogReachProbGivenInputVectorFeas= @(input_vector)...
                     -log(min(computeReachAvoidProb(input_vector, ...
                                 mean_X_sans_input, ...
                                 cov_X_sans_input, ...
                                 H, ...
-                                concat_target_tube_A, ...
-                                concat_target_tube_b, ...
-                                desired_accuracy),...
-                             prob_thresh_of_interest + 5*desired_accuracy));
+                                concat_safety_tube_A, ...
+                                concat_safety_tube_b, ...
+                                options.desired_accuracy),...
+                                prob_thresh + 5*options.desired_accuracy));
 
                 % Compute the opt admissible input_vector that ensures
                 % W_0(x,U)\geq \alpha, given x_0
                 %
                 % minimize
-                % -log(min(ReachAvoidProb(U),prob_thresh_of_interest))
+                % -log(min(ReachAvoidProb(U),prob_thresh))
                 % subject to
                 %        concat_input_space_A * U \leq concat_input_space_b
                 [opt_input_at_this_step, patternsearch_opt_value]= ...
@@ -354,10 +355,10 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube,...
                         concat_input_space_A, ...
                         concat_input_space_b, ...
                         [],[],[],[],[], ...
-                        PSoptions);
+                        options.PSoptions);
                 prob_value_at_this_step = exp(-patternsearch_opt_value);
-                if  prob_value_at_this_step - prob_thresh_of_interest >=...
-                        desired_accuracy/2
+                if  prob_value_at_this_step - prob_thresh >=...
+                        options.desired_accuracy/2
                     % Update values only if it is above the thresh
                     opt_reachAvoid_prob_so_far = prob_value_at_this_step;
                     opt_inputs_so_far = opt_input_at_this_step;
@@ -372,7 +373,7 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube,...
                 if options.verbose >= 1
                     % Print current solution
                     fprintf(strcat('  %1.4f  |  %1.2e  |  %1.2e  |  %1.2e  ',...
-                        '|  %1.2e  |  ', exitmessage, ' \n'), ...
+                        '  |  %1.2e  |  ', exitmessage, ' \n'), ...
                         opt_reachAvoid_prob_so_far, opt_theta_so_far, ...
                         lb_theta,ub_theta,opt_inputs_so_far'*opt_inputs_so_far);
                 end

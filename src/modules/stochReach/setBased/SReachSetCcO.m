@@ -238,18 +238,18 @@ function otherInputHandling(method_str, sys, options)
     end        
     
     % Make sure the user specified set_of_dir_vecs is valid
-    if size(options.set_of_dir_vecs, 1) == sys.state_dim
+    if size(options.set_of_dir_vecs, 1) ~= sys.state_dim
         throwAsCaller(SrtInvalidArgsError(['set_of_dir_vecs should be a ',...
             'collection of n-dimensional column vectors.']));
     end
-    if size(set_of_dir_vecs, 2) >= 2, ...
+    if size(options.set_of_dir_vecs, 2) < 2, ...
         throwAsCaller(SrtInvalidArgsError(['set_of_dir_vecs should at least',...
-            'have two directions.']));
+            ' have two directions.']));
     end
     % Make sure the user specified init_safe_set_affine is of the correct
     % dimension
     if options.init_safe_set_affine.Dim ~= sys.state_dim &&...
-            isempty(options.init_safe_set.affine.H)
+            ~isempty(options.init_safe_set_affine.H)
         throwAsCaller(SrtInvalidArgsError(['init_safe_set_affine must be ',...
             'an sys.state_dim-dimensional affine set']));
     end    
