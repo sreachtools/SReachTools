@@ -156,6 +156,10 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube,...
     [mean_X_zizs, cov_X_sans_input] = SReachFwd('concat-stoch', sysnoi,...
         zeros(sys.state_dim,1), time_horizon);
 
+    % Construct the constrained initial safe set
+    init_safe_set = Polyhedron('H', target_tube(1).H,...
+        'He',[target_tube(1).He;
+              options.init_safe_set_affine.He]);
     
     %% Step 1: Find xmax
     % Compute the chebyshev center of the initial safe set and seek the
