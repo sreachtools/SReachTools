@@ -54,7 +54,7 @@ function bounded_set = SReachSetLagBset(disturbance, onestep_prob_thresh, ...
 %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 
-    valid_bound_set_methods = {'load','random','box','optim-box'};
+    valid_bound_set_methods = {'load','random','box'};
     validatestring(options.bound_set_method, valid_bound_set_methods);
 
     % only need to validate attributes if not loading from file
@@ -96,7 +96,7 @@ function bounded_set = SReachSetLagBset(disturbance, onestep_prob_thresh, ...
             validateattributes(options.err_thresh, {'numeric'}, ...
                 {'scalar', 'positive'});
 
-            bounded_set = getBoundingBoxForGaussian(disturbance, ...
+            bounded_set = boxBisection(disturbance, ...
                 onestep_prob_thresh, options.err_thresh);
         case 'optim-box'
             % Has to be Gaussian
@@ -160,16 +160,16 @@ function bounded_set = boxBisection(disturbance, onestep_onestep_prob_thresh, er
     center = zeros(1, disturbance.dim);
     dx_ones = ones(1, disturbance.dim);
 
-    bx = Polyhedron('A', [eye(size(c, 1)), -eye(size(c, 1))], ...
-                    'b', b * ones(2 * size(c, 1), 1));
+    bx = Polyhedron('A', [eye(disturbance.dim); -eye(disturbance.dim)], ...
+                    'b', b * ones(2 * disturbance.dim, 1));
     bx = disturbance.parameters.covariance^(1/2) * bx + ...
         disturbance.parameters.mean;
     p = computeProb(disturbance, bx);
     
     while p < onestep_onestep_prob_thresh + err
         b = 2 * b;
-        bx = Polyhedron('A', [eye(size(c, 1)), -eye(size(c, 1))], ...
-                        'b', b * ones(2 * size(c, 1), 1));
+        bx = Polyhedron('A', [eye(disturbance.dim); -eye(disturbance.dim)], ...
+                        'b', b * ones(2 * disturbance.dim, 1));
         bx = disturbance.parameters.covariance^(1/2) * bx + ...
             disturbance.parameters.mean;
         p = computeProb(disturbance, bx);
@@ -185,8 +185,8 @@ function bounded_set = boxBisection(disturbance, onestep_onestep_prob_thresh, er
 
         % bisect 
         b_new = b - (b - a) / 2;
-        bx = Polyhedron('A', [eye(size(c, 1)), -eye(size(c, 1))], ...
-                        'b', b * ones(2 * size(c, 1), 1));
+        bx = Polyhedron('A', [eye(disturbance.dim); -eye(disturbance.dim)], ...
+                        'b', b_new * ones(2 * disturbance.dim, 1));
         bx = disturbance.parameters.covariance^(1/2) * bx + ...
             disturbance.parameters.mean;
         p = computeProb(disturbance, bx);
@@ -464,7 +464,7 @@ end
 
 function b = boxFromCenterAndHalfLength(c, hl)
 
-    v = zeros(2^size(c, 1), size(c, 1));
+    v = zeros(2^disturbance.dim, size(c, 1));
 
     if size(c, 1) == 2
         P = [ hl(1),  hl(2); ...

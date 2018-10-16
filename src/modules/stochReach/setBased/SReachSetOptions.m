@@ -81,7 +81,7 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 
     valid_prob = {'term'};
     valid_method= {'chance-open','genzps-open','lag-under','lag-over'};
-    valid_bound_method = {'load','random','box','optim-box'};
+    valid_bound_method = {'load','random','box'};
     % Input parsing
     inpar = inputParser();
     inpar.addRequired('prob_str', @(x) any(validatestring(x,valid_prob)));
@@ -148,21 +148,21 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
                 'input for SReachSet when using ''lag-over''/''lag-under''.']));
         end
         switch(lower(options.bound_set_method))
-            case 'optim-box'
-                v = ver;            
-                has_fmincon = any(strcmp(cellstr(char(v.Name)),...
-                    'Optimization Toolbox'));
-                if ~has_fmincon
-                    exc = SrtSetupError(['SReachSet with ''lag-over/under''',...
-                        'and bound_set_method as ''optim-box'' needs ',...
-                        'MATLAB''s Optimization Toolbox.']);
-                    throw(exc);
-                end
-                if any(contains(inpar.UsingDefaults,'box_center'))
-                    throw(SrtInvalidArgsError(['Box center (fixed center ',...
-                        'around which the box is optimized for) is a ',...
-                        'required input for bound_set_method: optim-box']));
-                end
+            % case 'optim-box'
+            %     v = ver;            
+            %     has_fmincon = any(strcmp(cellstr(char(v.Name)),...
+            %         'Optimization Toolbox'));
+            %     if ~has_fmincon
+            %         exc = SrtSetupError(['SReachSet with ''lag-over/under''',...
+            %             'and bound_set_method as ''optim-box'' needs ',...
+            %             'MATLAB''s Optimization Toolbox.']);
+            %         throw(exc);
+            %     end
+            %     if any(contains(inpar.UsingDefaults,'box_center'))
+            %         throw(SrtInvalidArgsError(['Box center (fixed center ',...
+            %             'around which the box is optimized for) is a ',...
+            %             'required input for bound_set_method: optim-box']));
+            %     end
             case 'box'
                 if any(contains(inpar.UsingDefaults,'err_thresh'))
                     throw(SrtInvalidArgsError(['err_thresh (threshold for ',...
