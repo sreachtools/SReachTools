@@ -74,9 +74,8 @@ sysnoi = LtvSystem('StateMatrix',sys.state_mat,'DisturbanceMatrix',...
 if ft_run
     timer_ft = tic;
     disp('Genz-algorithm+patternsearch technique');
-    options = SReachPointOptions('term','genzps-open');
     [lb_stoch_reach_avoid_ft, optimal_input_vector_ft] = SReachPoint(...
-        'term','genzps-open', sys, initial_state, target_tube, options);  
+        'term','genzps-open', sys, initial_state, target_tube);  
     elapsed_time_ft = toc(timer_ft);
     if lb_stoch_reach_avoid_ft > 0
         % This function returns the concatenated state vector stacked columnwise
@@ -96,9 +95,8 @@ end
 if cc_open_run
     timer_cc_pwl = tic;
     disp('Piecewise-linear single shot risk allocation technique');
-    options = SReachPointOptions('term','chance-open');
     [lb_stoch_reach_avoid_cc_pwl, optimal_input_vector_cc_pwl] = SReachPoint(...
-        'term','chance-open', sys, initial_state, target_tube, options);  
+        'term','chance-open', sys, initial_state, target_tube);  
     elapsed_time_cc_pwl = toc(timer_cc_pwl);
     if lb_stoch_reach_avoid_cc_pwl > 0
         % This function returns the concatenated state vector stacked columnwise
@@ -121,7 +119,8 @@ end
 if cc_affine_run
     timer_cc_pwl_closed = tic;
     disp('Piecewise-linear single shot (closed-loop-dc) risk allocation technique');
-    options = SReachPointOptions('term','chance-affine', 'verbose', 1);
+    options = SReachPointOptions('term','chance-affine',...
+        'max_input_viol_prob', 1e-2, 'verbose', 1);
     [lb_stoch_reach_avoid_cc_pwl_closed, optimal_input_vector_cc_pwl_closed, optimal_input_gain, risk_alloc_state, risk_alloc_input] =...
          SReachPoint('term','chance-affine', sys, initial_state, target_tube,...
             options);  
