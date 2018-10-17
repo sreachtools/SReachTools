@@ -119,7 +119,7 @@ classdef SReachFwdTest < matlab.unittest.TestCase
             mean_end_locations = mean(end_locations,2);
             % Checking values
             testCase.verifyLessThanOrEqual(abs(sum(mcarlo_result)/n_mcarlo_sims - prob), desired_accuracy);            
-            testCase.verifyLessThanOrEqual(max(abs(mean_vec - mean_end_locations)), 1e-3);            
+            testCase.verifyLessThanOrEqual(max(abs(mean_vec - mean_end_locations)), 1e-2);            
             %% Stochastic initial state
             init_state_rand = RandomVector('Gaussian',init_state,0.1*eye(4)); 
             % Testing
@@ -141,7 +141,7 @@ classdef SReachFwdTest < matlab.unittest.TestCase
             mean_end_locations = mean(end_locations,2);
             % Checking values
             testCase.verifyLessThanOrEqual(abs(sum(mcarlo_result)/n_mcarlo_sims - prob), desired_accuracy);            
-            testCase.verifyLessThanOrEqual(max(abs(mean_vec - mean_end_locations)), 5e-3);                    
+            testCase.verifyLessThanOrEqual(max(abs(mean_vec - mean_end_locations)), 1e-2);                    
         end
         
         function testTargetTubeStochAndProb(testCase)
@@ -216,7 +216,7 @@ classdef SReachFwdTest < matlab.unittest.TestCase
             mean_concat_state = mean(concat_state_realization,2);
             % Checking values
             testCase.verifyLessThanOrEqual(abs(sum(mcarlo_result)/n_mcarlo_sims - prob), desired_accuracy);            
-            testCase.verifyLessThanOrEqual(max(abs(mean_vec - mean_concat_state)), 1e-3);            
+            testCase.verifyLessThanOrEqual(max(abs(mean_vec - mean_concat_state)), 1e-2);            
             %% Stochastic initial state
             init_state_rand = RandomVector('Gaussian',init_state,0.001*eye(4)); 
             % Testing
@@ -237,7 +237,7 @@ classdef SReachFwdTest < matlab.unittest.TestCase
             mean_concat_state = mean(concat_state_realization,2);
             % Checking values
             testCase.verifyLessThanOrEqual(abs(sum(mcarlo_result)/n_mcarlo_sims - prob), desired_accuracy);            
-            testCase.verifyLessThanOrEqual(max(abs(mean_vec - mean_concat_state)), 5e-3);                    
+            testCase.verifyLessThanOrEqual(max(abs(mean_vec - mean_concat_state)), 1e-2);                    
         end
     end
 end
