@@ -129,13 +129,14 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointPaO(sys, initial_state,...
         variable U_vector(sys.input_dim * time_horizon,1);
         variable mean_X(sys.state_dim * time_horizon,options.num_particles);
         variable z(1,options.num_particles) binary;
-        minimize sum(z)
+        % Implementation of Problem 2 in Lesser CDC 2013
+        maximize sum(z)
         subject to
             mean_X == repmat(Z * initial_state + H * U_vector,...
                 1, options.num_particles) + G * W_realizations;
             concat_input_space_A * U_vector <= concat_input_space_b;
             concat_safety_tube_A * mean_X <= repmat(concat_safety_tube_b, 1,...
-                options.num_particles) + options.bigM * repmat(z,n_lin_state,1);
+                options.num_particles) + options.bigM * repmat(1-z,n_lin_state,1);
         if options.verbose >= 1
             fprintf('Done\nParsing and solving the MILP....');
         end

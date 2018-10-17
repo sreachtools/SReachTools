@@ -325,8 +325,15 @@ function [options, varargout] = otherInputHandling(prob_str,method_str,...
 
     if strcmpi(prob_str,'term') && length(additional_args) <= 1        
         if isempty(additional_args) || isempty(additional_args{1})
-            % No options provided! Create one.
-            options = SReachPointOptions(prob_str,method_str);
+            if strcmpi(method_str, 'chance-affine')
+                throwAsCaller(SrtInvalidArgsError(['Default options for ',...
+                    'chance-affine requires a user specified parameter.\n',...
+                    'Expected max_input_viol_prob, the maximum allowed ',...
+                    'likelihood of violating the input constraints.']));
+            else
+                % No options provided! Create one.
+                options = SReachPointOptions(prob_str,method_str);
+            end
         else
             % Options provided
             options = additional_args{1};        
