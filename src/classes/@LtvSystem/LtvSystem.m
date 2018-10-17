@@ -10,7 +10,7 @@ classdef LtvSystem
 %
 % Perturbation can be either:
 %     - a bounded uncertainity with no stochastic information
-%     - a StochasticDisturbance object
+%     - a RandomVector object
 %
 %  Usage:
 %  ------
@@ -105,9 +105,8 @@ classdef LtvSystem
         %   StateMatrix        | Square numeric matrix
         %   InputMatrix        | (optional) Numeric matrix
         %   DisturbanceMatrix  | (optional) Numeric matrix
-        %   InputSpace         | (optional) Polyhedron
-        %   Disturbance        | (optional) Polyhedron or 
-        %                      |            StochasticDisturbance
+        %   InputSpace         | (optional) Polyhedron or empty
+        %   Disturbance        | (optional) Polyhedron or RandomVector or empty
         % 
         % Outputs:
         % --------
@@ -197,8 +196,8 @@ classdef LtvSystem
             if any(strcmp(inpar.UsingDefaults, 'Disturbance'))
                 obj.dist_dim = 0;
             else
-                if isa(obj.dist, 'RandomVector') || isa(obj.dist,...
-                    'StochasticDisturbance') 
+                % Can be only Polyhedron or RandomVector due to input parsing
+                if isa(obj.dist, 'RandomVector') 
                     obj.dist_dim = obj.dist.dim;
                 else
                     obj.dist_dim = obj.dist.Dim;

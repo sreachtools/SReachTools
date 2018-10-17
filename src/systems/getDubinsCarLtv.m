@@ -24,7 +24,7 @@ function [sys, heading_vec] = getDubinsCarLtv(type,...
 %   dim         - Dimensions
 %   T           - Discretization time step
 %   input_space - Input space (Polyhedron)
-%   disturb     - Disturbance object (Polyhedron / StochasticDisturbance)
+%   disturb     - Disturbance object (Polyhedron / RandomVector / empty)
 % 
 % Outputs:
 % --------
@@ -37,6 +37,8 @@ function [sys, heading_vec] = getDubinsCarLtv(type,...
 %        https://github.com/abyvinod/SReachTools/blob/master/LICENSE
 % 
 %
+
+    %TODO: Incorporate input handling
 
     heading_vec = initial_heading + sampling_time * cumsum([0;turning_rate_seq]);
 

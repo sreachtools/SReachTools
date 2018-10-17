@@ -136,7 +136,7 @@ assert(correct_error_id_sent_out == 1, ...
 
 %% Incorrect safe set type
 correct_error_id_sent_out = 0;
-safe_set = StochasticDisturbance('Gaussian',0,1);
+safe_set = RandomVector('Gaussian',0,1);
 target_set = Polyhedron('lb', [-1,-1], 'ub', [1,1]);
 try
     [concat_target_tube_A, concat_target_tube_b] = ...
@@ -162,7 +162,7 @@ assert(correct_error_id_sent_out == 1, ...
 
 %% Incorrect target set type
 correct_error_id_sent_out = 0;
-target_set = StochasticDisturbance('Gaussian',0,1);
+target_set = RandomVector('Gaussian',0,1);
 safe_set = Polyhedron('lb', [-1,-1], 'ub', [1,1]);
 try
     [concat_target_tube_A, concat_target_tube_b] = ...

@@ -10,7 +10,7 @@ classdef LtiSystem < LtvSystem
 %
 % Perturbation can be either:
 %     - a bounded uncertainity with no stochastic information
-%     - a StochasticDisturbance object
+%     - a RandomVector object
 %
 %  Usage:
 %  ------
@@ -32,7 +32,7 @@ classdef LtiSystem < LtvSystem
 %   input_space  - Input space (empty / Polyhedron)
 %   dist_matrix  - Disturbance matrix (Matrix, state_dim x dist_dim)
 %   dist         - Disturbance object 
-%                  (empty / Polyhedron / StochasticDisturbance)     
+%                  (empty / Polyhedron / RandomVector)     
 %   state_dim    - State dimension (scalar)   
 %   input_dim    - Input dimension (scalar)  
 %   dist_dim     - Disturbance dimension (scalar)
@@ -86,9 +86,8 @@ classdef LtiSystem < LtvSystem
         %   StateMatrix        | Square numeric matrix
         %   InputMatrix        | (optional) Numeric matrix
         %   DisturbanceMatrix  | (optional) Numeric matrix
-        %   InputSpace         | (optional) Polyhedron
-        %   Disturbance        | (optional) Polyhedron or 
-        %                      |            StochasticDisturbance
+        %   InputSpace         | (optional) Polyhedron or empty
+        %   Disturbance        | (optional) Polyhedron or RandomVector or empty
         % 
         % Outputs:
         % --------

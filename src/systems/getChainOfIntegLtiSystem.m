@@ -35,7 +35,7 @@ function sys = getChainOfIntegLtiSystem(dim, T, inputSpace, varargin)
 %   dim         - Dimensions
 %   T           - Discretization time step
 %   input_space - Input space (Polyhedron)
-%   disturb     - Disturbance object (Polyhedron / StochasticDisturbance)
+%   disturb     - Disturbance object (Polyhedron / RandomVector / empty)
 % 
 % Outputs:
 % --------
@@ -57,7 +57,7 @@ function sys = getChainOfIntegLtiSystem(dim, T, inputSpace, varargin)
     inpar.addRequired('inputSpace', @(x) validateattributes(x, ...
         {'Polyhedron'}, {'nonempty'}));
     inpar.addOptional('dist', Polyhedron(), @(x) validateattributes(x,...
-        {'Polyhedron', 'StochasticDisturbance', 'RandomVector'},{'nonempty'}));
+        {'Polyhedron', 'RandomVector'},{'nonempty'}));
     inpar.addOptional('dist_mat', [], @(x) validateattributes(x, {'numeric'},...
         {'nonempty'}));
     

@@ -80,7 +80,7 @@ classdef LtiSystemTest < matlab.unittest.TestCase
                 'DisturbanceMatrix', [T^2;T]), 'SReachTools:invalidArgs');
         end
         
-        function testIncorrectStochasticDisturbanceBadDim(testCase)
+        function testIncorrectRandomVectorBadDim(testCase)
             T = 0.5;
             mean_disturbance = zeros(5,1);
             covariance_disturbance = eye(5);
@@ -164,7 +164,7 @@ classdef LtiSystemTest < matlab.unittest.TestCase
 %            umax = 0.75;
 %            mean_disturbance = 0;
 %            covariance_disturbance = 4;
-%            GaussianDisturbance = StochasticDisturbance('Gaussian', ...
+%            GaussianDisturbance = RandomVector('Gaussian', ...
 %                                                         mean_disturbance, ...
 %                                                         covariance_disturbance);                                                     
 %            sys = LtiSystem(...
@@ -213,9 +213,8 @@ classdef LtiSystemTest < matlab.unittest.TestCase
             dmax = 1;
             mean_disturbance = 0;
             covariance_disturbance = 4;
-            GaussianDisturbance = StochasticDisturbance('Gaussian', ...
-                                                         mean_disturbance, ...
-                                                         covariance_disturbance);                                                     
+            GaussianDisturbance = RandomVector('Gaussian', mean_disturbance, ...
+                covariance_disturbance);                                                     
             % Load Abar_saved, H_saved, G_matrix_saved expected
             load('./data/getConcatMatsData.mat');
             
