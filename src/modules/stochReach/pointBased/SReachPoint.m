@@ -185,7 +185,7 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 
     % Input parsing
     valid_prob = {'first','term'};
-    valid_method= {'chance-open','chance-affine','genzps-open','scenario-open'};
+    valid_method= {'chance-open','chance-affine','genzps-open','particle-open'};
 
     inpar = inputParser();
     inpar.addRequired('prob_str', @(x) any(validatestring(x,valid_prob)));
@@ -232,10 +232,10 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
                     SReachPointCcO(sys, initial_state, safety_tube, options);
                  opt_input_gain = [];
                  varargout{1} = risk_alloc_state;
-            case 'scenario-open'
+            case 'particle-open'
                 % Chance-constrained formulation with piecewise-linear 
                 % approximations to compute open-loop controller (LP)
-                [approx_reach_prob, opt_input_vec] = SReachPointCcO(sys,...
+                [approx_reach_prob, opt_input_vec] = SReachPointPaO(sys,...
                     initial_state, safety_tube, options);
                  opt_input_gain = [];
             case 'chance-affine'

@@ -81,7 +81,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 %
 
     valid_prob = {'first','term'};
-    valid_method= {'chance-open','chance-affine','genzps-open','scenario-open'};
+    valid_method= {'chance-open','chance-affine','genzps-open','particle-open'};
 
     % Input parsing
     inpar = inputParser();
@@ -106,6 +106,13 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
         case 'chance-open'
             % Accuracy of piecewise-affine approximation of norminvcdf
             inpar.addParameter('pwa_accuracy',1e-3, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0}));
+        case 'particle-open'
+            % Number of particles to be used for approximation
+            inpar.addParameter('num_particles', 1e2, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0}));
+            % BigM notation requires a large value
+            inpar.addParameter('bigM', 5e3, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
         case 'chance-affine'
             % Probabilistic relaxation of the hard input constraints
