@@ -105,13 +105,27 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointPaO(sys, initial_state,...
     if strcmpi(sys.dist.type,'Gaussian')
         muW = repmat(sys.dist.parameters.mean,time_horizon,1);
         covW = kron(eye(time_horizon), sys.dist.parameters.covariance);
+        if options.verbose >= 1
+            fprintf('Creating Gaussian random variable realizations....');
+        end    
         % Create realizations of W arranged columnwise
         W_realizations = mvnrnd(muW', covW, options.num_particles)';
+        if options.verbose >= 1
+            fprintf('Done\n');
+        end
     else
         throw(SrtInvalidArgsError('Expected a Gaussian-perturbed linear system'));
     end
     %% Solve the feasibility problem
-    cvx_begin quiet
+    if options.verbose >= 1
+        fprintf('Setting up CVX problem....');
+    end
+    cvx_begin
+        if options.verbose >= 2
+            cvx_quiet false
+        else
+            cvx_quiet true
+        end
         variable U_vector(sys.input_dim * time_horizon,1);
         variable mean_X(sys.state_dim * time_horizon,options.num_particles);
         variable z(1,options.num_particles) binary;
@@ -122,8 +136,13 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointPaO(sys, initial_state,...
             concat_input_space_A * U_vector <= concat_input_space_b;
             concat_safety_tube_A * mean_X <= repmat(concat_safety_tube_b, 1,...
                 options.num_particles) + options.bigM * repmat(z,n_lin_state,1);
+        if options.verbose >= 1
+            fprintf('Done\nParsing and solving the MILP....');
+        end
     cvx_end
-
+    if options.verbose >= 1
+        fprintf('Done\n');
+    end
     %% Overwrite the solutions
     if strcmpi(cvx_status, 'Solved')
         lb_stoch_reach = sum(z)/options.num_particles;
