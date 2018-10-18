@@ -1,0 +1,635 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>forwardStochasticReachCWH</title><meta name="generator" content="MATLAB 9.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2018-10-18"><meta name="DC.source" content="forwardStochasticReachCWH.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Forward stochastic reachability using Fourier transforms</a></li><li><a href="#2">Problem formulation: Spacecraft motion via CWH dynamics</a></li><li><a href="#4">Dynamics model for the deputy relative to the chief spacecraft</a></li><li><a href="#5">System definition</a></li><li><a href="#7">P1. Probability that the deputy rendezvous with the chief at some time <img src="forwardStochasticReachCWH_eq15636846968047188835.png" alt="$k$">?</a></li><li><a href="#15">P2. Probability that the deputy (safely) rendezvous with the chief?</a></li></ul></div><h2 id="1">Forward stochastic reachability using Fourier transforms</h2><p>This example will demonstrate the use of SReachTools in forward stochastic reachability analysis for stochastic continuous-state discrete-time linear time-invariant (LTI) systems.</p><p>Specifically, we will discuss how SReachTools uses Fourier transforms to efficiently compute</p><div><ol><li><b>Forward stochastic reach probability density</b>: The probability density function associated with the random vector describing the state at a future time of interest.</li><li><b>Probability computations</b>: Probability that the state lies in a target set or the trajectory in a target tube at a future time of interest.</li></ol></div><p>Our approach is grid-free and recursion-free resulting in highly scalable solutions, especially for Gaussian-perturbed LTI systems.</p><p>We will consider the case where the initial state is a known deterministic point in the state space, and the case where the initial state is a random vector.</p><p>This Live Script is part of the SReachTools toolbox. License for the use of this function is given in <a href="https://github.com/unm-hscl/SReachTools/blob/master/LICENSE">https://github.com/unm-hscl/SReachTools/blob/master/LICENSE</a>.</p><pre class="codeinput"><span class="comment">% Prescript running</span>
+close <span class="string">all</span>;clc;clear;
+srtinit
+</pre><h2 id="2">Problem formulation: Spacecraft motion via CWH dynamics</h2><p>We consider both the spacecrafts, referred to as the deputy spacecraft and the chief spacecraft, to be in the same circular orbit. In this example, we will consider the forward stochastic reachability analysis of the deputy.</p><p><img vspace="5" hspace="5" src="cwh_sketch.png" alt=""> </p><h2 id="4">Dynamics model for the deputy relative to the chief spacecraft</h2><p>The relative planar dynamics of the deputy with respect to the chief are described by the <a href="https://doi.org/10.1109/CDC.2013.6760626">Clohessy-Wiltshire-Hill (CWH) equations,</a></p><p><img src="forwardStochasticReachCWH_eq00898161790449768620.png" alt="$$\ddot{x} - 3 \omega x - 2 \omega \dot{y} = \frac{F_{x}}{m_{d}}$$"></p><p><img src="forwardStochasticReachCWH_eq15283232495949856112.png" alt="$$            \ddot{y} + 2 \omega \dot{x} = \frac{F_{y}}{m_{d}}$$"></p><p>where the position of the deputy relative to the chief is <img src="forwardStochasticReachCWH_eq15556242510480314522.png" alt="$x,y \in \mathbf{R}$">, <img src="forwardStochasticReachCWH_eq07285538383886324120.png" alt="$\omega = \sqrt{\frac{\mu}{R_{0}^{3}}}$"> is the orbital frequency, <img src="forwardStochasticReachCWH_eq05371638286043275527.png" alt="$\mu$"> is the gravitational constant, and <img src="forwardStochasticReachCWH_eq10871390185993502494.png" alt="$R_{0}$"> is the orbital radius of the chief spacecraft.  We define the state as <img src="forwardStochasticReachCWH_eq10872751811371042055.png" alt="$\overline{x} = {[x\ y\ \dot{x}\ \dot{y}]}^\top \in \mathbf{R}^{4}$"> which is the position and velocity of the deputy relative to the chief along <img src="forwardStochasticReachCWH_eq15238746908345155538.png" alt="$\mathrm{x}$">- and <img src="forwardStochasticReachCWH_eq06683332128004049953.png" alt="$\mathrm{y}$">- axes, and the input as <img src="forwardStochasticReachCWH_eq03681831066756660658.png" alt="$\overline{u} = {[F_{x}\ F_{y}]}^\top \in \mathcal{U}\subset\mathbf{R}^{2}$">.</p><p>We will discretize the CWH dynamics in time, via zero-order hold, to obtain the discrete-time linear time-invariant system and add a Gaussian disturbance to account for the modeling uncertainties and the disturbance forces,</p><p><img src="forwardStochasticReachCWH_eq17824561326300448854.png" alt="$$\overline{x}_{k+1} = A \overline{x}_{k} + B \overline{u}_{k} +&#xA;\overline{w}_{k}$$"></p><p>with <img src="forwardStochasticReachCWH_eq17592557756310175309.png" alt="$\overline{w}_{k} \in \mathbf{R}^{4}$"> as an IID Gaussian zero-mean random process with a known covariance matrix <img src="forwardStochasticReachCWH_eq13715931348400830039.png" alt="$\Sigma_{\overline{w}}$">.</p><p>SReachTools directly allows us to create a <tt>LtiSystem</tt> object with these dynamics. We will set the input space to be unbounded.</p><h2 id="5">System definition</h2><pre class="codeinput">umax=Inf;
+mean_disturbance = zeros(4,1);
+covariance_disturbance = diag([1e-4, 1e-4, 5e-8, 5e-8]);
+<span class="comment">% Define the CWH (planar) dynamics of the deputy spacecraft relative to the</span>
+<span class="comment">% chief spacecraft as a LtiSystem object</span>
+sys_CWH = getCwhLtiSystem(4, Polyhedron(<span class="string">'lb'</span>, -umax*ones(2,1),<span class="keyword">...</span>
+                                        <span class="string">'ub'</span>,  umax*ones(2,1)),<span class="keyword">...</span>
+       RandomVector(<span class="string">'Gaussian'</span>, mean_disturbance,covariance_disturbance));
+</pre><p>Next, we close the control loop under the action of a linear feedback law (LQR) We will define a <tt>LtiSystem</tt> object to describe the dynamics when <img src="forwardStochasticReachCWH_eq07071218762776734431.png" alt="$\overline{u}_k = -K \overline{x}_k$"> for some <img src="forwardStochasticReachCWH_eq12098423596142149701.png" alt="$K\in \mathbf{R}^{4\times 2}$">. We will compute <img src="forwardStochasticReachCWH_eq03845174387838694102.png" alt="$K$"> using LQR theory with <img src="forwardStochasticReachCWH_eq16816910371545504788.png" alt="$Q= 0.01 I_4$"> and <img src="forwardStochasticReachCWH_eq17195948995856232139.png" alt="$R=I_2$">, i.e., <img src="forwardStochasticReachCWH_eq07071218762776734431.png" alt="$\overline{u}_k = -K \overline{x}_k$"> will regulate the deputy spacecraft towards the origin.</p><pre class="codeinput"><span class="comment">% Create a discrete-time LQR controller that regulates the deputy to the origin</span>
+K = lqr(ss(sys_CWH.state_mat,sys_CWH.input_mat,[],[],-1),0.01*eye(4),eye(2));
+<span class="comment">% Reuse the system definition in sys_CWH with appropriately defined state matrix</span>
+closed_loop_state_mat = sys_CWH.state_mat - sys_CWH.input_mat*K;
+sys = LtiSystem(<span class="string">'StateMatrix'</span>, closed_loop_state_mat,<span class="keyword">...</span>
+                <span class="string">'DisturbanceMatrix'</span>, sys_CWH.dist_mat,<span class="keyword">...</span>
+                <span class="string">'Disturbance'</span>, sys_CWH.dist);
+disp(sys);
+</pre><pre class="codeoutput">Linear time invariant system with 4 states, 0 inputs, and 4 disturbances.
+</pre><h2 id="7">P1. Probability that the deputy rendezvous with the chief at some time <img src="forwardStochasticReachCWH_eq15636846968047188835.png" alt="$k$">?</h2><p>Since the chief is located at the origin in this coordinate frame (<tt>sys</tt> describes the relative dynamics of the deputy), we define the target set to be a small box centered at the origin (<tt>target_set</tt> is a box axis-aligned with side <img src="forwardStochasticReachCWH_eq02555199365942447413.png" alt="$0.2$">).  We are interested in the probability that the deputy will meet the chief at <tt>target_time</tt> time steps in future.</p><pre class="codeinput"><span class="comment">% Time of interest</span>
+target_time = 23;
+<span class="comment">% Target set definition</span>
+target_set = Polyhedron(<span class="string">'lb'</span>,-0.05 * ones(4,1),<span class="keyword">...</span>
+                        <span class="string">'ub'</span>, 0.05 * ones(4,1));
+desired_accuracy = 1e-2;
+
+<span class="comment">% Problem 1a: Fixed initial state</span>
+<span class="comment">% -------------------------------</span>
+<span class="comment">% Initial state definition</span>
+initial_state = [-10;10;0;0];
+</pre><pre class="codeinput"><span class="comment">% 1. Compute the mean and the covariance of the forward stochastic reach</span>
+<span class="comment">% probability density of the state at time |target_time starting from this fixed</span>
+<span class="comment">% initial state.|</span>
+
+[mean_x, cov_x] = SReachFwd(<span class="string">'state-stoch'</span>, sys, initial_state, target_time);
+disp(mean_x);
+disp(cov_x);
+</pre><pre class="codeoutput">   -0.0056
+    0.0229
+   -0.0001
+    0.0003
+
+   1.0e-03 *
+
+    0.4935   -0.0000   -0.0026   -0.0003
+   -0.0000    0.4937    0.0003   -0.0026
+   -0.0026    0.0003    0.0001    0.0000
+   -0.0003   -0.0026    0.0000    0.0001
+
+</pre><pre class="codeinput"><span class="comment">% 2. Compute the probability of reaching a target set at a specified target</span>
+<span class="comment">% time</span>
+
+<span class="comment">% Integrate the FSRPD at time target_time over the target_set</span>
+prob = SReachFwd(<span class="string">'state-prob'</span>, sys, initial_state, target_time, target_set,<span class="keyword">...</span>
+    desired_accuracy);
+fprintf(<span class="string">'Probability of x_{target_time} lying in target_set: %1.4f\n'</span>,prob);
+</pre><pre class="codeoutput">Probability of x_{target_time} lying in target_set: 0.8600
+</pre><pre class="codeinput"><span class="comment">% 3. Validate this probability via Monte-Carlo simulations</span>
+
+n_mcarlo_sims = 1e5;
+<span class="comment">% This function returns the concatenated state vector stacked columnwise</span>
+concat_state_realization = generateMonteCarloSims(<span class="keyword">...</span>
+                                               n_mcarlo_sims,<span class="keyword">...</span>
+                                               sys,<span class="keyword">...</span>
+                                               initial_state,<span class="keyword">...</span>
+                                               target_time);
+<span class="comment">% Extract the location of the deputy at target_time</span>
+end_locations = concat_state_realization(end-sys.state_dim +1 : end,:);
+<span class="comment">% Check if the location is within the target_set or not</span>
+mcarlo_result = target_set.contains(end_locations);
+fprintf(<span class="string">'Monte-Carlo simulation using %1.0e particles: %1.3f\n'</span>,<span class="keyword">...</span>
+        n_mcarlo_sims,<span class="keyword">...</span>
+        sum(mcarlo_result)/n_mcarlo_sims);
+</pre><pre class="codeoutput">Monte-Carlo simulation using 1e+05 particles: 0.862
+</pre><pre class="codeinput"><span class="comment">% Problem 1b: Initial state is a Gaussian random vector</span>
+<span class="comment">% ------------------------------------------------------</span>
+<span class="comment">% Initial state definition</span>
+initial_state_rv = RandomVector(<span class="string">'Gaussian'</span>, initial_state, 0.1*eye(4));
+</pre><pre class="codeinput"><span class="comment">% 1. Compute the mean and the covariance of the forward stochastic reach</span>
+<span class="comment">% probability density of the state at time |target_time when the initial state</span>
+<span class="comment">% is stochastic.|</span>
+[mean_x, cov_x] = SReachFwd(<span class="string">'state-stoch'</span>, sys, initial_state_rv, target_time);
+disp(mean_x);
+disp(cov_x);
+</pre><pre class="codeoutput">   -0.0056
+    0.0229
+   -0.0001
+    0.0003
+
+   1.0e-03 *
+
+    0.9818   -0.0100   -0.0263   -0.0007
+   -0.0100    0.9350    0.0010   -0.0254
+   -0.0263    0.0010    0.0013    0.0000
+   -0.0007   -0.0254    0.0000    0.0013
+
+</pre><pre class="codeinput"><span class="comment">% 2. Compute the probability of reaching a target set at a specified target</span>
+<span class="comment">% time</span>
+<span class="comment">% Integrate the FSRPD at time target_time over the target_set</span>
+prob = SReachFwd(<span class="string">'state-prob'</span>, sys, initial_state_rv, target_time,<span class="keyword">...</span>
+    target_set, desired_accuracy);
+fprintf(<span class="string">'Probability of x_{target_time} lying in target_set: %1.4f\n'</span>,prob);
+</pre><pre class="codeoutput">Probability of x_{target_time} lying in target_set: 0.7100
+</pre><p>Notice how the probability of success is lower due to a random initial state.</p><pre class="codeinput"><span class="comment">% 3. Validate this reach probability via Monte-Carlo simulations</span>
+
+n_mcarlo_sims = 1e5;
+<span class="comment">% This function returns the concatenated state vector stacked columnwise</span>
+concat_state_realization = generateMonteCarloSims(<span class="keyword">...</span>
+                                               n_mcarlo_sims,<span class="keyword">...</span>
+                                               sys,<span class="keyword">...</span>
+                                               initial_state_rv,<span class="keyword">...</span>
+                                               target_time);
+<span class="comment">% Extract the location of the deputy at target_time</span>
+end_locations = concat_state_realization(end-sys.state_dim +1 : end,:);
+<span class="comment">% Check if the location is within the target_set or not</span>
+mcarlo_result = target_set.contains(end_locations);
+fprintf(<span class="string">'Monte-Carlo simulation using %1.0e particles: %1.3f\n'</span>,<span class="keyword">...</span>
+        n_mcarlo_sims,<span class="keyword">...</span>
+        sum(mcarlo_result)/n_mcarlo_sims);
+</pre><pre class="codeoutput">Monte-Carlo simulation using 1e+05 particles: 0.711
+</pre><h2 id="15">P2. Probability that the deputy (safely) rendezvous with the chief?</h2><p>Since the chief is located at the origin in this coordinate frame (<tt>sys</tt> describes the relative dynamics of the deputy), we define the target set to be a small box centered at the origin (<tt>target_set</tt> is a box axis-aligned with side <img src="forwardStochasticReachCWH_eq02555199365942447413.png" alt="$0.2$">). We are interested in the probability that the deputy will meet the chief at <tt>target_time</tt> time steps in future. <b>Additionally</b>, we desire that the deputy satellite stays within a line-of-sight cone for accurate sensing.</p><pre class="codeinput">target_time = 10;                                        <span class="comment">% Time of interest</span>
+target_set = Polyhedron(<span class="string">'lb'</span>,-0.05 * ones(4,1),<span class="keyword">...</span>
+                        <span class="string">'ub'</span>, 0.05 * ones(4,1));         <span class="comment">% Target set definition</span>
+
+<span class="comment">% Create a target tube</span>
+<span class="comment">% Safe set definition</span>
+<span class="comment">% LoS cone |x|&lt;=y and y\in[0,ymax] and |vx|&lt;=vxmax and |vy|&lt;=vymax</span>
+<span class="comment">% ------------------------------------------------------------------------------</span>
+ymax=10;
+vxmax=0.5;
+vymax=0.5;
+A_safe_set = [1, 1, 0, 0;
+             -1, 1, 0, 0;
+              0, -1, 0, 0;
+              0, 0, 1,0;
+              0, 0,-1,0;
+              0, 0, 0,1;
+              0, 0, 0,-1];
+b_safe_set = [0;
+              0;
+              ymax;
+              vxmax;
+              vxmax;
+              vymax;
+              vymax];
+safe_set = Polyhedron(A_safe_set, b_safe_set);
+safety_tube = TargetTube(<span class="string">'reach-avoid'</span>, safe_set, target_set, target_time);
+</pre><pre class="codeinput"><span class="comment">% Problem 2a: Fixed initial state</span>
+<span class="comment">% -------------------------------</span>
+initial_state = [0;
+                 -1;
+                 0;
+                 0];                                    <span class="comment">% Initial state definition</span>
+
+<span class="comment">% 1. Compute the mean and the covariance of the forward stochastic reach</span>
+<span class="comment">% probability density of the state at time |target_time starting from this fixed</span>
+<span class="comment">% initial state.|</span>
+
+[mean_X, ~] = SReachFwd(<span class="string">'concat-stoch'</span>, sys, initial_state, target_time);
+mean_X_trajectory = reshape(mean_X,4,[]);
+disp(mean_X_trajectory);
+</pre><pre class="codeoutput">  Columns 1 through 7
+
+   -0.0034   -0.0098   -0.0145   -0.0159   -0.0142   -0.0102   -0.0051
+   -0.9486   -0.8201   -0.6587   -0.4943   -0.3451   -0.2204   -0.1232
+   -0.0003   -0.0003   -0.0002    0.0000    0.0002    0.0002    0.0003
+    0.0051    0.0077    0.0084    0.0080    0.0069    0.0056    0.0042
+
+  Columns 8 through 10
+
+    0.0001    0.0046    0.0079
+   -0.0526   -0.0051    0.0237
+    0.0002    0.0002    0.0001
+    0.0029    0.0018    0.0010
+
+</pre><pre class="codeinput"><span class="comment">% 2. Compute the probability of reaching a target set at a specified target</span>
+<span class="comment">% time *while staying within a safe set*</span>
+
+<span class="comment">% Integrate the FSRPD at time target_time over the target_set</span>
+prob = SReachFwd(<span class="string">'concat-prob'</span>, sys, initial_state, target_time, safety_tube, desired_accuracy);
+fprintf(<span class="string">'Probability of x_{target_time} lying in target_set while staying inside line-of-sight cone: %1.4f\n'</span>,prob);
+</pre><pre class="codeoutput">Probability of x_{target_time} lying in target_set while staying inside line-of-sight cone: 0.3100
+</pre><pre class="codeinput"><span class="comment">% 3. Validate this reach probability via Monte-Carlo simulations</span>
+n_mcarlo_sims = 1e5;
+<span class="comment">% This function returns the concatenated state vector stacked columnwise</span>
+concat_state_realization = generateMonteCarloSims(<span class="keyword">...</span>
+                                               n_mcarlo_sims,<span class="keyword">...</span>
+                                               sys,<span class="keyword">...</span>
+                                               initial_state,<span class="keyword">...</span>
+                                               target_time);
+<span class="comment">% Check if the location is within the target_set or not</span>
+mcarlo_result = safety_tube.contains([repmat(initial_state,1,n_mcarlo_sims);
+                                      concat_state_realization]);
+prob_mc_estim = sum(mcarlo_result)/n_mcarlo_sims;
+fprintf(<span class="string">'Monte-Carlo simulation using %1.0e particles: %1.3f\n'</span>,<span class="keyword">...</span>
+        n_mcarlo_sims,<span class="keyword">...</span>
+        sum(mcarlo_result)/n_mcarlo_sims);
+</pre><pre class="codeoutput">Monte-Carlo simulation using 1e+05 particles: 0.313
+</pre><pre class="codeinput"><span class="comment">% Problem 2b: Initial state is a Gaussian random vector</span>
+<span class="comment">% -----------------------------------------------------</span>
+
+initial_state_rv = RandomVector(<span class="string">'Gaussian'</span>,<span class="keyword">...</span>
+                             initial_state,<span class="keyword">...</span>
+                             0.001*eye(4));         <span class="comment">% Initial state definition</span>
+
+<span class="comment">% 1. Compute the mean and the covariance of the forward stochastic reach</span>
+<span class="comment">% probability density of the state at time |target_time starting from this fixed</span>
+<span class="comment">% initial state.|</span>
+
+[mean_X, cov_X] = SReachFwd(<span class="string">'concat-stoch'</span>, sys, initial_state_rv, target_time);
+mean_X_trajectory = reshape(mean_X,4,[]);
+disp(mean_X_trajectory);
+</pre><pre class="codeoutput">  Columns 1 through 7
+
+   -0.0034   -0.0098   -0.0145   -0.0159   -0.0142   -0.0102   -0.0051
+   -0.9486   -0.8201   -0.6587   -0.4943   -0.3451   -0.2204   -0.1232
+   -0.0003   -0.0003   -0.0002    0.0000    0.0002    0.0002    0.0003
+    0.0051    0.0077    0.0084    0.0080    0.0069    0.0056    0.0042
+
+  Columns 8 through 10
+
+    0.0001    0.0046    0.0079
+   -0.0526   -0.0051    0.0237
+    0.0002    0.0002    0.0001
+    0.0029    0.0018    0.0010
+
+</pre><p>Note that the mean remains the same as Problem 2a.</p><pre class="codeinput"><span class="comment">% 2. Compute the probability of reaching a target set at a specified target</span>
+<span class="comment">% time *while staying within a safe set*</span>
+
+prob = SReachFwd(<span class="string">'concat-prob'</span>, sys, initial_state_rv, target_time, safety_tube, desired_accuracy);
+fprintf(<span class="string">'Probability of x_{target_time} lying in target_set while staying inside line-of-sight cone: %1.4f\n'</span>,prob);
+</pre><pre class="codeoutput">Probability of x_{target_time} lying in target_set while staying inside line-of-sight cone: 0.0700
+</pre><pre class="codeinput"><span class="comment">% However, the probability decreases drastically since the initial state</span>
+<span class="comment">% is now random.</span>
+
+<span class="comment">% 3. Validate this reach probability via Monte-Carlo simulations</span>
+
+n_mcarlo_sims = 1e5;
+<span class="comment">% This function returns the concatenated state vector stacked columnwise</span>
+concat_state_realization = generateMonteCarloSims(<span class="keyword">...</span>
+                                               n_mcarlo_sims,<span class="keyword">...</span>
+                                               sys,<span class="keyword">...</span>
+                                               initial_state_rv,<span class="keyword">...</span>
+                                               target_time);
+<span class="comment">% Check if the location is within the target_set or not</span>
+mcarlo_result = safety_tube.contains([repmat(initial_state,1,n_mcarlo_sims);
+                                      concat_state_realization]);
+fprintf(<span class="string">'Monte-Carlo simulation using %1.0e particles: %1.3f\n'</span>,<span class="keyword">...</span>
+        n_mcarlo_sims,<span class="keyword">...</span>
+        sum(mcarlo_result)/n_mcarlo_sims);
+</pre><pre class="codeoutput">Monte-Carlo simulation using 1e+05 particles: 0.067
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Forward stochastic reachability using Fourier transforms
+% This example will demonstrate the use of SReachTools in forward stochastic
+% reachability analysis for stochastic continuous-state discrete-time linear
+% time-invariant (LTI) systems.
+% 
+% Specifically, we will discuss how SReachTools uses Fourier transforms to
+% efficiently compute
+% 
+% # *Forward stochastic reach probability density*: The probability density 
+% function associated with the random vector describing the state at a future 
+% time of interest.
+% # *Probability computations*: Probability that the state lies in a target
+% set or the trajectory in a target tube at a future time of interest. 
+% 
+% Our approach is grid-free and recursion-free resulting in highly scalable
+% solutions, especially for Gaussian-perturbed LTI systems. 
+%
+% We will consider the case where the initial state is a known deterministic
+% point in the state space, and the case where the initial state is a random
+% vector.
+%
+% This Live Script is part of the SReachTools toolbox. License for the use 
+% of this function is given in 
+% <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE 
+% https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
+
+% Prescript running
+close all;clc;clear;
+srtinit
+%% Problem formulation: Spacecraft motion via CWH dynamics
+% We consider both the spacecrafts, referred to as the deputy spacecraft and 
+% the chief spacecraft, to be in the same circular orbit. In this example, we 
+% will consider the forward stochastic reachability analysis of the deputy.
+%%
+% <<cwh_sketch.png>>
+%% Dynamics model for the deputy relative to the chief spacecraft
+% The relative planar dynamics of the deputy with respect to the chief are described 
+% by the <https://doi.org/10.1109/CDC.2013.6760626 Clohessy-Wiltshire-Hill (CWH) 
+% equations,> 
+% 
+% $$\ddot{x} - 3 \omega x - 2 \omega \dot{y} = \frac{F_{x}}{m_{d}}$$
+% 
+% $$            \ddot{y} + 2 \omega \dot{x} = \frac{F_{y}}{m_{d}}$$ 
+% 
+% where the position of the deputy relative to the chief is $x,y \in
+% \mathbf{R}$, $\omega = \sqrt{\frac{\mu}{R_{0}^{3}}}$ is the orbital frequency,
+% $\mu$ is the gravitational constant, and $R_{0}$ is the orbital radius of the
+% chief spacecraft.  We define the state as $\overline{x} = {[x\ y\ \dot{x}\
+% \dot{y}]}^\top \in \mathbf{R}^{4}$ which is the position and velocity of the
+% deputy relative to the chief along $\mathrm{x}$- and $\mathrm{y}$- axes, and
+% the input as $\overline{u} = {[F_{x}\ F_{y}]}^\top \in
+% \mathcal{U}\subset\mathbf{R}^{2}$. 
+% 
+% We will discretize the CWH dynamics in time, via zero-order hold, to obtain
+% the discrete-time linear time-invariant system and add a Gaussian disturbance
+% to account for the modeling uncertainties and the disturbance forces,
+% 
+% $$\overline{x}_{k+1} = A \overline{x}_{k} + B \overline{u}_{k} +
+% \overline{w}_{k}$$
+% 
+% with $\overline{w}_{k} \in \mathbf{R}^{4}$ as an IID Gaussian zero-mean 
+% random process with a known covariance matrix $\Sigma_{\overline{w}}$. 
+% 
+% SReachTools directly allows us to create a |LtiSystem| object with these 
+% dynamics. We will set the input space to be unbounded.
+
+%% System definition
+umax=Inf;
+mean_disturbance = zeros(4,1);
+covariance_disturbance = diag([1e-4, 1e-4, 5e-8, 5e-8]);
+% Define the CWH (planar) dynamics of the deputy spacecraft relative to the
+% chief spacecraft as a LtiSystem object
+sys_CWH = getCwhLtiSystem(4, Polyhedron('lb', -umax*ones(2,1),...
+                                        'ub',  umax*ones(2,1)),...
+       RandomVector('Gaussian', mean_disturbance,covariance_disturbance));
+%%
+% Next, we close the control loop under the action of a linear feedback law
+% (LQR) We will define a |LtiSystem| object to describe the dynamics when
+% $\overline{u}_k = -K \overline{x}_k$ for some $K\in \mathbf{R}^{4\times 2}$.
+% We will compute $K$ using LQR theory with $Q= 0.01 I_4$ and $R=I_2$, i.e.,
+% $\overline{u}_k = -K \overline{x}_k$ will regulate the deputy spacecraft
+% towards the origin.
+
+% Create a discrete-time LQR controller that regulates the deputy to the origin 
+K = lqr(ss(sys_CWH.state_mat,sys_CWH.input_mat,[],[],-1),0.01*eye(4),eye(2));
+% Reuse the system definition in sys_CWH with appropriately defined state matrix
+closed_loop_state_mat = sys_CWH.state_mat - sys_CWH.input_mat*K;
+sys = LtiSystem('StateMatrix', closed_loop_state_mat,...
+                'DisturbanceMatrix', sys_CWH.dist_mat,...
+                'Disturbance', sys_CWH.dist);
+disp(sys);
+
+%% P1. Probability that the deputy rendezvous with the chief at some time $k$?
+% Since the chief is located at the origin in this coordinate frame (|sys|
+% describes the relative dynamics of the deputy), we define the target set to be
+% a small box centered at the origin (|target_set| is a box axis-aligned with
+% side $0.2$).  We are interested in the probability that the deputy will meet
+% the chief at |target_time| time steps in future.
+
+% Time of interest
+target_time = 23;                                        
+% Target set definition
+target_set = Polyhedron('lb',-0.05 * ones(4,1),...
+                        'ub', 0.05 * ones(4,1));          
+desired_accuracy = 1e-2;
+
+% Problem 1a: Fixed initial state
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+% Initial state definition
+initial_state = [-10;10;0;0];                                    
+%% 
+
+% 1. Compute the mean and the covariance of the forward stochastic reach 
+% probability density of the state at time |target_time starting from this fixed 
+% initial state.|
+
+[mean_x, cov_x] = SReachFwd('state-stoch', sys, initial_state, target_time);
+disp(mean_x);
+disp(cov_x);
+%% 
+
+% 2. Compute the probability of reaching a target set at a specified target 
+% time
+
+% Integrate the FSRPD at time target_time over the target_set
+prob = SReachFwd('state-prob', sys, initial_state, target_time, target_set,...
+    desired_accuracy);
+fprintf('Probability of x_{target_time} lying in target_set: %1.4f\n',prob);
+%% 
+
+% 3. Validate this probability via Monte-Carlo simulations
+
+n_mcarlo_sims = 1e5;
+% This function returns the concatenated state vector stacked columnwise
+concat_state_realization = generateMonteCarloSims(...
+                                               n_mcarlo_sims,...
+                                               sys,...
+                                               initial_state,...
+                                               target_time);
+% Extract the location of the deputy at target_time
+end_locations = concat_state_realization(end-sys.state_dim +1 : end,:);
+% Check if the location is within the target_set or not
+mcarlo_result = target_set.contains(end_locations);
+fprintf('Monte-Carlo simulation using %1.0e particles: %1.3f\n',...
+        n_mcarlo_sims,...
+        sum(mcarlo_result)/n_mcarlo_sims);
+%%    
+
+% Problem 1b: Initial state is a Gaussian random vector
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+% Initial state definition
+initial_state_rv = RandomVector('Gaussian', initial_state, 0.1*eye(4));
+%%
+
+% 1. Compute the mean and the covariance of the forward stochastic reach 
+% probability density of the state at time |target_time when the initial state 
+% is stochastic.|
+[mean_x, cov_x] = SReachFwd('state-stoch', sys, initial_state_rv, target_time);
+disp(mean_x);
+disp(cov_x);
+%%
+
+% 2. Compute the probability of reaching a target set at a specified target 
+% time
+% Integrate the FSRPD at time target_time over the target_set
+prob = SReachFwd('state-prob', sys, initial_state_rv, target_time,...
+    target_set, desired_accuracy);
+fprintf('Probability of x_{target_time} lying in target_set: %1.4f\n',prob);
+%% 
+% Notice how the probability of success is lower due to a random initial 
+% state.
+
+% 3. Validate this reach probability via Monte-Carlo simulations
+
+n_mcarlo_sims = 1e5;
+% This function returns the concatenated state vector stacked columnwise
+concat_state_realization = generateMonteCarloSims(...
+                                               n_mcarlo_sims,...
+                                               sys,...
+                                               initial_state_rv,...
+                                               target_time);
+% Extract the location of the deputy at target_time
+end_locations = concat_state_realization(end-sys.state_dim +1 : end,:);
+% Check if the location is within the target_set or not
+mcarlo_result = target_set.contains(end_locations);
+fprintf('Monte-Carlo simulation using %1.0e particles: %1.3f\n',...
+        n_mcarlo_sims,...
+        sum(mcarlo_result)/n_mcarlo_sims);
+%% P2. Probability that the deputy (safely) rendezvous with the chief?
+% Since the chief is located at the origin in this coordinate frame (|sys| describes 
+% the relative dynamics of the deputy), we define the target set to be a small 
+% box centered at the origin (|target_set| is a box axis-aligned with side $0.2$). 
+% We are interested in the probability that the deputy will meet the chief at 
+% |target_time| time steps in future. *Additionally*, we desire that the deputy 
+% satellite stays within a line-of-sight cone for accurate sensing.
+% 
+% 
+%%
+target_time = 10;                                        % Time of interest
+target_set = Polyhedron('lb',-0.05 * ones(4,1),...
+                        'ub', 0.05 * ones(4,1));         % Target set definition
+
+% Create a target tube
+% Safe set definition 
+% LoS cone |x|<=y and y\in[0,ymax] and |vx|<=vxmax and |vy|<=vymax
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+ymax=10;
+vxmax=0.5;
+vymax=0.5;
+A_safe_set = [1, 1, 0, 0;           
+             -1, 1, 0, 0; 
+              0, -1, 0, 0;
+              0, 0, 1,0;
+              0, 0,-1,0;
+              0, 0, 0,1;
+              0, 0, 0,-1];
+b_safe_set = [0;
+              0;
+              ymax;
+              vxmax;
+              vxmax;
+              vymax;
+              vymax];
+safe_set = Polyhedron(A_safe_set, b_safe_set);                    
+safety_tube = TargetTube('reach-avoid', safe_set, target_set, target_time);
+%%
+
+% Problem 2a: Fixed initial state
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+initial_state = [0;
+                 -1;
+                 0;
+                 0];                                    % Initial state definition
+
+% 1. Compute the mean and the covariance of the forward stochastic reach 
+% probability density of the state at time |target_time starting from this fixed 
+% initial state.|
+
+[mean_X, ~] = SReachFwd('concat-stoch', sys, initial_state, target_time);
+mean_X_trajectory = reshape(mean_X,4,[]);
+disp(mean_X_trajectory);
+%% 
+
+% 2. Compute the probability of reaching a target set at a specified target 
+% time *while staying within a safe set*
+
+% Integrate the FSRPD at time target_time over the target_set
+prob = SReachFwd('concat-prob', sys, initial_state, target_time, safety_tube, desired_accuracy);
+fprintf('Probability of x_{target_time} lying in target_set while staying inside line-of-sight cone: %1.4f\n',prob);
+%% 
+
+% 3. Validate this reach probability via Monte-Carlo simulations
+n_mcarlo_sims = 1e5;
+% This function returns the concatenated state vector stacked columnwise
+concat_state_realization = generateMonteCarloSims(...
+                                               n_mcarlo_sims,...
+                                               sys,...
+                                               initial_state,...
+                                               target_time);
+% Check if the location is within the target_set or not
+mcarlo_result = safety_tube.contains([repmat(initial_state,1,n_mcarlo_sims);
+                                      concat_state_realization]);
+prob_mc_estim = sum(mcarlo_result)/n_mcarlo_sims;
+fprintf('Monte-Carlo simulation using %1.0e particles: %1.3f\n',...
+        n_mcarlo_sims,...
+        sum(mcarlo_result)/n_mcarlo_sims);
+%%
+
+% Problem 2b: Initial state is a Gaussian random vector
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+
+initial_state_rv = RandomVector('Gaussian',...
+                             initial_state,...
+                             0.001*eye(4));         % Initial state definition
+ 
+% 1. Compute the mean and the covariance of the forward stochastic reach 
+% probability density of the state at time |target_time starting from this fixed 
+% initial state.|
+
+[mean_X, cov_X] = SReachFwd('concat-stoch', sys, initial_state_rv, target_time);
+mean_X_trajectory = reshape(mean_X,4,[]);
+disp(mean_X_trajectory);
+%% 
+% Note that the mean remains the same as Problem 2a.
+ 
+% 2. Compute the probability of reaching a target set at a specified target 
+% time *while staying within a safe set*
+
+prob = SReachFwd('concat-prob', sys, initial_state_rv, target_time, safety_tube, desired_accuracy);
+fprintf('Probability of x_{target_time} lying in target_set while staying inside line-of-sight cone: %1.4f\n',prob);
+%% 
+
+% However, the probability decreases drastically since the initial state 
+% is now random.
+ 
+% 3. Validate this reach probability via Monte-Carlo simulations
+
+n_mcarlo_sims = 1e5;
+% This function returns the concatenated state vector stacked columnwise
+concat_state_realization = generateMonteCarloSims(...
+                                               n_mcarlo_sims,...
+                                               sys,...
+                                               initial_state_rv,...
+                                               target_time);
+% Check if the location is within the target_set or not
+mcarlo_result = safety_tube.contains([repmat(initial_state,1,n_mcarlo_sims);
+                                      concat_state_realization]);
+fprintf('Monte-Carlo simulation using %1.0e particles: %1.3f\n',...
+        n_mcarlo_sims,...
+        sum(mcarlo_result)/n_mcarlo_sims);
+
+##### SOURCE END #####
+--></body></html>
