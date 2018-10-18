@@ -1,32 +1,81 @@
-clear
-clc
-close all
+%% Demonstration of controller synthesis via SReachPoint
+% This example will demonstrate the use of SReachTools in controller synthesis
+% for stochastic continuous-state discrete-time linear time-invariant (LTI) 
+% systems.
+% 
+% Specifically, we will discuss how SReachTools can use Fourier transforms
+% (<http://www.math.wsu.edu/faculty/genz/software/matlab/qsimvnv.m 
+% Genz's algorithm> and MATLAB's patternsearch), particle filter, or convex 
+% chance constraints to synthesize open-loop controllers. We also synthesize an 
+% affine controller using difference-of-convex program.
+%
+% Our approaches is grid-free and recursion-free resulting in highly scalable
+% solutions, especially for Gaussian-perturbed LTI systems. 
+%
+% This Live Script is part of the SReachTools toolbox. License for the use 
+% of this function is given in 
+% <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE 
+% https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
 
+% Prescript running
+close all;clc;clear;
+srtinit
+%% Problem formulation: Spacecraft motion via CWH dynamics
+% We consider both the spacecrafts, referred to as the deputy spacecraft and 
+% the chief spacecraft, to be in the same circular orbit. In this example, we 
+% will consider the forward stochastic reachability analysis of the deputy.
+%%
+% <<cwh_sketch.png>>
+%% Dynamics model for the deputy relative to the chief spacecraft
+% The relative planar dynamics of the deputy with respect to the chief are described 
+% by the <https://doi.org/10.1109/CDC.2013.6760626 Clohessy-Wiltshire-Hill (CWH) 
+% equations,> 
+% 
+% $$\ddot{x} - 3 \omega x - 2 \omega \dot{y} = \frac{F_{x}}{m_{d}}$$
+% 
+% $$            \ddot{y} + 2 \omega \dot{x} = \frac{F_{y}}{m_{d}}$$ 
+% 
+% where the position of the deputy relative to the chief is $x,y \in
+% \mathbf{R}$, $\omega = \sqrt{\frac{\mu}{R_{0}^{3}}}$ is the orbital frequency,
+% $\mu$ is the gravitational constant, and $R_{0}$ is the orbital radius of the
+% chief spacecraft.  We define the state as $\overline{x} = {[x\ y\ \dot{x}\
+% \dot{y}]}^\top \in \mathbf{R}^{4}$ which is the position and velocity of the
+% deputy relative to the chief along $\mathrm{x}$- and $\mathrm{y}$- axes, and
+% the input as $\overline{u} = {[F_{x}\ F_{y}]}^\top \in
+% \mathcal{U}\subset\mathbf{R}^{2}$. 
+% 
+% We will discretize the CWH dynamics in time, via zero-order hold, to obtain
+% the discrete-time linear time-invariant system and add a Gaussian disturbance
+% to account for the modeling uncertainties and the disturbance forces,
+% 
+% $$\overline{x}_{k+1} = A \overline{x}_{k} + B \overline{u}_{k} +
+% \overline{w}_{k}$$
+% 
+% with $\overline{w}_{k} \in \mathbf{R}^{4}$ as an IID Gaussian zero-mean 
+% random process with a known covariance matrix $\Sigma_{\overline{w}}$. 
+ 
+%% System definition
+umax=0.1;
+mean_disturbance = zeros(4,1);
+covariance_disturbance = diag([1e-4, 1e-4, 5e-8, 5e-8]);
+% Define the CWH (planar) dynamics of the deputy spacecraft relative to the
+% chief spacecraft as a LtiSystem object
+sys = getCwhLtiSystem(4, Polyhedron('lb', -umax*ones(2,1),...
+                                        'ub',  umax*ones(2,1)),...
+       RandomVector('Gaussian', mean_disturbance,covariance_disturbance));
+
+%% Methods to run   
 ft_run = 1;
 cc_open_run = 1;
 cc_affine_run = 1;
 pa_open_run = 1;
+plot_traj_instead_of_ellipses = 0;
 
-%% Monte-Carlo simulation parameters
-n_mcarlo_sims = 1e5;
-n_sims_to_plot = 5;
-max_input_viol_prob = 0.01;
-%% CWH system params
-umax=0.1;
-mean_disturbance = zeros(4,1);
-covariance_disturbance = diag([1e-4, 1e-4, 5e-8, 5e-8]);
-% Define the CWH (planar) dynamics of the deputy spacecraft relative to the 
-% chief spacecraft as a LtiSystem object
-sys = getCwhLtiSystem(4,...
-                      Polyhedron('lb', -umax*ones(2,1),...
-                                 'ub',  umax*ones(2,1)),...
-                      StochasticDisturbance('Gaussian',...
-                                            mean_disturbance,...
-                                            covariance_disturbance));
+%% Target tube construction --- reach-avoid specification
 time_horizon=5;          % Stay within a line of sight cone for 4 time steps and 
                          % reach the target at t=5% Safe Set --- LoS cone
-%% Safe set definition --- LoS cone |x|<=y and y\in[0,ymax] and |vx|<=vxmax and 
-%% |vy|<=vymax
+% Safe set definition --- LoS cone |x|<=y and y\in[0,ymax] and |vx|<=vxmax and 
+% |vy|<=vymax
 ymax=2;
 vxmax=0.5;
 vymax=0.5;
@@ -45,11 +94,11 @@ b_safe_set = [0;
               vymax;
               vymax];
 safe_set = Polyhedron(A_safe_set, b_safe_set);
-
-%% Target set --- Box [-0.1,0.1]x[-0.1,0]x[-0.01,0.01]x[-0.01,0.01]
+% Target set --- Box [-0.1,0.1]x[-0.1,0]x[-0.01,0.01]x[-0.01,0.01]
 target_set = Polyhedron('lb', [-0.1; -0.1; -0.01; -0.01],...
                         'ub', [0.1; 0; 0.01; 0.01]);
 target_tube = TargetTube('reach-avoid',safe_set, target_set, time_horizon);                    
+%%
 
 %% Initial state definition
 initial_state = [-1.15;         % Initial x relative position
@@ -57,14 +106,12 @@ initial_state = [-1.15;         % Initial x relative position
                  0;             % Initial x relative velocity
                  0];            % Initial y relative velocity
 slice_at_vx_vy = initial_state(3:4);             
-%% Parameters for MATLAB's Global Optimization Toolbox patternsearch
-desired_accuracy = 1e-3;        % Decrease for a more accurate lower 
-                                % bound at the cost of higher 
-                                % computation time
-desired_accuracy_cc_affine = 1e-2;
-PSoptions = psoptimset('Display','off');
 
-%% Generate matrices for optimal mean trajectory generation
+%% Preparation for Monte-Carlo simulations of the optimal controllers
+% Monte-Carlo simulation parameters
+n_mcarlo_sims = 1e5;
+n_sims_to_plot = 5;      % Required only if plot_traj_instead_of_ellipses = 1
+% Generate matrices for optimal mean trajectory generation
 % Get H and mean_X_sans_input
 [~, H, ~] = getConcatMats(sys, time_horizon);
 sysnoi = LtvSystem('StateMatrix',sys.state_mat,'DisturbanceMatrix',...
@@ -74,7 +121,6 @@ sysnoi = LtvSystem('StateMatrix',sys.state_mat,'DisturbanceMatrix',...
 
 if ft_run
     timer_ft = tic;
-    disp('Genz-algorithm+patternsearch technique');
     [lb_stoch_reach_avoid_ft, optimal_input_vector_ft] = SReachPoint(...
         'term','genzps-open', sys, initial_state, target_tube);  
     elapsed_time_ft = toc(timer_ft);
@@ -92,10 +138,10 @@ if ft_run
     end
 end
 
-%% CC (Linear program approach)     
+%% CC (Linear program approach)
+% We will use the default options   
 if cc_open_run
     timer_cc_pwl = tic;
-    disp('Piecewise-linear single shot risk allocation technique');
     [lb_stoch_reach_avoid_cc_pwl, optimal_input_vector_cc_pwl] = SReachPoint(...
         'term','chance-open', sys, initial_state, target_tube);  
     elapsed_time_cc_pwl = toc(timer_cc_pwl);
@@ -117,41 +163,48 @@ if cc_open_run
 end
 
 %% CC with affine controllers (Second order cone program approach)     
+% We set $\Delta_U=0.01$ and define verbosity level of 1.
+max_input_viol_prob = 0.01;
 if cc_affine_run
-    timer_cc_pwl_closed = tic;
-    disp('Piecewise-linear single shot (closed-loop-dc) risk allocation technique');
+    timer_cc_affine = tic;
     options = SReachPointOptions('term','chance-affine',...
         'max_input_viol_prob', 1e-2, 'verbose', 1);
-    [lb_stoch_reach_avoid_cc_pwl_closed, optimal_input_vector_cc_pwl_closed, optimal_input_gain, risk_alloc_state, risk_alloc_input] =...
+    [lb_stoch_reach_avoid_cc_affine, optimal_input_vector_cc_affine,...
+        optimal_input_gain, risk_alloc_state, risk_alloc_input] =...
          SReachPoint('term','chance-affine', sys, initial_state, target_tube,...
             options);  
-    elapsed_time_cc_pwl_closed = toc(timer_cc_pwl_closed);            
-    if lb_stoch_reach_avoid_cc_pwl_closed > 0
+    elapsed_time_cc_affine = toc(timer_cc_affine);            
+    if lb_stoch_reach_avoid_cc_affine > 0
         % This function returns the concatenated state vector stacked columnwise
-        [concat_state_realization_cc_pwl_closed,...
-            concat_disturb_realization_cc_pwl_closed] =...
+        [concat_state_realization_cc_affine,...
+            concat_disturb_realization_cc_affine] =...
                 generateMonteCarloSims(n_mcarlo_sims, sys, initial_state,...
-                    time_horizon,optimal_input_vector_cc_pwl_closed,...
+                    time_horizon,optimal_input_vector_cc_affine,...
                     optimal_input_gain);
 
         % Check if the location is within the target_set or not
-        mcarlo_result_cc_pwl_closed = target_tube.contains([repmat(initial_state,1,n_mcarlo_sims);
-                                                            concat_state_realization_cc_pwl_closed]);
+        mcarlo_result_cc_affine = target_tube.contains(...
+            [repmat(initial_state,1,n_mcarlo_sims);
+             concat_state_realization_cc_affine]);
         
         % Check if the input is within the tolerance
-        [concat_input_space_A, concat_input_space_b] = sys.getConcatInputSpace(time_horizon);
-        mcarlo_result_cc_pwl_closed_input = any(concat_input_space_A * (optimal_input_gain * concat_disturb_realization_cc_pwl_closed + optimal_input_vector_cc_pwl_closed)<=concat_input_space_b);
+        [concat_input_space_A, concat_input_space_b] =...
+            sys.getConcatInputSpace(time_horizon);
+        mcarlo_result_cc_affine_input = any(concat_input_space_A *...
+            (optimal_input_gain * concat_disturb_realization_cc_affine +...
+                optimal_input_vector_cc_affine)<=concat_input_space_b);
         
         % Optimal mean trajectory generation                         
-        optimal_mean_X_cc_pwl_closed = mean_X_sans_input + H * optimal_input_vector_cc_pwl_closed;
-        optimal_mean_trajectory_cc_pwl_closed=reshape(optimal_mean_X_cc_pwl_closed,sys.state_dim,[]);
+        optimal_mean_X_cc_affine = mean_X_sans_input +...
+            H * optimal_input_vector_cc_affine;
+        optimal_mean_trajectory_cc_affine=reshape(...
+            optimal_mean_X_cc_affine,sys.state_dim,[]);
     end
 end
 
 %% Particle filter approach
 if pa_open_run
     timer_pa = tic;
-    disp('Particle filter technique');
     [lb_stoch_reach_avoid_pa, optimal_input_vector_pa] = SReachPoint(...
         'term','particle-open', sys, initial_state, target_tube);  
     elapsed_time_pa = toc(timer_pa);
@@ -172,8 +225,7 @@ if pa_open_run
     end
 end
 
-%% Plotting
-disp('Plotting and Monte-Carlo simulation-based validation');
+%% Plotting and Monte-Carlo simulation-based validation
 figure(1);
 clf
 box on;
@@ -200,15 +252,16 @@ if exist('optimal_mean_trajectory_pa','var')
         30, 'ko', 'filled');
     legend_cell{end+1} = 'Optimal mean trajectory (particle-open)';
 end
-if exist('optimal_mean_trajectory_cc_pwl_closed','var')
-    scatter([initial_state(1), optimal_mean_trajectory_cc_pwl_closed(1,:)],...
-        [initial_state(2), optimal_mean_trajectory_cc_pwl_closed(2,:)],...
+if exist('optimal_mean_trajectory_cc_affine','var')
+    scatter([initial_state(1), optimal_mean_trajectory_cc_affine(1,:)],...
+        [initial_state(2), optimal_mean_trajectory_cc_affine(2,:)],...
         30, 'bo', 'filled');
     legend_cell{end+1} = 'Optimal mean trajectory (chance-affine)';
 end
 legend(legend_cell);
+xlabel('$x$','interpreter','latex');
+ylabel('$y$','interpreter','latex');
 
-%% Monte Carlo plot
 figure(2);
 clf
 box on;
@@ -223,10 +276,14 @@ if exist('optimal_mean_trajectory_ft','var')
             30, 'ro', 'filled');
     legend_cell{end+1} = 'Optimal mean trajectory (genzps-open)';
     if ~isnan(concat_state_realization_ft)
-%         [legend_cell] = plotMonteCarlo('(genzps-open)', mcarlo_result_ft,...
-%             concat_state_realization_ft, n_mcarlo_sims, n_sims_to_plot,...
-%             sys.state_dim, initial_state, legend_cell);
-        ellipsoidsFromMonteCarloSims(concat_state_realization_ft, sys.state_dim, [1,2], {'r'});
+        if plot_traj_instead_of_ellipses == 1
+            [legend_cell] = plotMonteCarlo('(genzps-open)', mcarlo_result_ft,...
+                concat_state_realization_ft, n_mcarlo_sims, n_sims_to_plot,...
+                sys.state_dim, initial_state, legend_cell);
+        else
+            ellipsoidsFromMonteCarloSims(concat_state_realization_ft,...
+                sys.state_dim, [1,2], {'r'});
+        end
     end
 else
     lb_stoch_reach_avoid_ft = NaN;
@@ -239,12 +296,15 @@ if exist('optimal_mean_trajectory_cc_pwl','var')
         30, 'mo', 'filled');
     legend_cell{end+1} = 'Optimal mean trajectory (chance-open)';
     if ~isnan(concat_state_realization_cc_pwl)
-%         [legend_cell] = plotMonteCarlo('(chance-open)', ...
-%             mcarlo_result_cc_pwl, concat_state_realization_cc_pwl,...
-%             n_mcarlo_sims, n_sims_to_plot, sys.state_dim, initial_state,...
-%             legend_cell);
-        ellipsoidsFromMonteCarloSims(concat_state_realization_cc_pwl,...
-            sys.state_dim, [1,2], {'m'});
+        if plot_traj_instead_of_ellipses == 1
+            [legend_cell] = plotMonteCarlo('(chance-open)', ...
+                mcarlo_result_cc_pwl, concat_state_realization_cc_pwl,...
+                n_mcarlo_sims, n_sims_to_plot, sys.state_dim, initial_state,...
+                legend_cell);
+        else
+            ellipsoidsFromMonteCarloSims(concat_state_realization_cc_pwl,...
+                sys.state_dim, [1,2], {'m'});
+        end
     end
 else
     lb_stoch_reach_avoid_cc_pwl = NaN;
@@ -257,12 +317,15 @@ if exist('optimal_mean_trajectory_pa','var')
         30, 'ko', 'filled');
     legend_cell{end+1} = 'Optimal mean trajectory (particle-open)';
     if ~isnan(concat_state_realization_pa)
-%         [legend_cell] = plotMonteCarlo('(chance-open)', ...
-%             mcarlo_result_pa, concat_state_realization_pa,...
-%             n_mcarlo_sims, n_sims_to_plot, sys.state_dim, initial_state,...
-%             legend_cell);
-        ellipsoidsFromMonteCarloSims(concat_state_realization_pa,...
-            sys.state_dim, [1,2], {'k'});
+        if plot_traj_instead_of_ellipses == 1
+            [legend_cell] = plotMonteCarlo('(particle-open)', ...
+                mcarlo_result_pa, concat_state_realization_pa,...
+                n_mcarlo_sims, n_sims_to_plot, sys.state_dim, initial_state,...
+                legend_cell);
+        else
+            ellipsoidsFromMonteCarloSims(concat_state_realization_pa,...
+                sys.state_dim, [1,2], {'k'});
+        end
     end
 else
     lb_stoch_reach_avoid_pa = NaN;
@@ -270,48 +333,60 @@ else
     elapsed_time_pa = NaN;     
 end
 
-if exist('optimal_mean_trajectory_cc_pwl_closed','var')
-        scatter([initial_state(1), optimal_mean_trajectory_cc_pwl_closed(1,:)],...
-        [initial_state(2), optimal_mean_trajectory_cc_pwl_closed(2,:)],...
+if exist('optimal_mean_trajectory_cc_affine','var')
+        scatter([initial_state(1), optimal_mean_trajectory_cc_affine(1,:)],...
+        [initial_state(2), optimal_mean_trajectory_cc_affine(2,:)],...
         30, 'bd', 'filled');
     legend_cell{end+1} = 'Optimal mean trajectory (chance-affine)';
-    if ~isnan(concat_state_realization_cc_pwl_closed)
-%         [legend_cell] = plotMonteCarlo('(chance-affine)',...
-%             mcarlo_result_cc_pwl_closed,...
-%             concat_state_realization_cc_pwl_closed, n_mcarlo_sims,...
-%             n_sims_to_plot, sys.state_dim, initial_state, legend_cell);
-        ellipsoidsFromMonteCarloSims(concat_state_realization_cc_pwl_closed,...
-            sys.state_dim, [1,2], {'b'});
+    if ~isnan(concat_state_realization_cc_affine)
+        if plot_traj_instead_of_ellipses==1
+            [legend_cell] = plotMonteCarlo('(chance-affine)',...
+                mcarlo_result_cc_affine,...
+                concat_state_realization_cc_affine, n_mcarlo_sims,...
+                n_sims_to_plot, sys.state_dim, initial_state, legend_cell);
+        else
+            ellipsoidsFromMonteCarloSims(concat_state_realization_cc_affine,...
+                sys.state_dim, [1,2], {'b'});
+        end
     end
 else
-    lb_stoch_reach_avoid_cc_pwl_closed = NaN;
-    mcarlo_result_cc_pwl_closed = NaN;
-    elapsed_time_cc_pwl_closed = NaN;     
+    lb_stoch_reach_avoid_cc_affine = NaN;
+    mcarlo_result_cc_affine = NaN;
+    elapsed_time_cc_affine = NaN;     
 end
 
 legend(legend_cell, 'Location','South');
-% title(sprintf('Plot with %d Monte-Carlo sims', n_sims_to_plot));
-title('Plot with ellipsoid fit for 100 randomly chosen Monte-Carlo sims');
+if plot_traj_instead_of_ellipses==1
+    title(sprintf('Plot with %d Monte-Carlo sims', n_sims_to_plot));
+else
+    title('Plot with ellipsoid fit for 100 randomly chosen Monte-Carlo sims');
+end
 box on;
 grid on;
-disp('Skipped items would show up as NaN');
+xlabel('$x$','interpreter','latex');
+ylabel('$y$','interpreter','latex');
+%% Reporting the results
+if isnan([lb_stoch_reach_avoid_cc_pwl, lb_stoch_reach_avoid_ft, lb_stoch_reach_avoid_cc_affine, lb_stoch_reach_avoid_pa])
+    disp('Skipped items would show up as NaN');
+end
 fprintf(['FT: %1.3f | CC (Open): %1.3f | Scenario (Open): %1.3f | ',...
     'CC (Affine): %1.3f\n'],...
     lb_stoch_reach_avoid_ft,...
     lb_stoch_reach_avoid_cc_pwl,...
     lb_stoch_reach_avoid_pa,...
-    lb_stoch_reach_avoid_cc_pwl_closed); 
+    lb_stoch_reach_avoid_cc_affine); 
 fprintf('MC (%1.0e particles): %1.3f, %1.3f, %1.3f, %1.3f\n',...
     n_mcarlo_sims,...
     sum(mcarlo_result_ft)/n_mcarlo_sims, ...
     sum(mcarlo_result_cc_pwl)/n_mcarlo_sims,...
     sum(mcarlo_result_pa)/n_mcarlo_sims,...
-    sum(mcarlo_result_cc_pwl_closed)/n_mcarlo_sims);
+    sum(mcarlo_result_cc_affine)/n_mcarlo_sims);
 fprintf('Elapsed time: %1.3f, %1.3f, %1.3f, %1.3f seconds\n',...
     elapsed_time_ft, elapsed_time_cc_pwl, elapsed_time_pa,...
-    elapsed_time_cc_pwl_closed);
+    elapsed_time_cc_affine);
 
-%%
+%% Helper functions
+% Plotting function
 function [legend_cell] = plotMonteCarlo(method_str, mcarlo_result,...
     concat_state_realization, n_mcarlo_sims, n_sims_to_plot, state_dim,...
     initial_state, legend_cell)
