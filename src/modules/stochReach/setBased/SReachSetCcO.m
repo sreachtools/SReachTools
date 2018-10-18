@@ -219,8 +219,7 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube,...
     end
     varargout{1} = polytope;
     if nargout > 1
-        varargout{2} = extra_info_wmax;
-        varargout{3} = extra_info_cheby;
+        varargout{2} = [extra_info_wmax, extra_info_cheby];
     end
 end
 

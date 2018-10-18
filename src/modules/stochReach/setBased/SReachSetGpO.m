@@ -194,7 +194,7 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube,...
                                                    init_safe_set.be
             for i = 1:length(init_safe_set.A)
                 init_safe_set.A(i,:) * initial_x_for_xmax...
-                              + R * dual_norm_of_init_safe_set_A(i) <= init_safe_set.b(i)
+                     + R * dual_norm_of_init_safe_set_A(i) <= init_safe_set.b(i)
             end
     cvx_end
     initial_guess_input_vector_and_xmax = [guess_concatentated_input_vector;

@@ -19,12 +19,14 @@
 % upto three dimensions. For efficient implementation, we require the input set 
 % to be an axis-aligned hypercuboid, and define the grid the smallest hypercuboid 
 % containing all the target sets.
-%% Notes about this Live Script:
-% # Make sure that |srtinit| is run before running this script.
-% 
+%
 % This Live Script is part of the SReachTools toolbox. License for the use 
 % of this function is given in <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE 
 % https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
+
+% Prescript running
+close all;clc;clear;
+srtinit
 %% Problem setup
 % In this example we use a discretized double integrator dynamics given by:
 % 
@@ -280,12 +282,12 @@ title('Stochastic reach-avoid sets $L_{SR}^\ast(\cdot)$','interpreter','latex');
 
 % Safety tube definition
 % ----------------------
-N=length(safety_tube3)-1;
 safety_tube3 = TargetTube(Polyhedron('lb', [-1, -1], 'ub', [1, 1]), ...
     Polyhedron('lb', [-0.5, -1], 'ub', [1, 0.5]),...
     Polyhedron('lb', [-1, -1], 'ub', [0.5, 0.5]), ...
     Polyhedron('lb', [-1, -0.5], 'ub', [0.5, 1]), ...
     Polyhedron('lb', [-0.5, -0.5], 'ub', [1, 1]));
+N=length(safety_tube3)-1;
 
 % Plotting of safety tube
 % -----------------------
