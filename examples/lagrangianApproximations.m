@@ -95,45 +95,27 @@ title('Target tube');
 % through random direction choices.
 %%
 % bounded set for Lagrangian
-lag_bounded_set = getBoundedSetForDisturbance(sys.dist, time_horizon, beta, 'random', 50);
+tic;
+opts = SReachSetOptions('term', 'lag-under', 'bound_set_method', 'random', 'num_dirs', 50);
+luSet = SReachSet('term', 'lag-under', sys, 0.8, target_tube, opts);
+
+opts = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'random', 'num_dirs', 50);
+loSet = SReachSet('term', 'lag-over', sys, 0.8, target_tube, opts);
+lagrange_time = toc()
 %% 
 % Now we can compute the Lagrangian under and overapproximations which we 
 % call the robust and augmented effective target sets
 
-robust_eff_target = getRobustEffTarget(sys, target_tube, lag_bounded_set);
-aug_eff_target    = getAugEffTarget(sys, target_tube, lag_bounded_set);
+% robust_eff_target = getRobustEffTarget(sys, target_tube, lag_bounded_set);
+% aug_eff_target    = getAugEffTarget(sys, target_tube, lag_bounded_set);
 %% 
 % Plotting these sets
 
 figure();
 plot(safe_set, 'color', 'k', 'alpha',1);
 hold on;
-plot(aug_eff_target, 'color', 'y');
-plot(robust_eff_target, 'color', 'g');
-hold off;
-xlabel('$x_1$', 'Interpreter', 'latex')
-ylabel('$x_2$', 'Interpreter', 'latex')
-box on;
-leg=legend('Safe set','Overapproximation','Underapproximation');
-set(leg,'Location','EastOutside');
-%% A single function to perform of all the above operations: `getApproxStochasticLevelSetViaLagrangian`
-% The above functions, i.e. computing the bounded set and determining the over 
-% and under approximations have been combined into one function for convenience.
-%%
-tic;
-robust_target_2 = getApproxStochasticLevelSetViaLagrangian(sys, ...
-    beta, target_tube, 'underapproximation', 'random', 50);
-aug_target_2    = getApproxStochasticLevelSetViaLagrangian(sys, ...
-    beta, target_tube, 'overapproximation', 'random', 50);
-lagrange_time = toc();
-%% 
-% Plotting these sets
-
-figure();
-plot(safe_set, 'color', 'k', 'alpha',1);
-hold on;
-plot(aug_target_2, 'color', 'y');
-plot(robust_target_2, 'color', 'g');
+plot(loSet, 'color', 'y');
+plot(luSet, 'color', 'g');
 hold off;
 xlabel('$x_1$', 'Interpreter', 'latex')
 ylabel('$x_2$', 'Interpreter', 'latex')
@@ -147,17 +129,16 @@ set(leg,'Location','EastOutside');
 %% Dynamic programming solution
 % We can compare the results with <https://doi.org/10.1016/j.automatica.2010.08.006 
 % dynamic programming> to see how the approximations appear and how they compare 
-% in simulation times. The dynamic programming methods use an 80x80x10 ($x_1\times 
-% x_{2} \times u$) grid.
+% in simulation times.
 %%
-% need to create a state space grid and input space grid
-ss_grid = SpaceGrid([-1, -1], [1, 1], 40);
-in_grid = InputGrid(-0.1, 0.1, 10);
-
+dyn_prog_xinc = 0.025;
+dyn_prog_uinc = 0.1;
 tic;
-grid_probability = getDynProgSolForTargetTube(sys, ...
-    ss_grid, in_grid, target_tube);
+[prob_x, cell_of_xvec] = SReachDynProg(sys, dyn_prog_xinc, dyn_prog_uinc, target_tube);
 dynprog_time = toc();
+%% Compute the 0.8- stochastic level set
+%%
+dyn_soln_lvl_set = getDynProgLevelSets2D(cell_of_xvec, prob_x, 0.8, target_tube);
 %% Simulation times --- Lagrangian approximation is much faster than dynamic programming
 % The simulation times for Lagrangian computation is much faster than dynamic 
 % programming, even when the former computes both an underapproximation and an 
@@ -170,13 +151,11 @@ dynprog_time
 % Lagrangian approach bounds the dynamic programming solution from "inside" and 
 % "outside".
 %%
-[X,Y] = ss_grid.getMeshGrids();
 figure();
 plot(safe_set, 'color', 'k', 'alpha',1);
 hold on;
 plot(aug_target_2, 'color', 'y');
-contourf(X,Y,reshape(grid_probability, size(X)), [0.8,0.8], ...
-    'color', 'b', 'facecolor', 'b')
+plot(dyn_soln_lvl_set,'color', 'b')
 plot(robust_target_2, 'color', 'g');
 hold off;
 xlabel('$x_1$', 'Interpreter', 'latex')
