@@ -1,27 +1,28 @@
 %% Double Integrator Reach-Avoid Via Dynamic Programming
-% This example demonstrates how to use the SReachTools toolbox to solve a terminal-hitting 
-% time reach-avoid problem using <https://doi.org/10.1016/j.automatica.2010.08.006 
-% dynamic programming>.
+% This example demonstrates how to use the SReachTools toolbox to solve a
+% terminal-hitting time reach-avoid problem using
+% <https://doi.org/10.1016/j.automatica.2010.08.006 dynamic programming>.
 % 
 % In this example, we analyze the following problems via dynamic programming 
 % for a stochastic system with known dynamics:
 % 
-% # *stochastic viability problem*: Compute a controller to stay within a safe 
+% # *stochastic viability problem*: Compute a controller to stay within a safe
 % set with maximum likelihood
-% # *the terminal-hitting time stochastic reach-avoid problem*: Compute a controller 
-% that maximizes the probability of reaching a target set at a time horizon, |N|, 
-% while maintaining the system in a set of safe states
-% # *stochastic reachability of a moving target tube*: Compute a controller 
-% that maximizes the probability of staying within a target tube (a
-% collection of time-varying safe sets)
+% # *the terminal-hitting time stochastic reach-avoid problem*: Compute a
+% controller that maximizes the probability of reaching a target set at a time
+% horizon, |N|, while maintaining the system in a set of safe states
+% # *stochastic reachability of a moving target tube*: Compute a controller that
+% maximizes the probability of staying within a target tube (a collection of
+% time-varying safe sets)
 % 
-% SReachTools has a dynamic programing implementation that can analyze systems 
-% upto three dimensions. For efficient implementation, we require the input set 
-% to be an axis-aligned hypercuboid, and define the grid the smallest hypercuboid 
-% containing all the target sets.
+% SReachTools has a dynamic programing implementation that can analyze systems
+% upto three dimensions. For efficient implementation, we require the input set
+% to be an axis-aligned hypercuboid, and define the grid the smallest
+% hypercuboid containing all the target sets.
 %
 % This Live Script is part of the SReachTools toolbox. License for the use 
-% of this function is given in <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE 
+% of this function is given in 
+% <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE 
 % https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
 
 % Prescript running
@@ -30,7 +31,7 @@ srtinit
 %% Problem setup
 % In this example we use a discretized double integrator dynamics given by:
 % 
-% $$  x_{k+1} = \left[ \begin{array}{cc}    1 & T \\    0 & 1  \end{array}\right] 
+% $$  x_{k+1} = \left[ \begin{array}{cc}    1 & T \\   0 & 1  \end{array}\right] 
 % x_{k} + \left[\begin{array}{c}    \frac{T^{2}}{2} \\    T  \end{array}\right] 
 % u_{k} + w_{k}$$
 % 

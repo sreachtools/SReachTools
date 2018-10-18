@@ -11,15 +11,16 @@
 % within pre-specified safe bounds.
 %
 % This Live Script is part of the SReachTools toolbox. License for the use 
-% of this function is given in <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE 
+% of this function is given in 
+% <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE 
 % https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
 
 % Prescript running
 close all;clc;clear;
 srtinit
 %% Problem Formulation
-% We first define a |LtiSystem| object corresponding to the discrete-time approximation 
-% of the three-compartment pharmacokinetic system model.
+% We first define a |LtiSystem| object corresponding to the discrete-time 
+% approximation of the three-compartment pharmacokinetic system model.
 %
 % We bound the anesthesia the automation can deliver to $[0,7]$ mg/dL and
 % account for patient model mismatch via an additive Gaussian noise.
