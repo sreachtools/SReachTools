@@ -38,9 +38,9 @@ classdef SReachDynProgTest < matlab.unittest.TestCase
             % chanceConstraint formulation
             SReachDynProg('term', sys, xinc, uinc, safety_tube);
 
-            % First hitting time problem
-            target_set = Polyhedron('lb', 0.5*[-1, -1], 'ub', 0.5*[1, 1]);
-            SReachDynProg('first', sys, xinc, uinc, safety_tube, target_set);
+%             % First hitting time problem TODO-first
+%             target_set = Polyhedron('lb', 0.5*[-1, -1], 'ub', 0.5*[1, 1]);
+%             SReachDynProg('first', sys, xinc, uinc, safety_tube, target_set);
         end
     end
 end
