@@ -4,6 +4,8 @@ examples/figs/
 *.swp
 *.todo
 _site/
+.sass-cache/
+_site/
 docs/.sass-cache/
 docs/_site
 .jekyll-metadata

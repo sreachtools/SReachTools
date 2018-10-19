@@ -1,8 +1,20 @@
 ---
 layout: docs
-title: Function List
+title: Documentation
 permalink: /docs/
 ---
+
+This page lists all the functions included as part of SReachTools. This information is also available in the docstrings. Please use:
+
+- `help FUNCTION_NAME` to understand the details of a function
+- `methods(CLASS_NAME)` to understand the details of a class
+- `<Ctrl+F1>` to get function hints for a given function
+
+
+
+Do check out the [examples](../examples) for more detailed explanations of various functionalities of the toolbox.
+
+## Function list
 
 <ul class="doc-list">
     <li>src/</li>
@@ -31,7 +43,6 @@ permalink: /docs/
             <li class="doc-list"><a href="src/helperFunctions/getSrtWarning">getSrtWarning.m</a></li>
             <li class="doc-list"><a href="src/helperFunctions/iteratedQscmvnv">iteratedQscmvnv.m</a></li>
             <li class="doc-list"><a href="src/helperFunctions/qscmvnv">qscmvnv.m</a></li>
-            <li class="doc-list"><a href="src/helperFunctions/removeNameValuePairs">removeNameValuePairs.m</a></li>
             <li class="doc-list"><a href="src/helperFunctions/setSrtWarning">setSrtWarning.m</a></li>
         </ul>
         <li>modules/</li>

@@ -20,14 +20,25 @@ function docs2md()
     fid = fopen(fullfile(DOCS_ROOT_PATH, 'index.md'), 'w+');
     fprintf(fid, '---\n');
     fprintf(fid, 'layout: docs\n');
-    fprintf(fid, 'title: Function List\n');
+    fprintf(fid, 'title: Documentation\n');
     fprintf(fid, 'permalink: /docs/\n');
     fprintf(fid, '---\n\n');
+
+    doc_webpage_header = [...
+    'This page lists all the functions included as part of SReachTools. ',...
+    'This information is also available in the docstrings. Please use:\n\n',...
+    '- `help FUNCTION_NAME` to understand the details of a function\n',...
+    '- `methods(CLASS_NAME)` to understand the details of a class\n',...
+    '- `<Ctrl+F1>` to get function hints for a given function\n\n',...
+    '\n\nDo check out the [examples](../examples) for more detailed ',...
+    'explanations of various functionalities of the toolbox.\n'];
+    fprintf(fid, doc_webpage_header);
     fclose(fid);
 
     checkAndMakeFolder(fullfile(DOCS_ROOT_PATH, 'src'));
 
     fid = fopen(fullfile(DOCS_ROOT_PATH, 'index.md'), 'a');
+    fprintf(fid, sprintf('\n## Function list\n\n', tabstr));
     fprintf(fid, sprintf('%s<ul class="doc-list">\n', tabstr));
     fclose(fid);
 
@@ -38,6 +49,8 @@ function docs2md()
     fid = fopen(fullfile(DOCS_ROOT_PATH, 'index.md'), 'a');
     fprintf(fid, sprintf('%s</ul>\n', tabstr));
     fclose(fid);
+    
+    movefile([DOCS_ROOT_PATH 'index.md'],[DOCS_ROOT_PATH '../docs.md'])
 end
 
 function checkAndMakeFolder(fpath)
