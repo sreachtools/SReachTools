@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>forwardStochasticReachCWH</title><meta name="generator" content="MATLAB 9.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2018-10-18"><meta name="DC.source" content="forwardStochasticReachCWH.m"><style type="text/css">
+      --><title>forwardStochasticReachCWH</title><meta name="generator" content="MATLAB 9.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2018-10-19"><meta name="DC.source" content="forwardStochasticReachCWH.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -140,7 +140,7 @@ mcarlo_result = target_set.contains(end_locations);
 fprintf(<span class="string">'Monte-Carlo simulation using %1.0e particles: %1.3f\n'</span>,<span class="keyword">...</span>
         n_mcarlo_sims,<span class="keyword">...</span>
         sum(mcarlo_result)/n_mcarlo_sims);
-</pre><pre class="codeoutput">Monte-Carlo simulation using 1e+05 particles: 0.862
+</pre><pre class="codeoutput">Monte-Carlo simulation using 1e+05 particles: 0.863
 </pre><pre class="codeinput"><span class="comment">% Problem 1b: Initial state is a Gaussian random vector</span>
 <span class="comment">% ------------------------------------------------------</span>
 <span class="comment">% Initial state definition</span>
@@ -186,7 +186,7 @@ mcarlo_result = target_set.contains(end_locations);
 fprintf(<span class="string">'Monte-Carlo simulation using %1.0e particles: %1.3f\n'</span>,<span class="keyword">...</span>
         n_mcarlo_sims,<span class="keyword">...</span>
         sum(mcarlo_result)/n_mcarlo_sims);
-</pre><pre class="codeoutput">Monte-Carlo simulation using 1e+05 particles: 0.710
+</pre><pre class="codeoutput">Monte-Carlo simulation using 1e+05 particles: 0.712
 </pre><h2 id="15">P2. Probability that the deputy (safely) rendezvous with the chief?</h2><p>Since the chief is located at the origin in this coordinate frame (<tt>sys</tt> describes the relative dynamics of the deputy), we define the target set to be a small box centered at the origin (<tt>target_set</tt> is a box axis-aligned with side <img src="forwardStochasticReachCWH_eq02555199365942447413.png" alt="$0.2$">). We are interested in the probability that the deputy will meet the chief at <tt>target_time</tt> time steps in future. <b>Additionally</b>, we desire that the deputy satellite stays within a line-of-sight cone for accurate sensing.</p><pre class="codeinput">target_time = 10;                                        <span class="comment">% Time of interest</span>
 target_set = Polyhedron(<span class="string">'lb'</span>,-0.05 * ones(4,1),<span class="keyword">...</span>
                         <span class="string">'ub'</span>, 0.05 * ones(4,1));         <span class="comment">% Target set definition</span>
@@ -264,7 +264,7 @@ prob_mc_estim = sum(mcarlo_result)/n_mcarlo_sims;
 fprintf(<span class="string">'Monte-Carlo simulation using %1.0e particles: %1.3f\n'</span>,<span class="keyword">...</span>
         n_mcarlo_sims,<span class="keyword">...</span>
         sum(mcarlo_result)/n_mcarlo_sims);
-</pre><pre class="codeoutput">Monte-Carlo simulation using 1e+05 particles: 0.316
+</pre><pre class="codeoutput">Monte-Carlo simulation using 1e+05 particles: 0.310
 </pre><pre class="codeinput"><span class="comment">% Problem 2b: Initial state is a Gaussian random vector</span>
 <span class="comment">% -----------------------------------------------------</span>
 
@@ -317,7 +317,7 @@ mcarlo_result = safety_tube.contains([repmat(initial_state,1,n_mcarlo_sims);
 fprintf(<span class="string">'Monte-Carlo simulation using %1.0e particles: %1.3f\n'</span>,<span class="keyword">...</span>
         n_mcarlo_sims,<span class="keyword">...</span>
         sum(mcarlo_result)/n_mcarlo_sims);
-</pre><pre class="codeoutput">Monte-Carlo simulation using 1e+05 particles: 0.068
+</pre><pre class="codeoutput">Monte-Carlo simulation using 1e+05 particles: 0.067
 </pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Forward stochastic reachability using Fourier transforms

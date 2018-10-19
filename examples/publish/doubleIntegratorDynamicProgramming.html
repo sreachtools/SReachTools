@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>doubleIntegratorDynamicProgramming</title><meta name="generator" content="MATLAB 9.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2018-10-18"><meta name="DC.source" content="doubleIntegratorDynamicProgramming.m"><style type="text/css">
+      --><title>doubleIntegratorDynamicProgramming</title><meta name="generator" content="MATLAB 9.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2018-10-19"><meta name="DC.source" content="doubleIntegratorDynamicProgramming.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -145,7 +145,7 @@ zlabel(<span class="string">'Safety probability'</span>)
 title(<span class="string">'Optimal value function $V_{SR}^\ast(\cdot)$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
 box <span class="string">on</span>
 view(45, 45)
-</pre><pre class="codeoutput">Elapsed time is 2.767257 seconds.
+</pre><pre class="codeoutput">Elapsed time is 2.513387 seconds.
 </pre><img vspace="5" hspace="5" src="doubleIntegratorDynamicProgramming_02.png" alt=""> <pre class="codeinput"><span class="comment">% Obtain the stochastic viability sets</span>
 <span class="comment">% ------------------------------------</span>
 poly_array1 = getDynProgLevelSets2D(cell_of_xvec_x1, prob_x1,<span class="keyword">...</span>
@@ -223,7 +223,7 @@ zlabel(<span class="string">'Safety probability'</span>)
 box <span class="string">on</span>
 view(45, 45)
 title(<span class="string">'Optimal value function $V_{SR}^\ast(\cdot)$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
-</pre><pre class="codeoutput">Elapsed time is 2.679040 seconds.
+</pre><pre class="codeoutput">Elapsed time is 2.491362 seconds.
 </pre><img vspace="5" hspace="5" src="doubleIntegratorDynamicProgramming_05.png" alt=""> <pre class="codeinput"><span class="comment">% Obtain the stochastic reach-avoid sets</span>
 <span class="comment">% --------------------------------------</span>
 poly_array2 = getDynProgLevelSets2D(cell_of_xvec_x2, prob_x2,<span class="keyword">...</span>
@@ -294,7 +294,7 @@ zlabel(<span class="string">'Safety probability'</span>)
 box <span class="string">on</span>
 view(45, 45)
 title(<span class="string">'Optimal value function $V_{SR}^\ast(\cdot)$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
-</pre><pre class="codeoutput">Elapsed time is 2.642697 seconds.
+</pre><pre class="codeoutput">Elapsed time is 2.430353 seconds.
 </pre><img vspace="5" hspace="5" src="doubleIntegratorDynamicProgramming_08.png" alt=""> <pre class="codeinput"><span class="comment">% Obtain the stochastic reach sets</span>
 <span class="comment">% --------------------------------</span>
 poly_array3 = getDynProgLevelSets2D(cell_of_xvec_x3, prob_x3,<span class="keyword">...</span>
