@@ -7,10 +7,12 @@ This is an area of **active research**, and this toolbox will attempt to cater
 certain classes of problems.  
 
 We aim to support the following problems:
- - **Stochastic reach-avoid problem** (guaranteeing safety for stochastic
+ - **Stochastic reachability of a target tube** (guaranteeing safety for stochastic
    systems to lying in a collection of time-varying safe sets while satisfying
    input bounds)
-    - Open-loop controller synthesis (admissible controller satisfying hard
+    - This problem subsumes existing work on terminal hitting stochastic reach-avoid
+      problems as well as stochastic viability problems.
+    - **Open-loop controller synthesis** (admissible controller satisfying hard
       control bounds with maximum safety probability):
         - `chance-open`: Chance constraint formulation solved via linear
           programming
@@ -18,21 +20,22 @@ We aim to support the following problems:
           patternsearch)
         - `particle-open`: Particle filter approach (mixed-integer linear
           program approach)
-    - Affine controller synthesis (admissible controller with chance constrained
+    - **Affine controller synthesis** (admissible controller with chance constrained
       input bounds with maximum safety probability)
         - `chance-affine`: Chance constraint formulation solved via
           difference-of-convex programming
-    - Set computation (set of initial states from which an admissible controller
-      exists such that the probability of safety is above a given threshold)
+    - **Stochastic reach set computation** (set of initial states from which an 
+      admissible controller exists such that the probability of safety is above a 
+      given threshold)
         - `chance-open`: Chance constraint-based under-approximation
         - `genzps-open`: Fourier transforms-based under-approximation
         - `lag-over/lag-under`: Lagrangian methods-based over- and
           under-approximation
  - **Forward stochastic reachability** (characterizing the stochasticity of the
-   state at a future time of interest)
-        - `state-stoch/concat-stoch`: Stochasticity of the state or the
+      state at a future time of interest)
+      - `state-stoch/concat-stoch`: Stochasticity of the state or the
           concatenated state vector
-        - `state-prob/concat-prob`: Probability of the state or the concatenated
+      - `state-prob/concat-prob`: Probability of the state or the concatenated
           state vector lying in a target set or a tube respectively
 
 Do check our [project blog](https://unm-hscl.github.io/SReachTools/blog/) for
