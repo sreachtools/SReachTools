@@ -16,13 +16,13 @@ publish('doubleIntegratorDynamicProgramming.m', options);
 options = struct('format','pdf','outputDir','./examples/publish');
 publish('forwardStochasticReachCWH.m', options);
 
-% options = struct('format','html','outputDir','./examples/publish');
-% publish('AutomatedAnesthesiaDelivery.m', options);
-% options = struct('format','html','outputDir','./examples/publish');
-% publish('cwhSReachPointDemo.m', options);
-% options = struct('format','html','outputDir','./examples/publish');
-% publish('doubleIntegratorDynamicProgramming.m', options);
-% options = struct('format','html','outputDir','./examples/publish');
-% publish('forwardStochasticReachCWH.m', options);
+options = struct('format','html','outputDir','./examples/publish');
+publish('AutomatedAnesthesiaDelivery.m', options);
+options = struct('format','html','outputDir','./examples/publish');
+publish('cwhSReachPointDemo.m', options);
+options = struct('format','html','outputDir','./examples/publish');
+publish('doubleIntegratorDynamicProgramming.m', options);
+options = struct('format','html','outputDir','./examples/publish');
+publish('forwardStochasticReachCWH.m', options);
 
 close all;

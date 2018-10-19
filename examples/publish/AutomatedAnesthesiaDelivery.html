@@ -121,7 +121,7 @@ timer_val = tic;
     <span class="string">'chance-open'</span>, sys, prob_thresh, safety_tube, options);
 elapsed_time = toc(timer_val);
 disp(elapsed_time)
-</pre><pre class="codeoutput">   18.0668
+</pre><pre class="codeoutput">   16.2737
 
 </pre><h2 id="5">Plotting the stochastic viable set</h2><pre class="codeinput">figure(1);
 hold <span class="string">on</span>;
@@ -366,5 +366,6 @@ if ~isEmptySet(underapprox_stoch_viab_polytope)
     xlabel('$x_1$','interpreter','latex')
     ylabel('$x_2$','interpreter','latex');   
 end
+
 ##### SOURCE END #####
 --></body></html>

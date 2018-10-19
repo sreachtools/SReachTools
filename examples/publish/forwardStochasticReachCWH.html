@@ -186,7 +186,7 @@ mcarlo_result = target_set.contains(end_locations);
 fprintf(<span class="string">'Monte-Carlo simulation using %1.0e particles: %1.3f\n'</span>,<span class="keyword">...</span>
         n_mcarlo_sims,<span class="keyword">...</span>
         sum(mcarlo_result)/n_mcarlo_sims);
-</pre><pre class="codeoutput">Monte-Carlo simulation using 1e+05 particles: 0.711
+</pre><pre class="codeoutput">Monte-Carlo simulation using 1e+05 particles: 0.710
 </pre><h2 id="15">P2. Probability that the deputy (safely) rendezvous with the chief?</h2><p>Since the chief is located at the origin in this coordinate frame (<tt>sys</tt> describes the relative dynamics of the deputy), we define the target set to be a small box centered at the origin (<tt>target_set</tt> is a box axis-aligned with side <img src="forwardStochasticReachCWH_eq02555199365942447413.png" alt="$0.2$">). We are interested in the probability that the deputy will meet the chief at <tt>target_time</tt> time steps in future. <b>Additionally</b>, we desire that the deputy satellite stays within a line-of-sight cone for accurate sensing.</p><pre class="codeinput">target_time = 10;                                        <span class="comment">% Time of interest</span>
 target_set = Polyhedron(<span class="string">'lb'</span>,-0.05 * ones(4,1),<span class="keyword">...</span>
                         <span class="string">'ub'</span>, 0.05 * ones(4,1));         <span class="comment">% Target set definition</span>
@@ -264,7 +264,7 @@ prob_mc_estim = sum(mcarlo_result)/n_mcarlo_sims;
 fprintf(<span class="string">'Monte-Carlo simulation using %1.0e particles: %1.3f\n'</span>,<span class="keyword">...</span>
         n_mcarlo_sims,<span class="keyword">...</span>
         sum(mcarlo_result)/n_mcarlo_sims);
-</pre><pre class="codeoutput">Monte-Carlo simulation using 1e+05 particles: 0.313
+</pre><pre class="codeoutput">Monte-Carlo simulation using 1e+05 particles: 0.316
 </pre><pre class="codeinput"><span class="comment">% Problem 2b: Initial state is a Gaussian random vector</span>
 <span class="comment">% -----------------------------------------------------</span>
 
@@ -317,7 +317,7 @@ mcarlo_result = safety_tube.contains([repmat(initial_state,1,n_mcarlo_sims);
 fprintf(<span class="string">'Monte-Carlo simulation using %1.0e particles: %1.3f\n'</span>,<span class="keyword">...</span>
         n_mcarlo_sims,<span class="keyword">...</span>
         sum(mcarlo_result)/n_mcarlo_sims);
-</pre><pre class="codeoutput">Monte-Carlo simulation using 1e+05 particles: 0.067
+</pre><pre class="codeoutput">Monte-Carlo simulation using 1e+05 particles: 0.068
 </pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Forward stochastic reachability using Fourier transforms
