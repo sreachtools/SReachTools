@@ -18,15 +18,15 @@ classdef computeNormCdfInvOverApproxTest < matlab.unittest.TestCase
                 y_pwa = max(invcdf_approx_m*x+invcdf_approx_c);
                 y_true = norminv(1-x);
                 err_bn_pwa_and_true=y_pwa-y_true;
-                %% Skipping plotting commands
-                figure(); 
-                clf
-                plot(x,err_bn_pwa_and_true,'ro-'); hold on;
-                plot(x,pwa_accuracy*ones(length(x),1)); 
-                xlim([-0.05,max_delta + 0.05]);
-                xlabel('x'); 
-                ylabel('PWL-true curve');
-                title('Approximation quality');
+%                 %% Skipping plotting commands
+%                 figure(); 
+%                 clf
+%                 plot(x,err_bn_pwa_and_true,'ro-'); hold on;
+%                 plot(x,pwa_accuracy*ones(length(x),1)); 
+%                 xlim([-0.05,max_delta + 0.05]);
+%                 xlabel('x'); 
+%                 ylabel('PWL-true curve');
+%                 title('Approximation quality');
                 testCase.verifyLessThanOrEqual(max(err_bn_pwa_and_true),...
                     pwa_accuracy, 'Overapproximation error not satisfied');
                 testCase.verifyLessThanOrEqual(-1e-8, min(err_bn_pwa_and_true), ...
