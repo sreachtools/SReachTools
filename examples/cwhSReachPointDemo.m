@@ -367,7 +367,8 @@ grid on;
 xlabel('$x$','interpreter','latex');
 ylabel('$y$','interpreter','latex');
 %% Reporting the results
-if isnan([lb_stoch_reach_avoid_cc_pwl, lb_stoch_reach_avoid_ft, lb_stoch_reach_avoid_cc_affine, lb_stoch_reach_avoid_pa])
+if any(isnan([lb_stoch_reach_avoid_cc_pwl, lb_stoch_reach_avoid_ft,...
+        lb_stoch_reach_avoid_cc_affine, lb_stoch_reach_avoid_pa]))
     disp('Skipped items would show up as NaN');
 end
 fprintf(['FT: %1.3f | CC (Open): %1.3f | Scenario (Open): %1.3f | ',...

@@ -152,10 +152,16 @@ legend_cell = {'Safe set','Target set'};
 if exist('polytope_cc_open','var')
     plot(polytope_cc_open.slice([3,4], slice_at_vx_vy), 'color','m','alpha',1);
     legend_cell{end+1} = 'Underapprox. polytope (chance-open)';
+else
+    polytope_cc_open = Polyhedron();
+    elapsed_time_cc_open = NaN;
 end
 if exist('polytope_ft','var')
     plot(polytope_ft.slice([3,4], slice_at_vx_vy), 'color','b','alpha',1);
     legend_cell{end+1} = 'Underapprox. polytope (genzps-open)';
+else
+    polytope_ft = Polyhedron();
+    elapsed_time_ft = NaN;
 end
 direction_index_to_plot = 30;
 if ~isEmptySet(polytope_cc_open)
@@ -180,6 +186,11 @@ end
 legend(legend_cell, 'Location','South');
 xlabel('$x$','interpreter','latex');
 ylabel('$y$','interpreter','latex');
+
+%% Reporting solution times
+if any(isnan([elapsed_time_ft, elapsed_time_cc_open]))
+    disp('Skipped items would show up as NaN');
+end
 fprintf('Elapsed time: (genzps-open) %1.3f | (chance-open) %1.3f seconds\n',...
     elapsed_time_ft, elapsed_time_cc_open);
 

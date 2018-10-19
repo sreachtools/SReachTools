@@ -114,6 +114,7 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube,...
 %
 %
 
+    myeps = 1e-10; % Ideally, we need eps but SDPT3 gets only 1e-13 accuracy
     validatestring(method_str,{'chance-open'});
     
     inpar = inputParser();
@@ -174,10 +175,10 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube,...
             options.set_of_dir_vecs;
         % Step 2b: Does it satisfy the equality constraints of init_safe_set
         xmaxPlusdirs_within_init_safe_set_eq = abs(init_safe_set.Ae *...
-            check_set_of_dir_vecs - init_safe_set.be)<eps;
+            check_set_of_dir_vecs - init_safe_set.be) < myeps;
         % Step 2c: If they don't, throw error
         if ~all(all(xmaxPlusdirs_within_init_safe_set_eq))
-            throwAsCaller(SrtInvalidArgsError(['set_of_dir_vecs+xmax does ',... 
+            throw(SrtInvalidArgsError(['set_of_dir_vecs+xmax does ',... 
                 'not lie in the affine hull intersecting safe_set.']));
         end
 
