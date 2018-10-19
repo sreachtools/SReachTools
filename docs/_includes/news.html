@@ -1,0 +1,26 @@
+<div>
+  <h2 id="news" style="display:inline-block;">
+    {{ page.list_title | default: "News" }}
+  </h2>
+  <a href="{{ "/feed.xml" | relative_url }}">
+    <img src="{{ "/assets/if_social_style_3_rss_341106.svg" | relative_url }}" style="width: 20px; height:20px; padding-bottom: 7px; padding-left: 10px;"/>
+  </a>
+</div>
+<ul class="post-list">
+  {%- for post in site.posts -%}
+  <li>
+    {%- assign date_format = site.minima.date_format | default: "%b %-d, %Y" -%}
+    <p>
+      <span class="post-meta">
+        {{ post.date | date: date_format }}
+      </span> &mdash;
+      <a class="post-link" href="{{ post.url | relative_url }}">
+        {{ post.title | escape }}
+      </a> 
+    </p>
+    {%- if site.show_excerpts -%}
+      {{ post.excerpt }}
+    {%- endif -%}
+  </li>
+  {%- endfor -%}
+</ul>

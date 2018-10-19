@@ -1,0 +1,14 @@
+---
+layout: default
+permalink: /contact/
+---
+{{ content }}
+
+<form class="formspree-contact" style="margin-top: 30px;" method="POST" action="https://formspree.io/YOUREMAILHERE">
+  <input name="email" placeholder="Your email" type="email">
+  <input type="hidden" name="_cc" value="gleasonj@unm.edu" />
+  <input name="_subject" placeholder="Subject" type="subject" />
+  <input type="hidden" name="_next" value="{{ "/contact-thanks" | relative_url }}" />
+  <textarea name="message" placeholder="Your message"></textarea>
+  <button type="submit">Send</button>
+</form>
