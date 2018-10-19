@@ -5,5 +5,3 @@ examples/figs/
 *.todo
 _site/
 .sass-cache/
-docs2md.m
-doc/jekyll
