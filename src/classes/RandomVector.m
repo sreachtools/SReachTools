@@ -1,5 +1,5 @@
 classdef RandomVector
-% SReachTools/RandomVector: Create a random vector object
+% Create a random vector object
 % ==========================================================================
 %
 % Defines a random vector with a standard probability density function (pdf)
@@ -7,7 +7,7 @@ classdef RandomVector
 % We support the following pdfs:
 %     1. Gaussian
 %
-% Usage
+% Usage:
 % ------
 %
 % % Define a Gaussian random variable of mean 0 and standard deviation 2:
@@ -27,7 +27,7 @@ classdef RandomVector
 % ------------------------
 %   type       - Random vector type (string)
 %   parameters - System parameters (struct)
-%   dimension  - Random vector dimension (scalar)
+%   dim        - Random vector dimension (scalar)
 %   pdf        - Probability density function (function handle)
 %
 % RandomVector Methods:
@@ -44,13 +44,13 @@ classdef RandomVector
 % * The anonymous function used for the definition of obj.pdf transposes the
 %   accepted column vector for using mvnpdf.
 % * RandomVector.pdf takes in arguments of the form N_points x
-%   random_vector_dimension
+%   random_vector_dim
 % 
 % =========================================================================
 % 
 % This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 % 
 
@@ -77,12 +77,12 @@ classdef RandomVector
         %   parameters.covariance - Covariance matrix (p x p)
         % 
         parameters
-        dimension
+        dim
         pdf
     end
     methods
         function obj = RandomVector(rv_type, varargin)
-        % SReachTools/RandomVector: Constructor for random vector class
+        %  Constructor for random vector class
         % ====================================================================
         %
         % Inputs:
@@ -96,14 +96,14 @@ classdef RandomVector
         %                   sigma
         %
         % Outputs:
-        % -------
+        % --------
         %   obj - Random vector object
         %
         % =====================================================================
         % 
         % This function is part of the Stochastic Reachability Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
         % 
             
@@ -114,11 +114,11 @@ classdef RandomVector
 
             switch(lower(obj.type))
                 case 'gaussian'
-                    assert(length(varargin) == 2, ...
-                           'SReachTools:invalidArgs', ...
-                           ['Gaussian random vector needs the mean vector ', ...
-                           'and covariance matrix']);
-                       
+                    if length(varargin) ~= 2 
+                        throwAsCaller(SrtInvalidArgsError(['Gaussian random vector needs the mean vector ', ...
+                           'and covariance matrix']));
+                    end
+
                     % Check if mean is a nonempty numeric column vector
                     validateattributes(varargin{1}, {'numeric'}, {'column'});
                     % Check if covariance matrix is a nonempty square matrix
@@ -128,16 +128,19 @@ classdef RandomVector
                     % set parameters
                     obj.parameters.mean = varargin{1};
                     obj.parameters.covariance = varargin{2};
+                    if ~issymmetric(obj.parameters.covariance)
+                        obj.parameters.covariance =...
+                            (obj.parameters.covariance + obj.parameters.covariance')/2;
+                    end
                     
                     % Check if the mean and covariance are of correct dimensions
-                    assert(size(obj.parameters.mean,1) == ...
-                           size(obj.parameters.covariance,1), ...
-                           'SReachTools:invalidArgs', ...
-                           ['Mean and covariance matrix have different ', ...
-                            'dimensions']);
+                    if size(obj.parameters.mean, 1) ~= size(obj.parameters.covariance, 1)
+                        throwAsCaller(SrtInvalidArgsError(['Mean and covariance matrix have different ', ...
+                            'dimensions']));
+                    end
                         
                     % Update the dimension
-                    obj.dimension = size(obj.parameters.mean, 1);
+                    obj.dim = size(obj.parameters.mean, 1);
                     
                     % Define an anonymous function using MATLAB's built-in pdf 
                     % Transpose the mean for mvnpdf
@@ -145,13 +148,14 @@ classdef RandomVector
                                           obj.parameters.mean', ...
                                           obj.parameters.covariance);
                 otherwise
-                    error('SReachTools:internal', ...
-                          'Unsupported random vector type');
+                    exc = SrtInternalError(['Unsupported random ', ...
+                        'vector type']);
+                    throw(exc);
             end
         end
         
         function disp(obj)
-        % SReachTools/RandomVector/disp  Override of MATLAB internal display
+        % Override of MATLAB internal display
         % ====================================================================
         % 
         % Overriding of MATLAB built-in display function for the class
@@ -160,12 +164,12 @@ classdef RandomVector
         % 
         % This function is part of the Stochastic Reachability Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
         %
             
             disp(sprintf('%s-dimensional %s random vector', ...
-                         num2str(obj.dimension), ...
+                         num2str(obj.dim), ...
                          obj.type));
         end
     end

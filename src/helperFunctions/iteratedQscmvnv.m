@@ -4,9 +4,8 @@ function prob = iteratedQscmvnv(qscmvnv_cov, ...
                                 qscmvnv_ub, ...
                                 desired_accuracy, ...
                                 warning_iteration)
-% SReachTools/helperFunctions/iteratedQscmvnv: Wrapper for Genz's algorithm to
-% compute the integral of a Gaussian over an intersection of halfspaces up to a
-% desired_accuracy
+% Wrapper for Genz's algorithm to compute the integral of a Gaussian over an 
+% intersection of halfspaces up to a desired_accuracy
 % ============================================================================
 % 
 % This function computes the integral of a zero-mean Gaussian \eta with
@@ -45,7 +44,7 @@ function prob = iteratedQscmvnv(qscmvnv_cov, ...
 %                       qscmvnv_lb <= qscmvnv_coeff_matrix * x 
 %                       qscmvnv_ub => qscmvnv_coeff_matrix * x 
 % desired_accuracy    - Accuracy of the integral evaluation [If unsure, use 1e-8
-%                       if sys.state_dimension <= 4, and 1e-3 otherwise]
+%                       if sys.state_dim <= 4, and 1e-3 otherwise]
 % warning_iteration   - No. of iterations after which warning should be provided
 %                       to make the user aware that the accuracy setting might
 %                       be too high [If unsure, use 10]
@@ -69,14 +68,14 @@ function prob = iteratedQscmvnv(qscmvnv_cov, ...
 %        increasing the number of Monte Carlo particles used.
 % * In the event, the integral is below the desired_accuracy, prob is set to
 %   desired_accuracy. This is to allow to take log of the prob, if desired.
-% * In case, the target set is a hyper-cuboid and the state_dimension < 25,
+% * In case, the target set is a hyper-cuboid and the state_dim < 25,
 %   then use mvncdf instead.
 %
 % ============================================================================
 %
 % This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
-%      https://github.com/abyvinod/SReachTools/blob/master/LICENSE
+%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 %
 

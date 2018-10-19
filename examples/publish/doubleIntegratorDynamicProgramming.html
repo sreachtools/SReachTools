@@ -1,0 +1,679 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>doubleIntegratorDynamicProgramming</title><meta name="generator" content="MATLAB 9.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2018-10-18"><meta name="DC.source" content="doubleIntegratorDynamicProgramming.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Double Integrator Reach-Avoid Via Dynamic Programming</a></li><li><a href="#2">Problem setup</a></li><li><a href="#3">Case 1: Stochastic viability problem</a></li><li><a href="#6">Case 2: Terminal hitting-time stochastic reach-avoid</a></li><li><a href="#10">Case 3: Time-varying safety sets (Stochastic reachability of a target tube)</a></li></ul></div><h2 id="1">Double Integrator Reach-Avoid Via Dynamic Programming</h2><p>This example demonstrates how to use the SReachTools toolbox to solve a terminal-hitting time reach-avoid problem using <a href="https://doi.org/10.1016/j.automatica.2010.08.006">dynamic programming</a>.</p><p>In this example, we analyze the following problems via dynamic programming for a stochastic system with known dynamics:</p><div><ol><li><b>stochastic viability problem</b>: Compute a controller to stay within a safe set with maximum likelihood</li><li><b>the terminal-hitting time stochastic reach-avoid problem</b>: Compute a controller that maximizes the probability of reaching a target set at a time horizon, <tt>N</tt>, while maintaining the system in a set of safe states</li><li><b>stochastic reachability of a moving target tube</b>: Compute a controller that maximizes the probability of staying within a target tube (a collection of time-varying safe sets)</li></ol></div><p>SReachTools has a dynamic programing implementation that can analyze systems upto three dimensions. For efficient implementation, we require the input set to be an axis-aligned hypercuboid, and define the grid the smallest hypercuboid containing all the target sets.</p><p>This Live Script is part of the SReachTools toolbox. License for the use of this function is given in <a href="https://github.com/unm-hscl/SReachTools/blob/master/LICENSE">https://github.com/unm-hscl/SReachTools/blob/master/LICENSE</a>.</p><pre class="codeinput"><span class="comment">% Prescript running</span>
+close <span class="string">all</span>;clc;clear;
+srtinit
+</pre><h2 id="2">Problem setup</h2><p>In this example we use a discretized double integrator dynamics given by:</p><p><img src="doubleIntegratorDynamicProgramming_eq10500098239847735597.png" alt="$$  x_{k+1} = \left[ \begin{array}{cc}    1 &amp; T \\   0 &amp; 1  \end{array}\right]&#xA;x_{k} + \left[\begin{array}{c}    \frac{T^{2}}{2} \\    T  \end{array}\right]&#xA;u_{k} + w_{k}$$"></p><p>with state <img src="doubleIntegratorDynamicProgramming_eq04084560418051301441.png" alt="$x_k$">, input <img src="doubleIntegratorDynamicProgramming_eq06185581748565047363.png" alt="$u_k$">, disturbance <img src="doubleIntegratorDynamicProgramming_eq17066019916537791851.png" alt="$w_{k}$">, and sampling time <img src="doubleIntegratorDynamicProgramming_eq14047577632175690031.png" alt="$T$">.</p><p>The double integrator system can be used as a simple model of a vehicle on a lane.</p><div><ol><li>The state is position and velocity of the vehicle.</li><li>The vehicle is acceleration-controlled with restrictions on the maximum and   minimum acceleration provided</li><li>The stochastic disturbance affects its position and velocity accounting for   unmodelled phenomena like slipping or engine model mismatch.</li></ol></div><pre class="codeinput"><span class="comment">% System definition</span>
+<span class="comment">% -----------------</span>
+<span class="comment">% discretization parameter</span>
+T = 0.1;
+
+<span class="comment">% define the system</span>
+sys = LtiSystem(<span class="string">'StateMatrix'</span>, [1, T; 0, 1], <span class="keyword">...</span>
+    <span class="string">'InputMatrix'</span>, [T^2/2; T], <span class="keyword">...</span>
+    <span class="string">'InputSpace'</span>, Polyhedron(<span class="string">'lb'</span>, -0.1, <span class="string">'ub'</span>, 0.1), <span class="keyword">...</span>
+    <span class="string">'DisturbanceMatrix'</span>, eye(2), <span class="keyword">...</span>
+    <span class="string">'Disturbance'</span>, RandomVector(<span class="string">'Gaussian'</span>, zeros(2,1), 0.01*eye(2)));
+
+<span class="comment">% Parameters for dynamic programming and visualization</span>
+<span class="comment">% ----------------------------------------------------</span>
+<span class="comment">% Step sizes for gridding</span>
+dyn_prog_xinc = 0.05;
+dyn_prog_uinc = 0.1;
+
+<span class="comment">% Additionally, we need to specify thresholds of interest to compute the</span>
+<span class="comment">% stochastic viability set</span>
+reach_set_thresholds = [0.2 0.5 0.9];
+
+<span class="comment">% For plotting purposes, we specify legend and axis limits</span>
+axis_vec = [-1 1 -1 1];
+legend_str={<span class="string">'Safety tube at k=0'</span>, <span class="string">'Safety Probability $\geq 0.2$'</span>,<span class="keyword">...</span>
+    <span class="string">'Safety Probability $\geq 0.5$'</span>, <span class="string">'Safety Probability $\geq 0.9$'</span>};
+</pre><h2 id="3">Case 1: Stochastic viability problem</h2><p>We are interested in assessing the safety of this double integrator system to stay within the safe set of <img src="doubleIntegratorDynamicProgramming_eq04712238727479698605.png" alt="$[-1,1]^2$">.</p><p>For the vehicle in a lane example, we require controllers that maximize the probability of ensuring that the position stay within <img src="doubleIntegratorDynamicProgramming_eq01893875229900969577.png" alt="$[-1,1]$"> and the velocity with <img src="doubleIntegratorDynamicProgramming_eq01893875229900969577.png" alt="$[-1,1]$"> when the car at <img src="doubleIntegratorDynamicProgramming_eq17398102134707384461.png" alt="$k=0$"> has some initial position and velocity in <img src="doubleIntegratorDynamicProgramming_eq04712238727479698605.png" alt="$[-1,1]^2$">.</p><p>To perform this safety analysis, we need to do the following steps</p><div><ol><li>Provide parameters for dynamic programming like grid size and thresholds (if stochastic viability sets are of interest) [*Reused from above*]</li><li>Construct the safety tube using 'viability' option (and plot it as well)</li><li>Obtain the dynamic programming solution via SReachDynProg</li><li>Obtain the stochastic viability sets at desired thresholds using   getDynProgLevelSets2D</li></ol></div><pre class="codeinput"><span class="comment">% Safety tube definition</span>
+<span class="comment">% ----------------------</span>
+<span class="comment">% time horizon</span>
+N = 5;
+<span class="comment">% The viability problem is equivalent to a stochastic reachability of a target</span>
+<span class="comment">% tube of repeating safe sets</span>
+safe_set = Polyhedron(<span class="string">'lb'</span>, [-1, -1], <span class="string">'ub'</span>, [1, 1]);
+safety_tube1 = Tube(<span class="string">'viability'</span>, safe_set, N);
+
+<span class="comment">% Plotting of safety tube</span>
+<span class="comment">% -----------------------</span>
+figure()
+hold <span class="string">on</span>
+<span class="keyword">for</span> time_indx=0:N
+    <span class="comment">% Embed the 2-D safety sets in a 3-D space which is state-space x [0, N]</span>
+    safety_tube_at_time_indx = Polyhedron(<span class="string">'H'</span>,<span class="keyword">...</span>
+        [safety_tube1(time_indx+1).A,<span class="keyword">...</span>
+            zeros(size(safety_tube1(time_indx+1).A,1),1),<span class="keyword">...</span>
+            safety_tube1(time_indx+1).b],<span class="keyword">...</span>
+        <span class="string">'He'</span>,[0 0 1 time_indx]);
+    plot(safety_tube_at_time_indx, <span class="string">'alpha'</span>,0.25);
+<span class="keyword">end</span>
+axis([axis_vec 0 N])
+box <span class="string">on</span>;
+grid <span class="string">on</span>;
+xlabel(<span class="string">'$x_1$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+ylabel(<span class="string">'$x_2$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+zlabel(<span class="string">'time'</span>);
+title(<span class="string">'Safety tube'</span>);
+</pre><img vspace="5" hspace="5" src="doubleIntegratorDynamicProgramming_01.png" alt=""> <pre class="codeinput"><span class="comment">% Dynamic programming recursion via gridding</span>
+<span class="comment">% ------------------------------------------</span>
+tic;
+[prob_x1, cell_of_xvec_x1] =  SReachDynProg(<span class="string">'term'</span>, sys, dyn_prog_xinc,<span class="keyword">...</span>
+    dyn_prog_uinc, safety_tube1);
+toc
+
+<span class="comment">% Plotting of the optimal value function</span>
+<span class="comment">% --------------------------------------</span>
+<span class="comment">% Visualization of the value function at k=0 (safety probability)</span>
+figure();
+x1vec = cell_of_xvec_x1{1};
+x2vec = cell_of_xvec_x1{2};
+surf(x1vec,x2vec,reshape(prob_x1,length(x2vec),length(x1vec)));
+axis([axis_vec 0 1])
+xlabel(<span class="string">'$x_1$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+ylabel(<span class="string">'$x_2$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+zlabel(<span class="string">'Safety probability'</span>)
+title(<span class="string">'Optimal value function $V_{SR}^\ast(\cdot)$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+box <span class="string">on</span>
+view(45, 45)
+</pre><pre class="codeoutput">Elapsed time is 2.767257 seconds.
+</pre><img vspace="5" hspace="5" src="doubleIntegratorDynamicProgramming_02.png" alt=""> <pre class="codeinput"><span class="comment">% Obtain the stochastic viability sets</span>
+<span class="comment">% ------------------------------------</span>
+poly_array1 = getDynProgLevelSets2D(cell_of_xvec_x1, prob_x1,<span class="keyword">...</span>
+    reach_set_thresholds, safety_tube1);
+
+<span class="comment">% Plotting of the stochastic viability sets</span>
+<span class="comment">% -----------------------------------------</span>
+<span class="comment">% Visualization of the safe initial states --- Superlevel sets of safety</span>
+<span class="comment">% probability</span>
+figure();
+hold <span class="string">on</span>;
+plot([safety_tube1(1), poly_array1])
+xlabel(<span class="string">'$x_1$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+ylabel(<span class="string">'$x_2$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+box <span class="string">on</span>
+axis(axis_vec)
+axis <span class="string">equal</span>
+legend(legend_str)
+title(<span class="string">'Stochastic viability sets $L_{SR}^\ast(\cdot)$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+</pre><pre class="codeoutput">Warning: MATLAB's contour matrix missed a corner!
+Adding (1, -1) to polytope vertex list for level=0.20. 
+Warning: MATLAB's contour matrix missed a corner!
+Adding (-1, 1) to polytope vertex list for level=0.20. 
+</pre><img vspace="5" hspace="5" src="doubleIntegratorDynamicProgramming_03.png" alt=""> <h2 id="6">Case 2: Terminal hitting-time stochastic reach-avoid</h2><p>Stochastic reach-avoid problems have a time-invariant safety set uptil time horizon (uptill <img src="doubleIntegratorDynamicProgramming_eq05291766496614484047.png" alt="$k=N-1$">), and a different target set at time horizon <img src="doubleIntegratorDynamicProgramming_eq10077191877953251971.png" alt="$k=N$">.</p><p>Specifically, we are interested in assessing the safety of this double integrator system to stay within the safe set of <img src="doubleIntegratorDynamicProgramming_eq04712238727479698605.png" alt="$[-1,1]^2$"> for <img src="doubleIntegratorDynamicProgramming_eq04941290416507909356.png" alt="$4$"> time steps and then reach <img src="doubleIntegratorDynamicProgramming_eq05409236955776165217.png" alt="$[-0.5,0.5]^2$">. Here, the car at <img src="doubleIntegratorDynamicProgramming_eq17398102134707384461.png" alt="$k=0$"> has some initial position and velocity in <img src="doubleIntegratorDynamicProgramming_eq04712238727479698605.png" alt="$[-1,1]^2$"> as before.</p><p>To perform this safety analysis, we need to do the following steps</p><div><ol><li>Provide parameters for dynamic programming like grid size and thresholds (if stochastic reach-avoid sets are of interest) [*Reused from above*]</li><li>Construct the safety tube using 'reach-avoid' option (and plot it as well)</li><li>Obtain the dynamic programming solution via SReachDynProg</li><li>Obtain the stochastic reach-avoid sets at desired thresholds using   getDynProgLevelSets2D</li></ol></div><pre class="codeinput"><span class="comment">% Safety tube definition</span>
+<span class="comment">% ----------------------</span>
+<span class="comment">% Safety tube is a generalization of the reach problem. The reach avoid</span>
+<span class="comment">% safety-tube is created by setting the first $N$ sets in the tube as the</span>
+<span class="comment">% |safe_set| and the final set as the |target_set|.</span>
+<span class="comment">%</span>
+<span class="comment">% time horizon</span>
+N = 5;
+<span class="comment">% The viability problem is equivalent to a stochastic reachability of a target</span>
+<span class="comment">% tube of repeating safe sets</span>
+safe_set = Polyhedron(<span class="string">'lb'</span>, [-1, -1], <span class="string">'ub'</span>, [1, 1]);
+target_set = Polyhedron(<span class="string">'lb'</span>, [-0.5, -0.5], <span class="string">'ub'</span>, [0.5, 0.5]);
+safety_tube2 = Tube(<span class="string">'reach-avoid'</span>, safe_set, target_set, N);
+
+<span class="comment">% Plotting of safety tube</span>
+<span class="comment">% -----------------------</span>
+figure()
+hold <span class="string">on</span>
+<span class="keyword">for</span> time_indx=0:N
+    <span class="comment">% Embed the 2-D safety sets in a 3-D space which is state-space x [0, N]</span>
+    safety_tube_at_time_indx = Polyhedron(<span class="string">'H'</span>,<span class="keyword">...</span>
+        [safety_tube2(time_indx+1).A,<span class="keyword">...</span>
+            zeros(size(safety_tube2(time_indx+1).A,1),1),<span class="keyword">...</span>
+            safety_tube2(time_indx+1).b],<span class="keyword">...</span>
+        <span class="string">'He'</span>,[0 0 1 time_indx]);
+    plot(safety_tube_at_time_indx, <span class="string">'alpha'</span>,0.25);
+<span class="keyword">end</span>
+axis([axis_vec 0 N])
+box <span class="string">on</span>;
+grid <span class="string">on</span>;
+xlabel(<span class="string">'$x_1$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+ylabel(<span class="string">'$x_2$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+zlabel(<span class="string">'time'</span>);
+title(<span class="string">'Safety tube'</span>);
+</pre><img vspace="5" hspace="5" src="doubleIntegratorDynamicProgramming_04.png" alt=""> <pre class="codeinput"><span class="comment">% Dynamic programming recursion via gridding</span>
+<span class="comment">% ------------------------------------------</span>
+tic;
+[prob_x2, cell_of_xvec_x2] =  SReachDynProg(<span class="string">'term'</span>, sys, dyn_prog_xinc,<span class="keyword">...</span>
+    dyn_prog_uinc, safety_tube2);
+toc
+<span class="comment">% Plotting of the optimal value function</span>
+<span class="comment">% --------------------------------------</span>
+<span class="comment">% Visualization of the value function at k=0 (safety probability)</span>
+figure();
+x1vec = cell_of_xvec_x2{1};
+x2vec = cell_of_xvec_x2{2};
+axis([axis_vec 0 N]);
+surf(x1vec,x2vec,reshape(prob_x2,length(x2vec),length(x1vec)));
+xlabel(<span class="string">'$x_1$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+ylabel(<span class="string">'$x_2$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+zlabel(<span class="string">'Safety probability'</span>)
+box <span class="string">on</span>
+view(45, 45)
+title(<span class="string">'Optimal value function $V_{SR}^\ast(\cdot)$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+</pre><pre class="codeoutput">Elapsed time is 2.679040 seconds.
+</pre><img vspace="5" hspace="5" src="doubleIntegratorDynamicProgramming_05.png" alt=""> <pre class="codeinput"><span class="comment">% Obtain the stochastic reach-avoid sets</span>
+<span class="comment">% --------------------------------------</span>
+poly_array2 = getDynProgLevelSets2D(cell_of_xvec_x2, prob_x2,<span class="keyword">...</span>
+    reach_set_thresholds, safety_tube2);
+
+<span class="comment">% Plotting of the stochastic reach-avoid sets</span>
+<span class="comment">% -------------------------------------------</span>
+<span class="comment">% Visualization of the safe initial states --- Superlevel sets of safety</span>
+<span class="comment">% probability</span>
+figure();
+hold <span class="string">on</span>;
+plot([safety_tube2(1) poly_array2])
+box <span class="string">on</span>
+xlabel(<span class="string">'$x_1$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+ylabel(<span class="string">'$x_2$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+axis(axis_vec);
+box <span class="string">on</span>
+axis <span class="string">equal</span>
+legend(legend_str)
+title(<span class="string">'Stochastic reach-avoid sets $L_{SR}^\ast(\cdot)$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+</pre><img vspace="5" hspace="5" src="doubleIntegratorDynamicProgramming_06.png" alt=""> <h2 id="10">Case 3: Time-varying safety sets (Stochastic reachability of a target tube)</h2><p>Stochastic reachability of a target tube has time-varying safety sets.</p><p>To perform this safety analysis, we need to do the following steps</p><div><ol><li>Provide parameters for dynamic programming like grid size and thresholds (if stochastic reach sets are of interest) [*Reused from above*]</li><li>Construct the safety tube by constructing at piecemeal (and plot it as well)</li><li>Obtain the dynamic programming solution via SReachDynProg</li><li>Obtain the stochastic reach sets at desired thresholds using   getDynProgLevelSets2D</li></ol></div><pre class="codeinput"><span class="comment">% Safety tube definition</span>
+<span class="comment">% ----------------------</span>
+safety_tube3 = Tube(Polyhedron(<span class="string">'lb'</span>, [-1, -1], <span class="string">'ub'</span>, [1, 1]), <span class="keyword">...</span>
+    Polyhedron(<span class="string">'lb'</span>, [-0.5, -1], <span class="string">'ub'</span>, [1, 0.5]),<span class="keyword">...</span>
+    Polyhedron(<span class="string">'lb'</span>, [-1, -1], <span class="string">'ub'</span>, [0.5, 0.5]), <span class="keyword">...</span>
+    Polyhedron(<span class="string">'lb'</span>, [-1, -0.5], <span class="string">'ub'</span>, [0.5, 1]), <span class="keyword">...</span>
+    Polyhedron(<span class="string">'lb'</span>, [-0.5, -0.5], <span class="string">'ub'</span>, [1, 1]));
+N=length(safety_tube3)-1;
+
+<span class="comment">% Plotting of safety tube</span>
+<span class="comment">% -----------------------</span>
+figure()
+hold <span class="string">on</span>
+<span class="keyword">for</span> time_indx=0:N
+    <span class="comment">% Embed the 2-D safety sets in a 3-D space which is state-space x [0, N]</span>
+    safety_tube_at_time_indx = Polyhedron(<span class="string">'H'</span>,<span class="keyword">...</span>
+        [safety_tube3(time_indx+1).A,<span class="keyword">...</span>
+            zeros(size(safety_tube3(time_indx+1).A,1),1),<span class="keyword">...</span>
+            safety_tube3(time_indx+1).b],<span class="keyword">...</span>
+        <span class="string">'He'</span>,[0 0 1 time_indx]);
+    plot(safety_tube_at_time_indx, <span class="string">'alpha'</span>,0.25);
+<span class="keyword">end</span>
+axis([axis_vec 0 N])
+box <span class="string">on</span>;
+grid <span class="string">on</span>;
+xlabel(<span class="string">'$x_1$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+ylabel(<span class="string">'$x_2$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+zlabel(<span class="string">'time'</span>);
+title(<span class="string">'Safety tube'</span>);
+view([-25 60]);
+</pre><img vspace="5" hspace="5" src="doubleIntegratorDynamicProgramming_07.png" alt=""> <pre class="codeinput"><span class="comment">% Dynamic programming recursion via gridding</span>
+<span class="comment">% ------------------------------------------</span>
+tic;
+[prob_x3, cell_of_xvec_x3] =  SReachDynProg(<span class="string">'term'</span>, sys, dyn_prog_xinc,<span class="keyword">...</span>
+    dyn_prog_uinc, safety_tube3);
+toc
+<span class="comment">% Plotting of the optimal value function</span>
+<span class="comment">% --------------------------------------</span>
+<span class="comment">% Visualization of the value function at k=0 (safety probability)</span>
+figure();
+x1vec = cell_of_xvec_x3{1};
+x2vec = cell_of_xvec_x3{2};
+axis([axis_vec 0 N]);
+surf(x1vec,x2vec,reshape(prob_x3,length(x2vec),length(x1vec)));
+xlabel(<span class="string">'$x_1$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+ylabel(<span class="string">'$x_2$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+zlabel(<span class="string">'Safety probability'</span>)
+box <span class="string">on</span>
+view(45, 45)
+title(<span class="string">'Optimal value function $V_{SR}^\ast(\cdot)$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+</pre><pre class="codeoutput">Elapsed time is 2.642697 seconds.
+</pre><img vspace="5" hspace="5" src="doubleIntegratorDynamicProgramming_08.png" alt=""> <pre class="codeinput"><span class="comment">% Obtain the stochastic reach sets</span>
+<span class="comment">% --------------------------------</span>
+poly_array3 = getDynProgLevelSets2D(cell_of_xvec_x3, prob_x3,<span class="keyword">...</span>
+    reach_set_thresholds, safety_tube3);
+
+<span class="comment">% Plotting of the stochastic reach sets</span>
+<span class="comment">% -------------------------------------</span>
+<span class="comment">% Visualization of the safe initial states --- Superlevel sets of safety</span>
+<span class="comment">% probability</span>
+figure();
+hold <span class="string">on</span>;
+plot([safety_tube3(1) poly_array3])
+box <span class="string">on</span>
+xlabel(<span class="string">'$x_1$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+ylabel(<span class="string">'$x_2$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+axis(axis_vec);
+box <span class="string">on</span>
+axis <span class="string">equal</span>
+legend(legend_str)
+title(<span class="string">'Stochastic reach sets $L_{SR}^\ast(\cdot)$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+</pre><img vspace="5" hspace="5" src="doubleIntegratorDynamicProgramming_09.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Double Integrator Reach-Avoid Via Dynamic Programming
+% This example demonstrates how to use the SReachTools toolbox to solve a
+% terminal-hitting time reach-avoid problem using
+% <https://doi.org/10.1016/j.automatica.2010.08.006 dynamic programming>.
+% 
+% In this example, we analyze the following problems via dynamic programming 
+% for a stochastic system with known dynamics:
+% 
+% # *stochastic viability problem*: Compute a controller to stay within a safe
+% set with maximum likelihood
+% # *the terminal-hitting time stochastic reach-avoid problem*: Compute a
+% controller that maximizes the probability of reaching a target set at a time
+% horizon, |N|, while maintaining the system in a set of safe states
+% # *stochastic reachability of a moving target tube*: Compute a controller that
+% maximizes the probability of staying within a target tube (a collection of
+% time-varying safe sets)
+% 
+% SReachTools has a dynamic programing implementation that can analyze systems
+% upto three dimensions. For efficient implementation, we require the input set
+% to be an axis-aligned hypercuboid, and define the grid the smallest
+% hypercuboid containing all the target sets.
+%
+% This Live Script is part of the SReachTools toolbox. License for the use 
+% of this function is given in 
+% <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE 
+% https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
+
+% Prescript running
+close all;clc;clear;
+srtinit
+%% Problem setup
+% In this example we use a discretized double integrator dynamics given by:
+% 
+% $$  x_{k+1} = \left[ \begin{array}{cc}    1 & T \\   0 & 1  \end{array}\right] 
+% x_{k} + \left[\begin{array}{c}    \frac{T^{2}}{2} \\    T  \end{array}\right] 
+% u_{k} + w_{k}$$
+% 
+% with state $x_k$, input $u_k$, disturbance $w_{k}$, and sampling time $T$.
+%
+% The double integrator system can be used as a simple model of a vehicle on a 
+% lane.
+%
+% # The state is position and velocity of the vehicle.
+% # The vehicle is acceleration-controlled with restrictions on the maximum and 
+%   minimum acceleration provided
+% # The stochastic disturbance affects its position and velocity accounting for
+%   unmodelled phenomena like slipping or engine model mismatch.
+
+% System definition
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+% discretization parameter
+T = 0.1;
+
+% define the system
+sys = LtiSystem('StateMatrix', [1, T; 0, 1], ...
+    'InputMatrix', [T^2/2; T], ...
+    'InputSpace', Polyhedron('lb', -0.1, 'ub', 0.1), ...
+    'DisturbanceMatrix', eye(2), ...
+    'Disturbance', RandomVector('Gaussian', zeros(2,1), 0.01*eye(2)));
+
+% Parameters for dynamic programming and visualization
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+% Step sizes for gridding
+dyn_prog_xinc = 0.05;
+dyn_prog_uinc = 0.1;
+
+% Additionally, we need to specify thresholds of interest to compute the
+% stochastic viability set
+reach_set_thresholds = [0.2 0.5 0.9];
+
+% For plotting purposes, we specify legend and axis limits
+axis_vec = [-1 1 -1 1];
+legend_str={'Safety tube at k=0', 'Safety Probability $\geq 0.2$',...
+    'Safety Probability $\geq 0.5$', 'Safety Probability $\geq 0.9$'};
+
+%% Case 1: Stochastic viability problem
+% We are interested in assessing the safety of this double integrator
+% system to stay within the safe set of $[-1,1]^2$.
+%
+% For the vehicle in a lane example, we require controllers that maximize
+% the probability of ensuring that the position stay within $[-1,1]$ and
+% the velocity with $[-1,1]$ when the car at $k=0$ has some initial position
+% and velocity in $[-1,1]^2$.
+%
+% To perform this safety analysis, we need to do the following steps
+%
+% # Provide parameters for dynamic programming like grid size and
+% thresholds (if stochastic viability sets are of interest)
+% [*Reused from above*]
+% # Construct the safety tube using 'viability' option (and plot it as well)
+% # Obtain the dynamic programming solution via SReachDynProg
+% # Obtain the stochastic viability sets at desired thresholds using 
+%   getDynProgLevelSets2D
+%
+
+% Safety tube definition
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+% time horizon
+N = 5;
+% The viability problem is equivalent to a stochastic reachability of a target 
+% tube of repeating safe sets
+safe_set = Polyhedron('lb', [-1, -1], 'ub', [1, 1]);
+safety_tube1 = Tube('viability', safe_set, N);
+
+% Plotting of safety tube
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+figure()
+hold on    
+for time_indx=0:N
+    % Embed the 2-D safety sets in a 3-D space which is state-space x [0, N]
+    safety_tube_at_time_indx = Polyhedron('H',...
+        [safety_tube1(time_indx+1).A,...
+            zeros(size(safety_tube1(time_indx+1).A,1),1),...
+            safety_tube1(time_indx+1).b],...
+        'He',[0 0 1 time_indx]);
+    plot(safety_tube_at_time_indx, 'alpha',0.25);
+end
+axis([axis_vec 0 N])
+box on;
+grid on;
+xlabel('$x_1$','interpreter','latex');
+ylabel('$x_2$','interpreter','latex');
+zlabel('time');
+title('Safety tube');
+%%
+
+% Dynamic programming recursion via gridding
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+tic;
+[prob_x1, cell_of_xvec_x1] =  SReachDynProg('term', sys, dyn_prog_xinc,...
+    dyn_prog_uinc, safety_tube1);
+toc
+
+% Plotting of the optimal value function
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+% Visualization of the value function at k=0 (safety probability)
+figure();
+x1vec = cell_of_xvec_x1{1};
+x2vec = cell_of_xvec_x1{2};
+surf(x1vec,x2vec,reshape(prob_x1,length(x2vec),length(x1vec)));
+axis([axis_vec 0 1])
+xlabel('$x_1$','interpreter','latex');
+ylabel('$x_2$','interpreter','latex');
+zlabel('Safety probability')
+title('Optimal value function $V_{SR}^\ast(\cdot)$','interpreter','latex');
+box on
+view(45, 45)
+%%
+
+% Obtain the stochastic viability sets
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+poly_array1 = getDynProgLevelSets2D(cell_of_xvec_x1, prob_x1,...
+    reach_set_thresholds, safety_tube1);
+
+% Plotting of the stochastic viability sets
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+% Visualization of the safe initial states REPLACE_WITH_DASH_DASH- Superlevel sets of safety 
+% probability
+figure();
+hold on;
+plot([safety_tube1(1), poly_array1])
+xlabel('$x_1$','interpreter','latex');
+ylabel('$x_2$','interpreter','latex');
+box on
+axis(axis_vec)
+axis equal
+legend(legend_str)
+title('Stochastic viability sets $L_{SR}^\ast(\cdot)$','interpreter','latex');
+
+%% Case 2: Terminal hitting-time stochastic reach-avoid 
+% Stochastic reach-avoid problems have a time-invariant safety set uptil time 
+% horizon (uptill $k=N-1$), and a different target set at time horizon $k=N$. 
+%
+% Specifically, we are 
+% interested in assessing the safety of this double integrator system to stay 
+% within the safe set of $[-1,1]^2$ for $4$ time steps and then reach 
+% $[-0.5,0.5]^2$. Here, the car at $k=0$ has some initial position
+% and velocity in $[-1,1]^2$ as before.
+%
+% To perform this safety analysis, we need to do the following steps
+%
+% # Provide parameters for dynamic programming like grid size and
+% thresholds (if stochastic reach-avoid sets are of interest)
+% [*Reused from above*]
+% # Construct the safety tube using 'reach-avoid' option (and plot it as well)
+% # Obtain the dynamic programming solution via SReachDynProg
+% # Obtain the stochastic reach-avoid sets at desired thresholds using 
+%   getDynProgLevelSets2D
+%
+
+% Safety tube definition
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+% Safety tube is a generalization of the reach problem. The reach avoid 
+% safety-tube is created by setting the first $N$ sets in the tube as the 
+% |safe_set| and the final set as the |target_set|.
+%
+% time horizon
+N = 5;
+% The viability problem is equivalent to a stochastic reachability of a target 
+% tube of repeating safe sets
+safe_set = Polyhedron('lb', [-1, -1], 'ub', [1, 1]);
+target_set = Polyhedron('lb', [-0.5, -0.5], 'ub', [0.5, 0.5]);
+safety_tube2 = Tube('reach-avoid', safe_set, target_set, N);
+
+% Plotting of safety tube
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+figure()
+hold on    
+for time_indx=0:N
+    % Embed the 2-D safety sets in a 3-D space which is state-space x [0, N]
+    safety_tube_at_time_indx = Polyhedron('H',...
+        [safety_tube2(time_indx+1).A,...
+            zeros(size(safety_tube2(time_indx+1).A,1),1),...
+            safety_tube2(time_indx+1).b],...
+        'He',[0 0 1 time_indx]);
+    plot(safety_tube_at_time_indx, 'alpha',0.25);
+end
+axis([axis_vec 0 N])
+box on;
+grid on;
+xlabel('$x_1$','interpreter','latex');
+ylabel('$x_2$','interpreter','latex');
+zlabel('time');
+title('Safety tube');
+%%
+
+% Dynamic programming recursion via gridding
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+tic;
+[prob_x2, cell_of_xvec_x2] =  SReachDynProg('term', sys, dyn_prog_xinc,...
+    dyn_prog_uinc, safety_tube2);
+toc
+% Plotting of the optimal value function
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+% Visualization of the value function at k=0 (safety probability)
+figure();
+x1vec = cell_of_xvec_x2{1};
+x2vec = cell_of_xvec_x2{2};
+axis([axis_vec 0 N]);
+surf(x1vec,x2vec,reshape(prob_x2,length(x2vec),length(x1vec)));
+xlabel('$x_1$','interpreter','latex');
+ylabel('$x_2$','interpreter','latex');
+zlabel('Safety probability')
+box on
+view(45, 45)
+title('Optimal value function $V_{SR}^\ast(\cdot)$','interpreter','latex');
+%%
+
+% Obtain the stochastic reach-avoid sets
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+poly_array2 = getDynProgLevelSets2D(cell_of_xvec_x2, prob_x2,...
+    reach_set_thresholds, safety_tube2);
+
+% Plotting of the stochastic reach-avoid sets
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+% Visualization of the safe initial states REPLACE_WITH_DASH_DASH- Superlevel sets of safety 
+% probability
+figure();
+hold on;
+plot([safety_tube2(1) poly_array2])
+box on
+xlabel('$x_1$','interpreter','latex');
+ylabel('$x_2$','interpreter','latex');
+axis(axis_vec);
+box on
+axis equal
+legend(legend_str)
+title('Stochastic reach-avoid sets $L_{SR}^\ast(\cdot)$','interpreter','latex');
+%%
+
+%% Case 3: Time-varying safety sets (Stochastic reachability of a target tube)
+% Stochastic reachability of a target tube has time-varying safety sets. 
+%
+% To perform this safety analysis, we need to do the following steps
+%
+% # Provide parameters for dynamic programming like grid size and
+% thresholds (if stochastic reach sets are of interest) [*Reused from above*]
+% # Construct the safety tube by constructing at piecemeal (and plot it as well)
+% # Obtain the dynamic programming solution via SReachDynProg
+% # Obtain the stochastic reach sets at desired thresholds using 
+%   getDynProgLevelSets2D
+%
+
+% Safety tube definition
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+safety_tube3 = Tube(Polyhedron('lb', [-1, -1], 'ub', [1, 1]), ...
+    Polyhedron('lb', [-0.5, -1], 'ub', [1, 0.5]),...
+    Polyhedron('lb', [-1, -1], 'ub', [0.5, 0.5]), ...
+    Polyhedron('lb', [-1, -0.5], 'ub', [0.5, 1]), ...
+    Polyhedron('lb', [-0.5, -0.5], 'ub', [1, 1]));
+N=length(safety_tube3)-1;
+
+% Plotting of safety tube
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+figure()
+hold on    
+for time_indx=0:N
+    % Embed the 2-D safety sets in a 3-D space which is state-space x [0, N]
+    safety_tube_at_time_indx = Polyhedron('H',...
+        [safety_tube3(time_indx+1).A,...
+            zeros(size(safety_tube3(time_indx+1).A,1),1),...
+            safety_tube3(time_indx+1).b],...
+        'He',[0 0 1 time_indx]);
+    plot(safety_tube_at_time_indx, 'alpha',0.25);
+end
+axis([axis_vec 0 N])
+box on;
+grid on;
+xlabel('$x_1$','interpreter','latex');
+ylabel('$x_2$','interpreter','latex');
+zlabel('time');
+title('Safety tube');
+view([-25 60]);
+%%
+
+% Dynamic programming recursion via gridding
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+tic;
+[prob_x3, cell_of_xvec_x3] =  SReachDynProg('term', sys, dyn_prog_xinc,...
+    dyn_prog_uinc, safety_tube3);
+toc
+% Plotting of the optimal value function
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+% Visualization of the value function at k=0 (safety probability)
+figure();
+x1vec = cell_of_xvec_x3{1};
+x2vec = cell_of_xvec_x3{2};
+axis([axis_vec 0 N]);
+surf(x1vec,x2vec,reshape(prob_x3,length(x2vec),length(x1vec)));
+xlabel('$x_1$','interpreter','latex');
+ylabel('$x_2$','interpreter','latex');
+zlabel('Safety probability')
+box on
+view(45, 45)
+title('Optimal value function $V_{SR}^\ast(\cdot)$','interpreter','latex');
+%%
+
+% Obtain the stochastic reach sets
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+poly_array3 = getDynProgLevelSets2D(cell_of_xvec_x3, prob_x3,...
+    reach_set_thresholds, safety_tube3);
+
+% Plotting of the stochastic reach sets
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+% Visualization of the safe initial states REPLACE_WITH_DASH_DASH- Superlevel sets of safety 
+% probability
+figure();
+hold on;
+plot([safety_tube3(1) poly_array3])
+box on
+xlabel('$x_1$','interpreter','latex');
+ylabel('$x_2$','interpreter','latex');
+axis(axis_vec);
+box on
+axis equal
+legend(legend_str)
+title('Stochastic reach sets $L_{SR}^\ast(\cdot)$','interpreter','latex');
+
+##### SOURCE END #####
+--></body></html>
