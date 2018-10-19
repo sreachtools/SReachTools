@@ -53,13 +53,11 @@ This will disable some of the features of SReachTools.
         1. MATLAB's Statistics and Machine Learning Toolbox
         1. MATLAB's Global Optimization Toolbox (**Optional**)
 1. MPT3 ([https://www.mpt3.org/](https://www.mpt3.org/))
-    1. Do an automatic install using a MATLAB script
-       [install_mpt3.m](https://www.mpt3.org/Main/Installation?action=download&upname=install_mpt3.m)
-       provided by MPT3.
+    1. Copy the MATLAB script [install_mpt3.m](https://www.mpt3.org/Main/Installation?action=download&upname=install_mpt3.m) provided by MPT3 from the browser, and run it in MATLAB to automatically download MPT3 and its dependencies.
 1. CVX ([http://cvxr.com/cvx/](http://cvxr.com/cvx/))
     1. Install the CVX (Standard bundle, including Gurobi and/or MOSEK)
     1. Installation instructions are given in [http://cvxr.com/cvx/download/](http://cvxr.com/cvx/download/).
-1. We recommend using Gurobi as the backend solver for the convex programs
+1. (**Optional**) We recommend using Gurobi as the backend solver for the convex programs
    formulated by SReachTools. In practice, we find both CVX and MPT3 perform
    much better with Gurobi. See
    [http://www.gurobi.com/registration/download-reg](http://www.gurobi.com/registration/download-reg)
@@ -80,6 +78,8 @@ This will disable some of the features of SReachTools.
        - Run `srtinit -t` to run all the unit tests.
        - Run `srtinit -v` to visualize the steps the changes to the path and
          check for recommended dependencies.  
+       - Run `srtinit -x` to remove functions of SReachTools from MATLAB's path
+         after use.  
 
 ### Examples
 

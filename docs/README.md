@@ -21,7 +21,8 @@ We use Github pages and Jekyll to power the documentation website for [SReachToo
     ```
 1. Getting Updates 
     ```
+    bundle update
     bundle init
     bundle install
-    bundle update
     ```
+1. Pushing the changes on to github will deploy the website.

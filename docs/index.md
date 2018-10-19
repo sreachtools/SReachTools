@@ -8,14 +8,20 @@ title: "Stochastic Reachability Toolbox"
 
 SReachTools is an open-source MATLAB Toolbox for performing stochastic verification and reachability analysis.  
 
-- Where do I get the code from? See our [Github repository](https://github.com/unm-hscl/SReachTools).
-- How do I install this? What do I need to get it working? See our [quick start guide](#quick-start-guide).
-- Can you show me some examples? See our [examples page](./examples.md).
-- Where do I ask/give questions/feedback/comments? Use our [Google groups](https://groups.google.com/d/forum/sreachtools) or the [Github issues](https://github.com/unm-hscl/SReachTools/issues) page.
-- I would like to contribute to this toolbox. See [Contributing guidelines](contributing/).
-- How can I use this toolbox? See our [License](license/).
+- Can you show me some examples of SReachTools working? 
+    - We have cataloged a number of [examples ](https://unm-hscl.github.io/SReachTools/examples/) implemented using SReachTools. These examples are also available as part of the source code of SReachTools, see `examples/*.m`. 
+- Where do I get the source code from? How do I install this? What are the dependencies?
+    - See our [Github repository](https://github.com/unm-hscl/SReachTools). We do periodic releases regarding bug fixes which can be obtained from our [release page](https://github.com/unm-hscl/SReachTools/releases). Our [quick start guide](#quick-start-guide), described further down this page, walks through the installation process.
+- How can I use this toolbox? What are the terms and conditions to follow to use SReachTools?
+    - SReachTools is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. See our [License](license/). 
+- Can I to contribute to this toolbox?
+    - Of course, we welcome pull requests. See [Contributing guidelines](contributing/). 
+- Where do I ask questions or give feedback? 
+    - Use our [Google groups](https://groups.google.com/d/forum/sreachtools) or the [Github issues](https://github.com/unm-hscl/SReachTools/issues) page.
 
 The authors of this toolbox are [Abraham P.  Vinod](http://www.unm.edu/~abyvinod/) and [Joseph D.  Gleason](http://www.unm.edu/~gleasonj/). Please cite their [relevant papers](https://scholar.google.com/citations?user=yb5Z7AwAAAAJ&hl=en) when using the toolbox. The authors are PhD advisees of [Prof. Meeko Oishi](http://www.unm.edu/~oishi/).
+
+We have submitted a tool paper describing the features of SReachTools to the *22nd ACM International Conference on Hybrid Systems: Computation and Control summarizing the features of SReachTools*. A copy of this submission is [available in the repository](https://github.com/unm-hscl/SReachTools/raw/master/SReachTools.pdf).
 
 {% include news.html %}
 
@@ -49,20 +55,37 @@ In future, we will provide extensions to linear time-varying systems, closed-loo
 You can skip installing the dependencies marked **optional**.
 This will disable some of the features of SReachTools.
 
-1. MATLAB (2017a or newer)
-    * Toolboxes
-        * MATLAB's Global Optimization Toolbox (**Optional**)
-        * MATLAB's Statistics and Machine Learning Toolbox (**Optional**)
-        * MATLAB's Control System Toolbox (**Optional**)
-1. MPT3 ([http://people.ee.ethz.ch/~mpt/3/](http://people.ee.ethz.ch/~mpt/3/))
-    * Do an automatic install using a MATLAB script [install_mpt3.m](http://control.ee.ethz.ch/~mpt/3/Main/Installation?action=download&upname=install_mpt3.m) provided by MPT3.
-1. CVX ([http://cvxr.com/cvx/](http://cvxr.com/cvx/)) (**Optional**)
+1. MATLAB (>2017a)
+    1. Toolboxes
+        1. MATLAB's Statistics and Machine Learning Toolbox
+        1. MATLAB's Global Optimization Toolbox (**Optional**)
+1. MPT3 ([https://www.mpt3.org/](https://www.mpt3.org/))
+    1. Copy the MATLAB script [install_mpt3.m](https://www.mpt3.org/Main/Installation?action=download&upname=install_mpt3.m) provided by MPT3 from the browser, and run it in MATLAB to automatically download MPT3 and its dependencies.
+1. CVX ([http://cvxr.com/cvx/](http://cvxr.com/cvx/))
+    1. Install the CVX (Standard bundle, including Gurobi and/or MOSEK)
+    1. Installation instructions are given in [http://cvxr.com/cvx/download/](http://cvxr.com/cvx/download/).
+1. (**Optional**) We recommend using Gurobi as the backend solver for the convex programs
+   formulated by SReachTools. In practice, we find both CVX and MPT3 perform
+   much better with Gurobi. See
+   [http://www.gurobi.com/registration/download-reg](http://www.gurobi.com/registration/download-reg)
+   for more details. Note that Gurobi offers free academic license.
 
 ### Installation
 
-1. Install the necessary dependencies (MATLAB and MPT3 are a must)
-1. Clone the *SReachTools* repository (or download the zip file)
-1. Run `srtinit -v -t` in MATLAB to add the toolbox to the paths, visualize the steps, and test the installation.  
-   - You can add `p=pwd();cd /path/to/SReachTools/folder;srtinit;cd(p);` to your MATLAB's `startup.m` to automatically have this done in future.
+1. Install the necessary dependencies listed above
+1. Clone the SReachTools repository (or download the latest zip file from
+   [Releases](https://github.com/unm-hscl/SReachTools/releases))
+1. Change the MATLAB current working directory to where SReachTools was
+   downloaded
+1. Run `srtinit` in MATLAB to add the toolbox to the paths and ensure all
+   must-have dependencies are properly installed.
+   - You can add `cd <path_to_sreachtools_repo>;srtinit` to your MATLAB's
+     `startup.m` to automatically have this done in future.
+   - Additional steps (optional):
+       - Run `srtinit -t` to run all the unit tests.
+       - Run `srtinit -v` to visualize the steps the changes to the path and
+         check for recommended dependencies.  
+       - Run `srtinit -x` to remove functions of SReachTools from MATLAB's path
+         after use.  
 
 ------
