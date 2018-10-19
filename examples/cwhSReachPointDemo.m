@@ -258,7 +258,7 @@ if exist('optimal_mean_trajectory_cc_affine','var')
         30, 'bo', 'filled');
     legend_cell{end+1} = 'Optimal mean trajectory (chance-affine)';
 end
-legend(legend_cell);
+legend(legend_cell, 'Location','South');
 xlabel('$x$','interpreter','latex');
 ylabel('$y$','interpreter','latex');
 
@@ -354,7 +354,6 @@ else
     mcarlo_result_cc_affine = NaN;
     elapsed_time_cc_affine = NaN;     
 end
-
 legend(legend_cell, 'Location','South');
 if plot_traj_instead_of_ellipses==1
     title(sprintf('Plot with %d Monte-Carlo sims', n_sims_to_plot));
