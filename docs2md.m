@@ -119,7 +119,6 @@ function listAllFilesRecursive(folder_name, base_dir)
         end
 
         if dl(lv).isdir()
-            disp(dl(lv));
             listAllFilesRecursive(dl(lv).name, dl(lv).folder);
         else
             fname = fullfile(dl(lv).folder, dl(lv).name);
@@ -139,6 +138,7 @@ function listAllFilesRecursive(folder_name, base_dir)
     fid = fopen(fullfile(DOCS_ROOT_PATH, 'index.md'), 'a');
     fprintf(fid, sprintf('%s</ul>\n', tabstr));
     fclose(fid);
+%     movefile(strcat(DOCS_ROOT_PATH','index.md'),strcat(DOCS_ROOT_PATH','../docs.md'));
 end
 
 function bool = isclassfile(f)
