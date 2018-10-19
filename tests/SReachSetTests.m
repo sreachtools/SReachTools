@@ -112,7 +112,7 @@ classdef SReachSetTests < matlab.unittest.TestCase
                 'Disturbance', RandomVector('Gaussian', zeros(2,1), 5e-3*eye(2)));
 
             % target_tube = {K, K, K, K, K, K};
-            safety_tube = TargetTube('viability', safe_set, time_horizon);
+            safety_tube = Tube('viability', safe_set, time_horizon);
         end
         
         function [sysCwh, safety_tube] = getCwh()
@@ -145,7 +145,7 @@ classdef SReachSetTests < matlab.unittest.TestCase
             %% Target set --- Box [-0.1,0.1]x[-0.1,0]x[-0.01,0.01]x[-0.01,0.01]
             target_set = Polyhedron('lb', [-0.1; -0.1; -0.01; -0.01],...
                                     'ub', [0.1; 0; 0.01; 0.01]);
-            safety_tube = TargetTube('reach-avoid',safe_set, target_set,...
+            safety_tube = Tube('reach-avoid',safe_set, target_set,...
                 time_horizon);                    
         end
     end            

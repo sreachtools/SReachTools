@@ -43,7 +43,7 @@ classdef SReachFwdTest < matlab.unittest.TestCase
             % Empty target set
             testCase.verifyError(@() SReachFwd(prob_str_test, sys, init_state, target_time, Polyhedron.emptySet(sys.state_dim),1e-3),'SReachTools:invalidArgs');
             % Empty target tube
-            testCase.verifyError(@() SReachFwd(prob_str_test, sys, init_state, target_time, TargetTube(Polyhedron()),1e-3),'SReachTools:invalidArgs');
+            testCase.verifyError(@() SReachFwd(prob_str_test, sys, init_state, target_time, Tube(Polyhedron()),1e-3),'SReachTools:invalidArgs');
             % Incorrect dimension target set
             testCase.verifyError(@() SReachFwd(prob_str_test, sys, init_state, target_time, Polyhedron('lb',-2*ones(3,1),'ub',ones(3,1)), 1e-3),'SReachTools:invalidArgs');            
             % Too strict desired_accuracy
@@ -55,17 +55,17 @@ classdef SReachFwdTest < matlab.unittest.TestCase
             % Empty target set
             testCase.verifyError(@() SReachFwd(prob_str_test, sys, init_state, target_time, Polyhedron.emptySet(sys.state_dim),1e-3),'SReachTools:invalidArgs');
             % Empty target tube
-            testCase.verifyError(@() SReachFwd(prob_str_test, sys, init_state, target_time, TargetTube(Polyhedron()),1e-3),'SReachTools:invalidArgs');
+            testCase.verifyError(@() SReachFwd(prob_str_test, sys, init_state, target_time, Tube(Polyhedron()),1e-3),'SReachTools:invalidArgs');
             % Incorrect dimension target set
-            testCase.verifyError(@() SReachFwd(prob_str_test, sys, init_state, target_time, TargetTube('viability',Polyhedron('lb',-2*ones(3,1),'ub',ones(3,1)),target_time), 1e-3),'SReachTools:invalidArgs');            
+            testCase.verifyError(@() SReachFwd(prob_str_test, sys, init_state, target_time, Tube('viability',Polyhedron('lb',-2*ones(3,1),'ub',ones(3,1)),target_time), 1e-3),'SReachTools:invalidArgs');            
             % Target tube not long enough
-            testCase.verifyError(@() SReachFwd(prob_str_test, sys, init_state, target_time, TargetTube('viability',Polyhedron('lb',-2*ones(2,1),'ub',ones(2,1)),target_time-1), 1e-3),'SReachTools:invalidArgs');            
+            testCase.verifyError(@() SReachFwd(prob_str_test, sys, init_state, target_time, Tube('viability',Polyhedron('lb',-2*ones(2,1),'ub',ones(2,1)),target_time-1), 1e-3),'SReachTools:invalidArgs');            
             % Target tube long enough --- blind test
-            SReachFwd(prob_str_test, sys, init_state, target_time, TargetTube('viability',Polyhedron('lb',-2*ones(2,1),'ub',ones(2,1)),target_time+1), 1e-3);            
+            SReachFwd(prob_str_test, sys, init_state, target_time, Tube('viability',Polyhedron('lb',-2*ones(2,1),'ub',ones(2,1)),target_time+1), 1e-3);            
             % Too strict desired_accuracy TODO --- takes a lot of time
             %testCase.verifyWarning(@() SReachFwd(prob_str_test, sys, init_state, target_time, Polyhedron('lb',-2*ones(2,1),'ub',ones(2,1)), 1e-10),'SReachTools:desiredAccuracy');            
             % More arguments than necessary
-            testCase.verifyError(@() SReachFwd(prob_str_test, sys, init_state, target_time, TargetTube('viability',Polyhedron('lb',-2*ones(2,1),'ub',ones(2,1)),target_time), 1e-10,'w'),'SReachTools:invalidArgs');                        
+            testCase.verifyError(@() SReachFwd(prob_str_test, sys, init_state, target_time, Tube('viability',Polyhedron('lb',-2*ones(2,1),'ub',ones(2,1)),target_time), 1e-10,'w'),'SReachTools:invalidArgs');                        
         end
         function testTerminalStateStochAndProb(testCase)
             % Performs forward stochastic reachability on the spacecraft rendezvous problem.
@@ -144,7 +144,7 @@ classdef SReachFwdTest < matlab.unittest.TestCase
             testCase.verifyLessThanOrEqual(max(abs(mean_vec - mean_end_locations)), 1e-2);                    
         end
         
-        function testTargetTubeStochAndProb(testCase)
+        function testTubeStochAndProb(testCase)
             % Performs forward stochastic reachability on the spacecraft rendezvous problem.
             % Computes the mean, covariance, and probability of lying in a
             % terminal set and compares it with Monte-Carlo simulation
@@ -193,7 +193,7 @@ classdef SReachFwdTest < matlab.unittest.TestCase
                           vymax];
             safe_set = Polyhedron(A_safe_set, b_safe_set);                    
             % Create a target tube
-            target_tube = TargetTube('reach-avoid', safe_set, target_set, target_time);
+            target_tube = Tube('reach-avoid', safe_set, target_set, target_time);
             desired_accuracy = 1e-2;
             
             %% Deterministic initial state

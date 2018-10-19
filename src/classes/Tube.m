@@ -1,38 +1,38 @@
-classdef TargetTube
-% Create a target tube object
+classdef Tube
+% Create a tube object
 % ==========================================================================
 %
-% Target tube class
+% Tube class
 %
 % Usage:
 % ------
 % % Three different calling mechanisms, reach-avoid problem
-% tt = TargetTube('reach-avoid', safe_set, target_set, time_horizon);
+% tt = Tube('reach-avoid', safe_set, target_set, time_horizon);
 % 
 % % Viability Problem
-% tt = TargetTube('viability', safe_set, time_horizon);
+% tt = Tube('viability', safe_set, time_horizon);
 %
-% Note that both of the above mechanisms will yield a target tube of length
+% Note that both of the above mechanisms will yield a tube of length
 % time_horizon+1 --- T_0, T_1, ..., T_{time_horizon}.
 % 
 % % General tube
 % % Can use general Polyhedron objects, for self-containment of the 
 % % usage example will use empty Polyhedron objects
-% tt = TargetTube(Polyhedron(), Polyhedron(), Polyhedron());
+% tt = Tube(Polyhedron(), Polyhedron(), Polyhedron());
 %
-% Given a target tube 'orig_tube' and a polytope 'int_polytope', you can also 
-% construct a target tube that is the result of the intersection of the polytope 
-% and sets in the target tube as
-% tt = TargetTube('intersect', orig_tube, int_polytope);
+% Given a tube 'orig_tube' and a polytope 'int_polytope', you can also 
+% construct a tube that is the result of the intersection of the polytope 
+% and sets in the tube as
+% tt = Tube('intersect', orig_tube, int_polytope);
 %   
 % ==========================================================================
 %
-% TargetTube Properties:
+% Tube Properties:
 % ------------------------
 %
-% TargetTube Methods:
+% Tube Methods:
 % ---------------------
-%   TargetTube/TargetTube - Class constructor
+%   Tube/Tube - Class constructor
 % 
 % Notes:
 % ------
@@ -46,10 +46,10 @@ classdef TargetTube
 % 
 % 
     properties (Access = private)
-        % TargetTube/tube
+        % Tube/tube
         % ==================================================================
         % 
-        % Polyhedron array of sets for the target tube
+        % Polyhedron array of sets for the tube
         %
         tube = Polyhedron();
     end
@@ -58,50 +58,50 @@ classdef TargetTube
     end
 
     methods
-        function obj = TargetTube(varargin)
-        % TargetTube constructor
+        function obj = Tube(varargin)
+        % Tube constructor
         % ====================================================================
         %
-        % TargetTube class constructor
+        % Tube class constructor
         %
         % Usage:
         % ------
         % % Three different calling mechanisms, reach-avoid problem
-        % tt = TargetTube('reach-avoid', safe_set, target_set, time_horizon);
+        % tt = Tube('reach-avoid', safe_set, target_set, time_horizon);
         % 
         % % Viability Problem
-        % tt = TargetTube('viability', safe_set, time_horizon);
+        % tt = Tube('viability', safe_set, time_horizon);
         % 
         % % General tube
         % % Can use general Polyhedron objects, for self-containment of the 
         % % usage example will use empty Polyhedron objects
-        % tt = TargetTube(Polyhedron(), Polyhedron(), Polyhedron());
+        % tt = Tube(Polyhedron(), Polyhedron(), Polyhedron());
         % 
-        % Given a target tube 'orig_tube' and a polytope 'int_polytope', you can also 
-        % construct a target tube that is the result of the intersection of the polytope 
-        % and sets in the target tube as
-        % tt = TargetTube('intersect', orig_tube, int_polytope);
+        % Given a tube 'orig_tube' and a polytope 'int_polytope', you can also
+        % construct a tube that is the result of the intersection of the
+        % polytope and sets in the tube as
+        % tt = Tube('intersect', orig_tube, int_polytope);
         %   
         % ====================================================================
         %
-        % obj = TargetTube('reach-avoid', safe_set, target_set, time_horizon)
-        % obj = TargetTube('viability', safe_set, time_horizon)
-        % obj = TargetTube(poly1, ..., polyN)
-        % obj = TargetTube('intersect', orig_tube, int_polytope);
+        % obj = Tube('reach-avoid', safe_set, target_set, time_horizon)
+        % obj = Tube('viability', safe_set, time_horizon)
+        % obj = Tube(poly1, ..., polyN)
+        % obj = Tube('intersect', orig_tube, int_polytope);
         % 
         % Inputs:
         % -------
         %   safe_set          - Polyhedron object for set of safe states
         %   target_set        - Polyhedron object for set of target states
-        %   time_hoizon       - Time horizon of target tube/reach-avoid problem
+        %   time_hoizon       - Time horizon of tube/reach-avoid problem
         %   poly1, ..., polyN - Polyhedron objects
-        %   orig_tube         - A target tube object that needs to be
+        %   orig_tube         - A tube object that needs to be
         %                       intersected
         %   int_polytope      - Polyhedron object that is used for intersection
         % 
         % Outputs:
         % --------
-        %   obj - TargetTube object
+        %   obj - Tube object
         % 
         % ====================================================================
         %
@@ -123,21 +123,24 @@ classdef TargetTube
                         target_set   = varargin{3};
                         time_horizon = varargin{4};
 
-                        validateattributes(target_set, {'Polyhedron'}, {'nonempty'});
-                        validateattributes(safe_set, {'Polyhedron'}, {'nonempty'});
+                        validateattributes(target_set, {'Polyhedron'},...
+                            {'nonempty'});
+                        validateattributes(safe_set, {'Polyhedron'},...
+                            {'nonempty'});
                         validateattributes(time_horizon, {'numeric'}, ...
                             {'integer', '>', 0});
                         
                         if safe_set.Dim ~= target_set.Dim
-                            throwAsCaller(SrtInvalidArgsError(['Safe and target ', ...
-                                'sets must be of the same dimension']));
+                            throwAsCaller(SrtInvalidArgsError(['Safe and',...
+                                ' target sets must be of the same dimension']));
                         end
                     case 'viability'
                         safe_set     = varargin{2};
                         time_horizon = varargin{3};
                         target_set   = safe_set;
                         
-                        validateattributes(safe_set, {'Polyhedron'}, {'nonempty'});
+                        validateattributes(safe_set, {'Polyhedron'},...
+                            {'nonempty'});
                         validateattributes(time_horizon, {'numeric'}, ...
                             {'integer', '>', 0});
 
@@ -145,11 +148,12 @@ classdef TargetTube
                         orig_tube = varargin{2};
                         int_polytope = varargin{3};
                         
-                        validateattributes(orig_tube, {'TargetTube'}, {'nonempty'});
-                        validateattributes(int_polytope, {'Polyhedron'}, {'nonempty'});                        
+                        validateattributes(orig_tube, {'Tube'}, {'nonempty'});
+                        validateattributes(int_polytope, {'Polyhedron'},...
+                            {'nonempty'});                        
                         if orig_tube.dim ~= int_polytope.Dim
                             throw(SrtInvalidArgsError(['Dimension mismatch ',...
-                                'between intersecting polytope and target tube.']));
+                                'between intersecting polytope and tube.']));
                         end
                     otherwise
                         err = SrtInvalidArgsError(['Invalid arguments, ', ...
@@ -157,7 +161,8 @@ classdef TargetTube
                         throwAsCaller(err);
                 end
 
-                if strcmpi(tube_type,'viability') || strcmpi(tube_type,'reach-avoid')
+                if strcmpi(tube_type,'viability') ||...
+                    strcmpi(tube_type,'reach-avoid')
                     obj.tube(1, time_horizon+1) = target_set;
                     obj.dim = safe_set.Dim;
                     for itt = 1:time_horizon
@@ -165,7 +170,8 @@ classdef TargetTube
                     end
                 elseif strcmpi(tube_type,'intersect')                    
                     for itt = 1:length(orig_tube)
-                        obj.tube(itt) = intersect(orig_tube.tube(itt),int_polytope);
+                        obj.tube(itt) = intersect(orig_tube.tube(itt),...
+                            int_polytope);
                     end
                 else
                     err = SrtInvalidArgsError(['Invalid arguments, ', ...
@@ -182,8 +188,8 @@ classdef TargetTube
                     validateattributes(varargin{itt}, {'Polyhedron'}, ...
                         {'nonempty'})
                     if varargin{itt}.Dim ~= obj.dim
-                        throwAsCaller(SrtInvalidArgsError(['All sets in the target tube must be of the same ', ...
-                         'dimension']));
+                        throwAsCaller(SrtInvalidArgsError(['All sets in the',...
+                            'tube must be of the same dimension']));
                     end
 
                     obj.tube(itt) = varargin{itt};
@@ -198,7 +204,7 @@ classdef TargetTube
         % Overloading of builting MATLAB subsref for the class. If the first
         % subscripted reference for the object is of type '()' then the 
         % remaining references are made on the tube (Polyhedron object array) 
-        % property, otherwise the TargetTube object is refernced.
+        % property, otherwise the Tube object is refernced.
         %
         % Usage: Overloading of MATLAB internal
         % 
@@ -232,7 +238,7 @@ classdef TargetTube
         % Overloading of length
         % ====================================================================
         %
-        % Function to get length of target tube, returns length of tube
+        % Function to get length of tube, returns length of tube
         % property
         %
         % Usage: Overloading of MATLAB length function
@@ -276,16 +282,16 @@ classdef TargetTube
         %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
 
-            fprintf('TargetTube of %d sets\n', length(obj));
+            fprintf('Tube of %d sets\n', length(obj));
         end
 
         function [concat_target_tube_A, concat_target_tube_b] =...
             concat(obj,varargin)
-        % Get concatenated target tube (Cartesian product of the polytopes)
+        % Get concatenated tube (Cartesian product of the polytopes)
         % ======================================================================
         %
         % This method computes the half-space representation of the concatenated 
-        % target tube. When no arguments are provided, it returns 
+        % tube. When no arguments are provided, it returns 
         % safe_set^{time_horizon} x target_set, a huge polyhedron in the
         % (obj.dim x time_horizon)-dimensional Euclidean space.
         %
@@ -298,14 +304,14 @@ classdef TargetTube
         % When arguments are specified, it provides the Cartesian of
         % specific time splice mentioned. Specifically, if the half space
         % representation of sets from t=3 to 5 is desired for a given
-        % target tube of length 10 (sets are defined for t=0 to 9), we
+        % tube of length 10 (sets are defined for t=0 to 9), we
         % provide
         %
         % [concat_target_tube_A, concat_target_tube_b] = concat(obj, [4 6]);
         % 
         % The +1 added is to account for MATLAB's indexing which begins
         % from 1. In other words, provide the starting and ending index of
-        % interest with respect to the TargetTube array of polyhedrons.
+        % interest with respect to the Tube array of polyhedrons.
         %
         % Usage: See getLowerBoundStochReachAvoid.
         %
@@ -320,8 +326,8 @@ classdef TargetTube
         %    
         % Outputs:
         % --------
-        %   concat_target_tube_A - State matrix concatenated for target tube
-        %   concat_target_tube_b - Input matrix concatenated for target tube
+        %   concat_target_tube_A - State matrix concatenated for tube
+        %   concat_target_tube_b - Input matrix concatenated for tube
         %
         % Notes:
         % ------
@@ -335,7 +341,7 @@ classdef TargetTube
         %
         %
 
-            %% Construction of the concatenated target tube
+            %% Construction of the concatenated tube
             tube_A_mats = cell(1, length(obj));
             [tube_A_mats{:}] = obj.tube(:).A;
 
@@ -351,11 +357,14 @@ classdef TargetTube
                 % Send out a slice
                 time_limits = varargin{1};
                 validateattributes(time_limits,{'numeric'},{'vector'});
-                if length(time_limits) == 2 && min(time_limits) >= 1 && max(time_limits) <= length(obj)
+                if length(time_limits) == 2 && min(time_limits) >= 1 &&...
+                    max(time_limits) <= length(obj)
                     if time_limits(2) >= time_limits(1)
                         % a <= b => send out the appropriate slices
-                        concat_target_tube_A = blkdiag(tube_A_mats{time_limits(1):time_limits(2)});
-                        concat_target_tube_b = vertcat(tube_b_vecs{time_limits(1):time_limits(2)});
+                        concat_target_tube_A =...
+                            blkdiag(tube_A_mats{time_limits(1):time_limits(2)});
+                        concat_target_tube_b =...
+                            vertcat(tube_b_vecs{time_limits(1):time_limits(2)});
                     else
                         % a > b => send out empty sets
                         concat_target_tube_A = [];
@@ -370,7 +379,7 @@ classdef TargetTube
         end
         
         function [contains_flag] = contains(obj,X)
-        % Check if a given concatenates state trajectory lies in the target tube
+        % Check if a given concatenates state trajectory lies in the tube
         % ======================================================================
         %
         % This method is a wrapper over MPT's Polyhedron/contains 
@@ -405,13 +414,14 @@ classdef TargetTube
         %  
 
             if size(X, 1) ~= length(obj) * obj.dim
-                throw(SrtInvalidArgsError(sprintf(['Concatenated state vector/matrix provided has ',...
-                    'incorrect number of rows. Expected: %d | Got: %d'],length(obj) * obj.dim,size(X, 1))));
+                throw(SrtInvalidArgsError(sprintf(['Concatenated state',...
+                    'vector/matrix provided has incorrect number of rows.',...
+                    'Expected: %d | Got: %d'],length(obj)*obj.dim,size(X, 1))));
             end
 
             if size(X, 2) <= 0
-                throw(SrtInvalidArgsError(['Concatenated state vector/matrix provided should have at ',...
-                 'least one column']));
+                throw(SrtInvalidArgsError(['Concatenated state ',...
+                    'vector/matrix provided should have at least one column']));
             end
             
             % Matrix to store the result for each time instant, trajectory
@@ -422,7 +432,8 @@ classdef TargetTube
                 % Parse the t^th state from X
                 X_at_t_indx = X((t_indx-1)*obj.dim + 1: t_indx*obj.dim,:);
                 % Use MPT's contains functionality
-                contains_flag_all(t_indx,:) = obj.tube(t_indx).contains(X_at_t_indx);
+                contains_flag_all(t_indx,:) =...
+                    obj.tube(t_indx).contains(X_at_t_indx);
             end
             % Are t^th state in the appropriate polytope for all t?
             % all for a matrix returns a row vector with checking done
@@ -444,7 +455,7 @@ classdef TargetTube
         % Inputs: None
         % Outputs:
         % --------
-        %   v - Value of end; equal to the length of the target tube
+        %   v - Value of end; equal to the length of the tube
         %
         % ======================================================================
         % 

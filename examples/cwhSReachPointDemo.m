@@ -97,7 +97,7 @@ safe_set = Polyhedron(A_safe_set, b_safe_set);
 % Target set --- Box [-0.1,0.1]x[-0.1,0]x[-0.01,0.01]x[-0.01,0.01]
 target_set = Polyhedron('lb', [-0.1; -0.1; -0.01; -0.01],...
                         'ub', [0.1; 0; 0.01; 0.01]);
-target_tube = TargetTube('reach-avoid',safe_set, target_set, time_horizon);                    
+target_tube = Tube('reach-avoid',safe_set, target_set, time_horizon);                    
 %%
 
 %% Initial state definition

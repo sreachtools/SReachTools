@@ -97,7 +97,7 @@ safe_set = Polyhedron(A_safe_set, b_safe_set);
 target_set = Polyhedron('lb', [-0.1; -0.1; -0.01; -0.01],...
                         'ub', [0.1; 0; 0.01; 0.01]);
 %% Target tube
-target_tube = TargetTube('reach-avoid', safe_set, target_set, time_horizon);
+target_tube = Tube('reach-avoid', safe_set, target_set, time_horizon);
 %% Problem 1 and 2: Verification and controller synthesis from a given initial state
 % We will first specify the initial state and parameters for the MATLAB's Global 
 % Optimization Toolbox |patternsearch|.

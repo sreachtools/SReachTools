@@ -56,7 +56,7 @@ disp(sys)
 
 time_horizon = 5;
 safe_set = Polyhedron('lb',[1, 0, 0], 'ub', [6, 10, 10]);
-safety_tube = TargetTube('viability',safe_set, time_horizon);
+safety_tube = Tube('viability',safe_set, time_horizon);
 
 %% Computation of the underapproximation of the stochastic viability set
 % We are interested in computing the stochastic viability set at

@@ -102,7 +102,7 @@ function [stoch_reach_set, varargout] = SReachSet(prob_str, method_str, sys,...
 %   sys         - System description (LtvSystem/LtiSystem object)
 %   prob_thresh - Probability threshold at which the set is to be constructed
 %   safety_tube - Collection of (potentially time-varying) safe sets that
-%                 define the safe states (TargetTube object)
+%                 define the safe states (Tube object)
 %   options     - Collection of user-specified options for each of the solution
 %                 (Matlab struct created using SReachSetOptions)
 %
@@ -165,7 +165,7 @@ function [stoch_reach_set, varargout] = SReachSet(prob_str, method_str, sys,...
         {'LtiSystem','LtvSystem'}, {'nonempty'}));
     inpar.addRequired('prob_thresh', @(x) validateattributes(x, {'numeric'},...
         {'scalar','>=',0,'<=',1}));
-    inpar.addRequired('safety_tube',@(x) validateattributes(x,{'TargetTube'},...
+    inpar.addRequired('safety_tube',@(x) validateattributes(x,{'Tube'},...
         {'nonempty'}));
 
     try

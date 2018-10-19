@@ -26,7 +26,7 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain,...
 %   initial_state- Initial state for which the maximal reach probability must be
 %                  evaluated (A numeric vector of dimension sys.state_dim)
 %   safety_tube  - Collection of (potentially time-varying) safe sets that
-%                  define the safe states (TargetTube object)
+%                  define the safe states (Tube object)
 %   options      - Collection of user-specified options for 'chance-affine'
 %                  (Matlab struct created using SReachPointOptions)
 %
@@ -69,7 +69,7 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain,...
         {'LtiSystem','LtvSystem'}, {'nonempty'}));
     inpar.addRequired('initial_state', @(x) validateattributes(x,...
         {'numeric'}, {'vector'}));
-    inpar.addRequired('safety_tube',@(x) validateattributes(x,{'TargetTube'},...
+    inpar.addRequired('safety_tube',@(x) validateattributes(x, {'Tube'},...
         {'nonempty'}));
     
     try
