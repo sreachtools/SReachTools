@@ -1,11 +1,11 @@
 function poly_array = getDynProgLevelSets2D(cell_of_grid_x, prob_x,...
     prob_lvls, target_tube)
 % SReachTools/stochasticReachAvoid/getDynProgLevelSets2D Get level sets based 
-% on the value function returned by getDynProgSolForTargetTube
+% on the value function returned by getDynProgSolForTube
 % ============================================================================
 %
 % The function computes an array of polytopes based on the results from
-% getDynProgSolForTargetTube
+% getDynProgSolForTube
 %
 % Usage: See example doubleIntegratorDynmaicProgramming.m
 %
@@ -17,7 +17,7 @@ function poly_array = getDynProgLevelSets2D(cell_of_grid_x, prob_x,...
 % -------
 %   sys         - LtiSystem object (Needs to be 2-dimensional)
 %   prob_x      - Mx1 Array of probability values at each grid point in
-%                 grid_X | Use getDynProgSolForTargetTube to compute this vector
+%                 grid_X | Use getDynProgSolForTube to compute this vector
 %   prob_lvls   - A vector containing safety probability thresholds of interest 
 %                 Each element needs to be within [0,1].
 %   target_tube - Target tube used for the dynamic programming solution
@@ -31,7 +31,7 @@ function poly_array = getDynProgLevelSets2D(cell_of_grid_x, prob_x,...
 %   to MPT (takes a convex hull). Because contour function may ignore corners
 %   (if value function saturates), we check for all the corners when
 %   constructing the polytope.
-% * To be used in conjunction with getDynProgSolForTargetTube
+% * To be used in conjunction with getDynProgSolForTube
 % 
 % ============================================================================
 % 
@@ -43,14 +43,15 @@ function poly_array = getDynProgLevelSets2D(cell_of_grid_x, prob_x,...
     validateattributes(cell_of_grid_x, {'cell'},{'vector'})
     validateattributes(prob_x, {'numeric'}, {'vector','nonempty'})
     validateattributes(prob_lvls, {'numeric'}, {'vector','nonempty'})
-    validateattributes(target_tube, {'TargetTube'}, {'nonempty'});
+    validateattributes(target_tube, {'Tube'}, {'nonempty'});
     % Check if prob_lvls is a [0,1] vector (check min >= 0 and max <=1)
     if min(prob_lvls) <0 || max(prob_lvls) > 1
         throwAsCaller(SrtInvalidArgsError('prob_lvls need to be [0,1].'));    
     end
     % Check if cell_of_grid_x has two elements
     if length(cell_of_grid_x)~=2
-        throwAsCaller(SrtInvalidArgsError('getDynProgLevelSets is meant only for 2-D systems (3D cell_of_grid_x given)!'));
+        throwAsCaller(SrtInvalidArgsError(['getDynProgLevelSets is meant',...
+            'only for 2-D systems (3D cell_of_grid_x given)!']));
     end
 
     %% Computation

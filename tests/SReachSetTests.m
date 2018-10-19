@@ -67,7 +67,7 @@ classdef SReachSetTests < matlab.unittest.TestCase
             level_set = SReachSet('term','chance-open', sys, 0.8,...
                 safety_tube, options);
             test_case.verifyInstanceOf(level_set, 'Polyhedron');
-            [level_set, extra_info_wmax, extra_info_cheby] = SReachSet(...
+            [level_set, extra_info] = SReachSet(...
                 'term','chance-open', sys, 0.8, safety_tube, options);
 
             % Empty case: 0.999 => emptyset for high stochastic system
@@ -81,13 +81,13 @@ classdef SReachSetTests < matlab.unittest.TestCase
                 safety_tube, options);
             test_case.verifyEqual(level_set, Polyhedron.emptySet(2),...
                 'Should be empty');
-            [level_set, extra_info_wmax, extra_info_cheby] = SReachSet(...
+            [level_set, extra_info] = SReachSet(...
                 'term','chance-open', sysEmpty, 0.999, safety_tube, options);
             test_case.verifyEqual(level_set, Polyhedron.emptySet(2),...
                 'Should be empty');
             test_case.verifyLessThanOrEqual(...
-                extra_info_wmax.xmax_reach_prob,0.8,'Low max safety');
-            test_case.verifyEmpty(extra_info_cheby);
+                extra_info(1).xmax_reach_prob,0.8,'Low max safety');
+            test_case.verifyEqual(length(extra_info),1,'Empty cheby');
 %             figure();
 %             plot(safety_tube(1),'alpha',0.3);
 %             hold on
@@ -112,7 +112,7 @@ classdef SReachSetTests < matlab.unittest.TestCase
                 'Disturbance', RandomVector('Gaussian', zeros(2,1), 5e-3*eye(2)));
 
             % target_tube = {K, K, K, K, K, K};
-            safety_tube = TargetTube('viability', safe_set, time_horizon);
+            safety_tube = Tube('viability', safe_set, time_horizon);
         end
         
         function [sysCwh, safety_tube] = getCwh()
@@ -145,7 +145,7 @@ classdef SReachSetTests < matlab.unittest.TestCase
             %% Target set --- Box [-0.1,0.1]x[-0.1,0]x[-0.01,0.01]x[-0.01,0.01]
             target_set = Polyhedron('lb', [-0.1; -0.1; -0.01; -0.01],...
                                     'ub', [0.1; 0; 0.01; 0.01]);
-            safety_tube = TargetTube('reach-avoid',safe_set, target_set,...
+            safety_tube = Tube('reach-avoid',safe_set, target_set,...
                 time_horizon);                    
         end
     end            

@@ -38,7 +38,7 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time, ...
 %                   or a RandomVector object
 %   target_time   - Time of interest (positive scalar)
 %   target_set/tube 
-%                 - [Required only for state/concat-prob] Polytope/TargetTube
+%                 - [Required only for state/concat-prob] Polytope/Tube
 %                   over which the probability must be computed
 %   desired_accuracy
 %                 - [Required only for state/concat-prob] Accuracy for the
@@ -262,7 +262,7 @@ function otherInputHandling(sys, initial_state, prob_str_splits, optional_args, 
                 end
             case 'concat'
                 target_tube = optional_args{1};
-                if ~(isa(target_tube, 'TargetTube') &&...
+                if ~(isa(target_tube, 'Tube') &&...
                     target_tube.tube(1).Dim == sys.state_dim &&...
                     length(target_tube) >= target_time + 1) 
                     err=SrtInvalidArgsError(['Expected a target tube of length',...

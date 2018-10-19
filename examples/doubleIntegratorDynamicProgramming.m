@@ -100,7 +100,7 @@ N = 5;
 % The viability problem is equivalent to a stochastic reachability of a target 
 % tube of repeating safe sets
 safe_set = Polyhedron('lb', [-1, -1], 'ub', [1, 1]);
-safety_tube1 = TargetTube('viability', safe_set, N);
+safety_tube1 = Tube('viability', safe_set, N);
 
 % Plotting of safety tube
 % -----------------------
@@ -200,7 +200,7 @@ N = 5;
 % tube of repeating safe sets
 safe_set = Polyhedron('lb', [-1, -1], 'ub', [1, 1]);
 target_set = Polyhedron('lb', [-0.5, -0.5], 'ub', [0.5, 0.5]);
-safety_tube2 = TargetTube('reach-avoid', safe_set, target_set, N);
+safety_tube2 = Tube('reach-avoid', safe_set, target_set, N);
 
 % Plotting of safety tube
 % -----------------------
@@ -283,7 +283,7 @@ title('Stochastic reach-avoid sets $L_{SR}^\ast(\cdot)$','interpreter','latex');
 
 % Safety tube definition
 % ----------------------
-safety_tube3 = TargetTube(Polyhedron('lb', [-1, -1], 'ub', [1, 1]), ...
+safety_tube3 = Tube(Polyhedron('lb', [-1, -1], 'ub', [1, 1]), ...
     Polyhedron('lb', [-0.5, -1], 'ub', [1, 0.5]),...
     Polyhedron('lb', [-1, -1], 'ub', [0.5, 0.5]), ...
     Polyhedron('lb', [-1, -0.5], 'ub', [0.5, 1]), ...

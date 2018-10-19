@@ -32,15 +32,15 @@ classdef SReachDynProgTest < matlab.unittest.TestCase
             xinc = 0.05;
             uinc = 0.1;
             safe_set = Polyhedron('lb', [-1, -1], 'ub', [1, 1]);
-            safety_tube = TargetTube('viability', safe_set, 5);
+            safety_tube = Tube('viability', safe_set, 5);
             
             % Terminal hitting time problem --- Compared later in
             % chanceConstraint formulation
             SReachDynProg('term', sys, xinc, uinc, safety_tube);
 
-            % First hitting time problem
-            target_set = Polyhedron('lb', 0.5*[-1, -1], 'ub', 0.5*[1, 1]);
-            SReachDynProg('first', sys, xinc, uinc, safety_tube, target_set);
+%             % First hitting time problem TODO-first
+%             target_set = Polyhedron('lb', 0.5*[-1, -1], 'ub', 0.5*[1, 1]);
+%             SReachDynProg('first', sys, xinc, uinc, safety_tube, target_set);
         end
     end
 end

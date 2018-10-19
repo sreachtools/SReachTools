@@ -97,7 +97,7 @@ disp(sys)
 </pre><pre class="codeoutput">Linear time invariant system with 3 states, 1 inputs, and 1 disturbances.
 </pre><h2 id="3">Safety specifications</h2><p>We desire that the state remains inside a set <img src="AutomatedAnesthesiaDelivery_eq13886633771416718936.png" alt="$\mathcal{K}=\{x\in \mathbf{R}^3: 0\leq x_1 \leq 6, 0\leq x_2 \leq 10, 0\leq x_3 \leq 10 \}$">.</p><pre class="codeinput">time_horizon = 5;
 safe_set = Polyhedron(<span class="string">'lb'</span>,[1, 0, 0], <span class="string">'ub'</span>, [6, 10, 10]);
-safety_tube = TargetTube(<span class="string">'viability'</span>,safe_set, time_horizon);
+safety_tube = Tube(<span class="string">'viability'</span>,safe_set, time_horizon);
 </pre><h2 id="4">Computation of the underapproximation of the stochastic viability set</h2><p>We are interested in computing the stochastic viability set at probability 0.99.</p><p>For using <tt>SReachSet</tt> with <tt>chance-open</tt> option, we need a set of direction vectors and an affine hull (n-2 dimensional) intersecting the initial state. Since <img src="AutomatedAnesthesiaDelivery_eq14660336936512934444.png" alt="$x_3$"> of the dynamics is slow, we fix it <img src="AutomatedAnesthesiaDelivery_eq18379816359921005976.png" alt="$x_3=5$"> and analyze the rest of the system.</p><pre class="codeinput"><span class="comment">% Safety probability threshold of interest</span>
 <span class="comment">% ----------------------------------------</span>
 prob_thresh = 0.99;     <span class="comment">% Stochastic reach-avoid 'level' of interest</span>
@@ -255,7 +255,7 @@ disp(sys)
 
 time_horizon = 5;
 safe_set = Polyhedron('lb',[1, 0, 0], 'ub', [6, 10, 10]);
-safety_tube = TargetTube('viability',safe_set, time_horizon);
+safety_tube = Tube('viability',safe_set, time_horizon);
 
 %% Computation of the underapproximation of the stochastic viability set
 % We are interested in computing the stochastic viability set at

@@ -24,7 +24,7 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state,...
 %   initial_state- Initial state for which the maximal reach probability must be
 %                  evaluated (A numeric vector of dimension sys.state_dim)
 %   safety_tube  - Collection of (potentially time-varying) safe sets that
-%                  define the safe states (TargetTube object)
+%                  define the safe states (Tube object)
 %   options      - Collection of user-specified options for 'genzps-open'
 %                  (Matlab struct created using SReachPointOptions)
 %

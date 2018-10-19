@@ -32,7 +32,7 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube,...
 % Inputs:
 % -------
 %   sys                  - LtiSystem object describing the system to be verified
-%   safety_tube          - Target tube to stay within [TargetTube object]
+%   safety_tube          - Target tube to stay within [Tube object]
 %   init_safe_set_affine_const        
 %                        - Affine constraints (if any) on the initial state
 %                          Must include a translate of the affine hull of the
@@ -121,7 +121,7 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube,...
         {'LtiSystem','LtvSystem'}, {'nonempty'}));
     inpar.addRequired('prob_thresh', @(x) validateattributes(x, {'numeric'},...
         {'scalar','>=',0,'<=',1}));
-    inpar.addRequired('safety_tube',@(x) validateattributes(x,{'TargetTube'},...
+    inpar.addRequired('safety_tube',@(x) validateattributes(x,{'Tube'},...
         {'nonempty'}));
 
     try

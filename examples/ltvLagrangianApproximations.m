@@ -77,7 +77,7 @@ xlabel('$x_1$', 'Interpreter', 'latex')
 ylabel('$x_2$', 'Interpreter', 'latex')
 
 N = 5;          % time_horizon
-target_tube = TargetTube('viability', safe_set, N);  % safe sets
+target_tube = Tube('viability', safe_set, N);  % safe sets
 
 % For the Lagrangian methods we compute robust and augmented effective target 
 % sets---for the under and overapproximations, respectively. For this computation 

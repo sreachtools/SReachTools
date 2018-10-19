@@ -66,7 +66,7 @@ time_horizon = 5;
 % safe set definition
 safe_set = Polyhedron('lb', [-1, -1], 'ub', [1, 1]);
 % target tube definition
-target_tube = TargetTube('viability', safe_set, time_horizon);
+target_tube = Tube('viability', safe_set, time_horizon);
 % probability threshold desired
 beta = 0.8;
 % Plotting of target tube

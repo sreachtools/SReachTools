@@ -138,7 +138,7 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %   initial_state- Initial state for which the maximal reach probability must be
 %                  evaluated (A numeric vector of dimension sys.state_dim)
 %   safety_tube  - Collection of (potentially time-varying) safe sets that
-%                  define the safe states (TargetTube object)
+%                  define the safe states (Tube object)
 %   options      - Collection of user-specified options for each of the solution
 %                  (Matlab struct created using SReachPointOptions)
 %
@@ -184,7 +184,7 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %
 
     % Input parsing
-    valid_prob = {'first','term'};
+    valid_prob = {'term'}; % TODO-first: 'first',
     valid_method= {'chance-open','chance-affine','genzps-open','particle-open'};
 
     inpar = inputParser();
@@ -194,7 +194,7 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
         {'LtiSystem','LtvSystem'}, {'nonempty'}));
     inpar.addRequired('initial_state', @(x) validateattributes(x,...
         {'numeric'}, {'vector'}));
-    inpar.addRequired('safety_tube',@(x) validateattributes(x,{'TargetTube'},...
+    inpar.addRequired('safety_tube',@(x) validateattributes(x,{'Tube'},...
         {'nonempty'}));
 
     try
@@ -282,7 +282,7 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
             % Safety tube intersection with the hyperplane:
             % Complement of ax <= b is ax > b is -ax <-b
             target_hyperplane_complement = Polyhedron('H',-target_hyperplane.H);
-            safety_tube_minus_target_set = TargetTube('intersect',...
+            safety_tube_minus_target_set = Tube('intersect',...
                 safety_tube, target_hyperplane_complement);
 
             % Compute the series of terminal problems (stochastic
@@ -295,7 +295,7 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
                 safe_sets = safety_tube_minus_target_set.extract([1 t]);
                 % Construct the reach tube up to t-1 (count in theory starts 
                 % from 0) and set the target set at t
-                reach_tube_at_t = TargetTube(safe_sets{:}, target_hyperplane);
+                reach_tube_at_t = Tube(safe_sets{:}, target_hyperplane);
                 options.prob_str = 'term';
                 % The terminal subproblem that is to solved for each t
                 [approx_reach_prob_vec(t), opt_input_vec_cells{t},...

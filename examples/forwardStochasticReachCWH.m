@@ -222,7 +222,7 @@ b_safe_set = [0;
               vymax;
               vymax];
 safe_set = Polyhedron(A_safe_set, b_safe_set);                    
-safety_tube = TargetTube('reach-avoid', safe_set, target_set, target_time);
+safety_tube = Tube('reach-avoid', safe_set, target_set, target_time);
 %%
 
 % Problem 2a: Fixed initial state

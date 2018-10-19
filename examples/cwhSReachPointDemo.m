@@ -99,7 +99,7 @@ safe_set = Polyhedron(A_safe_set, b_safe_set);
 % Target set --- Box [-0.1,0.1]x[-0.1,0]x[-0.01,0.01]x[-0.01,0.01]
 target_set = Polyhedron('lb', [-0.1; -0.1; -0.01; -0.01],...
                         'ub', [0.1; 0; 0.01; 0.01]);
-target_tube = TargetTube('reach-avoid',safe_set, target_set, time_horizon);                    
+target_tube = Tube('reach-avoid',safe_set, target_set, time_horizon);                    
 %%
 
 %% Initial state definition
@@ -260,7 +260,7 @@ if exist('optimal_mean_trajectory_cc_affine','var')
         30, 'bo', 'filled');
     legend_cell{end+1} = 'Optimal mean trajectory (chance-affine)';
 end
-legend(legend_cell);
+legend(legend_cell, 'Location','South');
 xlabel('$x$','interpreter','latex');
 ylabel('$y$','interpreter','latex');
 
@@ -356,7 +356,6 @@ else
     mcarlo_result_cc_affine = NaN;
     elapsed_time_cc_affine = NaN;     
 end
-
 legend(legend_cell, 'Location','South');
 if plot_traj_instead_of_ellipses==1
     title(sprintf('Plot with %d Monte-Carlo sims', n_sims_to_plot));
