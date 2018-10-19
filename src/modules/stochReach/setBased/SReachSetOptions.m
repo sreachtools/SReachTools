@@ -121,14 +121,6 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 
         switch lower(method_str)
             case 'genzps-open'  
-                % Tolerance for bisection for the line search
-                inpar.addParameter('tol_bisect',1e-2, @(x)...
-                    validateattributes(x, {'numeric'}, {'scalar','>',0}));
-                % Accuracy for Genz's algorithm to compute integral of Gaussian
-                inpar.addParameter('desired_accuracy',1e-3, @(x)...
-                    validateattributes(x, {'numeric'}, {'scalar','>',0}));
-                % Patternsearch options
-                inpar.addParameter('PSoptions',psoptimset('display','off'));
                 % Ensure that patternsearch is installed
                 v = ver;            
                 has_fmincon = any(strcmp(cellstr(char(v.Name)),...
@@ -138,6 +130,14 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
                         'option needs MATLAB''s Global Optimization Toolbox.']);
                     throw(exc);
                 end
+                % Tolerance for bisection for the line search
+                inpar.addParameter('tol_bisect',1e-2, @(x)...
+                    validateattributes(x, {'numeric'}, {'scalar','>',0}));
+                % Accuracy for Genz's algorithm to compute integral of Gaussian
+                inpar.addParameter('desired_accuracy',1e-3, @(x)...
+                    validateattributes(x, {'numeric'}, {'scalar','>',0}));
+                % Patternsearch options
+                inpar.addParameter('PSoptions',psoptimset('display','off'));
             case 'chance-open'
                 % Accuracy of piecewise-affine approximation of norminvcdf
                 inpar.addParameter('pwa_accuracy',1e-3, @(x)...
