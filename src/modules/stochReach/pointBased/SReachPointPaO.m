@@ -67,6 +67,9 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys,...
         exc = exc.addCause(err);
         throwAsCaller(exc);
     end
+    
+    % Target tubes has polyhedra T_0, T_1, ..., T_{time_horizon}
+    time_horizon = length(safety_tube)-1;
 
     approx_stoch_reach = -1;
     opt_input_vec = nan(sys.input_dim * time_horizon,1);
@@ -81,9 +84,6 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys,...
         % Ensure options is good
         otherInputHandling(options, sys);
         
-        % Target tubes has polyhedra T_0, T_1, ..., T_{time_horizon}
-        time_horizon = length(safety_tube)-1;
-
         % Get half space representation of the target tube and time horizon
         % skipping the first time step
         [concat_safety_tube_A, concat_safety_tube_b] =...
