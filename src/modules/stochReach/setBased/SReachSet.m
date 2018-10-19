@@ -90,9 +90,7 @@ function [stoch_reach_set, varargout] = SReachSet(prob_str, method_str, sys,...
 %   prob_str    - String specifying the problem of interest. For each case, we
 %                 compute the optimal value function that maps initial states
 %                 to different maximal reach probabilities
-%                     1. 'first' : Stay within the safety_tube and reach the
-%                                  target set early if possible
-%                     2. 'term' : Stay within the safety_tube
+%                     1. 'term' : Stay within the safety_tube
 %   method_str  - Solution technique to be used.
 %                     'chance-open' -- Convex chance-constrained approach for an
 %                                      open-loop controller synthesis

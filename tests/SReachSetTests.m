@@ -81,13 +81,13 @@ classdef SReachSetTests < matlab.unittest.TestCase
                 safety_tube, options);
             test_case.verifyEqual(level_set, Polyhedron.emptySet(2),...
                 'Should be empty');
-            [level_set, extra_info_wmax, extra_info_cheby] = SReachSet(...
+            [level_set, extra_info] = SReachSet(...
                 'term','chance-open', sysEmpty, 0.999, safety_tube, options);
             test_case.verifyEqual(level_set, Polyhedron.emptySet(2),...
                 'Should be empty');
             test_case.verifyLessThanOrEqual(...
-                extra_info_wmax.xmax_reach_prob,0.8,'Low max safety');
-            test_case.verifyEmpty(extra_info_cheby);
+                extra_info(1).xmax_reach_prob,0.8,'Low max safety');
+            test_case.verifyEqual(length(extra_info),1,'Empty cheby');
 %             figure();
 %             plot(safety_tube(1),'alpha',0.3);
 %             hold on

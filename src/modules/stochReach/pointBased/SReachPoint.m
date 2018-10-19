@@ -184,7 +184,7 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %
 
     % Input parsing
-    valid_prob = {'first','term'};
+    valid_prob = {'term'}; % TODO-first: 'first',
     valid_method= {'chance-open','chance-affine','genzps-open','particle-open'};
 
     inpar = inputParser();

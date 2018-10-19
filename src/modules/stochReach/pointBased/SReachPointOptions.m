@@ -14,9 +14,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 %   prob_str    - String specifying the problem of interest. For each case, we
 %                 compute the optimal value function that maps initial states
 %                 to different maximal reach probabilities
-%                     1. 'first' : Stay within the safety_tube and reach the
-%                                  target set early if possible
-%                     2. 'term' : Stay within the safety_tube
+%                     1. 'term' : Stay within the safety_tube
 %   method_str  - Solution technique to be used (user-specifiable
 %                 options associated with each technique is enumerated)
 %                     'chance-open'  -- Convex chance-constrained approach for
@@ -80,7 +78,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 % 
 %
 
-    valid_prob = {'first','term'};
+    valid_prob = {'term'};
     valid_method= {'chance-open','chance-affine','genzps-open','particle-open'};
 
     % Input parsing
