@@ -24,8 +24,8 @@ srtinit
 % We consider both the spacecrafts, referred to as the deputy spacecraft and 
 % the chief spacecraft, to be in the same circular orbit. In this example, we 
 % will consider the problem of optimal controller synthesis for the deputy such 
-% that it can rendezvous with the chief while staying within the line-of-sight c
-% one with maximium likelihood.
+% that it can rendezvous with the chief while staying within the line-of-sight
+% cone with maximium likelihood.
 %%
 % <<cwh_sketch.png>>
 %% Dynamics model for the deputy relative to the chief spacecraft
