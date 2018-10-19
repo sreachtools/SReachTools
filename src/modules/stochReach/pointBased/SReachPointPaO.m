@@ -1,25 +1,20 @@
-function [lb_stoch_reach, opt_input_vec] = SReachPointPaO(sys, initial_state,...
-    safety_tube, options)
+function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys,...
+    initial_state, safety_tube, options)
 % Solve the stochastic reach-avoid problem (lower bound on the probability and
-% open-loop controller synthesis) using chance-constrained convex optimization
+% open-loop controller synthesis) using particle filter control
 % =============================================================================
 %
-% SReachPointCcO implements a chance-constrained convex underapproximation to
-% the stochastic reachability of a target tube problem. This solution is based
-% off the formulation (A) discussed in
+% SReachPointCcO implements a mixed-integer linear program-based approximation
+% to the stochastic reachability of a target tube problem. This solution is
+% based off the particle filter control formulation discussed in
 %
 % K. Lesser, M. Oishi, and R. Erwin, "Stochastic reachability for control of
 % spacecraft relative motion," in IEEE Conference on Decision and Control (CDC),
 % 2013.
 %
-% This function implements a convex solver-friendly piecewise-affine restriction
-% of the formulation (A), as discussed in
-%
-% A. Vinod and M. Oishi, HSCC 2018 TODO
-%
 % =============================================================================
 %
-% [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
+% [approx_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
 %    SReachPointCcO(sys, initial_state, safety_tube, options)
 %
 % Inputs:
@@ -29,31 +24,23 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointPaO(sys, initial_state,...
 %                  evaluated (A numeric vector of dimension sys.state_dim)
 %   safety_tube  - Collection of (potentially time-varying) safe sets that
 %                  define the safe states (Tube object)
-%   options      - Collection of user-specified options for 'chance-open'
+%   options      - Collection of user-specified options for 'particle-open'
 %                  (Matlab struct created using SReachPointOptions)
 %
 % Outputs:
 % --------
-%   lb_stoch_reach 
-%               - Lower bound on the stochastic reachability of a target tube
-%                   problem computed using convex chance constraints and
-%                   piecewise affine approximation
+%   approx_stoch_reach 
+%               - An approximation of the stochastic reachability of a target
+%                   tube problem computed using particle control
 %   opt_input_vec
 %               - Open-loop controller: column vector of dimension
 %                 (sys.input_dim*N) x 1
-%   risk_alloc_state 
-%               - Risk allocation for the state constraints
-%   extra_info  - [Optional] Useful information to construct the
-%                   reachability problem | Used by 'genzps-open' to avoid 
-%                   unnecessary recomputation
-%                 Matlab struct with members --- concat_safety_tube_A,
-%                   concat_safety_tube_b, concat_input_space_A,
-%                   concat_input_space_b, H, mean_X_sans_input,
-%                   cov_X_sans_input;
 %
 % See also SReachPoint.
 %
 % Notes:
+% * Requires Gurobi as the backend solver for optimizing the resulting
+%       mixed-integer linear program
 % * See @LtiSystem/getConcatMats for more information about the notation used.
 % 
 % ============================================================================
@@ -81,82 +68,95 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointPaO(sys, initial_state,...
         throwAsCaller(exc);
     end
 
-    % Ensure options is good
-    otherInputHandling(options);
-    
-    % Target tubes has polyhedra T_0, T_1, ..., T_{time_horizon}
-    time_horizon = length(safety_tube)-1;
+    approx_stoch_reach = -1;
+    opt_input_vec = nan(sys.input_dim * time_horizon,1);
 
-    % Get half space representation of the target tube and time horizon
-    % skipping the first time step
-    [concat_safety_tube_A, concat_safety_tube_b] =...
-        safety_tube.concat([2 time_horizon+1]);
+    % Requires Gurobi since we are solving a MILP
+    [default_solver, solvers_cvx] = cvx_solver;
+    if ~(contains(default_solver,'Gurobi') ||...
+        any(contains(solvers_cvx,'Gurobi')))
+        warning('SReachTools:setup',['SReachPointPaO returns a trivial ',...
+            'result since Gurobi (a MILP solver) was not setup.']);
+    else
+        % Ensure options is good
+        otherInputHandling(options, sys);
+        
+        % Target tubes has polyhedra T_0, T_1, ..., T_{time_horizon}
+        time_horizon = length(safety_tube)-1;
 
-    %% Halfspace-representation of U^N, H, mean_X_sans_input, cov_X_sans_input
-    % GUARANTEES: Non-empty input sets (polyhedron)
-    [concat_input_space_A, concat_input_space_b] = getConcatInputSpace(sys,...
-        time_horizon);
-    % Compute the input concatenated transformations
-    [Z, H, G] = getConcatMats(sys, time_horizon);
-    
-    %% Compute M --- the number of polytopic halfspaces to worry about
-    n_lin_state = size(concat_safety_tube_A,1);
+        % Get half space representation of the target tube and time horizon
+        % skipping the first time step
+        [concat_safety_tube_A, concat_safety_tube_b] =...
+            safety_tube.concat([2 time_horizon+1]);
 
-    if strcmpi(sys.dist.type,'Gaussian')
+        % Halfspace-representation of U^N, and matrices Z, H, and G
+        % GUARANTEES: Non-empty input sets (polyhedron)
+        [concat_input_space_A, concat_input_space_b] = getConcatInputSpace(...
+            sys, time_horizon);
+        % Compute the input concatenated transformations
+        [Z, H, G] = getConcatMats(sys, time_horizon);
+        
+        % Compute M --- the number of polytopic halfspaces to worry about
+        n_lin_state = size(concat_safety_tube_A,1);
+
+        % Compute the stochasticity of the concatenated disturbance random vec
         muW = repmat(sys.dist.parameters.mean,time_horizon,1);
         covW = kron(eye(time_horizon), sys.dist.parameters.covariance);
+
+        % Create realizations of W arranged columnwise
         if options.verbose >= 1
             fprintf('Creating Gaussian random variable realizations....');
         end    
-        % Create realizations of W arranged columnwise
         W_realizations = mvnrnd(muW', covW, options.num_particles)';
         if options.verbose >= 1
             fprintf('Done\n');
         end
-    else
-        throw(SrtInvalidArgsError('Expected a Gaussian-perturbed linear system'));
-    end
-    %% Solve the feasibility problem
-    if options.verbose >= 1
-        fprintf('Setting up CVX problem....');
-    end
-    cvx_begin
-        if options.verbose >= 2
-            cvx_quiet false
-        else
-            cvx_quiet true
-        end
-        variable U_vector(sys.input_dim * time_horizon,1);
-        variable mean_X(sys.state_dim * time_horizon,options.num_particles);
-        variable z(1,options.num_particles) binary;
+
         % Implementation of Problem 2 in Lesser CDC 2013
-        maximize sum(z)
-        subject to
-            mean_X == repmat(Z * initial_state + H * U_vector,...
-                1, options.num_particles) + G * W_realizations;
-            concat_input_space_A * U_vector <= concat_input_space_b;
-            concat_safety_tube_A * mean_X <= repmat(concat_safety_tube_b, 1,...
-                options.num_particles) + options.bigM * repmat(1-z,n_lin_state,1);
+        % Solve the mixed-integer linear program
         if options.verbose >= 1
-            fprintf('Done\nParsing and solving the MILP....');
+            fprintf('Setting up CVX problem....');
         end
-    cvx_end
-    if options.verbose >= 1
-        fprintf('Done\n');
-    end
-    %% Overwrite the solutions
-    if strcmpi(cvx_status, 'Solved')
-        lb_stoch_reach = sum(z)/options.num_particles;
-        opt_input_vec = U_vector; 
-    else
-        lb_stoch_reach = -1;
-        opt_input_vec = nan(sys.input_dim * time_horizon,1);
+        cvx_begin
+            if options.verbose >= 2
+                cvx_quiet false
+            else
+                cvx_quiet true
+            end
+            cvx_solver Gurobi
+            variable U_vector(sys.input_dim * time_horizon,1);
+            variable mean_X(sys.state_dim * time_horizon,options.num_particles);
+            variable z(1,options.num_particles) binary;
+            maximize sum(z)
+            subject to
+                mean_X == repmat(Z * initial_state + H * U_vector,...
+                    1, options.num_particles) + G * W_realizations;
+                concat_input_space_A * U_vector <= concat_input_space_b;
+                concat_safety_tube_A * mean_X <= repmat(concat_safety_tube_b,...
+                    1, options.num_particles) + options.bigM *...
+                        repmat(1-z,n_lin_state,1);
+            if options.verbose >= 1
+                fprintf('Done\nParsing and solving the MILP....');
+            end
+        cvx_end
+        if options.verbose >= 1
+            fprintf('Done\n');
+        end
+        %% Overwrite the solutions
+        if strcmpi(cvx_status, 'Solved')
+            approx_stoch_reach = sum(z)/options.num_particles;
+            opt_input_vec = U_vector; 
+        end
     end
 end
 
-function otherInputHandling(options)
+function otherInputHandling(options, sys)
     if ~(strcmpi(options.prob_str, 'term') &&...
             strcmpi(options.method_str, 'particle-open'))
         throwAsCaller(SrtInvalidArgsError('Invalid options provided'));
+    end
+    if ~strcmpi(sys.dist.type,'Gaussian')
+        throwAsCaller(SrtInvalidArgsError(['Expected a Gaussian-perturbed',...
+            'linear system']));
     end
 end
