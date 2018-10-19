@@ -52,14 +52,13 @@ This will disable some of the features of SReachTools.
     1. Toolboxes
         1. MATLAB's Statistics and Machine Learning Toolbox
         1. MATLAB's Global Optimization Toolbox (**Optional**)
-        1. MATLAB's Symbolic Toolbox (**Optional**)
 1. MPT3 ([https://www.mpt3.org/](https://www.mpt3.org/))
     1. Do an automatic install using a MATLAB script
        [install_mpt3.m](https://www.mpt3.org/Main/Installation?action=download&upname=install_mpt3.m)
        provided by MPT3.
 1. CVX ([http://cvxr.com/cvx/](http://cvxr.com/cvx/))
-    1. Please follow the instructions given in
-       [http://cvxr.com/cvx/download/](http://cvxr.com/cvx/download/).
+    1. Install the CVX (Standard bundle, including Gurobi and/or MOSEK)
+    1. Installation instructions are given in [http://cvxr.com/cvx/download/](http://cvxr.com/cvx/download/).
 1. We recommend using Gurobi as the backend solver for the convex programs
    formulated by SReachTools. In practice, we find both CVX and MPT3 perform
    much better with Gurobi. See
@@ -68,15 +67,19 @@ This will disable some of the features of SReachTools.
 
 ### Installation
 
-1. Install the necessary dependencies
-1. Clone the SReachTools repository (or download the zip file)
+1. Install the necessary dependencies listed above
+1. Clone the SReachTools repository (or download the latest zip file from
+   [Releases](https://github.com/unm-hscl/SReachTools/releases))
+1. Change the MATLAB current working directory to where SReachTools was
+   downloaded
 1. Run `srtinit` in MATLAB to add the toolbox to the paths and ensure all
    must-have dependencies are properly installed.
    - You can add `cd <path_to_sreachtools_repo>;srtinit` to your MATLAB's
      `startup.m` to automatically have this done in future.
-   - Run `srtinit -t` to run all the unit tests.
-   - Run `srtinit -v` to visualize the steps and check for recommended
-     dependencies.  
+   - Additional steps (optional):
+       - Run `srtinit -t` to run all the unit tests.
+       - Run `srtinit -v` to visualize the steps the changes to the path and
+         check for recommended dependencies.  
 
 ### Examples
 

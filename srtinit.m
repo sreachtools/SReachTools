@@ -212,13 +212,6 @@ end
 
 function check_recommended_dependencies()
     v = ver;    
-    %% Check for Symbolic Math Toolbox for PWA
-    has_syms = any(strcmp(cellstr(char(v.Name)), 'Symbolic Math Toolbox'));
-    if ~has_syms
-        warning('SReachTools:setup',['Piecewise approximation ',...
-            'construction getPWAOverAndUnderApprox() in SReachTools ',...
-            'requires MATLAB''s Symbolic Math Toolbox.']);
-    end    
     %% Check for Global Optimization Toolbox (patternsearch)
     has_patternsearch = any(strcmp(cellstr(char(v.Name)),... 
         'Global Optimization Toolbox'));
@@ -227,13 +220,6 @@ function check_recommended_dependencies()
             'SReachPoint() function in SReachTools requires MATLAB''s ',...
             'Global Optimization Toolbox.']);
     end    
-    %% Check for Optimization Toolbox (fmincon)
-    has_fmincon = any(strcmp(cellstr(char(v.Name)), 'Optimization Toolbox'));
-    if ~has_fmincon
-        warning('SReachTools:setup',['''lag-over/under'' option of ',...
-            'SReachSet() function in SReachTools requires MATLAB''s ',...
-            'Optimization Toolbox in one of its techniques: ''optim-box''.']);
-    end
     %% Check for Gurobi
     [default_solver, solvers_cvx] = cvx_solver;
     options_mpt = mptopt;
