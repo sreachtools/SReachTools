@@ -111,3 +111,5 @@ Gleason](http://www.unm.edu/~gleasonj/).  Please cite their [relevant
 papers](https://scholar.google.com/citations?user=yb5Z7AwAAAAJ&hl=en) when using
 the toolbox.  The authors are PhD advisees of [Prof. Meeko
 Oishi](http://www.unm.edu/~oishi/).
+
+We have submitted a tool paper to the 22nd ACM International Conference on Hybrid Systems: Computation and Control summarizing the features of SReachTools. A copy of this submission is [available in the repository](./SReachTools.pdf).
