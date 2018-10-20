@@ -106,11 +106,6 @@ optimal_mean_X_particle_open =  Z * init_state_particle_open +...
 optimal_mean_trajectory_particle_open = reshape(optimal_mean_X_particle_open,...
     sys.state_dim,[]);
 
-
-%% Save data
-save_mat_file_path = strcat('./MatFiles/','DubinsCar_example_point_',datestr(now,'YYYYmmDD_HHMMSS'),'.mat');
-save(save_mat_file_path);
-
 %% Plot the set
 figure(101);
 clf;
@@ -145,9 +140,7 @@ h_opt_mean_particle = scatter(...
 xlabel('x');
 ylabel('y');
 axis equal
-axis(axis_vec);
 box on;
-set(gca,'FontSize',fontSize);
 legend_cell = {'Target tube', 'Nominal trajectory',...
     'Mean trajectory (chance-open)','Mean trajectory (chance-affine)',...
     'Mean trajectory (genzps-open)','Mean trajectory (particle-open)'};
