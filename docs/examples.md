@@ -9,8 +9,10 @@ In these set of examples, we apply SReachTools to perform forward (prediction of
 Please feel free to add requests for more examples at [https://github.com/unm-hscl/SReachTools/issues](https://github.com/unm-hscl/SReachTools/issues).
 They are available in the `examples` folder of the project. 
 
-{% include important-note.html content="HTML examples are not mobile friendly. We're working on it." %}
 
+{% comment %}
+
+<!--{% include important-note.html content="HTML examples are not mobile friendly. We're working on it." %}-->
 1. **Stochastic reachability of a target tube using dynamic programming**:  Demonstrates the use of `SReachDynProg`.
     1. **Stochastic double integrator**: For a stochastic double integrator, we compute a grid-based dynamic programming solution to the stochastic reachability of different target tubes listed below. [[PDF](https://github.com/unm-hscl/SReachTools/raw/master/examples/doubleIntegratorDynamicProgramming.pdf)] [[HTML](doubleIntegratorDynamicProgramming.html)]
         - Stochastic viability problem
@@ -30,6 +32,8 @@ They are available in the `examples` folder of the project.
         1. **Automated anesthesia delivery system**: Given the dynamics for the sedation levels of a patient, we wish to design an automated anesthesia delivery system that maintains the probability of the depth of hypnosis to stay within pre-specified bounds, above 0.99. 
             - Application of `SReachSet` for a probability threshold. [[PDF](https://github.com/unm-hscl/SReachTools/raw/master/examples/publish/cwhSReachPointDemo.pdf)] [[HTML](cwhSReachPointDemo.html)]
 1. **Forward stochastic reachability**: Computes the probability of the state of the spacecraft lying in a set at future time of interest with/without safety requirements. We also demonstrate how SReachTools can handle a deterministic and a stochastic initial state. [[PDF](https://github.com/unm-hscl/SReachTools/raw/master/examples/publish/forwardStochasticReachCWH.pdf)] [[HTML](forwardStochasticReachCWH.html)] 
+{% endcomment %}
+
 <!-- Add {:target="_blank"} if it is desired that the page opens in a new window.-->
 
 
