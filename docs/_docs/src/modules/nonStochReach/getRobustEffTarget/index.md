@@ -25,7 +25,7 @@ title: getRobustEffTarget.m
   -------
     sys          - LtiSystem object
     target_tube  - Target tube of length N+1 where N is the time_horizon. It should have
-                   polyhedrons T_0, T_1,...,T_N.
+                   polyhedrons T_0, T_1, ...,T_N.
     disturbance  - Polyhedron object (bounded disturbance set)
   
     Name       | Value

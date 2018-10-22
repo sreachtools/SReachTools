@@ -1,4 +1,4 @@
-function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc,...
+function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc, ...
     safety_tube, varargin)
 % Dynamic programming solution to stochastic reachability problems
 % ============================================================================
@@ -18,7 +18,7 @@ function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc,...
 %
 % ============================================================================
 %
-% prob_x=SReachDynProg('term',sys,x_inc,u_inc,safety_tube)
+% prob_x = SReachDynProg('term',sys,x_inc,u_inc,safety_tube)
 % 
 % Inputs:
 % -------
@@ -30,7 +30,7 @@ function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc,...
 %   x_inc       - Scalar increment for all dimensions of the state space
 %   u_inc       - Scalar increment for all dimensions of the input space
 %   safety_tube - Safety tube of length N+1 where N is the time_horizon. It
-%                 should have polyhedrons T_0, T_1,...,T_N.
+%                 should have polyhedrons T_0, T_1, ...,T_N.
 %
 % Outputs:
 % --------
@@ -41,7 +41,7 @@ function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc,...
 %                 dimension)
 %   grid_x      - [Optional] Collection of grid points (Mx1 array)
 %   mat_prob_x  - [Optional] M*(N+1) matrix of probability values corresponding
-%                 to the "unrolled" value functions [V_0, V_1,... V_N] where N
+%                 to the "unrolled" value functions [V_0, V_1, ... V_N] where N
 %                 is the time horizon. Note that prob_x = mat_prob_x(1,:)
 %
 % See also getDynProgLevelSets2D
@@ -66,13 +66,13 @@ function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc,...
     valid_prob_str = {'term'}; %TODO: 'first'
     inpar = inputParser();
     inpar.addRequired('prob_str', @(x) any(validatestring(x,valid_prob_str)));
-    inpar.addRequired('sys', @(x) validateattributes(x,...
+    inpar.addRequired('sys', @(x) validateattributes(x, ...
         {'LtiSystem', 'LtvSystem'}, {'nonempty'}));
-    inpar.addRequired('x_inc', @(x) validateattributes(x, {'numeric'},...
+    inpar.addRequired('x_inc', @(x) validateattributes(x, {'numeric'}, ...
         {'scalar', '>', 0}));
-    inpar.addRequired('u_inc', @(x) validateattributes(x, {'numeric'},...
+    inpar.addRequired('u_inc', @(x) validateattributes(x, {'numeric'}, ...
         {'scalar', '>', 0}));
-    inpar.addRequired('safety_tube',@(x) validateattributes(x,{'Tube'},...
+    inpar.addRequired('safety_tube',@(x) validateattributes(x,{'Tube'}, ...
         {'nonempty'}));
 
     try
@@ -135,11 +135,11 @@ function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc,...
     if sys.input_dim == 1
         grid_u = allcomb(umin(1):u_inc:umax(1));
     elseif sys.input_dim == 2
-        grid_u = allcomb(umin(1):u_inc:umax(1),...
+        grid_u = allcomb(umin(1):u_inc:umax(1), ...
                          umin(2):u_inc:umax(2));
     elseif sys.input_dim == 3
-        grid_u = allcomb(umin(1):u_inc:umax(1),...
-                         umin(2):u_inc:umax(2),...
+        grid_u = allcomb(umin(1):u_inc:umax(1), ...
+                         umin(2):u_inc:umax(2), ...
                          umin(3):u_inc:umax(3));
     end
     
@@ -147,17 +147,17 @@ function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc,...
     mat_prob_x = zeros(n_targets, n_grid_x); 
     
     % Compute transition probabilities
-    transition_prob_with_delta = computeTransProbWithDelta(sys, grid_x,...
+    transition_prob_with_delta = computeTransProbWithDelta(sys, grid_x, ...
         grid_u, delta_x_grid);
     
     switch prob_str
         case 'term'
             terminal_indicator_x = safety_tube(n_targets).contains(grid_x');
-%             fprintf('Set optimal value function at t=%d\n',n_targets-1);    
+            % fprintf('Set optimal value function at t=%d\n',n_targets-1);    
             mat_prob_x(n_targets,:) = terminal_indicator_x;
   
             for itt = n_targets - 1:-1:1
-%                 fprintf('Compute optimal value function at t=%d\n', itt - 1);
+                % fprintf('Compute optimal value function at t=%d\n', itt - 1);
                 % Obtain V_{t+1}
                 old_prob_x = mat_prob_x(itt+1,:);
                 % Check which of the grid points need to be iterated over
@@ -175,21 +175,22 @@ function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc,...
             indx_grid_points_outside_target_set = ~double(target_set_indicator_x);
             
             % Initialize
-%             fprintf('Set optimal value function at t=%d\n',n_targets-1);    
+            % fprintf('Set optimal value function at t=%d\n',n_targets-1);    
             mat_prob_x(n_targets,:) = target_set_indicator_x;
 
             for itt = n_targets - 1:-1:1
-%                 fprintf('Compute optimal value function at t=%d\n', itt - 1);
+                % fprintf('Compute optimal value function at t=%d\n', itt - 1);
                 % Obtain V_{t+1}
                 old_prob_x = mat_prob_x(itt+1,:);
                 % Set points that reached the target set as one
                 mat_prob_x(itt,:) = target_set_indicator_x;
                 % Iterate over the remaining safe points and compute
                 % max_u \int_X V_{t+1}(x_{t+1}(u))transitionProb(x_{t+1},u)dx_{t+1}
-                current_indicator_x = indx_grid_points_outside_target_set.*...
+                current_indicator_x = indx_grid_points_outside_target_set.* ...
                     safety_tube(itt).contains(grid_x');
                 for ix = find(current_indicator_x==1)
-                    mat_prob_x(itt,ix) = max(old_prob_x*transition_prob_with_delta{ix}');
+                    mat_prob_x(itt,ix) = max(old_prob_x * ...
+                        transition_prob_with_delta{ix}');
                 end          
             end
     end
@@ -199,7 +200,7 @@ function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc,...
     varargout{3} = mat_prob_x;
 end
 
-function transition_prob_with_delta = computeTransProbWithDelta(sys, grid_x,...
+function transition_prob_with_delta = computeTransProbWithDelta(sys, grid_x, ...
     grid_u, delta_x_grid)
     % Internal function to compute the transition probability scaled by the
     % Delta_x term for integration
@@ -231,12 +232,12 @@ function transition_prob_with_delta = computeTransProbWithDelta(sys, grid_x,...
         transition_prob_with_delta{ix} = zeros(length(grid_u), n_grid_x);
         for iu = 1:length(grid_u)
             % Compute the mean from the point of interest
-            dist_mean = sys.state_mat * grid_x(ix,:)' +...
-                sys.input_mat * grid_u(iu,:) +...
+            dist_mean = sys.state_mat * grid_x(ix,:)' + ...
+                sys.input_mat * grid_u(iu,:) + ...
                 sys.dist_mat * sys.dist.parameters.mean;
             % Transition probability is the pdf times delta for integration
-            transition_prob_with_delta{ix}(iu,:) = mvnpdf(grid_x, dist_mean', dist_cov)'...
-                .* delta_x_grid';
+            transition_prob_with_delta{ix}(iu,:) = mvnpdf(grid_x, ...
+                dist_mean', dist_cov)' .* delta_x_grid';
         end
         if verbose == 1 && ix > print_marker(print_marker_indx)
             val = (print_marker_indx-1) * print_marker_val;
@@ -254,7 +255,7 @@ function otherInputHandling(sys, safety_tube, prob_str, optional_args)
 
     % Ensure the system is a Gaussian-perturbed system
     if ~(isa(sys.dist,'RandomVector') && strcmpi(sys.dist.type, 'Gaussian'))
-        throwAsCaller(SrtInvalidArgsError(['Expected a Gaussian-perturbed',...
+        throwAsCaller(SrtInvalidArgsError(['Expected a Gaussian-perturbed', ...
             ' LTI System']));
     end
     
@@ -278,7 +279,7 @@ function otherInputHandling(sys, safety_tube, prob_str, optional_args)
         
     % Safety tube
     if ~(isa(safety_tube, 'Tube') && safety_tube.tube(1).Dim == sys.state_dim) 
-        throwAsCaller(SrtInvalidArgsError(['Expected a safety_tube of',...
+        throwAsCaller(SrtInvalidArgsError(['Expected a safety_tube of', ...
             ' dimension sys.state_dim']));
     end
     
@@ -296,7 +297,7 @@ function otherInputHandling(sys, safety_tube, prob_str, optional_args)
             % Ensure target_set is a non-empty Polyhedron
             if ~(isa(target_set, 'Polyhedron') && ~target_set.isEmptySet()... 
                 && target_set.Dim == sys.state_dim)
-                err=SrtInvalidArgsError(['Expected a non-empty polyhedron ',...
+                err = SrtInvalidArgsError(['Expected a non-empty polyhedron ', ...
                     'of dimension sys.state_dim as target set']);
                 throw(err);
             end
@@ -309,7 +310,7 @@ end
 
 %% Things for the first hitting time problem
 %
-% prob_x=SReachDynProg('first',sys,x_inc,u_inc,safety_tube,target_set)
+% prob_x = SReachDynProg('first',sys,x_inc,u_inc,safety_tube,target_set)
 %
 %                     1. 'first' : Stay within the safety_tube and reach the
 %                                  target set early if possible

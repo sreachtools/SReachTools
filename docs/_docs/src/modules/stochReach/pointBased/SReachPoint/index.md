@@ -120,7 +120,7 @@ title: SReachPoint.m
  
   =============================================================================
  
-  [approx_reach_prob, opt_controller, varargout] = SReachPoint(prob_str,...
+  [approx_reach_prob, opt_controller, varargout] = SReachPoint(prob_str, ...
      method_str, sys, initial_state, safety_tube, options)
   
   Inputs:
@@ -176,7 +176,7 @@ title: SReachPoint.m
   * See @LtiSystem/getConcatMats for more information about the notation used.
   * If an open_loop policy is desired arranged in increasing time columnwise,
     use the following command:
-        optimal_open_loop_control_policy = reshape(opt_controller,...
+        optimal_open_loop_control_policy = reshape(opt_controller, ...
             sys.input_dim, time_horizon);
   
   =============================================================================

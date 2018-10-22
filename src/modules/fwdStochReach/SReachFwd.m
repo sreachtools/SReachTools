@@ -37,18 +37,17 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time, ...
 %   initial_state - Initial state as a deterministic n-dimensional vector
 %                   or a RandomVector object
 %   target_time   - Time of interest (positive scalar)
-%   target_set/tube 
-%                 - [Required only for state/concat-prob] Polytope/Tube
-%                   over which the probability must be computed
-%   desired_accuracy
-%                 - [Required only for state/concat-prob] Accuracy for the
-%                   integral
+%   target_set/tube  - [Required only for state/concat-prob] Polytope/Tube
+%                      over which the probability must be computed
+%   desired_accuracy - [Required only for state/concat-prob] Accuracy for the
+%                      integral
 %   
 %
 % Outputs:
 % --------
 %   mean_vec      - ['state/concat-stoch'] Mean of the stochastic disturbance
-%   cov_mat       - ['state/concat-stoch'] Covariance of the stochastic disturbance
+%   cov_mat       - ['state/concat-stoch'] Covariance of the stochastic 
+%                                          disturbance
 %   prob          - ['state/concat-prob'] Probability of occurence
 %
 % Notes:
@@ -69,7 +68,7 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time, ...
     valid_prob_str = {'state-stoch','state-prob','concat-stoch','concat-prob'};
     inpar = inputParser();
     inpar.addRequired('prob_str', @(x) any(validatestring(x,valid_prob_str)));
-    inpar.addRequired('sys', @(x) validateattributes(x,...
+    inpar.addRequired('sys', @(x) validateattributes(x, ...
         {'LtiSystem','LtvSystem'}, {'nonempty'}));
     inpar.addRequired('initial_state', @(x) validateattributes(x, ...
         {'RandomVector', 'numeric'}, {'nonempty'}))
@@ -90,9 +89,11 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time, ...
     % Ensure that:
     % 1. Initial state is a column vector of dimension sys.state_dim OR
     %    a RandomVector (Gaussian) object of dimension sys.state_dim
-    % 2. Given system is an uncontroller LTI/LTV system with Gaussian disturbance
+    % 2. Given system is an uncontroller LTI/LTV system with Gaussian 
+    %    disturbance
     % 3. For prob computation, ensure the optional arguments are all ok
-    otherInputHandling(sys, initial_state, prob_str_splits, varargin, target_time);
+    otherInputHandling(sys, initial_state, prob_str_splits, varargin, ...
+        target_time);
 
     % IID assumption allows to compute the mean and covariance of the
     % concatenated disturbance vector W
@@ -104,7 +105,7 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time, ...
     [Z,~,G] = sys.getConcatMats(target_time);
 
     if strcmpi(prob_str_splits{1},'state')
-        state_trans_mat = Z(end-sys.state_dim+1:end,...
+        state_trans_mat = Z(end-sys.state_dim+1:end, ...
                                     end-sys.state_dim+1:end);
         flipped_ctrb_mat_disturb = G(end-sys.state_dim+1:end,:);
 
@@ -113,23 +114,24 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time, ...
             mean_vec = state_trans_mat * initial_state.parameters.mean + ...
                            flipped_ctrb_mat_disturb * mean_concat_disturb;
             % cov_x = A^\tau * cov_{x_0} * (A^\tau)' + C * cov_{W} * C';
-            cov_mat =state_trans_mat* initial_state.parameters.covariance *...
-                    state_trans_mat' + flipped_ctrb_mat_disturb *...
-                                     cov_concat_disturb * flipped_ctrb_mat_disturb';
+            cov_mat = state_trans_mat* initial_state.parameters.covariance * ...
+                state_trans_mat' + flipped_ctrb_mat_disturb * ...
+                    cov_concat_disturb * flipped_ctrb_mat_disturb';
         else
             % mu_x = A^\tau * x_0 + C * mu_W;
             mean_vec = state_trans_mat * initial_state + ...
-                                    flipped_ctrb_mat_disturb * mean_concat_disturb;
+                flipped_ctrb_mat_disturb * mean_concat_disturb;
             % cov_x = C * cov_{W} * C';
-            cov_mat = flipped_ctrb_mat_disturb * cov_concat_disturb *...
-                                                          flipped_ctrb_mat_disturb';
+            cov_mat = flipped_ctrb_mat_disturb * cov_concat_disturb * ...
+                flipped_ctrb_mat_disturb';
         end
     elseif strcmpi(prob_str_splits{1},'concat')
         if isa(initial_state,'RandomVector')
             % mu_X = Z * mu_{x_0} + G * mu_{W};
-            mean_vec = Z * initial_state.parameters.mean + G * mean_concat_disturb;
+            mean_vec = Z * initial_state.parameters.mean + ...
+                G * mean_concat_disturb;
             % cov_X = Z * cov_{x_0} * Z' + G * cov_{W} * G';
-            cov_mat = Z * initial_state.parameters.covariance * Z' +...
+            cov_mat = Z * initial_state.parameters.covariance * Z' + ...
                         G * cov_concat_disturb * G';
         else
             % mu_X = Z * x_0 + G * mu_{W};
@@ -145,8 +147,8 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time, ...
         max_err = max(max(abs(cov_mat - symm_cov_mat)));
         if max_err > eps
             % TODO-Test: Not sure when the matrices are non-symmetric
-            warning('SReachTools:runtime',sprintf(['Non-symmetric ',...
-                'covariance matrix made symmetric (max element-wise error:',...
+            warning('SReachTools:runtime',sprintf(['Non-symmetric ', ...
+                'covariance matrix made symmetric (max element-wise error:', ...
                 '%1.3e)!'], max_err));
         end
         cov_mat = symm_cov_mat;
@@ -190,7 +192,7 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time, ...
                                    10);
         catch
             %TODO-Test: Not sure when qscmvnv will bug out!
-            err=SrtDevError(['Error in qscmvnv (Quadrature of ',...
+            err = SrtDevError(['Error in qscmvnv (Quadrature of ', ...
                 'multivariate Gaussian)']);
             throw(err);
         end
@@ -201,18 +203,19 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time, ...
     end
 end
 
-function otherInputHandling(sys, initial_state, prob_str_splits, optional_args, target_time)
+function otherInputHandling(sys, initial_state, prob_str_splits, ...
+    optional_args, target_time)
     % Ensure that initial state is a column vector of appropriate dimension OR
     % random vector of approriate dimension
     if isa(initial_state,'RandomVector') && initial_state.dim~=sys.state_dim...
             && strcmp(initial_state.type, 'Gaussian')
         %TODO-Test: no support for non-Gaussian as of yet
-        err = SrtInvalidArgsError(['Expected a sys.state_dim-dimensional ',...
+        err = SrtInvalidArgsError(['Expected a sys.state_dim-dimensional ', ...
             'Gaussian random vector for initial state']);
         throw(err);
     elseif isa(initial_state,'numeric') &&...
             ~isequal(size(initial_state), [sys.state_dim 1])
-        err = SrtInvalidArgsError(['Expected a sys.state_dim-dimensional ',...
+        err = SrtInvalidArgsError(['Expected a sys.state_dim-dimensional ', ...
             'column-vector for initial state']);
         throw(err);
     end
@@ -220,7 +223,8 @@ function otherInputHandling(sys, initial_state, prob_str_splits, optional_args, 
     % Ensure that the given system has a Gaussian disturbance
     if isa(sys.dist, 'RandomVector') && ~strcmpi(sys.dist.type, 'Gaussian')
         %TODO-Test: no support for non-Gaussian as of yet
-        err=SrtInvalidArgsError('Expected a Gaussian-perturbed LTI/LTV system');
+        err = SrtInvalidArgsError('Expected a Gaussian-perturbed LTI/LTV ', ...
+            'system');
         throw(err);
     elseif ~isa(sys.dist, 'RandomVector')
         err = SrtInvalidArgsError('Expected a stochastic LTI/LTV system');
@@ -236,18 +240,18 @@ function otherInputHandling(sys, initial_state, prob_str_splits, optional_args, 
     % Ensure the optional arguments for prob computation are all ok
     if strcmpi(prob_str_splits{2},'prob')
         if length(optional_args)~=2
-            err=SrtInvalidArgsError(['Expected a target set or target tube ',...
-                'and a desired accuracy']);
+            err = SrtInvalidArgsError(['Expected a target set or target ', ...
+                'tube and a desired accuracy']);
             throw(err);
         end   
         desired_accuracy = optional_args{2};
         validateattributes(desired_accuracy, {'numeric'}, {'scalar', '>', 0})
         % TODO-Test: Triggers costly computations in testing
         if sys.state_dim <=3 && desired_accuracy < 1e-8
-            warning('SReachTools:desiredAccuracy',...
+            warning('SReachTools:desiredAccuracy', ...
                 'desired_accuracy < 1e-8 might be hard to enforce');
         elseif sys.state_dim >3 && desired_accuracy < 1e-4
-            warning('SReachTools:desiredAccuracy',...
+            warning('SReachTools:desiredAccuracy', ...
                 'desired_accuracy < 1e-4 might be hard to enforce');
         end
         % Ensure target_set is a non-empty Polyhedron
@@ -255,22 +259,25 @@ function otherInputHandling(sys, initial_state, prob_str_splits, optional_args, 
             case 'state'
                 target_set = optional_args{1};
                 % Ensure target_set is a non-empty Polyhedron
-                if ~(isa(target_set, 'Polyhedron') && ~target_set.isEmptySet()... 
-                    && target_set.Dim == sys.state_dim)
-                    err=SrtInvalidArgsError(['Expected a non-empty polyhedron ',...
-                        'of dimension sys.state_dim as target set']);
+                if ~(isa(target_set, 'Polyhedron') && ...
+                     ~target_set.isEmptySet() && ...
+                     target_set.Dim == sys.state_dim)
+
+                    err = SrtInvalidArgsError(['Expected a non-empty ', ...
+                        'polyhedron of dimension sys.state_dim as target set']);
                     throw(err);
                 end
             case 'concat'
                 target_tube = optional_args{1};
-                if ~(isa(target_tube, 'Tube') &&...
-                    target_tube.tube(1).Dim == sys.state_dim &&...
-                    length(target_tube) >= target_time + 1) 
-                    err=SrtInvalidArgsError(['Expected a target tube of length',...
-                        ' not smaller than target_time+1 and dimension ',...
-                        ' sys.state_dim']);
+                if ~(isa(target_tube, 'Tube') && ...
+                     target_tube.tube(1).Dim == sys.state_dim && ...
+                     length(target_tube) >= target_time + 1) 
+
+                    err = SrtInvalidArgsError(['Expected a target tube of ', ...
+                        'length not smaller than target_time+1 and ', ...
+                        'dimension sys.state_dim']);
                     throw(err);
-                end     
+                end
         end
     end    
 end

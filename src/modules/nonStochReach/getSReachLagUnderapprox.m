@@ -1,38 +1,32 @@
-function robust_eff_target = getRobustEffTarget(sys, ...
-                                                target_tube, ...
-                                                disturbance, ...
-                                                varargin)
-% Get robust Effective Target Set
+function underapprox_set = getSReachLagUnderapprox(sys, target_tube, ...
+    disturbance)
+% Get underapproximation of stochastic reach set
 % =========================================================================
 %
-% This function will compute the augmented effect target via the algorithm in
-% the paper:
-%      [[Will fill out this once paper is actually submitted]]
-%
-% TODO
+% This function will compute the underapproximation of the stochastic reach
+% set via Algorithm 1 in
+% 
+%      J. D. Gleason, A. P. Vinod, and M. M. K. Oishi. 2018. Lagrangian 
+%      Approximations for Stochastic Reachability of a Target Tube. 
+%      online. (2018). https://arxiv.org/abs/1810.07118
 %
 % Usage: See examples/lagrangianApproximations.m
 %
 % =========================================================================
 %
-% robust_eff_target = getRobustEffTarget(sys, ...
-%                                        target_tube, ...
-%                                        disturbance, ...
-%                                        Name, Value)
+% underapprox_set = getRobustEffTarget(sys, ...
+%                                      target_tube, ...
+%                                      disturbance, ...
+%                                      Name, Value)
 % Inputs:
 % -------
 %   sys          - LtiSystem object
-%   target_tube  - Target tube of length N+1 where N is the time_horizon. It should have
-%                  polyhedrons T_0, T_1,...,T_N.
+%   target_tube  - Tube object
 %   disturbance  - Polyhedron object (bounded disturbance set)
-% 
-%   Name       | Value
-%   ----------------------------------------
-%   style      | 'standard', 'vrep'
 %
 % Outputs:
 % --------
-%   robust_eff_target - Polyhedron object
+%   underapprox_set - Polyhedron object
 %
 % Notes:
 % * From computational geometry, intersections and Minkowski differences are
@@ -57,22 +51,9 @@ function robust_eff_target = getRobustEffTarget(sys, ...
         {'Tube'}, {'nonempty'}));
     inpar.addRequired('disturbance', @(x) validateattributes(x, ...
         {'Polyhedron'}, {'nonempty'}));
-    inpar.addOptional('style', 'standard', @(x) validatestring(x, ...
-        {'standard','vrep'}));
-    
-    % Expecting at most one extra argument
-    if length(varargin) > 1
-        exc = SrtInvalidArgsError.withFunctionName();
-        exc = addCause(exc, error('Too many input arguments'));
-        throwAsCaller(exc);
-    end
     
     try
-        if length(varargin) == 1
-            inpar.parse(sys, target_tube, disturbance, varargin{1});
-        else
-            inpar.parse(sys, target_tube, disturbance);
-        end
+        inpar.parse(sys, target_tube, disturbance);
     catch cause_exc
         exc = SrtInvalidArgsError.withFunctionName();
         exc = addCause(exc, cause_exc);
@@ -80,9 +61,9 @@ function robust_eff_target = getRobustEffTarget(sys, ...
     end
     
     if sys.state_dim > 4
-        warning('SReachTools:runtime',['Because both vertex and facet ',...
-            'representation of polyhedra are required for the necessary set',...
-            ' recursion operations, computing for systems greater than 4 ',...
+        warning('SReachTools:runtime',['Because both vertex and facet ', ...
+            'representation of polyhedra are required for the necessary set', ...
+            ' recursion operations, computing for systems greater than 4 ', ...
             'dimensions can take significant computational time and effort.']);
     end
     
@@ -120,16 +101,16 @@ function robust_eff_target = getRobustEffTarget(sys, ...
                     effective_dist = sys.dist_mat(current_time) * ...
                         disturbance{idist};
                 else
-                    effective_dist = sys.dist_mat * disturbance;
+                    effective_dist = sys.dist_mat(current_time) * disturbance;
                 end
 
-                effective_target = computeRobusteEffTargetRecursion(...
+                effective_target = computeUnderapproxsetRecursion(...
                     effective_target_tube(itt+1), ...
                     target_tube(itt), ...
                     minus_bu, ...
                     inverted_state_matrix, ....
                     effective_dist, ...
-                    inpar.Results.style);
+                    'standard');
 
                 if n_disturbances > 1
                     % Don't trigger conversion unless you really have to
@@ -145,29 +126,30 @@ function robust_eff_target = getRobustEffTarget(sys, ...
         end
     end
 
-    robust_eff_target = effective_target_tube(1);
+    underapprox_set = effective_target_tube(1);
 end
 
-function back_recursion_set = computeRobusteEffTargetRecursion(...
+function back_recursion_set = computeUnderapproxsetRecursion(...
     effective_target, ...
     target_tube_set, ...
     minus_bu, ...
     inverted_state_matrix, ...
     effective_dist, ...
     style)
-% Do the 
-% one set backward recursion to obtain the effective target
+% Do the one set backward recursion to obtain the effective target
 % =========================================================================
 %
-% Nested function to perform the one-step recursion for obtaining the robust
-% effective target set. See recursion from
-%   [[Will fill out this once paper is actually submitted]]
+% Nested function to perform the one-step recursion of Algorithm 1 from:
+% 
+%      J. D. Gleason, A. P. Vinod, and M. M. K. Oishi. 2018. Lagrangian 
+%      Approximations for Stochastic Reachability of a Target Tube. 
+%      online. (2018). https://arxiv.org/abs/1810.07118
 % 
 % Usage: Nested function in getRobustEffTarget
 %
 % =========================================================================
 % 
-% back_recursion_set = computeRobusteEffTargetRecursion(...
+% back_recursion_set = computeUnderapproxsetRecursion(...
 %     effective_target, ...
 %     target_tube_set, ...
 %     minus_bu, ...

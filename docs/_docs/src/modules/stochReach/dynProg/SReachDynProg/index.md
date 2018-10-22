@@ -34,7 +34,7 @@ title: SReachDynProg.m
     x_inc       - Scalar increment for all dimensions of the state space
     u_inc       - Scalar increment for all dimensions of the input space
     safety_tube - Safety tube of length N+1 where N is the time_horizon. It
-                  should have polyhedrons T_0, T_1,...,T_N.
+                  should have polyhedrons T_0, T_1, ...,T_N.
  
   Outputs:
   --------
@@ -45,7 +45,7 @@ title: SReachDynProg.m
                   dimension)
     grid_x      - [Optional] Collection of grid points (Mx1 array)
     mat_prob_x  - [Optional] M*(N+1) matrix of probability values corresponding
-                  to the "unrolled" value functions [V_0, V_1,... V_N] where N
+                  to the "unrolled" value functions [V_0, V_1, ... V_N] where N
                   is the time horizon. Note that prob_x = mat_prob_x(1,:)
  
   See also getDynProgLevelSets2D

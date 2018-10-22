@@ -29,6 +29,7 @@ classdef Tube
 %
 % Tube Properties:
 % ------------------------
+%   dim - Dimension of the tube, i.e. dimension of the sets in the tube
 %
 % Tube Methods:
 % ---------------------
@@ -54,6 +55,11 @@ classdef Tube
         tube = Polyhedron();
     end
     properties
+        % Tube/dim
+        % ==================================================================
+        % 
+        % Dimension of the tube / sets in the tube
+        % 
         dim
     end
 
@@ -95,8 +101,7 @@ classdef Tube
         %   target_set        - Polyhedron object for set of target states
         %   time_hoizon       - Time horizon of tube/reach-avoid problem
         %   poly1, ..., polyN - Polyhedron objects
-        %   orig_tube         - A tube object that needs to be
-        %                       intersected
+        %   orig_tube         - A tube object that needs to be intersected
         %   int_polytope      - Polyhedron object that is used for intersection
         % 
         % Outputs:
@@ -123,15 +128,15 @@ classdef Tube
                         target_set   = varargin{3};
                         time_horizon = varargin{4};
 
-                        validateattributes(target_set, {'Polyhedron'},...
+                        validateattributes(target_set, {'Polyhedron'}, ...
                             {'nonempty'});
-                        validateattributes(safe_set, {'Polyhedron'},...
+                        validateattributes(safe_set, {'Polyhedron'}, ...
                             {'nonempty'});
                         validateattributes(time_horizon, {'numeric'}, ...
                             {'integer', '>', 0});
                         
                         if safe_set.Dim ~= target_set.Dim
-                            throwAsCaller(SrtInvalidArgsError(['Safe and',...
+                            throwAsCaller(SrtInvalidArgsError(['Safe and', ...
                                 ' target sets must be of the same dimension']));
                         end
                     case 'viability'
@@ -139,7 +144,7 @@ classdef Tube
                         time_horizon = varargin{3};
                         target_set   = safe_set;
                         
-                        validateattributes(safe_set, {'Polyhedron'},...
+                        validateattributes(safe_set, {'Polyhedron'}, ...
                             {'nonempty'});
                         validateattributes(time_horizon, {'numeric'}, ...
                             {'integer', '>', 0});
@@ -149,10 +154,10 @@ classdef Tube
                         int_polytope = varargin{3};
                         
                         validateattributes(orig_tube, {'Tube'}, {'nonempty'});
-                        validateattributes(int_polytope, {'Polyhedron'},...
+                        validateattributes(int_polytope, {'Polyhedron'}, ...
                             {'nonempty'});                        
                         if orig_tube.dim ~= int_polytope.Dim
-                            throw(SrtInvalidArgsError(['Dimension mismatch ',...
+                            throw(SrtInvalidArgsError(['Dimension mismatch ', ...
                                 'between intersecting polytope and tube.']));
                         end
                     otherwise
@@ -170,7 +175,7 @@ classdef Tube
                     end
                 elseif strcmpi(tube_type,'intersect')                    
                     for itt = 1:length(orig_tube)
-                        obj.tube(itt) = intersect(orig_tube.tube(itt),...
+                        obj.tube(itt) = intersect(orig_tube.tube(itt), ...
                             int_polytope);
                     end
                 else
@@ -188,7 +193,7 @@ classdef Tube
                     validateattributes(varargin{itt}, {'Polyhedron'}, ...
                         {'nonempty'})
                     if varargin{itt}.Dim ~= obj.dim
-                        throwAsCaller(SrtInvalidArgsError(['All sets in the',...
+                        throwAsCaller(SrtInvalidArgsError(['All sets in the', ...
                             'tube must be of the same dimension']));
                     end
 
@@ -414,13 +419,13 @@ classdef Tube
         %  
 
             if size(X, 1) ~= length(obj) * obj.dim
-                throw(SrtInvalidArgsError(sprintf(['Concatenated state',...
-                    'vector/matrix provided has incorrect number of rows.',...
+                throw(SrtInvalidArgsError(sprintf(['Concatenated state', ...
+                    'vector/matrix provided has incorrect number of rows.', ...
                     'Expected: %d | Got: %d'],length(obj)*obj.dim,size(X, 1))));
             end
 
             if size(X, 2) <= 0
-                throw(SrtInvalidArgsError(['Concatenated state ',...
+                throw(SrtInvalidArgsError(['Concatenated state ', ...
                     'vector/matrix provided should have at least one column']));
             end
             

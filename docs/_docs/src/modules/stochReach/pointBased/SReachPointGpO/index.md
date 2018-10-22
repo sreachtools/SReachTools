@@ -19,7 +19,7 @@ title: SReachPointGpO.m
  
   =============================================================================
  
-   [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state,...
+   [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state, ...
        safety_tube, options)
  
   Inputs:
@@ -46,7 +46,7 @@ title: SReachPointGpO.m
  
   Notes:
   ------
-  * Uses SReachPoint('term','chance-open',...) for initialization of
+  * Uses SReachPoint('term','chance-open', ...) for initialization of
     patternsearch
   * Uses Genz's algorithm (see in src/helperFunctions) instead of MATLAB's
     Statistics and Machine Learning Toolbox's mvncdf to compute the integral of

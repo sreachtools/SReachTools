@@ -68,8 +68,8 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 %
 % Notes:
 % * SReachPoint() will call this function internally using the default
-%     values if SReachPointOptions()-based options is not explicitly provided
-%     to SReachPoint().
+%   values if SReachPointOptions()-based options is not explicitly provided
+%   to SReachPoint().
 % ============================================================================
 % 
 % This function is part of the Stochastic Reachability Toolbox.
@@ -90,10 +90,10 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
         case 'genzps-open'            
             % Ensure that patternsearch is installed
             v = ver;            
-            has_patternsearch = any(strcmp(cellstr(char(v.Name)),...
+            has_patternsearch = any(strcmp(cellstr(char(v.Name)), ...
                 'Global Optimization Toolbox'));
             if ~has_patternsearch
-                exc = SrtSetupError(['SReachPoint with ''genzps-open'' ',...
+                exc = SrtSetupError(['SReachPoint with ''genzps-open'' ', ...
                     'option needs MATLAB''s Global Optimization Toolbox.']);
                 throw(exc);
             end
@@ -113,7 +113,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
             % Verbosity of the implementation
             inpar.addParameter('verbose', 0, @(x)...
-                validateattributes(x, {'numeric'}, {'scalar', 'integer',...
+                validateattributes(x, {'numeric'}, {'scalar', 'integer', ...
                     '>=',0,'<=',2}));                        
         case 'chance-affine'
             % Probabilistic relaxation of the hard input constraints
@@ -121,7 +121,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
                 validateattributes(x, {'numeric'}, {'scalar','>',0,'<',1}));
             % Verbosity of the implementation
             inpar.addParameter('verbose', 0, @(x)...
-                validateattributes(x, {'numeric'}, {'scalar', 'integer',...
+                validateattributes(x, {'numeric'}, {'scalar', 'integer', ...
                     '>=',0,'<=',2}));            
             % Accuracy of piecewise-affine approximation of norminvcdf
             inpar.addParameter('pwa_accuracy',1e-2, @(x)...
@@ -151,8 +151,8 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
     switch lower(method_str)
         case 'chance-affine'
             if any(strcmp(inpar.UsingDefaults, 'max_input_viol_prob'))
-                 throwAsCaller(SrtInvalidArgsError(['Expected ',...
-                     'max_input_viol_prob, the maximum allowed likelihood ',...
+                 throwAsCaller(SrtInvalidArgsError(['Expected ', ...
+                     'max_input_viol_prob, the maximum allowed likelihood ', ...
                      'of violating the input constraints.']));
             end
     end

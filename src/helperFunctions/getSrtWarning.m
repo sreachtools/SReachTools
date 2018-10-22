@@ -1,5 +1,5 @@
 function state = getSrtWarning(varargin)
-    valid_warn_str = {'SReachTools:runtime','SReachTools:desiredAccuracy',...
+    valid_warn_str = {'SReachTools:runtime','SReachTools:desiredAccuracy', ...
         'SReachTools:setup'};
     if isempty(varargin)
         state = cell(length(valid_warn_str),1);

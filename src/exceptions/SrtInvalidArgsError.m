@@ -37,11 +37,23 @@ classdef SrtInvalidArgsError < SrtBaseException
         end
 
         function obj = withFunctionName(varargin)
+        % Throw invalid args and provide function name that received the 
+        % invalid call
+        % =====================================================================
+        % 
+        % Method to preformat error strings to throw to the user the specific
+        % function that was used when passing the invalid args error. Will 
+        % display message:
+        % 
+        %       Invalid arguments provided to << function name >>
+        % 
+        % =====================================================================
+        % 
             stk = dbstack(1);
             try
                 stk = stk(1);
             catch err
-                warning('SReachTools:runtime',['Dbstack empty, perhaps you ',...
+                warning('SReachTools:runtime',['Dbstack empty, perhaps you ', ...
                     'are calling SrtInvalidArgsError from command window?']);
                 stk = struct('name', '<< empty stack >>');
             end

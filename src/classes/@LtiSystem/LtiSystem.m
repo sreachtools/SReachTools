@@ -58,8 +58,7 @@ classdef LtiSystem < LtvSystem
     
     methods
         function obj = LtiSystem(varargin)
-        %  Create a discrete-time LTI system 
-        % object
+        % Create a discrete-time LTI system object
         % ====================================================================
         %
         % Constructor method fot the LTI System class. Will create the 
@@ -118,9 +117,8 @@ classdef LtiSystem < LtvSystem
                 @(x) validateattributes(x, {'numeric'}, ...
                     {'nonempty'}));
 
-            % TODO: Joe Because InputSpace and Disturbance will be handled in the
-            % LtvSystem superclass call just ignore what their inputs are 
-            % right now
+            % Because InputSpace and Disturbance will be handled in the
+            % LtvSystem superclass call just ignore what their inputs
             inpar.addParameter('InputSpace', Polyhedron(), @(x) true);
             inpar.addParameter('Disturbance', [], @(x) true);
 
@@ -137,7 +135,7 @@ classdef LtiSystem < LtvSystem
         end
 
         function disp(obj, varargin)
-        %  Overload of MATLAB internal disp
+        % Overload of MATLAB internal disp
         % ====================================================================
         %
         % Overloaded method of MATLAB's internal disp. 
@@ -206,9 +204,7 @@ classdef LtiSystem < LtvSystem
 
         % Methods inherited from LTV
         function [Z,G,H] = getConcatMats(sys, time_horizon)
-
             [Z,G,H] = getConcatMats@LtvSystem(sys, time_horizon);
-
         end
 
         function [concat_input_space_A, concat_input_space_b] =...
@@ -216,7 +212,6 @@ classdef LtiSystem < LtvSystem
 
             [concat_input_space_A, concat_input_space_b] =...
                 getConcatInputSpace@LtvSystem(sys, time_horizon);
-
         end
     end
 end

@@ -1,4 +1,4 @@
-function approx_level_set = SReachSetLag(method_str, sys, prob_thresh,...
+function approx_level_set = SReachSetLag(method_str, sys, prob_thresh, ...
     safety_tube, options)
 % Get approximate level set using lagrangian methods
 % ============================================================================
@@ -17,12 +17,13 @@ function approx_level_set = SReachSetLag(method_str, sys, prob_thresh,...
 %
 % Inputs:
 % -------
-%   sys              - LtiSystem object
-%   prob_thresh             - Probability threshold
-%   safety_tube      - Cell array of polyhedron objects
-%   approx_type      - Approximation type, either 'overapproximation' or
-%                      'underapproximation'
-%   method, varargin - See help getBoundedSetForDisturbance
+%   method_str  - Lagrangian method,
+%                   'lag-over'  -- Lagrangian Overapproximation
+%                   'lag-under' -- Lagrangian Underapproximation
+%   sys         - LtiSystem object
+%   prob_thresh - Probability threshold
+%   safety_tube - Tube object
+%   options     - Struct of reach set options, see SReachSetOptions
 %
 % Outputs:
 % --------
@@ -40,14 +41,12 @@ function approx_level_set = SReachSetLag(method_str, sys, prob_thresh,...
     inpar = inputParser();
     inpar.addRequired('method_str', @(x) any(validatestring(x, ...
         {'lag-under', 'lag-over'})));
-    inpar.addRequired('sys', @(x) validateattributes(x, {'LtiSystem',...
+    inpar.addRequired('sys', @(x) validateattributes(x, {'LtiSystem', ...
         'LtvSystem'}, {'nonempty'}));
     inpar.addRequired('prob_thresh', @(x) validateattributes(x, {'numeric'}, ...
         {'>=', 0, '<=', 1}));
-    inpar.addRequired('safety_tube', @(x) validateattributes(x, {'Tube'},...
+    inpar.addRequired('safety_tube', @(x) validateattributes(x, {'Tube'}, ...
         {'nonempty'}));
-%     inpar.addRequired('method', @(x) any(validatestring(x, ...
-%         {'random', 'box', 'load'})));
 
     try
         inpar.parse(method_str, sys, prob_thresh, safety_tube);
@@ -74,18 +73,18 @@ function approx_level_set = SReachSetLag(method_str, sys, prob_thresh,...
                     prob_thresh^(1/time_horizon), options);
 
                 % get underapproximated level set (robust effective target)
-                approx_level_set = getRobustEffTarget(sys, safety_tube, ...
-                    bounded_set);
+                approx_level_set = getSReachLagUnderapprox(sys, ...
+                    safety_tube, bounded_set);
             case 'lag-over'
                 % get bounded disturbance set
                 bounded_set = SReachSetLagBset(sys.dist, ...
                     (1 - prob_thresh)^(1/time_horizon), options);
 
                 % get overapproximated level set (augmented effective target)
-                approx_level_set = getAugEffTarget(sys, safety_tube, ...
-                    bounded_set);
+                approx_level_set = getSReachLagOverapprox(sys, ...
+                    safety_tube, bounded_set);
             otherwise
-                throw(SrtInvalidArgsError('Unhandled method_str: %s',...
+                throw(SrtInvalidArgsError('Unhandled method_str: %s', ...
                     method_str));
         end
     elseif time_horizon == 0 || prob_thresh == 0

@@ -72,7 +72,7 @@ beta = 0.8;
 % Plotting of target tube
 figure()
 hold on    
-for time_indx=0:time_horizon
+for time_indx = 0:time_horizon
     target_tube_at_time_indx = Polyhedron('H',[target_tube(time_indx+1).A,zeros(size(target_tube(time_indx+1).A,1),1), target_tube(time_indx+1).b], 'He',[0 0 1 time_indx]);
     plot(target_tube_at_time_indx, 'alpha',0.25);
 end
@@ -120,7 +120,7 @@ hold off;
 xlabel('$x_1$', 'Interpreter', 'latex')
 ylabel('$x_2$', 'Interpreter', 'latex')
 box on;
-leg=legend('Safe set','Overapproximation','Underapproximation');
+leg = legend('Safe set','Overapproximation','Underapproximation');
 set(leg,'Location','EastOutside');
 %% 
 % Because of the choice or random directions for the ellipse |robust_eff_target| 
@@ -160,6 +160,6 @@ plot(robust_target_2, 'color', 'g');
 hold off;
 xlabel('$x_1$', 'Interpreter', 'latex')
 ylabel('$x_2$', 'Interpreter', 'latex')
-leg=legend('Safe set','Overapproximation', 'Dyn. prog. soln.','Underapproximation');
+leg = legend('Safe set','Overapproximation', 'Dyn. prog. soln.','Underapproximation');
 set(leg,'Location','EastOutside');
 box on;

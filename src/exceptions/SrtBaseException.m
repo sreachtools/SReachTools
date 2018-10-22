@@ -21,6 +21,11 @@ classdef SrtBaseException < MException
 % 
     
     properties (Access = private)
+        % SrtBaseException/mnemonic
+        % ====================================================================
+        % 
+        % MATLAB error mnemonic, used for building error ids
+        % 
         mnemonic = '';
     end
     

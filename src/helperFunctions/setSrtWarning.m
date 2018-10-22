@@ -1,5 +1,5 @@
 function setSrtWarning(warn_str,state)
-    valid_warn_str = {'SReachTools:runtime','SReachTools:desiredAccuracy',...
+    valid_warn_str = {'SReachTools:runtime','SReachTools:desiredAccuracy', ...
         'SReachTools:setup'};
     if strcmpi(warn_str,'all') && length(state) == length(valid_warn_str)
         for warn_indx = 1:length(valid_warn_str)

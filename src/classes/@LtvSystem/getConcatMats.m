@@ -55,7 +55,8 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
 %     'InputSpace', Polyhedron('lb', -umax, 'ub', umax), ...
 %     'DisturbanceMatrix', eye(2), ...
 %     'Disturbance', Polyhedron('lb', -dmax *ones(2,1), 'ub', dmax *ones(2,1)));
-% % Compute the robust reach-avoid set
+% 
+% % Get the concatenated matrices
 % [Z,H,G] = getConcatMats(sys, time_horizon);
 %
 % =============================================================================
@@ -98,16 +99,16 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
 
     %% Construct Z matrix --- concatenated state matrix
     % Z = [A;A^2;...A^{N}]
-    Z=zeros(sys.state_dim * time_horizon, sys.state_dim);
-    for t_indx=1:time_horizon
+    Z = zeros(sys.state_dim * time_horizon, sys.state_dim);
+    for t_indx = 1:time_horizon
         Z((t_indx-1)*sys.state_dim +1 : t_indx*sys.state_dim,:) =...
             computeMatProductsStateMat(sys, 0, t_indx);
     end
 
     %% Construct H matrix --- concatenated input matrix
     if sys.input_dim > 0
-        H=zeros(sys.state_dim * time_horizon, sys.input_dim * time_horizon);
-        for t_indx=1:time_horizon
+        H = zeros(sys.state_dim * time_horizon, sys.input_dim * time_horizon);
+        for t_indx = 1:time_horizon
             row_for_H = zeros(sys.state_dim, sys.input_dim * time_horizon);
             for sub_indx = 1:t_indx
                 if sys.islti()
@@ -115,9 +116,9 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
                 else
                     input_matrix_temp = sys.input_mat(sub_indx-1);
                 end
-                row_for_H(:,...
+                row_for_H(:, ...
                     (sub_indx-1)*sys.input_dim + 1: sub_indx*sys.input_dim) =...
-                        computeMatProductsStateMat(sys, sub_indx, t_indx) *...
+                        computeMatProductsStateMat(sys, sub_indx, t_indx) * ...
                         input_matrix_temp;
             end            
             H((t_indx-1)*sys.state_dim +1 : t_indx*sys.state_dim,:) = row_for_H;
@@ -128,8 +129,8 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
 
     %% Construct G matrix --- concatenated disturbance matrix
     if sys.dist_dim > 0
-        G=zeros(sys.state_dim * time_horizon, sys.dist_dim * time_horizon);
-        for t_indx=1:time_horizon
+        G = zeros(sys.state_dim * time_horizon, sys.dist_dim * time_horizon);
+        for t_indx = 1:time_horizon
             row_for_G = zeros(sys.state_dim, sys.dist_dim * time_horizon);
             for sub_indx = 1:t_indx
                 if sys.islti()
@@ -137,9 +138,9 @@ function [Z,H,G] = getConcatMats(sys, time_horizon)
                 else
                     dist_matrix_temp = sys.dist_mat(sub_indx-1);
                 end
-                row_for_G(:,...
+                row_for_G(:, ...
                     (sub_indx-1)*sys.dist_dim + 1: sub_indx*sys.dist_dim) =...
-                        computeMatProductsStateMat(sys, sub_indx, t_indx) *...
+                        computeMatProductsStateMat(sys, sub_indx, t_indx) * ...
                         dist_matrix_temp;
             end            
             G((t_indx-1)*sys.state_dim +1 : t_indx*sys.state_dim,:) = row_for_G;

@@ -1,7 +1,7 @@
 function A = allcomb(varargin)
 
 % ALLCOMB - All combinations
-%    B = ALLCOMB(A1,A2,A3,...,AN) returns all combinations of the elements
+%    B = ALLCOMB(A1,A2,A3, ...,AN) returns all combinations of the elements
 %    in the arrays A1, A2, ..., and AN. B is P-by-N matrix is which P is the product
 %    of the number of elements of the N inputs. This functionality is also
 %    known as the Cartesian Product. The arguments can be numerical and/or
@@ -92,7 +92,7 @@ elseif NC > 1
         [ix{ii}] = ndgrid(ix{ii}) ;
         
         A = cell(numel(ix{1}),NC) ; % pre-allocate the output
-        for k=1:NC,
+        for k = 1:NC,
             % combine
             A(:,k) = reshape(varargin{k}(ix{k}),[],1) ;
         end

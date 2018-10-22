@@ -21,7 +21,8 @@ classdef CwhSystemParameters
         % Default value: 300
         chief_mass
 
-        % Gravitation constant for the pull of the celestial body (default Earth)
+        % Gravitation constant for the pull of the celestial body 
+        % (default Earth)
         % Set via the equation
         %   grav_body = grav_constant * celes_mass / 1000^3;
         grav_body
@@ -69,7 +70,7 @@ classdef CwhSystemParameters
                 for indx = 1:length(invalid_args)
                     err_mesg = [err_mesg,' ',char(invalid_args{indx}),','];
                 end
-                err_mesg=[err_mesg,...
+                err_mesg=[err_mesg, ...
                     '\b---given to CwhSystemParameters. Expected'];
                 for valid_arg = inpar.Parameters
                     err_mesg = [err_mesg,' ',char(valid_arg),','];

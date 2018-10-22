@@ -5,7 +5,7 @@ title: allcomb.m
 
 ```
   ALLCOMB - All combinations
-     B = ALLCOMB(A1,A2,A3,...,AN) returns all combinations of the elements
+     B = ALLCOMB(A1,A2,A3, ...,AN) returns all combinations of the elements
      in the arrays A1, A2, ..., and AN. B is P-by-N matrix is which P is the product
      of the number of elements of the N inputs. This functionality is also
      known as the Cartesian Product. The arguments can be numerical and/or

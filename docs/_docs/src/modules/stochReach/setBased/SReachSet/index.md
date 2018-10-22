@@ -86,7 +86,7 @@ title: SReachSet.m
  
   =============================================================================
  
-  [stoch_reach_prob, opt_controller, varargout] = SReachSet(prob_str,...
+  [stoch_reach_prob, opt_controller, varargout] = SReachSet(prob_str, ...
      method_str, sys, initial_state, safety_tube, options)
   
   Inputs:

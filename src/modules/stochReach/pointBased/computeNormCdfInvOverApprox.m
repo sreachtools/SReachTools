@@ -52,20 +52,20 @@ function [overapprox_m, overapprox_c, lb_phiinv, norminv_knots] =...
     
     % Throw an error if the requested bounds are beyond the PWA parameters
     if ub_phiinv > 0.5
-        throwAsCaller(SrtInvalidArgsError(['Upper bound can''t exceed 0.5 ',...
+        throwAsCaller(SrtInvalidArgsError(['Upper bound can''t exceed 0.5 ', ...
             '(breaks convexity).']));
     end
     
     if pwa_accuracy < 1e-5
-        warning('SReachTools:desiredAccuracy',...
-            ['The requested accuracy might take a lot of time, and may ',...
+        warning('SReachTools:desiredAccuracy', ...
+            ['The requested accuracy might take a lot of time, and may ', ...
              ' cause MATLAB to crash.']);
     end
     
     %% hessian_phinvOneMinusX definition: Hessian of phiinv(1-x)
     % See end of the file for MATLAB's symbolic toolbox commands to obtain
     % this function
-    hessian_phiinvOneMinusX = @(x) 2*2^(1/2)*pi*erfcinv(2*x) *...
+    hessian_phiinvOneMinusX = @(x) 2*2^(1/2)*pi*erfcinv(2*x) * ...
         exp(2*erfcinv(2*x)^2);
     
 	%% Initialization
@@ -106,7 +106,7 @@ end
 % [cdf_approx_m, cdf_approx_c, lb_phiinv] =...
 %     computeNormCdfInvOverApprox(0.5, 1e-3, 1000);
 % toc
-% x=lb_phiinv:1e-4:0.5;
+% x = lb_phiinv:1e-4:0.5;
 % y_pwa = max(cdf_approx_m * x + cdf_approx_c);
 % clf
 % subplot(2,1,1);

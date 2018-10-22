@@ -12,13 +12,13 @@ classdef RandomVector
 %
 % % Define a Gaussian random variable of mean 0 and standard deviation 2:
 % GaussianRV = RandomVector('Gaussian', ...
-%                           0,
+%                           0, ...
 %                           2^2);
 %
 % % Define a Gaussian random vector of mean [0;2] and covariance matrix 
 % % eye(2):
 % GaussianRV = RandomVector('Gaussian', ...
-%                           [0;2],
+%                           [0;2], ...
 %                           eye(2));
 %   
 % ==========================================================================
@@ -77,7 +77,19 @@ classdef RandomVector
         %   parameters.covariance - Covariance matrix (p x p)
         % 
         parameters
+
+        % RandomVector/dim
+        % ==================================================================
+        % 
+        % Dimension of the random vector
+        % 
         dim
+
+        % RandomVector/pdf
+        % ==================================================================
+        % 
+        % Probability density function of random vector
+        % 
         pdf
     end
     methods
