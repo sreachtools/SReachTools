@@ -10,11 +10,16 @@ SReachTools is an open-source MATLAB Toolbox for performing stochastic verificat
 
 - Can you show me some examples of SReachTools working? 
     - We have cataloged a number of [examples ](https://unm-hscl.github.io/SReachTools/examples/) implemented using SReachTools. These examples are also available as part of the source code of SReachTools, see `examples/*.m`. 
-- Where do I get the source code from? How do I install this? What are the dependencies?
-    - See our [Github repository](https://github.com/unm-hscl/SReachTools). We do periodic releases regarding bug fixes which can be obtained from our [release page](https://github.com/unm-hscl/SReachTools/releases). Our [quick start guide](#quick-start-guide), described further down this page, walks through the installation process.
+- How do I install this? What are the dependencies?
+    - Our [quick start guide](#quick-start-guide), described further
+      down this page, walks through the installation process.
+- Where do I get the source code from?
+    - See our [Github repository](https://github.com/unm-hscl/SReachTools), or
+      our [release page](https://github.com/unm-hscl/SReachTools/releases) for
+      zip files. 
 - How can I use this toolbox? What are the terms and conditions to follow to use SReachTools?
-    - SReachTools is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. See our [License](license/). 
-- Can I to contribute to this toolbox?
+    - SReachTools is licensed under [GNU General Public License v3](https://www.gnu.org/licenses/), or (at your option) any later version. See our [License](license/).
+- Can I contribute to this toolbox?
     - Of course, we welcome pull requests. See [Contributing guidelines](contributing/). 
 - Where do I ask questions or give feedback? 
     - Use our [Google groups](https://groups.google.com/d/forum/sreachtools) or the [Github issues](https://github.com/unm-hscl/SReachTools/issues) page.
