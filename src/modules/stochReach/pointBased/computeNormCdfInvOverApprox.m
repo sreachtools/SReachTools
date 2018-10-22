@@ -1,16 +1,22 @@
 function [overapprox_m, overapprox_c, lb_phiinv, norminv_knots] =...
     computeNormCdfInvOverApprox(max_delta, pwa_accuracy, n_lin_consts)
 % Compute a piecewise-linear overapproximation of norminv(1-x) for 
-% x \in [1e-5,0.5] to the quality of 1e-4
+% x \in [lb_delta,0.5] to a user-specified quality (Internal function)
 % =============================================================================
 %
 % computeNormCdfInvOverApprox generates a piecewise-linear overapproximation of
-% norminv(1-x) for x\in[1e-5,0.5]. Specifically, given any z\in[1e-5,0.5],
-% norminv(1-x) + err_bnd > max(cdf_approx_m * x + cdf_approx_c) > norminv(1-x),
-% with err_bnd = desired_accuracy/n_lin_consts/10.
+% norminv(1-x) for x\in[lb_delta,0.5]. Specifically, given any
+% z\in[lb_delta,0.5],
 %
-% USAGE: See getUnderapproxStochReachAvoidSet,
-% computeCcLowerBoundStochReachAvoidPwlRisk.
+% norminv(1-x) + pwa_accuracy>max(cdf_approx_m * x + cdf_approx_c)>norminv(1-x),
+%
+% with lb_delta = max(max_delta/n_lin_consts/10,1e-8).
+%
+% This function implements Algorithm 2 of the following paper:
+%
+% A. Vinod and M. Oishi. Affine controller synthesis for stochastic reachability
+% via difference of convex programming. In Proc. Hybrid Syst.: Comput. & Ctrl.,
+% 2019. (submitted).
 %
 % =============================================================================
 %

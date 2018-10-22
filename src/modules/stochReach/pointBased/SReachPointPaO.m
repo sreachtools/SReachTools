@@ -1,21 +1,33 @@
 function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
     initial_state, safety_tube, options)
-% Solve the stochastic reach-avoid problem (lower bound on the probability and
-% open-loop controller synthesis) using particle filter control
+% Solve the problem of stochastic reachability of a target tube (a lower bound
+% on the maximal reach probability and an open-loop controller synthesis) using
+% particle filter control
 % =============================================================================
 %
-% SReachPointCcO implements a mixed-integer linear program-based approximation
+% SReachPointPaO implements a mixed-integer linear program-based approximation
 % to the stochastic reachability of a target tube problem. This solution is
-% based off the particle filter control formulation discussed in
+% based off the particle filter control formulation for stochastic reach-avoid
+% problems discussed in
 %
 % K. Lesser, M. Oishi, and R. Erwin, "Stochastic reachability for control of
 % spacecraft relative motion," in IEEE Conference on Decision and Control (CDC),
 % 2013.
 %
+%    High-level desc.   : Sample scenarios based on the additive noise and solve
+%                         a mixed-integer linear program to make the maximum
+%                         number of scenarios satisfy the reachability objective
+%    Approximation      : No direct approximation guarantees. Accuracy improves
+%                         as the number of scenarios considered increases.
+%    Controller type    : Open-loop controller that satisfies the hard input
+%                         bounds
+%    Optimality         : Optimal (w.r.t scenarios drawn) open-loop controller
+%                         for the underapproximation problem 
+%
 % =============================================================================
 %
-% [approx_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
-%    SReachPointCcO(sys, initial_state, safety_tube, options)
+% [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, initial_state,...
+%   safety_tube, options)
 %
 % Inputs:
 % -------
@@ -39,8 +51,8 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
 % See also SReachPoint.
 %
 % Notes:
-% * Requires Gurobi as the backend solver for optimizing the resulting
-%       mixed-integer linear program
+% * This function requires CVX with Gurobi as the backend solver for optimizing
+%   the resulting mixed-integer linear program.
 % * See @LtiSystem/getConcatMats for more information about the notation used.
 % 
 % ============================================================================
