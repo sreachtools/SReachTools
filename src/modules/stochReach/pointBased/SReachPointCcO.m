@@ -1,21 +1,36 @@
 function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
     SReachPointCcO(sys, initial_state, safety_tube, options)
-% Solve the stochastic reach-avoid problem (lower bound on the probability and
-% open-loop controller synthesis) using chance-constrained convex optimization
+% Solve the problem of stochastic reachability of a target tube (a lower bound
+% on the maximal reach probability and an open-loop controller synthesis) using
+% convex chance-constrained optimization
 % =============================================================================
 %
 % SReachPointCcO implements a chance-constrained convex underapproximation to
-% the stochastic reachability of a target tube problem. This solution is based
-% off the formulation (A) discussed in
+% the stochastic reachability of a target tube problem. The original problem was
+% formulated (for the simpler problem of terminal hitting-time stochastic
+% reach-avoid problem) in
 %
 % K. Lesser, M. Oishi, and R. Erwin, "Stochastic reachability for control of
 % spacecraft relative motion," in IEEE Conference on Decision and Control (CDC),
 % 2013.
 %
-% This function implements a convex solver-friendly piecewise-affine restriction
-% of the formulation (A), as discussed in
+% This function implements a convex solver-friendly using piecewise-affine
+% overapproximations of the convex constraints, as discussed in
 %
-% A. Vinod and M. Oishi, HSCC 2018 TODO
+% A. Vinod and M. Oishi. Affine controller synthesis for stochastic reachability
+% via difference of convex programming. In Proc. Hybrid Syst.: Comput. & Ctrl.,
+% 2019. (submitted). https://hscl.unm.edu/affinecontrollersynthesis/
+%
+%    High-level desc.   : Use Boole's inequality, Gaussian random vector, and
+%                         piecewise linear approximation of the inverse of the
+%                         standard normal cumulative density function to create
+%                         a linear program-based approximation to the original
+%                         optimization
+%    Approximation      : Guaranteed underapproximation
+%    Controller type    : Open-loop controller that satisfies the hard
+%                         input bounds 
+%    Optimality         : Optimal open-loop controller for the
+%                         underapproximation problem due to convexity guarantees
 %
 % =============================================================================
 %
@@ -54,6 +69,8 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
 % See also SReachPoint.
 %
 % Notes:
+% * We recommend using this function through SReachPoint.
+% * This function requires CVX to work.
 % * See @LtiSystem/getConcatMats for more information about the notation used.
 % 
 % ============================================================================

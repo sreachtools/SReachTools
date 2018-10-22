@@ -20,20 +20,63 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %                     'chance-open':
 %                          Convex chance-constrained approach for an open-loop
 %                          controller synthesis
-%                          1. init_safe_set_affine: 
-%                          1. set_of_dir_vecs: 
-%                          1. verbose: 
-%                          1. pwa_accuracy: Accuracy of the piecewise affine
-%                               approximation of norminvcdf used
+%                          1. set_of_dir_vecs
+%                                - Set of direction vectors shot outwards from
+%                                  the initial state with maximum reach
+%                                  probability to identify the vertices of the
+%                                  underapproximative polytope for the
+%                                  stochastic reach set
+%                          2. init_safe_set_affine
+%                                - Affine constraints (if any) on the initial
+%                                  state Must include a translate of the affine
+%                                  hull of the set_of_dir_vecs | On intersection
+%                                  with the safe set, it should result in a 2-D
+%                                  set
+%                          3. verbose
+%                                - Verbosity of the implementation {0,1}
+%                                   0 - No output 
+%                                   1 - Outputs the direction vector being
+%                                        analyzed and the method used to obtain
+%                                        xmax under study (maximizing the reach
+%                                        probability or the Chebyshev centering)
+%                          4. pwa_accuracy: Accuracy of the piecewise affine
+%                               overapproximation of the inverse of the standard
+%                               normal cumulative density function
+%
 %                     'genzps-open':
 %                          Genz's algorithm + Patternsearch
-%                          1. init_safe_set_affine: 
-%                          1. set_of_dir_vecs: 
-%                          1. verbose:
-%                          1. tol_bisect
-%                          1. desired_accuracy: Accuracy of Gaussian integral =>
-%                               Accuracy of the result
-%                          2. PSoptions: MATLAB struct from psoptimset()
+%                          1. set_of_dir_vecs
+%                                - Set of direction vectors shot outwards from
+%                                  the initial state with maximum reach
+%                                  probability to identify the vertices of the
+%                                  underapproximative polytope for the
+%                                  stochastic reach set
+%                          2. init_safe_set_affine
+%                                - Affine constraints (if any) on the initial
+%                                  state Must include a translate of the affine
+%                                  hull of the set_of_dir_vecs | On intersection
+%                                  with the safe set, it should result in a 2-D
+%                                  set
+%                          3. verbose:
+%                                - Verbosity of the implementation {0,1}
+%                                   0 - No output 
+%                                   1 - Outputs the direction vector being
+%                                       analyzed, the summarized progress made
+%                                       by the bisection used for line search
+%                          4. tol_bisect
+%                                - Tolerance for the bisection to terminate the
+%                                  line search along a direction vector for the
+%                                  vertex of the underapproximative polytope
+%                                  [Default 1e-2]
+%                          5. desired_accuracy
+%                                - Accuracy expected for the integral of the
+%                                  Gaussian random vector X over the safety tube
+%                                  => Accuracy of the result [Default 1e-3]
+%                          6. PSoptions
+%                                - MATLAB struct from psoptimset(), options for
+%                                  MATLAB's patternsearch [Default
+%                                  psoptimset('Display', 'off')]
+%
 %                     'lag-over'/'lag-under':
 %                          Lagrangian-based over- and underapproximation
 %                          bound_set_method:
@@ -73,9 +116,8 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 % See also SReachSet.
 %
 % Notes:
-% * SReachSet() will call this function internally using the default
-%   values if SReachSetOptions()-based options is not explicitly provided
-%   to SReachSet().
+% * SReachSetOptions() requires init_safe_set_affine and set_of_dir_vecs for the
+%   methods 'chance-open' and 'genzps-open'.
 % ============================================================================
 % 
 % This function is part of the Stochastic Reachability Toolbox.
