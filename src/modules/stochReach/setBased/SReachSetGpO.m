@@ -4,13 +4,13 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
 % problem of a target tube using Genz's algorithm and MATLAB's patternsearch
 % =============================================================================
 %
-% SReachSetCcO computes the open-loop controller-based underapproximative
-% stochastic reach-avoid set to the problem of stochastic reachability of a
-% target tube as discussed in
+% SReachSetGpO computes the open-loop controller-based underapproximative
+% stochastic reach set to the problem of stochastic reachability of a target
+% tube as discussed in
 %
 % A. Vinod and M. Oishi, "Scalable underapproximative verification of stochastic
 % LTI systems using convexity and compactness," In Proc. Hybrid Syst.: Comput. &
-% Ctrl., pages 1–10, 2018. HSCC 2018
+% Ctrl., pages 1--10, 2018. HSCC 2018
 %
 % A. Vinod and M. Oishi, "Stochastic reachability of a target tube: Theory and
 % computation," IEEE Transactions in Automatic Control, 2018 (submitted)
@@ -18,7 +18,7 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
 %
 % =============================================================================
 %
-% [polytope, extra_info] = SReachSetCcO(method_str, sys, prob_thresh,...
+% [polytope, extra_info] = SReachSetGpO(method_str, sys, prob_thresh,...
 %   safety_tube, options)
 % 
 % Inputs:
@@ -163,7 +163,7 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
     initial_guess_input_vector_and_xmax = [guess_concatentated_input_vector;
                                            initial_x_for_xmax];
     
-    % Construct the reach-avoid cost function: 
+    % Construct the reach cost function: 
     %   -log(ReachAvoidProbability(x_0,U))
     % input_vector_and_xmax has first the unrolled input vector followed by
     % the initial state that is optimized
@@ -189,7 +189,7 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
     input_vector_augmented_safe_bineq = [concat_input_space_b;
                                          init_safe_set.b];
 
-    % Compute xmax, the input policy, and the max reach-avoid probability
+    % Compute xmax, the input policy, and the max reach probability
     [opt_input_vec_and_xmax, opt_neg_log_reach_prob]= ...
               patternsearch(...
                 negLogReachProbGivenInputVecInitState, ...
@@ -202,39 +202,39 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
                 options.PSoptions);
     
     %% Parse the output of patternsearch
-    % Maximum attainable terminal hitting-time stochastic reach-avoid
+    % Maximum attainable terminal hitting-time stochastic reach
     % probability using open-loop controller
-    max_underapprox_reach_prob = exp(-opt_neg_log_reach_prob);
+    xmax_reach_prob = exp(-opt_neg_log_reach_prob);
     % Optimal open_loop_control_policy
-    opt_input_vec_for_xmax=opt_input_vec_and_xmax(1:sys.input_dim*time_horizon);
+    Umax=opt_input_vec_and_xmax(1:sys.input_dim*time_horizon);
     % Corresponding xmax
     xmax = opt_input_vec_and_xmax(sys.input_dim * time_horizon + 1: end);
 
     % No. of directions
     n_dir_vecs = size(options.set_of_dir_vecs, 2);
     
-    % If non-trivial underapproximative stochastic reach-avoid polytope
-    if max_underapprox_reach_prob < prob_thresh
-        % Stochastic reach-avoid underapproximation is empty and no
+    % If non-trivial underapproximative stochastic reach polytope
+    if xmax_reach_prob < prob_thresh
+        % Stochastic reach underapproximation is empty and no
         % admissible open-loop policy exists
         if options.verbose >= 1
             fprintf(['Polytopic underapproximation does not exist for ', ...
                  'alpha = %1.2f since W(x_max) = %1.3f.\n\n'], ...
-                 prob_thresh, max_underapprox_reach_prob);
+                 prob_thresh, xmax_reach_prob);
         end
 
         % Assigning the outputs to trivial results
-        underapprox_stoch_reach_polytope = Polyhedron();
+        polytope = Polyhedron();
         opt_input_vec_at_vertices =nan(sys.input_dim * time_horizon,n_dir_vecs);
         opt_theta_i = zeros(1, n_dir_vecs);
         opt_reach_prob_i = zeros(1, n_dir_vecs);
-        vertex_underapprox_polytope = nan(sys.state_dim, n_dir_vecs);
+        vertices_underapprox_polytope = nan(sys.state_dim, n_dir_vecs);
     else
         if options.verbose >= 1
-            % Stochastic reach-avoid underapproximation is non-trivial
+            % Stochastic reach underapproximation is non-trivial
             fprintf(['Polytopic underapproximation exists for alpha = ', ...
                      '%1.2f since W(x_max) = %1.3f.\n\n'], ...
-                     prob_thresh, max_underapprox_reach_prob);
+                     prob_thresh, xmax_reach_prob);
         end
 
         % For storing boundary points
@@ -273,14 +273,14 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
             if options.verbose >= 1
                 fprintf('\b | Upper bound of theta: %1.2f\n',ub_theta);
 
-                fprintf(['OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  ', ...
-                          '|  OptInp^2  | Exit reason\n']); %10 characters b/n | |
+                fprintf(['OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  ',...
+                          '|  OptInp^2  | Exit reason\n']); %10 chars b/n | |
             end
             %% Bisection-based computation of the maximum extension of
             %% the ray originating from xmax                
             % Temp variables that are updated as part of bisection
-            opt_inputs_so_far = opt_input_vec_for_xmax;
-            opt_reachAvoid_prob_so_far = max_underapprox_reach_prob;
+            opt_inputs_so_far = Umax;
+            opt_reachAvoid_prob_so_far = xmax_reach_prob;
             opt_theta_so_far = lb_theta;
             % While the gap remains above tolerance_bisection
             while (ub_theta - lb_theta) > options.tol_bisect
@@ -290,7 +290,7 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
                 % See @LtiSystem/getConcatMats for notation
                 candidate_initial_state = xmax + phi * dir_vec;
                 mean_X_sans_input = Z * candidate_initial_state + mean_X_zizs;
-                % Compute the maximum reach-avoid prob and the
+                % Compute the maximum reach prob and the
                 % associated open-loop opt controller starting from
                 % candidate_initial_state using Genz+patternsearch
                 % Add desired_accuracy to prob_thresh so that we
@@ -336,7 +336,7 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
                 end
                 if options.verbose >= 1
                     % Print current solution
-                    fprintf(strcat('  %1.4f  |  %1.2e  |  %1.2e  |  %1.2e  ', ...
+                    fprintf(strcat('  %1.4f  |  %1.2e  |  %1.2e  |  %1.2e  ',...
                         '  |  %1.2e  |  ', exitmessage, ' \n'), ...
                         opt_reachAvoid_prob_so_far, opt_theta_so_far, ...
                         lb_theta,ub_theta,opt_inputs_so_far'*opt_inputs_so_far);
@@ -354,20 +354,19 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
             opt_input_vec_at_vertices(:,dir_index) = opt_inputs_so_far;
             opt_reach_prob_i(dir_index) = opt_reachAvoid_prob_so_far;
         end
-        vertex_underapprox_polytope = xmax+opt_theta_i.*options.set_of_dir_vecs;
+        vertices_underapprox_polytope=xmax+opt_theta_i.*options.set_of_dir_vecs;
         %% Construction of underapprox_stoch_reach_avoid_polytope
-        underapprox_stoch_reach_polytope = Polyhedron('V', ...
-            vertex_underapprox_polytope');
+        polytope = Polyhedron('V', vertices_underapprox_polytope');
     end
-    varargout{1} = underapprox_stoch_reach_polytope;
+    varargout{1} = polytope;
     if nargout > 1
         extra_info.xmax = xmax;
-        extra_info.opt_input_vec_for_xmax = opt_input_vec_for_xmax;
-        extra_info.opt_input_vec_at_vertices = opt_input_vec_at_vertices;
-        extra_info.max_underapprox_reach_prob = max_underapprox_reach_prob;
+        extra_info.Umax = Umax;
+        extra_info.xmax_reach_prob = xmax_reach_prob;
         extra_info.opt_theta_i = opt_theta_i;
+        extra_info.opt_input_vec_at_vertices = opt_input_vec_at_vertices;
         extra_info.opt_reach_prob_i = opt_reach_prob_i;
-        extra_info.vertex_underapprox_polytope = vertex_underapprox_polytope;
+        extra_info.vertices_underapprox_polytope= vertices_underapprox_polytope;
         varargout{2} = extra_info;
     end    
 end

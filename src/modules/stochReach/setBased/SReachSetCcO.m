@@ -5,12 +5,12 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
 % =============================================================================
 %
 % SReachSetCcO computes the open-loop controller-based underapproximative
-% stochastic reach-avoid set to the problem of stochastic reachability of a
-% target tube as discussed in
+% stochastic reach set to the problem of stochastic reachability of a target
+% tube as discussed in
 %
 % A. Vinod and M. Oishi, "Scalable underapproximative verification of stochastic
 % LTI systems using convexity and compactness," In Proc. Hybrid Syst.: Comput. &
-% Ctrl., pages 1–10, 2018. HSCC 2018
+% Ctrl., pages 1--10, 2018. HSCC 2018
 %
 % A. Vinod and M. Oishi, "Stochastic reachability of a target tube: Theory and
 % computation," IEEE Transactions in Automatic Control, 2018 (submitted)
@@ -265,8 +265,7 @@ function [polytope, extra_info] = computePolytopeFromXmax(xmax_soln, sys, ...
         end
     
         %% Solve the optimization problem to compute the boundary
-        %% point of the devertex_underapprox_polytopevertex_underapprox_polytopesired unvertex_underapprox_polytopederapproximative stochastic
-        %% reach-avoid set
+        %% point of the underapproximative stochastic reach set
         % maximize theta
         % subject to
         %   boundary_point = xmax + theta * direction

@@ -35,7 +35,7 @@ function [stoch_reach_set, varargout] = SReachSet(prob_str, method_str, sys, ...
 %    Paper              : a. A. Vinod and M. Oishi, "Scalable underapproximative
 %                            verification of stochastic LTI systems using
 %                            convexity and compactness," In Proc. Hybrid Syst.:
-%                            Comput. & Ctrl., pages 1–10, 2018. HSCC 2018
+%                            Comput. & Ctrl., pages 1--10, 2018. HSCC 2018
 %                         b. A. Vinod and M. Oishi, "Stochastic reachability of
 %                            a target tube: Theory and computation," IEEE
 %                            Transactions in Automatic Control, 2018 (submitted)
@@ -58,7 +58,7 @@ function [stoch_reach_set, varargout] = SReachSet(prob_str, method_str, sys, ...
 %    Paper              : a. A. Vinod and M. Oishi, "Scalable underapproximative
 %                            verification of stochastic LTI systems using
 %                            convexity and compactness," In Proc. Hybrid Syst.:
-%                            Comput. & Ctrl., pages 1–10, 2018. HSCC 2018
+%                            Comput. & Ctrl., pages 1--10, 2018. HSCC 2018
 %                         b. A. Vinod and M. Oishi, "Scalable Underapproximation
 %                            for Stochastic Reach-Avoid Problem for
 %                            High-Dimensional LTI Systems using Fourier
