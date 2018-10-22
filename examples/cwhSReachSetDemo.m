@@ -16,7 +16,9 @@
 % https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
 
 % Prescript running
-close all;clc;clear;
+close all;
+% clc;
+clearvars;
 srtinit
 %% Problem formulation: Spacecraft motion via CWH dynamics
 % We consider both the spacecrafts, referred to as the deputy spacecraft and 
@@ -102,7 +104,7 @@ slice_at_vx_vy = zeros(2,1);
 %% Preparation for set computation
 prob_thresh = 0.8;
 
-n_dir_vecs = 16;
+n_dir_vecs = 10;
 theta_vec = linspace(0, 2*pi, n_dir_vecs);
 set_of_dir_vecs_ft = [cos(theta_vec);
                       sin(theta_vec);
@@ -118,7 +120,8 @@ init_safe_set_affine = Polyhedron('He',[zeros(2,2) eye(2,2) slice_at_vx_vy]);
 if cc_open_run
     options = SReachSetOptions('term', 'chance-open', ...
         'set_of_dir_vecs', set_of_dir_vecs_cc_open, ...
-        'init_safe_set_affine', init_safe_set_affine);
+        'init_safe_set_affine', init_safe_set_affine, ...
+        'verbose', 1);
     timer_cc_open = tic;
     [polytope_cc_open, extra_info] = SReachSet('term','chance-open', sys, ...
         prob_thresh, target_tube, options);  

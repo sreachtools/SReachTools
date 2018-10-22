@@ -1,6 +1,6 @@
 clear
 close all
-clc
+% clc
 
 time_horizon = 50;
 time_const = 1/2*time_horizon;

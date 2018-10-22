@@ -1,61 +1,5 @@
 classdef SReachSetTests < matlab.unittest.TestCase
     methods (Test)
-%         function testLagrangian(test_case)
-%             [sys, safety_tube] = test_case.getDI();
-%             %% Random option
-%             % Underaproximation
-%             options = SReachSetOptions('term','lag-under', ...
-%                 'bound_set_method', 'random', ...
-%                 'num_dirs',100);
-%             level_set = SReachSet('term','lag-under', sys, 0.8, safety_tube, ...
-%                 options);
-%             test_case.verifyInstanceOf(level_set, 'Polyhedron');
-%             
-%             % Overaproximation
-%             options = SReachSetOptions('term','lag-over', ...
-%                 'bound_set_method', 'random', ...
-%                 'num_dirs',100);
-%             level_set = SReachSet('term','lag-over', sys, 0.8, safety_tube, ...
-%                 options);
-%             test_case.verifyInstanceOf(level_set, 'Polyhedron');
-%             
-%             %% TODO: Repeat the same for box, optim-box options
-%             [sys_cwh, safety_tube_cwh] = test_case.getCwh();
-%             %% Load option
-%             % Underaproximation
-%             options = SReachSetOptions('term','lag-under', ...
-%                 'bound_set_method', 'load', ...
-%                 'load_str','data/cwhUnderapproxBoundeSet.mat');
-%             level_set = SReachSet('term','lag-under', sys_cwh, 0.8, ...
-%                 safety_tube_cwh, options);
-%             test_case.verifyInstanceOf(level_set, 'Polyhedron');
-%             
-% %             % Overaproximation
-%             options = SReachSetOptions('term','lag-over', ...
-%                 'bound_set_method', 'load', ...
-%                 'load_str','data/cwhUnderapproxBoundeSet.mat');
-%             level_set = SReachSet('term','lag-over', sys_cwh, 0.8, ...
-%                 safety_tube_cwh, options);
-%             test_case.verifyInstanceOf(level_set, 'Polyhedron');  
-% 
-%             [sys, safety_tube] = test_case.getDI();
-%             %% Random option
-%             % Underaproximation
-%             options = SReachSetOptions('term','lag-under', ...
-%                 'bound_set_method', 'box', ...
-%                 'num_dirs',100);
-%             level_set = SReachSet('term','lag-under', sys, 0.8, safety_tube, ...
-%                 options);
-%             test_case.verifyInstanceOf(level_set, 'Polyhedron');
-%             
-%             % Overaproximation
-%             options = SReachSetOptions('term','lag-over', ...
-%                 'bound_set_method', 'box', ...
-%                 'num_dirs',100);
-%             level_set = SReachSet('term','lag-over', sys, 0.8, safety_tube, ...
-%                 options);
-%             test_case.verifyInstanceOf(level_set, 'Polyhedron');                      
-%         end
          
         function testPointBased(test_case)
             [sys, safety_tube] = test_case.getDI();
@@ -63,6 +7,7 @@ classdef SReachSetTests < matlab.unittest.TestCase
             options = SReachSetOptions('term','chance-open', ...
                 'set_of_dir_vecs',[cos(theta);sin(theta)], ...
                 'init_safe_set_affine',Polyhedron(), 'verbose',0);
+
             % Non-empty case
             level_set = SReachSet('term','chance-open', sys, 0.8, ...
                 safety_tube, options);
@@ -88,11 +33,24 @@ classdef SReachSetTests < matlab.unittest.TestCase
             test_case.verifyLessThanOrEqual(...
                 extra_info(1).xmax_reach_prob,0.8,'Low max safety');
             test_case.verifyEqual(length(extra_info),1,'Empty cheby');
-%             figure();
-%             plot(safety_tube(1),'alpha',0.3);
-%             hold on
-%             plot(level_set);
         end
+    end
+
+    function testLagrangian(test_case)
+        [sys, safety_tube] = test_case.getDI();
+
+        % underapproximation
+        opts = SReachSetOptions('term', 'lag-under', 'box', 'err_thresh', 1e-3);
+        luSet = SReachSet('term', 'lag-under', sys, 0.8, safety_tube, ...
+            opts);
+
+        % overapproximation
+        opts = SReachSetOptions('term', 'lag-under', 'box', 'err_thresh', 1e-3);
+        loSet = SReachSet('term', 'lag-under', sys, 0.8, safety_tube, ...
+            opts);
+
+        test_case.verifyInstanceOf('Polyhedron', luSet);
+        test_case.verifyInstanceOf('Polyhedron', loSet);
     end
     methods (Static)
         function [sys, safety_tube] = getDI()

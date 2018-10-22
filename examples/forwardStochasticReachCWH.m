@@ -25,7 +25,9 @@
 % https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
 
 % Prescript running
-close all;clc;clear;
+close all;
+% clc;
+clear;
 srtinit
 %% Problem formulation: Spacecraft motion via CWH dynamics
 % We consider both the spacecrafts, referred to as the deputy spacecraft and 

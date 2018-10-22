@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>cwhSReachSetDemo</title><meta name="generator" content="MATLAB 9.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2018-10-19"><meta name="DC.source" content="cwhSReachSetDemo.m"><style type="text/css">
+      --><title>cwhSReachSetDemo</title><meta name="generator" content="MATLAB 9.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2018-10-22"><meta name="DC.source" content="cwhSReachSetDemo.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -83,8 +83,13 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 <span class="comment">% https://github.com/unm-hscl/SReachTools/blob/master/LICENSE&gt;.</span>
 
 <span class="comment">% Prescript running</span>
-close <span class="string">all</span>;clc;clear;
+close <span class="string">all</span>;
+<span class="comment">% clc;</span>
+clearvars;
 srtinit
+</pre><pre class="codeoutput error">Error using dbstatus
+Error: File: /home/kimmy/Documents/MATLAB/SReachTools/examples/cwhSReachSetDemo.m Line: 123 Column: 55
+Expression or statement is incorrect--possibly unbalanced (, {, or [.
 </pre><h2 id="2">Problem formulation: Spacecraft motion via CWH dynamics</h2><p>We consider both the spacecrafts, referred to as the deputy spacecraft and the chief spacecraft, to be in the same circular orbit. In this example, we will consider the problem of verification for the spacecraft rendezvous problem, i.e., identify all the initial states from which the deputy can can rendezvous with the chief while staying within the line-of-sight cone with a likelihood above a user-specified threshold.</p><p><img vspace="5" hspace="5" src="cwh_sketch.png" alt=""> </p><h2 id="4">Dynamics model for the deputy relative to the chief spacecraft The relative</h2><pre class="codeinput"><span class="comment">%planar dynamics of the deputy with respect to the chief are described by the</span>
 <span class="comment">%&lt;https://doi.org/10.1109/CDC.2013.6760626 Clohessy-Wiltshire-Hill (CWH)</span>
 <span class="comment">%equations,&gt;</span>
@@ -111,23 +116,23 @@ srtinit
 <span class="comment">%</span>
 <span class="comment">% with $\overline{w}_{k} \in \mathbf{R}^{4}$ as an IID Gaussian zero-mean</span>
 <span class="comment">% random process with a known covariance matrix $\Sigma_{\overline{w}}$.</span>
-</pre><h2 id="5">System definition</h2><pre class="codeinput">umax=0.1;
+</pre><h2 id="5">System definition</h2><pre class="codeinput">umax = 0.1;
 mean_disturbance = zeros(4,1);
 covariance_disturbance = diag([1e-4, 1e-4, 5e-8, 5e-8]);
 <span class="comment">% Define the CWH (planar) dynamics of the deputy spacecraft relative to the</span>
 <span class="comment">% chief spacecraft as a LtiSystem object</span>
-sys = getCwhLtiSystem(4, Polyhedron(<span class="string">'lb'</span>, -umax*ones(2,1),<span class="keyword">...</span>
-                                        <span class="string">'ub'</span>,  umax*ones(2,1)),<span class="keyword">...</span>
+sys = getCwhLtiSystem(4, Polyhedron(<span class="string">'lb'</span>, -umax*ones(2,1), <span class="keyword">...</span>
+                                        <span class="string">'ub'</span>,  umax*ones(2,1)), <span class="keyword">...</span>
        RandomVector(<span class="string">'Gaussian'</span>, mean_disturbance,covariance_disturbance));
 </pre><h2 id="6">Methods to run</h2><pre class="codeinput">ft_run = 1;
 cc_open_run = 1;
-</pre><h2 id="7">Target tube construction --- reach-avoid specification</h2><pre class="codeinput">time_horizon=5;          <span class="comment">% Stay within a line of sight cone for 4 time steps and</span>
+</pre><h2 id="7">Target tube construction --- reach-avoid specification</h2><pre class="codeinput">time_horizon = 5;          <span class="comment">% Stay within a line of sight cone for 4 time steps and</span>
                          <span class="comment">% reach the target at t=5% Safe Set --- LoS cone</span>
 <span class="comment">% Safe set definition --- LoS cone |x|&lt;=y and y\in[0,ymax] and |vx|&lt;=vxmax and</span>
 <span class="comment">% |vy|&lt;=vymax</span>
-ymax=2;
-vxmax=0.5;
-vymax=0.5;
+ymax = 2;
+vxmax = 0.5;
+vymax = 0.5;
 A_safe_set = [1, 1, 0, 0;
              -1, 1, 0, 0;
               0, -1, 0, 0;
@@ -144,13 +149,13 @@ b_safe_set = [0;
               vymax];
 safe_set = Polyhedron(A_safe_set, b_safe_set);
 <span class="comment">% Target set --- Box [-0.1,0.1]x[-0.1,0]x[-0.01,0.01]x[-0.01,0.01]</span>
-target_set = Polyhedron(<span class="string">'lb'</span>, [-0.1; -0.1; -0.01; -0.01],<span class="keyword">...</span>
+target_set = Polyhedron(<span class="string">'lb'</span>, [-0.1; -0.1; -0.01; -0.01], <span class="keyword">...</span>
                         <span class="string">'ub'</span>, [0.1; 0; 0.01; 0.01]);
 target_tube = Tube(<span class="string">'reach-avoid'</span>,safe_set, target_set, time_horizon);
 slice_at_vx_vy = zeros(2,1);
 </pre><h2 id="9">Preparation for set computation</h2><pre class="codeinput">prob_thresh = 0.8;
 
-n_dir_vecs = 16;
+n_dir_vecs = 10;
 theta_vec = linspace(0, 2*pi, n_dir_vecs);
 set_of_dir_vecs_ft = [cos(theta_vec);
                       sin(theta_vec);
@@ -162,167 +167,24 @@ set_of_dir_vecs_cc_open = [cos(theta_vec);
                            zeros(2,n_dir_vecs)];
 init_safe_set_affine = Polyhedron(<span class="string">'He'</span>,[zeros(2,2) eye(2,2) slice_at_vx_vy]);
 </pre><h2 id="10">CC (Linear program approach)</h2><pre class="codeinput"><span class="keyword">if</span> cc_open_run
-    options = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'chance-open'</span>,<span class="keyword">...</span>
-        <span class="string">'set_of_dir_vecs'</span>, set_of_dir_vecs_cc_open,<span class="keyword">...</span>
-        <span class="string">'init_safe_set_affine'</span>, init_safe_set_affine);
+    options = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'chance-open'</span>, <span class="keyword">...</span>
+        <span class="string">'set_of_dir_vecs'</span>, set_of_dir_vecs_cc_open, <span class="keyword">...</span>
+        <span class="string">'init_safe_set_affine'</span>, init_safe_set_affine,
+        <span class="string">'verbose'</span>, 1);
     timer_cc_open = tic;
-    [polytope_cc_open, extra_info] = SReachSet(<span class="string">'term'</span>,<span class="string">'chance-open'</span>, sys,<span class="keyword">...</span>
+    [polytope_cc_open, extra_info] = SReachSet(<span class="string">'term'</span>,<span class="string">'chance-open'</span>, sys, <span class="keyword">...</span>
         prob_thresh, target_tube, options);
     elapsed_time_cc_open = toc(timer_cc_open);
 <span class="keyword">end</span>
 </pre><h2 id="11">Fourier transform (Genz's algorithm and MATLAB's patternsearch)</h2><pre class="codeinput"><span class="keyword">if</span> ft_run
-    options = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'genzps-open'</span>,<span class="keyword">...</span>
-        <span class="string">'set_of_dir_vecs'</span>, set_of_dir_vecs_ft,<span class="keyword">...</span>
+    options = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'genzps-open'</span>, <span class="keyword">...</span>
+        <span class="string">'set_of_dir_vecs'</span>, set_of_dir_vecs_ft, <span class="keyword">...</span>
         <span class="string">'init_safe_set_affine'</span>, init_safe_set_affine, <span class="string">'verbose'</span>, 1);
     timer_ft = tic;
-    polytope_ft = SReachSet(<span class="string">'term'</span>,<span class="string">'genzps-open'</span>, sys, prob_thresh,<span class="keyword">...</span>
+    polytope_ft = SReachSet(<span class="string">'term'</span>,<span class="string">'genzps-open'</span>, sys, prob_thresh, <span class="keyword">...</span>
         target_tube, options);
     elapsed_time_ft = toc(timer_ft);
 <span class="keyword">end</span>
-</pre><pre class="codeoutput">Polytopic underapproximation exists for alpha = 0.80 since W(x_max) = 0.866.
-
-Analyzing direction : 1/16 | Upper bound of theta: 0.64
-OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
-  0.8660  |  0.00e+00  |  0.00e+00  |  6.45e-01  |  5.20e-03  | Infeasible (0.001) 
-  0.8050  |  1.61e-01  |  0.00e+00  |  3.22e-01  |  5.78e-03  | Feasible 
-  0.8050  |  2.42e-01  |  1.61e-01  |  3.22e-01  |  8.38e-03  | Feasible 
-  0.8050  |  2.82e-01  |  2.42e-01  |  3.22e-01  |  8.38e-03  | Feasible 
-  0.8050  |  3.02e-01  |  2.82e-01  |  3.22e-01  |  9.20e-03  | Feasible 
-  0.8050  |  3.12e-01  |  3.02e-01  |  3.22e-01  |  9.20e-03  | Feasible 
-  0.8050  |  3.17e-01  |  3.12e-01  |  3.22e-01  |  9.20e-03  | Feasible 
-Analyzing direction : 2/16 | Upper bound of theta: 0.49
-OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
-  0.8660  |  0.00e+00  |  0.00e+00  |  4.88e-01  |  5.20e-03  | Infeasible (0.001) 
-  0.8050  |  1.22e-01  |  0.00e+00  |  2.44e-01  |  1.11e-02  | Feasible 
-  0.8050  |  1.83e-01  |  1.22e-01  |  2.44e-01  |  1.19e-02  | Feasible 
-  0.8050  |  2.14e-01  |  1.83e-01  |  2.44e-01  |  1.19e-02  | Feasible 
-  0.8050  |  2.29e-01  |  2.14e-01  |  2.44e-01  |  1.19e-02  | Feasible 
-  0.8050  |  2.36e-01  |  2.29e-01  |  2.44e-01  |  1.19e-02  | Feasible 
-Analyzing direction : 3/16 | Upper bound of theta: 0.46
-OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
-  0.8050  |  2.28e-01  |  0.00e+00  |  4.56e-01  |  1.02e-02  | Feasible 
-  0.8050  |  3.42e-01  |  2.28e-01  |  4.56e-01  |  1.33e-02  | Feasible 
-  0.8050  |  3.99e-01  |  3.42e-01  |  4.56e-01  |  1.01e-02  | Feasible 
-  0.8050  |  4.28e-01  |  3.99e-01  |  4.56e-01  |  1.56e-02  | Feasible 
-  0.8050  |  4.42e-01  |  4.28e-01  |  4.56e-01  |  2.68e-02  | Feasible 
-  0.8050  |  4.49e-01  |  4.42e-01  |  4.56e-01  |  3.36e-02  | Feasible 
-Analyzing direction : 4/16 | Upper bound of theta: 0.51
-OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
-  0.8050  |  2.56e-01  |  0.00e+00  |  5.12e-01  |  1.45e-02  | Feasible 
-  0.8050  |  3.84e-01  |  2.56e-01  |  5.12e-01  |  1.30e-02  | Feasible 
-  0.8050  |  4.48e-01  |  3.84e-01  |  5.12e-01  |  2.48e-02  | Feasible 
-  0.8050  |  4.80e-01  |  4.48e-01  |  5.12e-01  |  1.88e-02  | Feasible 
-  0.8050  |  4.96e-01  |  4.80e-01  |  5.12e-01  |  1.95e-02  | Feasible 
-  0.8050  |  5.04e-01  |  4.96e-01  |  5.12e-01  |  2.23e-02  | Feasible 
-Analyzing direction : 5/16 | Upper bound of theta: 0.59
-OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
-  0.8050  |  2.93e-01  |  0.00e+00  |  5.87e-01  |  1.48e-02  | Feasible 
-  0.8050  |  4.40e-01  |  2.93e-01  |  5.87e-01  |  1.17e-02  | Feasible 
-  0.8050  |  5.13e-01  |  4.40e-01  |  5.87e-01  |  1.30e-02  | Feasible 
-  0.8050  |  5.50e-01  |  5.13e-01  |  5.87e-01  |  1.28e-02  | Feasible 
-  0.8050  |  5.68e-01  |  5.50e-01  |  5.87e-01  |  1.28e-02  | Feasible 
-  0.8050  |  5.77e-01  |  5.68e-01  |  5.87e-01  |  1.29e-02  | Feasible 
-Analyzing direction : 6/16 | Upper bound of theta: 0.47
-OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
-  0.8050  |  2.36e-01  |  0.00e+00  |  4.72e-01  |  9.77e-03  | Feasible 
-  0.8050  |  3.54e-01  |  2.36e-01  |  4.72e-01  |  1.34e-02  | Feasible 
-  0.8050  |  4.13e-01  |  3.54e-01  |  4.72e-01  |  1.30e-02  | Feasible 
-  0.8050  |  4.42e-01  |  4.13e-01  |  4.72e-01  |  1.56e-02  | Feasible 
-  0.8050  |  4.57e-01  |  4.42e-01  |  4.72e-01  |  1.66e-02  | Feasible 
-  0.8050  |  4.65e-01  |  4.57e-01  |  4.72e-01  |  1.62e-02  | Feasible 
-Analyzing direction : 7/16 | Upper bound of theta: 0.46
-OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
-  0.8660  |  0.00e+00  |  0.00e+00  |  4.61e-01  |  5.20e-03  | Infeasible (0.001) 
-  0.8050  |  1.15e-01  |  0.00e+00  |  2.31e-01  |  1.26e-02  | Feasible 
-  0.8050  |  1.73e-01  |  1.15e-01  |  2.31e-01  |  2.09e-02  | Feasible 
-  0.8050  |  2.02e-01  |  1.73e-01  |  2.31e-01  |  2.12e-02  | Feasible 
-  0.8050  |  2.16e-01  |  2.02e-01  |  2.31e-01  |  2.12e-02  | Feasible 
-  0.8050  |  2.24e-01  |  2.16e-01  |  2.31e-01  |  2.12e-02  | Feasible 
-Analyzing direction : 8/16 | Upper bound of theta: 0.54
-OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
-  0.8660  |  0.00e+00  |  0.00e+00  |  5.43e-01  |  5.20e-03  | Infeasible (0.001) 
-  0.8050  |  1.36e-01  |  0.00e+00  |  2.72e-01  |  5.50e-03  | Feasible 
-  0.8050  |  2.04e-01  |  1.36e-01  |  2.72e-01  |  1.14e-02  | Feasible 
-  0.8050  |  2.38e-01  |  2.04e-01  |  2.72e-01  |  1.14e-02  | Feasible 
-  0.8050  |  2.55e-01  |  2.38e-01  |  2.72e-01  |  1.14e-02  | Feasible 
-  0.8050  |  2.63e-01  |  2.55e-01  |  2.72e-01  |  1.14e-02  | Feasible 
-Analyzing direction : 9/16 | Upper bound of theta: 0.84
-OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
-  0.8660  |  0.00e+00  |  0.00e+00  |  8.37e-01  |  5.20e-03  | Infeasible (0.001) 
-  0.8050  |  2.09e-01  |  0.00e+00  |  4.18e-01  |  1.24e-02  | Feasible 
-  0.8050  |  3.14e-01  |  2.09e-01  |  4.18e-01  |  2.21e-02  | Feasible 
-  0.8050  |  3.66e-01  |  3.14e-01  |  4.18e-01  |  2.18e-02  | Feasible 
-  0.8050  |  3.92e-01  |  3.66e-01  |  4.18e-01  |  2.19e-02  | Feasible 
-  0.8050  |  4.05e-01  |  3.92e-01  |  4.18e-01  |  2.25e-02  | Feasible 
-  0.8050  |  4.12e-01  |  4.05e-01  |  4.18e-01  |  2.25e-02  | Feasible 
-Analyzing direction :10/16 | Upper bound of theta: 2.31
-OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
-  0.8660  |  0.00e+00  |  0.00e+00  |  2.31e+00  |  5.20e-03  | Infeasible (0.001) 
-  0.8660  |  0.00e+00  |  0.00e+00  |  1.15e+00  |  5.20e-03  | Infeasible (0.001) 
-  0.8660  |  0.00e+00  |  0.00e+00  |  5.76e-01  |  5.20e-03  | Infeasible (0.001) 
-  0.8050  |  1.44e-01  |  0.00e+00  |  2.88e-01  |  2.37e-02  | Feasible 
-  0.8050  |  2.16e-01  |  1.44e-01  |  2.88e-01  |  2.40e-02  | Feasible 
-  0.8050  |  2.52e-01  |  2.16e-01  |  2.88e-01  |  2.28e-02  | Feasible 
-  0.8050  |  2.70e-01  |  2.52e-01  |  2.88e-01  |  2.28e-02  | Feasible 
-  0.8050  |  2.79e-01  |  2.70e-01  |  2.88e-01  |  2.28e-02  | Feasible 
-Analyzing direction :11/16 | Upper bound of theta: 1.57
-OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
-  0.8660  |  0.00e+00  |  0.00e+00  |  1.57e+00  |  5.20e-03  | Infeasible (0.001) 
-  0.8660  |  0.00e+00  |  0.00e+00  |  7.83e-01  |  5.20e-03  | Infeasible (0.001) 
-  0.8050  |  1.96e-01  |  0.00e+00  |  3.91e-01  |  1.70e-02  | Feasible 
-  0.8050  |  2.93e-01  |  1.96e-01  |  3.91e-01  |  1.87e-02  | Feasible 
-  0.8050  |  3.42e-01  |  2.93e-01  |  3.91e-01  |  2.44e-02  | Feasible 
-  0.8050  |  3.67e-01  |  3.42e-01  |  3.91e-01  |  2.48e-02  | Feasible 
-  0.8050  |  3.79e-01  |  3.67e-01  |  3.91e-01  |  2.46e-02  | Feasible 
-  0.8050  |  3.85e-01  |  3.79e-01  |  3.91e-01  |  2.72e-02  | Feasible 
-Analyzing direction :12/16 | Upper bound of theta: 1.36
-OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
-  0.8660  |  0.00e+00  |  0.00e+00  |  1.36e+00  |  5.20e-03  | Infeasible (0.001) 
-  0.8660  |  0.00e+00  |  0.00e+00  |  6.81e-01  |  5.20e-03  | Infeasible (0.001) 
-  0.8050  |  1.70e-01  |  0.00e+00  |  3.41e-01  |  1.16e-02  | Feasible 
-  0.8050  |  2.56e-01  |  1.70e-01  |  3.41e-01  |  2.66e-02  | Feasible 
-  0.8050  |  2.98e-01  |  2.56e-01  |  3.41e-01  |  3.02e-02  | Feasible 
-  0.8050  |  3.19e-01  |  2.98e-01  |  3.41e-01  |  3.20e-02  | Feasible 
-  0.8050  |  3.30e-01  |  3.19e-01  |  3.41e-01  |  3.29e-02  | Feasible 
-  0.8050  |  3.35e-01  |  3.30e-01  |  3.41e-01  |  3.29e-02  | Feasible 
-Analyzing direction :13/16 | Upper bound of theta: 1.43
-OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
-  0.8660  |  0.00e+00  |  0.00e+00  |  1.43e+00  |  5.20e-03  | Infeasible (0.001) 
-  0.8660  |  0.00e+00  |  0.00e+00  |  7.13e-01  |  5.20e-03  | Infeasible (0.001) 
-  0.8050  |  1.78e-01  |  0.00e+00  |  3.56e-01  |  2.13e-02  | Feasible 
-  0.8050  |  2.67e-01  |  1.78e-01  |  3.56e-01  |  2.35e-02  | Feasible 
-  0.8050  |  3.12e-01  |  2.67e-01  |  3.56e-01  |  3.31e-02  | Feasible 
-  0.8050  |  3.34e-01  |  3.12e-01  |  3.56e-01  |  3.65e-02  | Feasible 
-  0.8050  |  3.45e-01  |  3.34e-01  |  3.56e-01  |  3.67e-02  | Feasible 
-  0.8050  |  3.51e-01  |  3.45e-01  |  3.56e-01  |  3.67e-02  | Feasible 
-Analyzing direction :14/16 | Upper bound of theta: 1.82
-OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
-  0.8660  |  0.00e+00  |  0.00e+00  |  1.82e+00  |  5.20e-03  | Infeasible (0.001) 
-  0.8660  |  0.00e+00  |  0.00e+00  |  9.12e-01  |  5.20e-03  | Infeasible (0.001) 
-  0.8050  |  2.28e-01  |  0.00e+00  |  4.56e-01  |  1.74e-02  | Feasible 
-  0.8050  |  3.42e-01  |  2.28e-01  |  4.56e-01  |  2.27e-02  | Feasible 
-  0.8050  |  3.99e-01  |  3.42e-01  |  4.56e-01  |  3.09e-02  | Feasible 
-  0.8050  |  4.27e-01  |  3.99e-01  |  4.56e-01  |  3.43e-02  | Feasible 
-  0.8050  |  4.42e-01  |  4.27e-01  |  4.56e-01  |  3.05e-02  | Feasible 
-  0.8050  |  4.49e-01  |  4.42e-01  |  4.56e-01  |  3.05e-02  | Feasible 
-Analyzing direction :15/16 | Upper bound of theta: 1.27
-OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
-  0.8660  |  0.00e+00  |  0.00e+00  |  1.27e+00  |  5.20e-03  | Infeasible (0.001) 
-  0.8660  |  0.00e+00  |  0.00e+00  |  6.36e-01  |  5.20e-03  | Infeasible (0.001) 
-  0.8050  |  1.59e-01  |  0.00e+00  |  3.18e-01  |  7.71e-03  | Feasible 
-  0.8050  |  2.38e-01  |  1.59e-01  |  3.18e-01  |  1.17e-02  | Feasible 
-  0.8050  |  2.78e-01  |  2.38e-01  |  3.18e-01  |  1.46e-02  | Feasible 
-  0.8050  |  2.98e-01  |  2.78e-01  |  3.18e-01  |  1.46e-02  | Feasible 
-  0.8050  |  3.08e-01  |  2.98e-01  |  3.18e-01  |  1.46e-02  | Feasible 
-Analyzing direction :16/16 | Upper bound of theta: 0.64
-OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
-  0.8660  |  0.00e+00  |  0.00e+00  |  6.45e-01  |  5.20e-03  | Infeasible (0.001) 
-  0.8050  |  1.61e-01  |  0.00e+00  |  3.22e-01  |  5.78e-03  | Feasible 
-  0.8050  |  2.42e-01  |  1.61e-01  |  3.22e-01  |  8.38e-03  | Feasible 
-  0.8050  |  2.82e-01  |  2.42e-01  |  3.22e-01  |  8.38e-03  | Feasible 
-  0.8050  |  3.02e-01  |  2.82e-01  |  3.22e-01  |  9.20e-03  | Feasible 
-  0.8050  |  3.12e-01  |  3.02e-01  |  3.22e-01  |  9.20e-03  | Feasible 
-  0.8050  |  3.17e-01  |  3.12e-01  |  3.22e-01  |  9.20e-03  | Feasible 
 </pre><h2 id="12">Preparation for Monte-Carlo simulations of the optimal controllers</h2><p>Monte-Carlo simulation parameters</p><pre class="codeinput">n_mcarlo_sims = 1e5;
 n_sims_to_plot = 5;
 </pre><h2 id="13">Plotting and Monte-Carlo simulation-based validation</h2><pre class="codeinput">figure(1);
@@ -353,30 +215,29 @@ direction_index_to_plot = 30;
     opt_reach_avoid = extra_info(2).opt_reach_prob_i(direction_index_to_plot);
 
     concat_state_realization = generateMonteCarloSims(<span class="keyword">...</span>
-            n_mcarlo_sims,<span class="keyword">...</span>
-            sys,<span class="keyword">...</span>
-            init_state,<span class="keyword">...</span>
-            time_horizon,<span class="keyword">...</span>
+            n_mcarlo_sims, <span class="keyword">...</span>
+            sys, <span class="keyword">...</span>
+            init_state, <span class="keyword">...</span>
+            time_horizon, <span class="keyword">...</span>
             input_vec);
 
     <span class="comment">% Check if the location is within the target_set or not</span>
     mcarlo_result = target_tube.contains([repmat(init_state,1,n_mcarlo_sims);
                                           concat_state_realization]);
-    [legend_cell] = plotMonteCarlo(<span class="string">' (chance-open)'</span>, mcarlo_result,<span class="keyword">...</span>
-        concat_state_realization, n_mcarlo_sims, n_sims_to_plot,<span class="keyword">...</span>
+    [legend_cell] = plotMonteCarlo(<span class="string">' (chance-open)'</span>, mcarlo_result, <span class="keyword">...</span>
+        concat_state_realization, n_mcarlo_sims, n_sims_to_plot, <span class="keyword">...</span>
         sys.state_dim,init_state, legend_cell);
 <span class="keyword">end</span>
 legend(legend_cell, <span class="string">'Location'</span>,<span class="string">'South'</span>);
 xlabel(<span class="string">'$x$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
 ylabel(<span class="string">'$y$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
-</pre><img vspace="5" hspace="5" src="cwhSReachSetDemo_01.png" alt=""> <h2 id="14">Reporting solution times</h2><pre class="codeinput"><span class="keyword">if</span> any(isnan([elapsed_time_ft, elapsed_time_cc_open]))
+</pre><h2 id="14">Reporting solution times</h2><pre class="codeinput"><span class="keyword">if</span> any(isnan([elapsed_time_ft, elapsed_time_cc_open]))
     disp(<span class="string">'Skipped items would show up as NaN'</span>);
 <span class="keyword">end</span>
-fprintf(<span class="string">'Elapsed time: (genzps-open) %1.3f | (chance-open) %1.3f seconds\n'</span>,<span class="keyword">...</span>
+fprintf(<span class="string">'Elapsed time: (genzps-open) %1.3f | (chance-open) %1.3f seconds\n'</span>, <span class="keyword">...</span>
     elapsed_time_ft, elapsed_time_cc_open);
-</pre><pre class="codeoutput">Elapsed time: (genzps-open) 1375.548 | (chance-open) 22.022 seconds
-</pre><h2 id="15">Helper functions</h2><p>Plotting function</p><pre class="codeinput"><span class="keyword">function</span> [legend_cell] = plotMonteCarlo(method_str, mcarlo_result,<span class="keyword">...</span>
-    concat_state_realization, n_mcarlo_sims, n_sims_to_plot, state_dim,<span class="keyword">...</span>
+</pre><h2 id="15">Helper functions</h2><p>Plotting function</p><pre class="codeinput"><span class="keyword">function</span> [legend_cell] = plotMonteCarlo(method_str, mcarlo_result, <span class="keyword">...</span>
+    concat_state_realization, n_mcarlo_sims, n_sims_to_plot, state_dim, <span class="keyword">...</span>
     initial_state, legend_cell)
 <span class="comment">% Plots a selection of Monte-Carlo simulations on top of the plot</span>
 
@@ -417,7 +278,7 @@ fprintf(<span class="string">'Elapsed time: (genzps-open) %1.3f | (chance-open) 
         <span class="keyword">end</span>
     <span class="keyword">end</span>
 <span class="keyword">end</span>
-</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017a</a><br></p></div><!--
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Verification of satellite rendezvous problem via SReachSet This example will
 %demonstrate the use of SReachTools in verification of stochastic
@@ -437,7 +298,9 @@ fprintf(<span class="string">'Elapsed time: (genzps-open) %1.3f | (chance-open) 
 % https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
 
 % Prescript running
-close all;clc;clear;
+close all;
+% clc;
+clearvars;
 srtinit
 %% Problem formulation: Spacecraft motion via CWH dynamics
 % We consider both the spacecrafts, referred to as the deputy spacecraft and 
@@ -477,7 +340,7 @@ srtinit
 % random process with a known covariance matrix $\Sigma_{\overline{w}}$. 
  
 %% System definition
-umax=0.1;
+umax = 0.1;
 mean_disturbance = zeros(4,1);
 covariance_disturbance = diag([1e-4, 1e-4, 5e-8, 5e-8]);
 % Define the CWH (planar) dynamics of the deputy spacecraft relative to the
@@ -491,13 +354,13 @@ ft_run = 1;
 cc_open_run = 1;
 
 %% Target tube construction REPLACE_WITH_DASH_DASH- reach-avoid specification
-time_horizon=5;          % Stay within a line of sight cone for 4 time steps and 
+time_horizon = 5;          % Stay within a line of sight cone for 4 time steps and 
                          % reach the target at t=5% Safe Set REPLACE_WITH_DASH_DASH- LoS cone
 % Safe set definition REPLACE_WITH_DASH_DASH- LoS cone |x|<=y and y\in[0,ymax] and |vx|<=vxmax and 
 % |vy|<=vymax
-ymax=2;
-vxmax=0.5;
-vymax=0.5;
+ymax = 2;
+vxmax = 0.5;
+vymax = 0.5;
 A_safe_set = [1, 1, 0, 0;           
              -1, 1, 0, 0; 
               0, -1, 0, 0;
@@ -523,7 +386,7 @@ slice_at_vx_vy = zeros(2,1);
 %% Preparation for set computation
 prob_thresh = 0.8;
 
-n_dir_vecs = 16;
+n_dir_vecs = 10;
 theta_vec = linspace(0, 2*pi, n_dir_vecs);
 set_of_dir_vecs_ft = [cos(theta_vec);
                       sin(theta_vec);
@@ -539,7 +402,8 @@ init_safe_set_affine = Polyhedron('He',[zeros(2,2) eye(2,2) slice_at_vx_vy]);
 if cc_open_run
     options = SReachSetOptions('term', 'chance-open', ...
         'set_of_dir_vecs', set_of_dir_vecs_cc_open, ...
-        'init_safe_set_affine', init_safe_set_affine);
+        'init_safe_set_affine', init_safe_set_affine, 
+        'verbose', 1);
     timer_cc_open = tic;
     [polytope_cc_open, extra_info] = SReachSet('term','chance-open', sys, ...
         prob_thresh, target_tube, options);  

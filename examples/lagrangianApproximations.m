@@ -2,6 +2,7 @@
 % This example will demonstrate how to use the SReachTools toolbox to compute 
 % over and under approximations for the stochastic reachability of a target tube 
 % via Lagrangian methods.
+% 
 %% Lagrangian Methods
 % Lagrangian methods perform computations with sets using operations like unions, 
 % intersection, Minkowski addition/differences, etc. This computation using set 
@@ -24,14 +25,17 @@
 % The theory for this approach can be found in
 % 
 % * J. D. Gleason, A. P. Vinod, M. M. K. Oishi, "Underapproximation of Reach-Avoid 
-% Sets for Discrete-Time Stochastic Systems via Lagrangian Methods," in Proceedings 
-% of the IEEE Conference on Decision and Control, 2017. 
-% * J. D. Gleason, A. P. Vinod, M. M. K. Oishi, "Lagrangian Approximations for 
-% Stochastic Reachability of a Target Tube", in preparation.
+%   Sets for Discrete-Time Stochastic Systems via Lagrangian Methods," in Proceedings 
+%   of the IEEE Conference on Decision and Control, 2017. 
+% * J. D. Gleason, A. P. Vinod, M. M. K. Oishi, "Underapproximation of 
+%   Reach-Avoid Sets for Discrete-Time Stochastic Systems via Lagrangian 
+%   Methods," in Proceedings of the IEEE Conference on Decision and Control, 
+%   2017
 % 
-% This Live Script is part of the SReachTools toolbox. License for the use 
+% This example is part of the SReachTools toolbox. License for the use 
 % of this function is given in <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE 
 % https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
+% 
 %% Problem Definition
 % In this example we will look at the viability problem for a double integrator. 
 % The system dynamics are:
@@ -96,12 +100,16 @@ title('Target tube');
 %%
 % bounded set for Lagrangian
 tic;
-opts = SReachSetOptions('term', 'lag-under', 'bound_set_method', 'random', 'num_dirs', 50);
+opts = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
+    'random', 'num_dirs', 50);
 luSet = SReachSet('term', 'lag-under', sys, 0.8, target_tube, opts);
+lagrange_under_time = toc();
 
-opts = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'random', 'num_dirs', 50);
+tic;
+opts = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'random', ...
+    'num_dirs', 50);
 loSet = SReachSet('term', 'lag-over', sys, 0.8, target_tube, opts);
-lagrange_time = toc()
+lagrange_over_time = toc();
 %% 
 % Now we can compute the Lagrangian under and overapproximations which we 
 % call the robust and augmented effective target sets
@@ -134,18 +142,23 @@ set(leg,'Location','EastOutside');
 dyn_prog_xinc = 0.025;
 dyn_prog_uinc = 0.1;
 tic;
-[prob_x, cell_of_xvec] = SReachDynProg(sys, dyn_prog_xinc, dyn_prog_uinc, target_tube);
+[prob_x, cell_of_xvec] = SReachDynProg('term', sys, dyn_prog_xinc, ...
+    dyn_prog_uinc, target_tube);
 dynprog_time = toc();
-%% Compute the 0.8- stochastic level set
 %%
+% Compute the 0.8- stochastic level set
+%
 dyn_soln_lvl_set = getDynProgLevelSets2D(cell_of_xvec, prob_x, 0.8, target_tube);
 %% Simulation times --- Lagrangian approximation is much faster than dynamic programming
 % The simulation times for Lagrangian computation is much faster than dynamic 
 % programming, even when the former computes both an underapproximation and an 
 % overapproximation.
 %%
-lagrange_time
-dynprog_time
+fprintf('Simulation times [seconds]:\n');
+fprintf('    Lagrangian:\n');
+fprintf('        Overapproximation  : %.3f\n', lagrange_over_time);
+fprintf('        Underapproximation : %.3f\n', lagrange_under_time);
+fprintf('    Dynamic programming    : %.3f\n', dynprog_time);
 %% Plotting all the sets together
 % As expected, the over-approximation and the under-approximation obtained via 
 % Lagrangian approach bounds the dynamic programming solution from "inside" and 
@@ -154,9 +167,9 @@ dynprog_time
 figure();
 plot(safe_set, 'color', 'k', 'alpha',1);
 hold on;
-plot(aug_target_2, 'color', 'y');
+plot(loSet, 'color', 'y');
 plot(dyn_soln_lvl_set,'color', 'b')
-plot(robust_target_2, 'color', 'g');
+plot(luSet, 'color', 'g');
 hold off;
 xlabel('$x_1$', 'Interpreter', 'latex')
 ylabel('$x_2$', 'Interpreter', 'latex')

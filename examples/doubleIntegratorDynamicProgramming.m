@@ -26,7 +26,9 @@
 % https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
 
 % Prescript running
-close all;clc;clear;
+close all;
+% clc;
+clearvars;
 srtinit
 %% Problem setup
 % In this example we use a discretized double integrator dynamics given by:

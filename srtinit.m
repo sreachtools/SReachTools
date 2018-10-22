@@ -68,6 +68,9 @@ function varargout = srtinit(varargin)
             dets = ver(SRTINIT_PATH);
             fprintf('SReachTools version %s\n', dets.Version);
             return;
+        elseif strcmp(varargin{lv}, '--rootpath')
+            varargout{1} = SRTINIT_PATH;
+            return;
         else
             throwAsCaller(SrtInvalidArgsError(['Invalid input option, ', ...
                 'see help srtinit']));
@@ -160,6 +163,10 @@ end
 
 function update_sreachtools()
 
+    fprintf(['This option is currently under development. It will be ', ...
+        'released soon.']);
+    return;
+
     SRTINIT_PATH = fileparts(which('srtinit.m'));
 
     % First check current version and newest version from repository
@@ -177,7 +184,7 @@ function update_sreachtools()
         fprintf('No newer version available.\n')
     else
         % download and insall newest version
-        fprintf('Updating...\n')
+        fprintf('Updating...\n');
     end
 
 end

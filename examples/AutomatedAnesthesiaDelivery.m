@@ -16,7 +16,9 @@
 % https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
 
 % Prescript running
-close all;clc;clear;
+close all;
+% clc;
+clear;
 srtinit
 %% Problem Formulation
 % We first define a |LtiSystem| object corresponding to the discrete-time 
