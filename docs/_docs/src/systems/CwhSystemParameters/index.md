@@ -82,7 +82,8 @@ title: CwhSystemParameters.m
 ### Property: grav_body
 {:#CwhSystemParameters-prop-grav_body}
 ```
-  Gravitation constant for the pull of the celestial body (default Earth)
+  Gravitation constant for the pull of the celestial body 
+  (default Earth)
   Set via the equation
     grav_body = grav_constant * celes_mass / 1000^3;
 ```

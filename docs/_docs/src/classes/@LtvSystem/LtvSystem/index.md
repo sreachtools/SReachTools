@@ -163,49 +163,87 @@ title: LtvSystem.m
 ### Property: state_mat
 {:#LtvSystem-prop-state_mat}
 ```
-LtvSystem/state_mat is a property.
+  LTVSystem/state_mat
+  ====================================================================
+  
+  System state matrix
+    - MATLAB matrix for LTI system
+    - Anonymous functions for LTV system, maps time index to matrix
+  
 ```
 
 ### Property: state_dim
 {:#LtvSystem-prop-state_dim}
 ```
-LtvSystem/state_dim is a property.
+  LTVSystem/state_dim
+  ====================================================================
+  
+  Dimension of the state vector
+  
 ```
 
 ### Property: input_mat
 {:#LtvSystem-prop-input_mat}
 ```
-LtvSystem/input_mat is a property.
+  LTVSystem/input_mat
+  ====================================================================
+  
+  System input matrix
+    - MATLAB matrix for LTI system
+    - Anonymous functions for LTV system, maps time index to matrix
+  
 ```
 
 ### Property: input_space
 {:#LtvSystem-prop-input_space}
 ```
-LtvSystem/input_space is a property.
+  LTVSystem/input_space
+  ====================================================================
+  
+  System input space, polyhedron object
+  
 ```
 
 ### Property: input_dim
 {:#LtvSystem-prop-input_dim}
 ```
-LtvSystem/input_dim is a property.
+  LTVSystem/input_dim
+  ====================================================================
+  
+  Dimension of the input vector
+  
 ```
 
 ### Property: dist
 {:#LtvSystem-prop-dist}
 ```
-LtvSystem/dist is a property.
+  LTVSystem/dist
+  ====================================================================
+  
+  LTV system disturbance, RandomVector object
+  
 ```
 
 ### Property: dist_mat
 {:#LtvSystem-prop-dist_mat}
 ```
-LtvSystem/dist_mat is a property.
+  LTVSystem/dist_mat
+  ====================================================================
+  
+  System disturbance matrix
+    - MATLAB matrix for LTI system
+    - Anonymous functions for LTV system, maps time index to matrix
+  
 ```
 
 ### Property: dist_dim
 {:#LtvSystem-prop-dist_dim}
 ```
-LtvSystem/dist_dim is a property.
+  LTVSystem/dist_dim
+  ====================================================================
+  
+  Dimension of disturbance vector
+  
 ```
 
 ### Method: getConcatInputSpace
@@ -318,7 +356,8 @@ LtvSystem/dist_dim is a property.
       'InputSpace', Polyhedron('lb', -umax, 'ub', umax), ...
       'DisturbanceMatrix', eye(2), ...
       'Disturbance', Polyhedron('lb', -dmax *ones(2,1), 'ub', dmax *ones(2,1)));
-  % Compute the robust reach-avoid set
+  
+  % Get the concatenated matrices
   [Z,H,G] = getConcatMats(sys, time_horizon);
  
   =============================================================================
@@ -398,7 +437,7 @@ LtvSystem/dist_dim is a property.
 ### Method: islti
 {:#LtvSystem-method-islti}
 ```
-   Get boolean result if system is LTI
+  Get boolean result if system is LTI
   ====================================================================
  
   Get boolean result if system is LTI. Considered LTI if state_mat, 

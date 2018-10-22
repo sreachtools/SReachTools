@@ -21,12 +21,13 @@ title: SReachSetLag.m
  
   Inputs:
   -------
-    sys              - LtiSystem object
-    prob_thresh             - Probability threshold
-    safety_tube      - Cell array of polyhedron objects
-    approx_type      - Approximation type, either 'overapproximation' or
-                       'underapproximation'
-    method, varargin - See help getBoundedSetForDisturbance
+    method_str  - Lagrangian method,
+                    'lag-over'  -- Lagrangian Overapproximation
+                    'lag-under' -- Lagrangian Underapproximation
+    sys         - LtiSystem object
+    prob_thresh - Probability threshold
+    safety_tube - Tube object
+    options     - Struct of reach set options, see SReachSetOptions
  
   Outputs:
   --------

@@ -22,7 +22,7 @@ title: SReachDynProg.m
  
   ============================================================================
  
-  prob_x=SReachDynProg('term',sys,x_inc,u_inc,safety_tube)
+  prob_x = SReachDynProg('term',sys,x_inc,u_inc,safety_tube)
   
   Inputs:
   -------

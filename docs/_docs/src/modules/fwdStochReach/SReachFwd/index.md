@@ -41,18 +41,17 @@ title: SReachFwd.m
     initial_state - Initial state as a deterministic n-dimensional vector
                     or a RandomVector object
     target_time   - Time of interest (positive scalar)
-    target_set/tube 
-                  - [Required only for state/concat-prob] Polytope/Tube
-                    over which the probability must be computed
-    desired_accuracy
-                  - [Required only for state/concat-prob] Accuracy for the
-                    integral
+    target_set/tube  - [Required only for state/concat-prob] Polytope/Tube
+                       over which the probability must be computed
+    desired_accuracy - [Required only for state/concat-prob] Accuracy for the
+                       integral
     
  
   Outputs:
   --------
     mean_vec      - ['state/concat-stoch'] Mean of the stochastic disturbance
-    cov_mat       - ['state/concat-stoch'] Covariance of the stochastic disturbance
+    cov_mat       - ['state/concat-stoch'] Covariance of the stochastic 
+                                           disturbance
     prob          - ['state/concat-prob'] Probability of occurence
  
   Notes:

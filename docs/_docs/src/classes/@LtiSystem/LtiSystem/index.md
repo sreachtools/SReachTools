@@ -260,7 +260,8 @@ Help for LtiSystem/getConcatInputSpace is inherited from superclass LTVSYSTEM
       'InputSpace', Polyhedron('lb', -umax, 'ub', umax), ...
       'DisturbanceMatrix', eye(2), ...
       'Disturbance', Polyhedron('lb', -dmax *ones(2,1), 'ub', dmax *ones(2,1)));
-  % Compute the robust reach-avoid set
+  
+  % Get the concatenated matrices
   [Z,H,G] = getConcatMats(sys, time_horizon);
  
   =============================================================================

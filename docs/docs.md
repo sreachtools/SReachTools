@@ -54,8 +54,8 @@ Do check out the [examples](../examples) for more detailed explanations of vario
             </ul>
             <li>nonStochReach/</li>
             <ul class="doc-list">
-                <li class="doc-list"><a href="src/modules/nonStochReach/getAugEffTarget">getAugEffTarget.m</a></li>
-                <li class="doc-list"><a href="src/modules/nonStochReach/getRobustEffTarget">getRobustEffTarget.m</a></li>
+                <li class="doc-list"><a href="src/modules/nonStochReach/getSReachLagOverapprox">getSReachLagOverapprox.m</a></li>
+                <li class="doc-list"><a href="src/modules/nonStochReach/getSReachLagUnderapprox">getSReachLagUnderapprox.m</a></li>
             </ul>
             <li>stochReach/</li>
             <ul class="doc-list">

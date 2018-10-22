@@ -79,8 +79,18 @@ title: SrtInvalidArgsError.m
 ### Method: withFunctionName
 {:#SrtInvalidArgsError-method-withFunctionName}
 ```
-SrtInvalidArgsError.withFunctionName is a function.
-    obj = withFunctionName(varargin)
+  Throw invalid args and provide function name that received the 
+  invalid call
+  =====================================================================
+  
+  Method to preformat error strings to throw to the user the specific
+  function that was used when passing the invalid args error. Will 
+  display message:
+  
+        Invalid arguments provided to << function name >>
+  
+  =====================================================================
+  
 ```
 
 ### Method: getErrorId

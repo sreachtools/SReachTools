@@ -52,6 +52,7 @@ title: Tube.m
  
   Tube Properties:
   ------------------------
+    dim - Dimension of the tube, i.e. dimension of the sets in the tube
  
   Tube Methods:
   ---------------------
@@ -107,6 +108,7 @@ title: Tube.m
  
   Tube Properties:
   ------------------------
+    dim - Dimension of the tube, i.e. dimension of the sets in the tube
  
   Tube Methods:
   ---------------------
@@ -132,7 +134,11 @@ title: Tube.m
 ### Property: dim
 {:#Tube-prop-dim}
 ```
-Tube/dim is a property.
+  Tube/dim
+  ==================================================================
+  
+  Dimension of the tube / sets in the tube
+  
 ```
 
 ### Method: contains

@@ -1,40 +1,36 @@
 ---
 layout: docs
-title: getRobustEffTarget.m
+title: getSReachLagUnderapprox.m
 ---
 
 ```
-  Get robust Effective Target Set
+  Get underapproximation of stochastic reach set
   =========================================================================
  
-  This function will compute the augmented effect target via the algorithm in
-  the paper:
-       [[Will fill out this once paper is actually submitted]]
- 
-  TODO
+  This function will compute the underapproximation of the stochastic reach
+  set via Algorithm 1 in
+  
+       J. D. Gleason, A. P. Vinod, and M. M. K. Oishi. 2018. Lagrangian 
+       Approximations for Stochastic Reachability of a Target Tube. 
+       online. (2018). https://arxiv.org/abs/1810.07118
  
   Usage: See examples/lagrangianApproximations.m
  
   =========================================================================
  
-  robust_eff_target = getRobustEffTarget(sys, ...
-                                         target_tube, ...
-                                         disturbance, ...
-                                         Name, Value)
+  underapprox_set = getRobustEffTarget(sys, ...
+                                       target_tube, ...
+                                       disturbance, ...
+                                       Name, Value)
   Inputs:
   -------
     sys          - LtiSystem object
-    target_tube  - Target tube of length N+1 where N is the time_horizon. It should have
-                   polyhedrons T_0, T_1, ...,T_N.
+    target_tube  - Tube object
     disturbance  - Polyhedron object (bounded disturbance set)
-  
-    Name       | Value
-    ----------------------------------------
-    style      | 'standard', 'vrep'
  
   Outputs:
   --------
-    robust_eff_target - Polyhedron object
+    underapprox_set - Polyhedron object
  
   Notes:
   * From computational geometry, intersections and Minkowski differences are

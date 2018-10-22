@@ -1,15 +1,18 @@
 ---
 layout: docs
-title: getAugEffTarget.m
+title: getSReachLagOverapprox.m
 ---
 
 ```
-  Get augmented effective target set
+  Get the overapproximation of the stoch reach set
   ============================================================================
  
-  This function will compute the augmented effect target via the algorithm in
-  the paper:
-       [[Will fill out this once paper is actually submitted]]
+  This function will compute the overapproximation of the stochastic reach
+  set via Algorithm 2 in
+  
+       J. D. Gleason, A. P. Vinod, and M. M. K. Oishi. 2018. Lagrangian 
+       Approximations for Stochastic Reachability of a Target Tube. 
+       online. (2018). https://arxiv.org/abs/1810.07118
  
   Usage: See examples/lagrangianApproximations.m
     
@@ -18,13 +21,13 @@ title: getAugEffTarget.m
   Inputs:
   -------
     sys          - LtiSystem object
-    target_tube  - Cell array of Polyhedron objects 
+    target_tube  - Tube object 
     disturbance  - Polyhedron object (bounded disturbance set)
  
   Outputs:
   --------
-    aug_eff_target - Polyhedron object for the augmented effective
-                                 target set
+    overapprox_set - Polyhedron object for the overapproximation of the 
+                     stochastic reach set
  
   Notes:
   * From computational geometry, intersections and Minkowski differences are

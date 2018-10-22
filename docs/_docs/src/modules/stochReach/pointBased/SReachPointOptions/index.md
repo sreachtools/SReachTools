@@ -73,8 +73,8 @@ title: SReachPointOptions.m
  
   Notes:
   * SReachPoint() will call this function internally using the default
-      values if SReachPointOptions()-based options is not explicitly provided
-      to SReachPoint().
+    values if SReachPointOptions()-based options is not explicitly provided
+    to SReachPoint().
   ============================================================================
   
   This function is part of the Stochastic Reachability Toolbox.

@@ -4,41 +4,34 @@ title: SReachPoint.m
 ---
 
 ```
-  Solve the stochastic (first/terminal) reach problem approximately from a given
+  Solve the problem of stochastic reachability of a target tube from a given
   initial state using a host of techniques
   =============================================================================
  
-  SReachPoint computes an approximation to the first/terminal stochastic reach
-  problems. 
- 
-  This function can (approximately) solve two stochastic reachability
-  problems:
- 
-  1. First hitting-time stochastic reachability problem:
- 
-      maximize Prob( \cup_{i=1}^N {\cap_{t=0}^{i-1} 
-                                x_t lies in Safe_t\TargetHyp, x_i\in\TargetHyp})
-      subject to
-            dynamics and bounds on control
- 
-  2. Terminal hitting-time stochastic reachability problem (stochastic
-  reachability of a target tube):
+  SReachPoint can (approximately) solve the problem of stochastic reachability 
+  of a target tube from a given initial state,
  
       maximize Prob( \cap_{i=1}^N x_t lies in Safe_t)
       subject to
             dynamics and bounds on control
  
-  Using the theory discussed in,
-  
-  A. P. Vinod and M. Oishi, HSCC 2019 TODO
+  This function can compute an underapproximation to the optimal value of the
+  above problem as well as synthesize controllers:
+  1. open-loop controller that satisfies the prespecified hard control bounds,
+  2. affine disturbance feedback controller that satisfies the hard control
+        bounds with a likelihood above the user-specified threshold.
+  This function is a compilation of various techniques proposed in the
+  literature.
  
-  We can underapproximate the first hitting-time problem by computing a
-  finite maximum of a series of stochastic reachability of a target tube with 
-  varying time-horizon. 
+  The problem of stochastic reachability of a target tube is discussed in 
  
-  For the affine controller synthesis problem, we relax hard bounds on the
-  control to a user-specified bound on the probability that the affine
-  controller
+  A. Vinod and M. Oishi, "Stochastic reachability of a target tube: Theory and
+  computation," IEEE Transactions in Automatic Control, 2018 (submitted) URL:
+  https://arxiv.org/pdf/1810.05217.pdf.
+ 
+  It subsumes the terminal hitting-time stochastic reach-avoid problem (Summers
+  and Lygeros, Automatica, 2010) as well as the stochastic viability problem
+  (Abate et. al, Automatica, 2008).
  
   This function is a compilation of various techniques proposed in the
   literature:
@@ -57,9 +50,14 @@ title: SReachPoint.m
                           underapproximation problem due to convexity guarantees
      SReachTool function: SReachPointCcO
      Dependency (EXT)   : CVX
-     Dependency (MATLAB): Symbolic toolbox
-     Paper              : a. Lesser, Oishi, Erwin TODO.
-                          b. A. Vinod and M. Oishi, HSCC 2018 TODO
+     Paper              : a. K. Lesser, M. Oishi, and R. Erwin, "Stochastic
+                             reachability for control of spacecraft relative
+                             motion," In Proc. IEEE Conf. Dec. & Ctrl., 2013.
+                          b. A. Vinod and M. Oishi. Affine controller synthesis
+                             for stochastic reachability via difference of
+                             convex programming. In Proc. Hybrid Syst.: Comput.
+                             & Ctrl., 2019. (submitted).
+                             https://hscl.unm.edu/affinecontrollersynthesis/
  
   2. Convex chance-constrained-based approach (chance-affine):
  
@@ -74,13 +72,16 @@ title: SReachPoint.m
                           hard input bounds upto a user-specified probabilistic
                           threshold)
      Optimality         : Suboptimal affine controller for the
-                          underapproximation problem due to the use of
-                          difference-of-convex
+                          underapproximation problem due to non-convexity
+                          established by the difference of convex formulation
      Approximation      : Guaranteed underapproximation
      SReachTool function: SReachPointCcA
      Dependency (EXT)   : CVX
-     Dependency (MATLAB): Symbolic toolbox
-     Paper              : A. Vinod and M. Oishi, HSCC 2018 TODO
+     Paper              : A. Vinod and M. Oishi. Affine controller synthesis for
+                          stochastic reachability via difference of convex
+                          programming. In Proc.  Hybrid Syst.: Comput.  & Ctrl.,
+                          2019. (submitted).
+                          https://hscl.unm.edu/affinecontrollersynthesis/
  
   3. Fourier transform + Patternsearch (genzps-open):
  
@@ -111,26 +112,25 @@ title: SReachPoint.m
                           bounds
      Optimality         : Optimal (w.r.t scenarios drawn) open-loop controller
                           for the underapproximation problem 
-     Dependency (EXT)   : CVX
-     SReachTool function: SReachPointScO TODO
-     Paper              : Lesser, Oishi, Erwin TODO.
+     Dependency (EXT)   : CVX, Gurobi
+     SReachTool function: SReachPointPaO
+     Paper              : K. Lesser, M. Oishi, and R. Erwin, "Stochastic
+                          reachability for control of spacecraft relative
+                          motion," In Proc. IEEE Conf. Dec. & Ctrl., 2013.
  
- 
-  USAGE: TODO
+  See also examples/cwhSReachPointDemo.m and examples/dubinsSReachPointDemo.m.
  
   =============================================================================
  
-  [approx_reach_prob, opt_controller, varargout] = SReachPoint(prob_str, ...
-     method_str, sys, initial_state, safety_tube, options)
+  [approx_reach_prob, opt_input_vec, opt_input_gain] = SReachPoint(prob_str,...
+    method_str, sys, initial_state, safety_tube, [options])
   
   Inputs:
   -------
     prob_str     - String specifying the problem of interest. For each case, we
                    compute the optimal value function that maps initial states
                    to different maximal reach probabilities
-                       1. 'first' : Stay within the safety_tube and reach the
-                                    target set early if possible
-                       2. 'term' : Stay within the safety_tube
+                       1. 'term' : Stay within the safety_tube
     method_str   - Solution technique to be used.
                        'chance-open'  -- Convex chance-constrained approach for
                                          an open-loop controller synthesis
@@ -143,14 +143,14 @@ title: SReachPoint.m
                    evaluated (A numeric vector of dimension sys.state_dim)
     safety_tube  - Collection of (potentially time-varying) safe sets that
                    define the safe states (Tube object)
-    options      - Collection of user-specified options for each of the solution
-                   (Matlab struct created using SReachPointOptions)
+    options      - [Optional] Collection of user-specified options for each of
+                   the solution (Matlab struct created using SReachPointOptions)
  
   Outputs:
   --------
     approx_reach_prob 
                 - Approximation (underapproximation, in some cases) to the
-                  first/terminal stochastic reach problem
+                  stochastic reach problem
     opt_input_vec, 
       opt_input_gain
                 - Controller U=MW+d for a concatenated input vector 
@@ -158,7 +158,8 @@ title: SReachPoint.m
                     vector W=[w_0; w_1; ...; w_{N-1}]. 
                     - opt_input_gain: Affine controller gain matrix of dimension
                         (sys.input_dim*N) x (sys.dist_dim*N)
-                    - opt_input_vec: Open-loop controller: column vector dimension
+                    - opt_input_vec: Open-loop controller: column vector 
+                      dimension
                         (sys.input_dim*N) x 1
                   The feedback gain matrix M is set to [] for methods that look
                   for open-loop controllers. 
@@ -170,9 +171,12 @@ title: SReachPoint.m
                   input constraints
  
   Notes:
-  * SReachPoint() will call this function internally using the default
-      values if SReachPointOptions()-based options is not explicitly provided
-      to SReachPoint().
+  * SReachPoint() will call SReachPointOptions() internally if
+        SReachPointOptions()-based options is not explicitly provided to
+        SReachPoint(). This will set the algorithm to default options.
+  * 'chance-affine' requires an explicit declaration of the options from
+    SReachPointOptions() to specify the threshold on the chance-constraint
+    relaxation of the input bounds.
   * See @LtiSystem/getConcatMats for more information about the notation used.
   * If an open_loop policy is desired arranged in increasing time columnwise,
     use the following command:
