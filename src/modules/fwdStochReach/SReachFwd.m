@@ -37,10 +37,12 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time, ...
 %   initial_state - Initial state as a deterministic n-dimensional vector
 %                   or a RandomVector object
 %   target_time   - Time of interest (positive scalar)
-%   target_set/tube  - [Required only for state/concat-prob] Polytope/Tube
-%                      over which the probability must be computed
-%   desired_accuracy - [Required only for state/concat-prob] Accuracy for the
-%                      integral
+%   target_set/tube  
+%                 - [Required only for state/concat-prob] Polyhedron/Tube object
+%                   over which the probability must be computed
+%   desired_accuracy 
+%                 - [Required only for state/concat-prob] Accuracy for the
+%                   integral
 %   
 %
 % Outputs:
@@ -54,7 +56,6 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time, ...
 % ------
 % * Requires Gaussian-perturbed LTI/LTV system
 % * Assumes IID disturbance.
-% * Few minor components are not covered by the unit tests (See TODO-Test)
 %
 % ============================================================================
 %

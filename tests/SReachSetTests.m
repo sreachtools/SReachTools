@@ -34,23 +34,23 @@ classdef SReachSetTests < matlab.unittest.TestCase
                 extra_info(1).xmax_reach_prob,0.8,'Low max safety');
             test_case.verifyEqual(length(extra_info),1,'Empty cheby');
         end
-    end
-
-    function testLagrangian(test_case)
-        [sys, safety_tube] = test_case.getDI();
-
-        % underapproximation
-        opts = SReachSetOptions('term', 'lag-under', 'box', 'err_thresh', 1e-3);
-        luSet = SReachSet('term', 'lag-under', sys, 0.8, safety_tube, ...
-            opts);
-
-        % overapproximation
-        opts = SReachSetOptions('term', 'lag-under', 'box', 'err_thresh', 1e-3);
-        loSet = SReachSet('term', 'lag-under', sys, 0.8, safety_tube, ...
-            opts);
-
-        test_case.verifyInstanceOf('Polyhedron', luSet);
-        test_case.verifyInstanceOf('Polyhedron', loSet);
+    
+%         function testLagrangian(test_case)
+%             [sys, safety_tube] = test_case.getDI();
+% 
+%             % underapproximation
+%             opts = SReachSetOptions('term', 'lag-under', 'box', 'err_thresh', 1e-3);
+%             luSet = SReachSet('term', 'lag-under', sys, 0.8, safety_tube, ...
+%                 opts);
+% 
+%             % overapproximation
+%             opts = SReachSetOptions('term', 'lag-under', 'box', 'err_thresh', 1e-3);
+%             loSet = SReachSet('term', 'lag-under', sys, 0.8, safety_tube, ...
+%                 opts);
+% 
+%             test_case.verifyInstanceOf('Polyhedron', luSet);
+%             test_case.verifyInstanceOf('Polyhedron', loSet);
+%         end
     end
     methods (Static)
         function [sys, safety_tube] = getDI()
