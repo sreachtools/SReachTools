@@ -7,8 +7,8 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
 %
 % SReachPointPaO implements a mixed-integer linear program-based approximation
 % to the stochastic reachability of a target tube problem. This solution is
-% based off the particle filter control formulation for stochastic reach-avoid
-% problems discussed in
+% based off the particle filter control formulation (for the simpler terminal
+% hitting-time stochastic reach-avoid problem) discussed in
 %
 % K. Lesser, M. Oishi, and R. Erwin, "Stochastic reachability for control of
 % spacecraft relative motion," in IEEE Conference on Decision and Control (CDC),

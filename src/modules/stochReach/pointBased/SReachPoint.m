@@ -1,6 +1,6 @@
 function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
     SReachPoint(prob_str, method_str, sys, initial_state, safety_tube, varargin)
-% Solve the stochastic (first/terminal) reach problem approximately from a given
+% Solve the problem of stochastic reachability of a target tube from a given
 % initial state using a host of techniques
 % =============================================================================
 %
@@ -53,6 +53,7 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %                            for stochastic reachability via difference of
 %                            convex programming. In Proc. Hybrid Syst.: Comput.
 %                            & Ctrl., 2019. (submitted).
+%                            https://hscl.unm.edu/affinecontrollersynthesis/
 %
 % 2. Convex chance-constrained-based approach (chance-affine):
 %
@@ -76,6 +77,7 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %                         stochastic reachability via difference of convex
 %                         programming. In Proc.  Hybrid Syst.: Comput.  & Ctrl.,
 %                         2019. (submitted).
+%                         https://hscl.unm.edu/affinecontrollersynthesis/
 %
 % 3. Fourier transform + Patternsearch (genzps-open):
 %

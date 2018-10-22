@@ -7,8 +7,9 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state, ..
 % =============================================================================
 %
 % SReachPointGpO implements the Fourier transform-based underapproximation to
-% the stochastic reachability of the target tube problem. A simpler reach-avoid
-% problem formulation was discussed in
+% the stochastic reachability of a target tube problem. The original problem was
+% formulated (for the simpler problem of terminal hitting-time stochastic
+% reach-avoid problem) in
 %
 % A. Vinod and M. Oishi, "Scalable Underapproximation for Stochastic
 % Reach-Avoid Problem for High-Dimensional LTI Systems using Fourier

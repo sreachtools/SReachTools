@@ -7,7 +7,8 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
 %
 % SReachPointCcO implements a chance-constrained convex underapproximation to
 % the stochastic reachability of a target tube problem. The original problem was
-% formulated in
+% formulated (for the simpler problem of terminal hitting-time stochastic
+% reach-avoid problem) in
 %
 % K. Lesser, M. Oishi, and R. Erwin, "Stochastic reachability for control of
 % spacecraft relative motion," in IEEE Conference on Decision and Control (CDC),
@@ -18,7 +19,7 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
 %
 % A. Vinod and M. Oishi. Affine controller synthesis for stochastic reachability
 % via difference of convex programming. In Proc. Hybrid Syst.: Comput. & Ctrl.,
-% 2019. (submitted).
+% 2019. (submitted). https://hscl.unm.edu/affinecontrollersynthesis/
 %
 %    High-level desc.   : Use Boole's inequality, Gaussian random vector, and
 %                         piecewise linear approximation of the inverse of the
