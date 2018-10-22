@@ -67,8 +67,8 @@ function [stoch_reach_set, varargout] = SReachSet(prob_str, method_str, sys, ...
 %
 % 3. Lagrangian underapproximation
 %
-%    High-level desc.   : Use computational geometry tools to compute a
-%                         robust effective target set
+%    High-level desc.   : Use computational geometry tools to compute an
+%                         underapproximation of the stochastic reach set
 %    Approximation      : Guaranteed underapproximation
 %    Controller type    : Closed-loop controller that satisfies the hard input
 %                         bounds
@@ -85,8 +85,8 @@ function [stoch_reach_set, varargout] = SReachSet(prob_str, method_str, sys, ...
 %
 % 4. Lagrangian overapproximation
 %
-%    High-level desc.   : Use computational geometry tools to compute a
-%                         augmented effective target set
+%    High-level desc.   : Use computational geometry tools to compute an
+%                         overapproximation of the stochastic reach set
 %    Approximation      : Guaranteed overapproximation
 %    Controller type    : Closed-loop controller that satisfies the hard input
 %                         bounds
