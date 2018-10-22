@@ -66,6 +66,8 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
 %   risk_alloc_input
 %               - Risk allocation for the input constraints
 %
+% See also SReachPoint.
+%
 % Notes:
 % * We recommend using this function through SReachPoint.
 % * This function requires CVX to work.

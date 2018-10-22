@@ -114,12 +114,12 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %                         reachability for control of spacecraft relative
 %                         motion," In Proc. IEEE Conf. Dec. & Ctrl., 2013.
 %
-% See examples/cwhSReachPointDemo.m and examples/dubinsSReachPointDemo.m.
+% See also examples/cwhSReachPointDemo.m and examples/dubinsSReachPointDemo.m.
 %
 % =============================================================================
 %
-% [approx_reach_prob, opt_input_vec, opt_input_gain, [risk_alloc_X]] =...
-%    SReachPoint(prob_str, method_str, sys, initial_state, safety_tube, [options])
+% [approx_reach_prob, opt_input_vec, opt_input_gain] = SReachPoint(prob_str,...
+%   method_str, sys, initial_state, safety_tube, [options])
 % 
 % Inputs:
 % -------
