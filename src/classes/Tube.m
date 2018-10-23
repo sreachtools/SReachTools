@@ -290,8 +290,7 @@ classdef Tube
             fprintf('Tube of %d sets\n', length(obj));
         end
 
-        function [concat_target_tube_A, concat_target_tube_b] =...
-            concat(obj,varargin)
+        function [concat_tube_A, concat_tube_b] = concat(obj,varargin)
         % Get concatenated tube (Cartesian product of the polytopes)
         % ======================================================================
         %
@@ -300,11 +299,11 @@ classdef Tube
         % safe_set^{time_horizon} x target_set, a huge polyhedron in the
         % (obj.dim x time_horizon)-dimensional Euclidean space.
         %
-        % [concat_target_tube_A, concat_target_tube_b] = concat(obj);
+        % [concat_tube_A, concat_tube_b] = concat(obj);
         %
         % The output matrices satisfy the relation that the a concatenated 
         % state vector X lies in the reach-avoid tube if and only if
-        % concat_target_tube_A * [initial_state;X] <= concat_target_tube_b 
+        % concat_tube_A * [initial_state;X] <= concat_tube_b 
         %
         % When arguments are specified, it provides the Cartesian of
         % specific time splice mentioned. Specifically, if the half space
@@ -312,7 +311,7 @@ classdef Tube
         % tube of length 10 (sets are defined for t=0 to 9), we
         % provide
         %
-        % [concat_target_tube_A, concat_target_tube_b] = concat(obj, [4 6]);
+        % [concat_tube_A, concat_tube_b] = concat(obj, [4 6]);
         % 
         % The +1 added is to account for MATLAB's indexing which begins
         % from 1. In other words, provide the starting and ending index of
@@ -322,7 +321,7 @@ classdef Tube
         %
         % ======================================================================
         %
-        % [concat_target_tube_A, concat_target_tube_b] = concat(obj,varagin);
+        % [concat_tube_A, concat_tube_b] = concat(obj,varagin);
         %
         % Inputs:
         % -------
@@ -331,8 +330,8 @@ classdef Tube
         %    
         % Outputs:
         % --------
-        %   concat_target_tube_A - State matrix concatenated for tube
-        %   concat_target_tube_b - Input matrix concatenated for tube
+        %   concat_tube_A - State matrix concatenated for tube
+        %   concat_tube_b - Input matrix concatenated for tube
         %
         % Notes:
         % ------
@@ -356,8 +355,8 @@ classdef Tube
             %% Do we send out everything or was a slice requested?
             if nargin == 1
                 % Send out everything
-                concat_target_tube_A = blkdiag(tube_A_mats{:});
-                concat_target_tube_b = vertcat(tube_b_vecs{:});
+                concat_tube_A = blkdiag(tube_A_mats{:});
+                concat_tube_b = vertcat(tube_b_vecs{:});
             else
                 % Send out a slice
                 time_limits = varargin{1};
@@ -366,14 +365,14 @@ classdef Tube
                     max(time_limits) <= length(obj)
                     if time_limits(2) >= time_limits(1)
                         % a <= b => send out the appropriate slices
-                        concat_target_tube_A =...
+                        concat_tube_A =...
                             blkdiag(tube_A_mats{time_limits(1):time_limits(2)});
-                        concat_target_tube_b =...
+                        concat_tube_b =...
                             vertcat(tube_b_vecs{time_limits(1):time_limits(2)});
                     else
                         % a > b => send out empty sets
-                        concat_target_tube_A = [];
-                        concat_target_tube_b = [];
+                        concat_tube_A = [];
+                        concat_tube_b = [];
                     end
                 else
                     % time_limits = [a,b] is not a 2x1/1x2 vector OR it does not
