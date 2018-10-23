@@ -1,5 +1,5 @@
 % Stochastic Reachability Toolbox (SReachTools)
-% Version 0.3.5 (R2017b) 19-October-2018
+% Version 1.0.0 (R2017b) 19-October-2018
 % 
 % The Stochastic Reachability Toolbox (SReachTools) is an open-source MATLAB 
 % toolbox for performing stochastic verification and reachability analysis.
