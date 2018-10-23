@@ -9,6 +9,7 @@ In these set of examples, we apply SReachTools to perform forward (prediction of
 Please feel free to add requests for more examples at [https://github.com/unm-hscl/SReachTools/issues](https://github.com/unm-hscl/SReachTools/issues).
 They are available in the `examples` folder of the project. 
 
+    {% comment %}
 {% include important-note.html content="HTML examples are not mobile friendly. We're working on it." %}
 1. **Stochastic reachability of a target tube using dynamic programming**:  Demonstrates the use of `SReachDynProg`.
     1. **Stochastic double integrator**: For a stochastic double integrator, we compute a grid-based dynamic programming solution to the stochastic reachability of different target tubes listed below.  [[HTML](doubleIntegratorDynamicProgramming.html)]
@@ -32,6 +33,7 @@ They are available in the `examples` folder of the project.
             - Application of `SReachSet` for a probability threshold. [[HTML](AutomatedAnesthesiaDelivery.html)]
         1. **Stochastic double integrator**: For a stochastic double integrator, we compute the over- and under-approximations for the stochastic viability problem, and compare it with the dynamic programming.  [[HTML](lagrangianApproximations.html)]
 1. **Forward stochastic reachability**: Computes the probability of the state of the spacecraft lying in a set at future time of interest with/without safety requirements. We also demonstrate how SReachTools can handle a deterministic and a stochastic initial state. [[HTML](forwardStochasticReachCWH.html)] 
+    {% endcomment %}
 
 <!-- Add {:target="_blank"} if it is desired that the page opens in a new window.-->
 
