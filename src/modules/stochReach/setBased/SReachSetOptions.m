@@ -140,9 +140,6 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
         % Get bisection error threshold for box option
         inpar.addParameter('err_thresh', 1e-3, @(x) validateattributes(x, ...
             {'numeric'}, {'scalar', 'positive'}));
-        % Get box center for optim-box option
-        inpar.addParameter('box_center', zeros(2,1), ...
-            @(x) validateattributes(x,{'numeric'}, {'nonempty', 'vector'}));
         % Get load string for load option
         inpar.addParameter('load_str', ' ', @(x) validateattributes(x, ...
             {'char'}, {'nonempty'}));
