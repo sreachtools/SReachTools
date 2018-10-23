@@ -7,19 +7,26 @@ author: "Abraham P. Vinod  & Joseph D. Gleason"
 ---
 
 SReachTools Toolbox [v1](https://github.com/unm-hscl/SReachTools/tree/v1.0.0) is
-now out! The SReachTools toolbox is a set of MATLAB codes to facilitate
-stochastic reachability computations. The toolbox currently supports
-reachability computations with several methods:
-* Dynamic programming computation
-* Stochastic reach set computation and controller synthesis using:
-    * Lagrangian (set-based) approximations
+now out! 
+
+{% include important-note.html content="This is the first stable release of the
+toolbox." %}
+
+The SReachTools toolbox is a set of MATLAB codes to facilitate stochastic
+reachability computations. The toolbox currently supports reachability
+computations with several methods:
+* Dynamic programming computation (implemented in `SReachDynProg`)
+* Stochastic reach set computation (implemented in `SReachSet`) and controller
+  synthesis (implemented in `SReachPoint`) using:
+    * Lagrangian (set-based) over- and under-approximations
     * Fourier transformation approximations, with support for open-loop
-      controller synthesis)
-    * Chance-constrained underapproximations, with support for open-loop and
+      controller synthesis
+    * Chance-constrained under-approximations, with support for open-loop and
       affine controller synthesis
     * Particle filter-based approximation for open-loop controller synthesis
-We currently support forward and backward stochastic reachability of *stochastic
-linear time-invariant and time-varying systems*.
+* Forward stochastic reachability analysis (implemented in `SReachFwd`)
+
+We can analyze *stochastic linear time-invariant and time-varying systems*.
 
 We have submitted a tool paper describing the features of SReachTools to the
 *22nd ACM International Conference on Hybrid Systems: Computation and Control
@@ -31,20 +38,21 @@ See the quick-start guide below for installation instructions.
 
 ## Important notes on this release
 
-- Updated License to GNU GPLv3 or (at your option) a later version.
-  See [LICENSE](./license/).
+- Updated License to GNU GPLv3, or (at your option) a later version.
+  See [LICENSE](https://unm-hscl.github.io/SReachTools/license/).
 - A complete overhaul of the APIs. For more details, see our [submitted tool
   paper](https://github.com/unm-hscl/SReachTools/raw/master/SReachTools.pdf).
 - All promises made in our previous [blog post](./2018-05-31-release-of-v0x2.md)
   have been met:
     - Extension to LTV systems
     - Support for chance-constrained and particle filter-based verification
-    - Adding online API documentation
+    - Added online API documentation. See [online documentation](https://unm-hscl.github.io/SReachTools/docs/index.html).
 - Affine control synthesis technique based on chance constraints and difference
   of convex programs have been added. See our [submitted
-  paper](https://hscl.unm.edu/affinecontrollersynthesis/) for more details.
-- Lagrangian overapproximation has been added into the toolbox. See our
-  [submitted paper](https://arxiv.org/pdf/1810.07118) for more details.
+  paper (arXiv)](https://hscl.unm.edu/affinecontrollersynthesis/) for more
+  details.
+- Lagrangian over-approximation has been added into the toolbox. See our
+  [submitted paper (arXiv)](https://arxiv.org/pdf/1810.07118) for more details.
 
 ## Quick start guide: installation and examples
 
