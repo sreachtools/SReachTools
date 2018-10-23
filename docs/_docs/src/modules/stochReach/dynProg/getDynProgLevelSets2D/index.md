@@ -11,7 +11,7 @@ title: getDynProgLevelSets2D.m
   The function computes an array of polytopes based on the results from
   getDynProgSolForTube
  
-  Usage: See example doubleIntegratorDynmaicProgramming.m
+  See also examples/doubleIntegratorDynamicProgramming.m, SReachDynProg
  
   ============================================================================
  
@@ -19,15 +19,18 @@ title: getDynProgLevelSets2D.m
   
   Inputs:
   -------
-    sys         - LtiSystem object (Needs to be 2-dimensional)
-    prob_x      - Mx1 Array of probability values at each grid point in
-                  grid_X | Use getDynProgSolForTube to compute this vector
-    prob_lvls   - A vector containing safety probability thresholds of interest 
-                  Each element needs to be within [0,1].
-    target_tube - Target tube used for the dynamic programming solution
+    cell_xvec  - Gridding along the particular dimension (sys.state_dim x 1
+                 cell array, with grid info along each dimension) | Output for
+                 SReachDynProg
+    prob_x     - Probability values at each grid point (M number of them) in
+                 grid_X (Mx1 array)
+    prob_lvls  - A vector containing safety probability thresholds of interest |
+                 Each element needs to be within [0,1].
+    safety_tube- Safety tube used for the dynamic programming solution
  
   Outputs:
   --------
+    poly_array - Array of Polyhedron objects for each of the level sets
  
   Notes:
   ------
@@ -35,11 +38,13 @@ title: getDynProgLevelSets2D.m
     to MPT (takes a convex hull). Because contour function may ignore corners
     (if value function saturates), we check for all the corners when
     constructing the polytope.
-  * To be used in conjunction with getDynProgSolForTube
+  * To be used in conjunction with SReachDynProg
   
   ============================================================================
   
     This function is part of the Stochastic Reachability Toolbox.
     License for the use of this function is given in
          https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+ 
+ 
 ```

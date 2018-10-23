@@ -1,5 +1,5 @@
 function poly_array = getDynProgLevelSets2D(cell_of_grid_x, prob_x, ...
-    prob_lvls, target_tube)
+    prob_lvls, safety_tube)
 % SReachTools/stochasticReachAvoid/getDynProgLevelSets2D Get level sets based 
 % on the value function returned by getDynProgSolForTube
 % ============================================================================
@@ -7,7 +7,7 @@ function poly_array = getDynProgLevelSets2D(cell_of_grid_x, prob_x, ...
 % The function computes an array of polytopes based on the results from
 % getDynProgSolForTube
 %
-% Usage: See example doubleIntegratorDynmaicProgramming.m
+% See also examples/doubleIntegratorDynamicProgramming.m, SReachDynProg
 %
 % ============================================================================
 %
@@ -15,15 +15,18 @@ function poly_array = getDynProgLevelSets2D(cell_of_grid_x, prob_x, ...
 % 
 % Inputs:
 % -------
-%   sys         - LtiSystem object (Needs to be 2-dimensional)
-%   prob_x      - Mx1 Array of probability values at each grid point in
-%                 grid_X | Use getDynProgSolForTube to compute this vector
-%   prob_lvls   - A vector containing safety probability thresholds of interest 
-%                 Each element needs to be within [0,1].
-%   target_tube - Target tube used for the dynamic programming solution
+%   cell_xvec  - Gridding along the particular dimension (sys.state_dim x 1
+%                cell array, with grid info along each dimension) | Output for
+%                SReachDynProg
+%   prob_x     - Probability values at each grid point (M number of them) in
+%                grid_X (Mx1 array)
+%   prob_lvls  - A vector containing safety probability thresholds of interest |
+%                Each element needs to be within [0,1].
+%   safety_tube- Safety tube used for the dynamic programming solution
 %
 % Outputs:
 % --------
+%   poly_array - Array of Polyhedron objects for each of the level sets
 %
 % Notes:
 % ------
@@ -31,19 +34,21 @@ function poly_array = getDynProgLevelSets2D(cell_of_grid_x, prob_x, ...
 %   to MPT (takes a convex hull). Because contour function may ignore corners
 %   (if value function saturates), we check for all the corners when
 %   constructing the polytope.
-% * To be used in conjunction with getDynProgSolForTube
+% * To be used in conjunction with SReachDynProg
 % 
 % ============================================================================
 % 
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
 %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+%
+%
 
     %% Input handling
     validateattributes(cell_of_grid_x, {'cell'},{'vector'})
     validateattributes(prob_x, {'numeric'}, {'vector','nonempty'})
     validateattributes(prob_lvls, {'numeric'}, {'vector','nonempty'})
-    validateattributes(target_tube, {'Tube'}, {'nonempty'});
+    validateattributes(safety_tube, {'Tube'}, {'nonempty'});
     % Check if prob_lvls is a [0,1] vector (check min >= 0 and max <=1)
     if min(prob_lvls) <0 || max(prob_lvls) > 1
         throwAsCaller(SrtInvalidArgsError('prob_lvls need to be [0,1].'));    
@@ -60,7 +65,7 @@ function poly_array = getDynProgLevelSets2D(cell_of_grid_x, prob_x, ...
     x2vec = cell_of_grid_x{2};
     
     % Corners of target set at t=0
-    corners = target_tube(1).outerApprox.V;
+    corners = safety_tube(1).outerApprox.V;
     
     % Initialize the set of vertices for the polytopes
     poly_array_vertices = cell(length(prob_lvls),1);
