@@ -16,7 +16,7 @@ title: SReachFwd.m
   Proceedings of the 20th International Conference on Hybrid Systems:
   Computation and Control (HSCC), 2017.
  
-  Usage: See examples/forwardStochasticReachCWH.mlx.
+  See also examples/forwardStochasticReachCWH.m.
  
   ============================================================================
   
@@ -58,8 +58,9 @@ title: SReachFwd.m
  
   Notes:
   ------
-  * Requires Gaussian-perturbed LTI/LTV system
   * Assumes IID disturbance.
+  * The outputs are either (mean_vec, cov_mat) or (prob), depending on the
+    method_str
  
   ============================================================================
  

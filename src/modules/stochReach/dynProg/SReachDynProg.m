@@ -14,7 +14,7 @@ function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc, ...
 % A trivial extension of this work to the case of time-varying safe set is
 % implemented here.
 %
-% Usage: See example/doubleIntegratorDynamicProgramming.mlx
+% See also examples/doubleIntegratorDynamicProgramming.m.
 %
 % ============================================================================
 %
@@ -49,6 +49,7 @@ function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc, ...
 % Notes:
 % ------
 % * REQUIRES:
+%   - Gaussian-perturbed LtiSystem
 %   - Input space is an axis-aligned HYPERCUBOID.
 %   - State space is the smallest axis-aligned HYPERCUBOID that contains all the
 %     sets in the target-tube
@@ -67,7 +68,7 @@ function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc, ...
     inpar = inputParser();
     inpar.addRequired('prob_str', @(x) any(validatestring(x,valid_prob_str)));
     inpar.addRequired('sys', @(x) validateattributes(x, ...
-        {'LtiSystem', 'LtvSystem'}, {'nonempty'}));
+        {'LtiSystem'}, {'nonempty'})); %TODO: 'LtvSystem'
     inpar.addRequired('x_inc', @(x) validateattributes(x, {'numeric'}, ...
         {'scalar', '>', 0}));
     inpar.addRequired('u_inc', @(x) validateattributes(x, {'numeric'}, ...

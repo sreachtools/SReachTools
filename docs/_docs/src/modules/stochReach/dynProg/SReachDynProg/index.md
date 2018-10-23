@@ -18,7 +18,7 @@ title: SReachDynProg.m
   A trivial extension of this work to the case of time-varying safe set is
   implemented here.
  
-  Usage: See example/doubleIntegratorDynamicProgramming.mlx
+  See also examples/doubleIntegratorDynamicProgramming.m.
  
   ============================================================================
  
@@ -53,6 +53,7 @@ title: SReachDynProg.m
   Notes:
   ------
   * REQUIRES:
+    - Gaussian-perturbed LtiSystem
     - Input space is an axis-aligned HYPERCUBOID.
     - State space is the smallest axis-aligned HYPERCUBOID that contains all the
       sets in the target-tube
