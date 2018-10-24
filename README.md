@@ -9,10 +9,12 @@ certain classes of problems.
 We aim to support the following problems:
  - **Stochastic reachability of a target tube** (guaranteeing safety for stochastic
    systems to lying in a collection of time-varying safe sets while satisfying
-   input bounds)
+   input bounds):
     - This problem subsumes existing work on terminal hitting stochastic reach-avoid
-      problems as well as stochastic viability problems.
-    - **Open-loop controller synthesis** (admissible controller satisfying hard
+      problems as well as stochastic viability problems. We implement a
+      dynamic programming solution limited to low-dimensional LTI systems using
+      `SReachDynProg`.
+    - **Open-loop controller synthesis** using `SReachPoint` (admissible controller satisfying hard
       control bounds with maximum safety probability):
         - `chance-open`: Chance constraint formulation solved via linear
           programming
@@ -20,19 +22,19 @@ We aim to support the following problems:
           patternsearch)
         - `particle-open`: Particle filter approach (mixed-integer linear
           program approach)
-    - **Affine controller synthesis** (admissible controller with chance constrained
-      input bounds with maximum safety probability)
+    - **Affine controller synthesis** using `SReachPoint` (admissible controller with chance constrained
+      input bounds with maximum safety probability):
         - `chance-affine`: Chance constraint formulation solved via
           difference-of-convex programming
-    - **Stochastic reach set computation** (set of initial states from which an 
-      admissible controller exists such that the probability of safety is above a 
-      given threshold)
+    - **Stochastic reach set computation** using `SReachSet` (set of initial
+      states from which an admissible controller exists such that the
+      probability of safety is above a given threshold):
         - `chance-open`: Chance constraint-based under-approximation
         - `genzps-open`: Fourier transforms-based under-approximation
         - `lag-over/lag-under`: Lagrangian methods-based over- and
           under-approximation
- - **Forward stochastic reachability** (characterizing the stochasticity of the
-      state at a future time of interest)
+ - **Forward stochastic reachability** using `SReachFwd` (characterizing the
+   stochasticity of the state at a future time of interest):
       - `state-stoch/concat-stoch`: Stochasticity of the state or the
           concatenated state vector
       - `state-prob/concat-prob`: Probability of the state or the concatenated
