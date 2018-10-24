@@ -6,7 +6,9 @@ layout: home
 title: "Stochastic Reachability Toolbox"
 ---
 
-SReachTools is an open-source MATLAB Toolbox for performing stochastic verification and reachability analysis.  
+SReachTools is an open-source MATLAB Toolbox for performing stochastic
+verification and reachability analysis. We had our first stable release of
+this toolbox on [October, 2018](./jekyll/update/2018/10/22/release-of-v1.html).
 
 - Can you show me some examples of SReachTools working? 
     - We have cataloged a number of [examples ](https://unm-hscl.github.io/SReachTools/examples/) implemented using SReachTools. These examples are also available as part of the source code of SReachTools, see `examples/*.m`. 
@@ -54,14 +56,16 @@ folder.
 
 This toolbox provides MATLAB APIs to tackle this problem[^1] for
 Gaussian-perturbed linear systems using chance-constrained approaches[^2],
-Fourier transforms[^3], Lagrangian (set-operations)[^4], and dynamic
-programming[^5][^6] methods. We currently provide polytopic underapproximation
-and (open-loop and affine) controller synthesis for this problem.
+Fourier transforms[^3], particle filter control [^4], Lagrangian
+(set-operations)[^5], and dynamic programming[^6][^7] methods. We currently
+provide polytopic underapproximation and (open-loop and affine) controller
+synthesis for this problem.
 
 [^1]: A. P. Vinod and M. M. K. Oishi, "[Stochastic reachability of a target tube:  Theory and computation](https://arxiv.org/pdf/1810.05217.pdf)", submitted to IEEE Transactions of Automatic Control, 2018 (submitted).
 [^2]: A. P. Vinod and M. M. K. Oishi, "[Affine controller synthesis for stochastic reachability via difference of convex programming](https://hscl.unm.edu/affinecontrollersynthesis/)", in Proceedings of Hybrid Systems: Computation and Control, 2019 (submitted).
 [^3]: A. P. Vinod and M. M. K. Oishi, "[Scalable Underapproximative Verification of Stochastic LTI Systems using Convexity and Compactness](https://doi.org/10.1145/3178126.3178148)", in Proceedings of Hybrid Systems: Computation and Control, pp. 1--10, 2018.
-[^4]: J. D. Gleason, A. P. Vinod, M. M. K. Oishi, "[Underapproximation of Reach-Avoid Sets for Discrete-Time Stochastic Systems via Lagrangian Methods](https://doi-org/10.1109/CDC.2017.8264291)," in Proceedings of the IEEE Conference on Decision and Control, pp. 4283-4290, 2017.
+[^4]: K. Lesser, M. M. K. Oishi, and R. S. Erwin, "[Stochastic reachability for control of spacecraft relative motion ](https://doi.org/10.1109/CDC.2013.6760626)," in Proceedings of the IEEE Conference on Decision and Control, pp. 4705-4712, 2013.
+[^5]: J. D. Gleason, A. P. Vinod, M. M. K. Oishi, "[Underapproximation of Reach-Avoid Sets for Discrete-Time Stochastic Systems via Lagrangian Methods](https://doi.org/10.1109/CDC.2017.8264291)," in Proceedings of the IEEE Conference on Decision and Control, pp. 4283-4290, 2017.
 [^5]: S. Summers and J. Lygeros, "[Verification of discrete time stochastic hybrid systems: A stochastic reach-avoid decision problem](https://doi.org/10.1016/j.automatica.2010.08.006)," Automatica, 2010.
 [^6]: A. Abate, M. Prandini, J. Lygeros, S. Sastry, "[Probabilistic reachability and safety for controlled discrete time stochastic hybrid systems](https://doi.org/10.1016/j.automatica.2008.03.027)," Automatica, 2008.
 
@@ -70,7 +74,7 @@ and (open-loop and affine) controller synthesis for this problem.
 ### Dependencies
 
 You can skip installing the dependencies marked **optional**.
-This will disable some of the features of SReachTools.
+This will disable some of the features of SReachTools or hamper performance.
 
 1. MATLAB (>2017a)
     1. Toolboxes

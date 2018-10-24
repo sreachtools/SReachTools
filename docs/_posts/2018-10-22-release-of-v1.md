@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  "Release of v1"
+title:  "Release of v1 (Stable)"
 date:   2018-10-22 19:27:00 -0600
 categories: jekyll update
 author: "Abraham P. Vinod  & Joseph D. Gleason"
@@ -59,7 +59,7 @@ See the quick-start guide below for installation instructions.
 ### Dependencies
 
 You can skip installing the dependencies marked **optional**.
-This will disable some of the features of SReachTools.
+This will disable some of the features of SReachTools or hamper performance.
 
 1. MATLAB (>2017a)
     1. Toolboxes

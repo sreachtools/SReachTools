@@ -46,7 +46,7 @@ updates!
 ### Dependencies
 
 You can skip installing the dependencies marked **optional**.
-This will disable some of the features of SReachTools.
+This will disable some of the features of SReachTools or hamper performance.
 
 1. MATLAB (>2017a)
     1. Toolboxes
