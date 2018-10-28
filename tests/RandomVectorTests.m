@@ -14,6 +14,9 @@ classdef RandomVectorTests < matlab.unittest.TestCase
 
     methods (Test)
         function inputHandlingTest(test_case)
+            % Gaussian: Too many arguments => Varargin means invalidArgs
+            test_case.verifyError(@(x) RandomVector('Gaussian',zeros(2,1),...
+                eye(2), eye(2)), 'SReachTools:invalidArgs');
             % Gaussian: Not enough arguments
             test_case.verifyError(@(x) RandomVector('Gaussian',zeros(2,1)),...
                 'SReachTools:invalidArgs');
@@ -24,9 +27,6 @@ classdef RandomVectorTests < matlab.unittest.TestCase
                 ones(4,3)), 'MATLAB:expectedSquare');
             test_case.verifyError(@(x) RandomVector('Gaussian',zeros(1,3),...
                 eye(3)), 'MATLAB:expectedColumn');
-            % Gaussian: Too many arguments
-            test_case.verifyError(@(x) RandomVector('Gaussian',zeros(2,1),...
-                eye(2), eye(2)), 'SReachTools:invalidArgs');
             % Gaussian: Dimension mismatch
             test_case.verifyError(@(x) RandomVector('Gaussian',zeros(2,1),...
                 eye(3)), 'SReachTools:invalidArgs');
