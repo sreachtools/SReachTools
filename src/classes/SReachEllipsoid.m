@@ -118,5 +118,32 @@ classdef SReachEllipsoid
             
             fprintf('%d-dimensional ellipsoid\n', obj.dim);
         end
+        
+        function support_fun_val = support_fun(obj, l)
+        % Support function of the ellipsoid object
+        % ====================================================================
+        %
+        % Inputs:
+        % -------
+        %   l  - A query column vector or a collection of query vectors stacked 
+        %        as rows
+        %
+        % Outputs:
+        % --------
+        %   support_fun_val - max_{y \in ellipsoid} l'*y
+        %
+        % =====================================================================
+        % 
+        % This function is part of the Stochastic Reachability Toolbox.
+        % License for the use of this function is given in
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        % 
+        % 
+        
+            if size(l,2) ~= obj.dim
+                throwAsCaller(SrtInvalidArgsError('l has incorrect dimensions.'));
+            end
+            support_fun_val = l* obj.center + sqrt(diag(l*obj.shape_matrix*l'));
+        end
     end
 end

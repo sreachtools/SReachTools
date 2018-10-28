@@ -40,5 +40,43 @@ classdef SReachEllipsoidTests < matlab.unittest.TestCase
             % Simply define a well-defined ellipsoid -> circle
             SReachEllipsoid(zeros(2,1), eye(2));
         end
+        
+        function supportFunctionTest(test_case)
+            % Support function of a unit circle must be one
+            unit_cir = SReachEllipsoid(zeros(2,1), eye(2));
+            theta = pi/4;
+            v = [cos(theta), sin(theta)];
+            test_case.verifyLessThanOrEqual(abs(unit_cir.support_fun(v)-1),...
+                eps, 'All tangents of unit circle must return 1');
+            theta = 3*pi/4;
+            v = [cos(theta), sin(theta)];
+            test_case.verifyLessThanOrEqual(abs(unit_cir.support_fun(v)-1),...
+                eps, 'All tangents of unit circle must return 1');
+            
+            % Checking multiple support function vector candidates +
+            % Cross-validate with CVX results
+            rand_ellipse = SReachEllipsoid(ones(2,1), 10*eye(2)+[1,0;0,5]);
+            theta = 3*pi/4;
+            v = [cos(theta), sin(theta);
+                 cos(1.2*pi/2+theta), sin(1.2*pi/2+theta)];
+            support_fun_vals = rand_ellipse.support_fun(v);
+            Q_inv_sqrt = chol(inv(rand_ellipse.shape_matrix));
+            cvx_begin quiet
+                variable y1(2,1);
+                maximize (v(1,:)*y1)
+                subject to
+                    norm(Q_inv_sqrt * (y1 - rand_ellipse.center)) <= 1
+            cvx_end
+            cvx_begin quiet
+                variable y2(2,1);
+                maximize (v(2,:)*y2)
+                subject to
+                    norm(Q_inv_sqrt * (y2 - rand_ellipse.center)) <= 1
+            cvx_end
+                        
+            test_case.verifyLessThanOrEqual(...
+                abs(support_fun_vals- diag(v*[y1,y2])),...
+                1e-8, 'CVX and support function definition do not agree!');
+        end
     end
 end
