@@ -66,20 +66,17 @@ function approx_level_set = SReachSetLag(method_str, sys, prob_thresh, ...
     if time_horizon > 0 && prob_thresh > 0        
         switch(lower(method_str))
             case 'lag-under'
-                % Perform underapproximation
-
                 % get bounded disturbance set
-                bounded_set = SReachSetLagBset(sys.dist, ...
+                bounded_set = SReachSetLagBset(sys, ...
                     prob_thresh^(1/time_horizon), options);
-
+                
                 % get underapproximated level set (robust effective target)
                 approx_level_set = getSReachLagUnderapprox(sys, ...
                     safety_tube, bounded_set);
             case 'lag-over'
                 % get bounded disturbance set
-                bounded_set = SReachSetLagBset(sys.dist, ...
-                    (1 - prob_thresh)^(1/time_horizon), options);
-
+                bounded_set = SReachSetLagBset(sys, ...
+                    (1-prob_thresh)^(1/time_horizon), options);
                 % get overapproximated level set (augmented effective target)
                 approx_level_set = getSReachLagOverapprox(sys, ...
                     safety_tube, bounded_set);

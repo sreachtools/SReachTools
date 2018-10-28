@@ -101,7 +101,7 @@ title('Target tube');
 % bounded set for Lagrangian
 tic;
 opts = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
-    'random', 'num_dirs', 50);
+    'ellipsoid', 'num_dirs', 50);
 luSet = SReachSet('term', 'lag-under', sys, 0.8, target_tube, opts);
 lagrange_under_time = toc();
 

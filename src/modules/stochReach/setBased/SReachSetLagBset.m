@@ -1,4 +1,4 @@
-function bounded_set = SReachSetLagBset(disturbance, onestep_prob_thresh, ...
+function bounded_set = SReachSetLagBset(sys, onestep_prob_thresh, ...
     options)
 % Get bounded disturbance set for approximation
 % ============================================================================
@@ -39,9 +39,35 @@ function bounded_set = SReachSetLagBset(disturbance, onestep_prob_thresh, ...
 %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 
-    valid_bound_set_methods = {'load','random','box'};
+    valid_bound_set_methods = {'load','random','box','ellipsoid'};
+        % Input parsing
+    valid_prob = {'term'};
+    valid_method= {'chance-open','genzps-open','lag-under','lag-over'};
     validatestring(options.bound_set_method, valid_bound_set_methods);
 
+    inpar = inputParser();
+    inpar.addRequired('sys', @(x) validateattributes(x, ...
+        {'LtiSystem','LtvSystem'}, {'nonempty'}));
+    inpar.addRequired('onestep_prob_thresh', @(x) validateattributes(x,...
+        {'numeric'}, {'scalar','>=',0,'<=',1}));
+    inpar.addRequired('options', @(x) any(validatestring(x.bound_set_method,...
+        valid_bound_set_methods)));
+    
+    try
+        inpar.parse(sys, onestep_prob_thresh, options);
+    catch err
+        exc = SrtInvalidArgsError.withFunctionName();
+        exc = exc.addCause(err);
+        throwAsCaller(exc);
+    end
+
+    if sys.isltv()
+        throw(SrtInternalError('Development for LtvSystem is on going'));
+         % Need to fix the SReachSetLagBset generation for LtvSystem
+   else
+        disturbance = sys.dist_mat * sys.dist;
+    end
+    
     % only need to validate attributes if not loading from file
     if ~strcmpi(options.bound_set_method, 'load')
         % validate that the disturbance is a RandomVector object
@@ -75,7 +101,13 @@ function bounded_set = SReachSetLagBset(disturbance, onestep_prob_thresh, ...
 
             bounded_set = boundedEllipseByRandomVectors(disturbance, ...
                 onestep_prob_thresh, options.num_dirs);
-
+    
+        case 'ellipsoid'
+            r_squared = chi2inv(onestep_prob_thresh, 2);
+            ellipse_shape_mat = disturbance.parameters.covariance * r_squared;
+            bounded_set = SReachEllipsoid(disturbance.parameters.mean,...
+                ellipse_shape_mat);
+            
         case 'box'
             % Has to be Gaussian
             validateattributes(options.err_thresh, {'numeric'}, ...

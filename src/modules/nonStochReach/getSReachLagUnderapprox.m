@@ -50,7 +50,7 @@ function underapprox_set = getSReachLagUnderapprox(sys, target_tube, ...
     inpar.addRequired('target_tube', @(x) validateattributes(x, ...
         {'Tube'}, {'nonempty'}));
     inpar.addRequired('disturbance', @(x) validateattributes(x, ...
-        {'Polyhedron'}, {'nonempty'}));
+        {'Polyhedron','SReachEllipsoid'}, {'nonempty'}));
     
     try
         inpar.parse(sys, target_tube, disturbance);
@@ -75,6 +75,9 @@ function underapprox_set = getSReachLagUnderapprox(sys, target_tube, ...
     if sys.islti()
         inverted_state_matrix = inv(sys.state_mat);
         minus_bu = - sys.input_mat * sys.input_space;
+    else
+        throw(SrtInternalError('LtvSystem development is on going!'));
+        % Need to fix the SReachSetLagBset generation for LtvSystem
     end
 
     if tube_length > 1
@@ -98,10 +101,10 @@ function underapprox_set = getSReachLagUnderapprox(sys, target_tube, ...
             vertices = [];
             for idist = 1: n_disturbances
                 if n_disturbances > 1
-                    effective_dist = sys.dist_mat(current_time) * ...
-                        disturbance{idist};
+                    % Disturbance matrix has already been accounted for
+                    effective_dist = disturbance{idist};
                 else
-                    effective_dist = sys.dist_mat(current_time) * disturbance;
+                    effective_dist = disturbance;
                 end
 
                 effective_target = computeUnderapproxsetRecursion(...
@@ -183,19 +186,25 @@ function back_recursion_set = computeUnderapproxsetRecursion(...
 % 
 % 
     
+    if isa(effective_dist, 'Polyhedron') && effective_dist.isEmptySet
+        % No requirement of robustness
+        new_target = effective_target;
+    elseif isa(effective_dist, 'SReachEllipsoid')
+        new_target_A = effective_target.A;            
+        % support function of the effective_dist - vectorized to handle
+        % Implementation of Kolmanovsky's 1998-based minkowski difference
+        new_target_b = effective_target.b -...
+            effective_dist.support_fun(new_target_A);
+        new_target = Polyhedron('H',[new_target_A new_target_b]);
+    else
+        % Compute a new target set for this iteration that is robust to 
+        % the disturbance
+        new_target = effective_target - effective_dist;
+    end
+            
     % choose style
     switch(style)
         case 'standard'
-            if effective_dist.isEmptySet
-                % No requirement of robustness
-                new_target = effective_target;
-            else
-                % Compute a new target set for this iteration that is robust to 
-                % the disturbance
-                new_target = effective_target - ...
-                    effective_dist;
-            end
-
             % One-step backward reach set
             one_step_backward_reach_set = inverted_state_matrix * ...
                 (new_target + minus_bu);
@@ -210,15 +219,6 @@ function back_recursion_set = computeUnderapproxsetRecursion(...
             % running the computation using a vrep style is an augmentation that
             % tries to keep the polytope in vertex representation for as many
             % possible operations
-            if effective_dist.isEmptySet
-                % No requirement of robustness
-                new_target = effective_target;
-            else
-                % Compute a new target set for this iteration that is robust to 
-                % the disturbance
-                new_target = effective_target - effective_dist;
-            end
-
             % Miniminizing H before MPT makes us jump to V
             minHRep(new_target);
 

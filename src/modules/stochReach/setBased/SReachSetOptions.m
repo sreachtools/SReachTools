@@ -124,7 +124,7 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 
     valid_prob = {'term'};
     valid_method= {'chance-open','genzps-open','lag-under','lag-over'};
-    valid_bound_method = {'load','random','box'};
+    valid_bound_method = {'load','random','box','ellipsoid'};
     % Input parsing
     inpar = inputParser();
     inpar.addRequired('prob_str', @(x) any(validatestring(x,valid_prob)));
