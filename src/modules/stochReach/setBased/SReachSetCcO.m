@@ -118,8 +118,10 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
 
     % Compute \sqrt{h_i^\top * \Sigma_X_no_input * h_i}
     [concat_safety_tube_A, ~] = safety_tube.concat([1 time_horizon]+1);
-    scaled_sigma_mat = diag(sqrt(diag(concat_safety_tube_A * ...
-        cov_X_sans_input * concat_safety_tube_A')));
+
+    sqrt_cov_X_sans_input = chol(cov_X_sans_input);
+    scaled_sigma_mat = diag(norms(concat_safety_tube_A*sqrt_cov_X_sans_input,...
+        2,2));
 
     %% Step 1: Find initial state (xmax) w/ max open-loop stochastic reach prob
     xmax_soln = computeWmax(sys, options, init_safe_set, prob_thresh, ...
@@ -421,7 +423,7 @@ function cheby_soln = computeChebyshev(sys, options, init_safe_set, ...
     %   U\in U^N
     % Dual norm of a_i in init_safe_set for chebyshev-centering
     % constraint
-    dual_norm_of_init_safe_set_A = sqrt(diag(init_safe_set.A*init_safe_set.A')); 
+    dual_norm_of_init_safe_set_A = norms(init_safe_set.A,2,2); 
     cvx_begin quiet
         variable mean_X(sys.state_dim * time_horizon, 1);
         variable deltai(n_lin_const, 1);

@@ -126,7 +126,7 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
     %% Step 1: Find xmax
     % Compute the chebyshev center of the initial safe set and seek the
     % optimal xmax that maximizes the open-loop safety from there
-    dual_norm_of_init_safe_set_A = sqrt(diag(init_safe_set.A*init_safe_set.A')); 
+    dual_norm_of_init_safe_set_A = norms(init_safe_set.A,2,2); 
     % maximize R - 0.01 |U| 
     % subject to
     %   X = Abar x_0 + H * U + G_matrix * \mu_W 

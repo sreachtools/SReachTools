@@ -125,9 +125,9 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
     %% Compute M --- the number of polytopic halfspaces to worry about
     n_lin_state = size(concat_safety_tube_A,1);
 
-    %% Compute \sqrt{h_i^\top * \Sigma_X_no_input * h_i}
-    sigma_vector = diag(sqrt(diag(concat_safety_tube_A * ...
-        cov_X_sans_input * concat_safety_tube_A')));
+    %% Compute \sqrt{h_i^\top * \Sigma_X_no_input * h_i} = ||\sqrt\Sigma_X*h_i||
+    sqrt_cov_X_sans_input = chol(cov_X_sans_input);
+    sigma_vector = norms(concat_safety_tube_A * sqrt_cov_X_sans_input, 2, 2);
 
 
     %% Obtain the piecewise linear overapproximation of norminvcdf in [0,0.5]
