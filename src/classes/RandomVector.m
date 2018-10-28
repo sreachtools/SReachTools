@@ -140,17 +140,42 @@ classdef RandomVector
                     % set parameters
                     obj.parameters.mean = varargin{1};
                     obj.parameters.covariance = varargin{2};
+                    
+                    % TODO: Throw warning as in ellipsoid
                     if ~issymmetric(obj.parameters.covariance)
-                        obj.parameters.covariance =...
-                            (obj.parameters.covariance + obj.parameters.covariance')/2;
+                        % Compute the symmetric component of it
+                        symm_cov_matrix = (obj.parameters.covariance +...
+                            obj.parameters.covariance')/2;
+                        % Max error element-wise
+                        max_err = max(max(abs(obj.parameters.covariance -...
+                            symm_cov_matrix)));
+                        if max_err > eps
+                            warning('SReachTools:runtime',sprintf(...
+                                ['Non-symmetric covariance matrix made ',...
+                                 'symmetric (max element-wise error: ',...
+                                 '%1.3e)!'], max_err));
+                        end
+                        obj.parameters.covariance = symm_cov_matrix;
                     end
                     
                     % Check if the mean and covariance are of correct dimensions
-                    if size(obj.parameters.mean, 1) ~= size(obj.parameters.covariance, 1)
-                        throwAsCaller(SrtInvalidArgsError(['Mean and covariance matrix have different ', ...
-                            'dimensions']));
+                    if size(obj.parameters.mean, 1) ~=...
+                            size(obj.parameters.covariance, 1)
+                        throwAsCaller(SrtInvalidArgsError(['Mean and ',...
+                            'covariance matrix have different dimensions']));
                     end
                         
+                    % For some reason, -eps alone is not enough?
+                    min_eig_val = min(eig(obj.parameters.covariance));
+                    if  min_eig_val < -2*eps
+                        throwAsCaller(SrtInvalidArgsError(['Covariance ',...
+                            'matrix can not have negative eigenvalues']));
+                    elseif min_eig_val <= eps
+                        warning('SReachTools:runtime',['Creating a',...
+                            ' Gaussian which might have a deterministic ',...
+                            'component']);
+                    end
+                                        
                     % Update the dimension
                     obj.dim = size(obj.parameters.mean, 1);
                     
@@ -180,9 +205,47 @@ classdef RandomVector
         % 
         %
             
-            disp(sprintf('%s-dimensional %s random vector', ...
-                         num2str(obj.dim), ...
-                         obj.type));
+            fprintf('%d-dimensional %s random vector\n', obj.dim, obj.type);
+        end
+        
+        function newobj=mtimes(obj, F)
+        % Override of MATLAB multiplication command
+        % ====================================================================
+        % 
+        % Overriding of MATLAB built-in display function for the class
+        %
+        % ====================================================================
+        % 
+        % This function is part of the Stochastic Reachability Toolbox.
+        % License for the use of this function is given in
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        % 
+        %
+            
+            switch [class(obj), class(F)]
+                case ['RandomVector','double']
+                    % All ok
+                case ['double', 'RandomVector']
+                    % Need to switch the arguments
+                    Ftemp = obj;
+                    obj = F;
+                    F = Ftemp;
+                otherwise
+                    throwAsCaller(SrtInvalidArgsError(sprintf(['Operation *',...
+                       ' not defined between *%s, %s'], class(obj), class(F))));
+            end
+            switch obj.type
+                case 'Gaussian'
+                    if size(F, 2) ~= obj.dim
+                        throwAsCaller(SrtInvalidArgsError(['Mismatch ',...
+                            'between dimensions']));
+                    end
+                    newobj=RandomVector('Gaussian', F*obj.parameters.mean,...
+                        F*obj.parameters.covariance*F');
+                otherwise
+                    throwAsCaller(SrtInvalidArgsError(['Multiplication is ',...
+                        'supported only for Gaussian random vectors']));
+            end
         end
     end
 end

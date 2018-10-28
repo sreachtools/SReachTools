@@ -2,12 +2,7 @@ classdef TubeTests < matlab.unittest.TestCase
 % SReachTools/TubeTests: Unit tests for bounded disturbances
 % ===========================================================================
 %
-% Unit testing for bounded disturbances
-%
-% Usage:
-% ------
-% tests = TubeTests()
-% run(tests)
+% Unit testing for Tube
 %
 % ===========================================================================
 %
