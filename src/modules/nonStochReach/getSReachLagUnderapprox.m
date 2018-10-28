@@ -92,7 +92,7 @@ function underapprox_set = getSReachLagUnderapprox(sys, target_tube, ...
         effective_target_tube(end) = target_tube(end);
         for itt = tube_length-1:-1:1
             % Computing effective target tube for current_time
-            current_time = itt - 1;
+            current_time = itt - 1
             if ~sys.islti()
                 inverted_state_matrix = inv(sys.state_mat(current_time));
                 minus_bu = sys.input_mat(current_time) * sys.input_space;
@@ -190,6 +190,7 @@ function back_recursion_set = computeUnderapproxsetRecursion(...
         % No requirement of robustness
         new_target = effective_target;
     elseif isa(effective_dist, 'SReachEllipsoid')
+        %effective_target.minHRep();
         new_target_A = effective_target.A;            
         % support function of the effective_dist - vectorized to handle
         % Implementation of Kolmanovsky's 1998-based minkowski difference

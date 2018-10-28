@@ -68,9 +68,9 @@ sys = getCwhLtiSystem(4, Polyhedron('lb', -umax*ones(2,1), ...
        RandomVector('Gaussian', mean_disturbance,covariance_disturbance));
 
 %% Methods to run   
-ft_run = 1;
-cc_open_run = 1;
-
+ft_run = 0;
+cc_open_run = 0;
+lagunder_run = 1;
 %% Target tube construction --- reach-avoid specification
 time_horizon = 5;          % Stay within a line of sight cone for 4 time steps and 
                          % reach the target at t=5% Safe Set --- LoS cone
@@ -121,7 +121,7 @@ if cc_open_run
     options = SReachSetOptions('term', 'chance-open', ...
         'set_of_dir_vecs', set_of_dir_vecs_cc_open, ...
         'init_safe_set_affine', init_safe_set_affine, ...
-        'verbose', 1);
+        'verbose', 0);
     timer_cc_open = tic;
     [polytope_cc_open, extra_info] = SReachSet('term','chance-open', sys, ...
         prob_thresh, target_tube, options);  
@@ -138,6 +138,18 @@ if ft_run
         target_tube, options);  
     elapsed_time_ft = toc(timer_ft);
 end
+
+%% Fourier transform (Genz's algorithm and MATLAB's patternsearch)
+if lagunder_run
+    options = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
+        'ellipsoid');
+
+    timer_lagunder = tic;
+    polytope_lag = SReachSet('term', 'lag-under', sys,  prob_thresh, ...
+        target_tube, options);
+    elapsed_time_lagunder = toc(timer_lagunder);
+end
+
 
 %% Preparation for Monte-Carlo simulations of the optimal controllers
 % Monte-Carlo simulation parameters
@@ -166,6 +178,13 @@ else
     polytope_ft = Polyhedron();
     elapsed_time_ft = NaN;
 end
+if exist('polytope_lagunder','var')
+    plot(polytope_lagunder.slice([3,4], slice_at_vx_vy), 'color','k','alpha',1);
+    legend_cell{end+1} = 'Underapprox. polytope (lag-under)';
+else
+    polytope_lagunder = Polyhedron();
+    elapsed_time_lagunder = NaN;
+end
 direction_index_to_plot = 30;
 if ~isEmptySet(polytope_cc_open)
     init_state = extra_info(2).vertices_underapprox_polytope(:,direction_index_to_plot);
@@ -191,11 +210,12 @@ xlabel('$x$','interpreter','latex');
 ylabel('$y$','interpreter','latex');
 
 %% Reporting solution times
-if any(isnan([elapsed_time_ft, elapsed_time_cc_open]))
+if any(isnan([elapsed_time_ft, elapsed_time_cc_open, elapsed_time_lagunder]))
     disp('Skipped items would show up as NaN');
 end
-fprintf('Elapsed time: (genzps-open) %1.3f | (chance-open) %1.3f seconds\n', ...
-    elapsed_time_ft, elapsed_time_cc_open);
+fprintf('Elapsed time: (genzps-open) %1.3f | (chance-open) %1.3f',...
+    ' | (lag-under) %1.3f seconds\n', ...
+    elapsed_time_ft, elapsed_time_cc_open, elapsed_time_lagunder);
 
 %% Helper functions
 % Plotting function
