@@ -1,5 +1,5 @@
-function underapprox_set = getSReachLagUnderapprox(sys, target_tube, ...
-    disturbance)
+function [underapprox_set, varargout] = getSReachLagUnderapprox(sys, ...
+    target_tube, disturbance)
 % Get underapproximation of stochastic reach set
 % =========================================================================
 %
@@ -70,66 +70,214 @@ function underapprox_set = getSReachLagUnderapprox(sys, target_tube, ...
     tube_length = length(target_tube);
     n_disturbances = length(disturbance);
 
-    % MPT does not support A \ P or P / A (P is Polyhedron and A is matrix)
-    % so we must invert prior
+
+    % initialize polyhedron array
+    effective_target_tube(tube_length) = target_tube(end);
+    effective_target = effective_target_tube(end);
+
     if sys.islti()
+        % LTI System recursion
+        % --------------------------------------------------------------------
+        % For LTI systems we can improve the speed some by precomputing the
+        % inverse of A and -B*U because they will remain consistent across
+        % time
+
+        % MPT does not support A \ P or P / A (P is Polyhedron and A is matrix)
+        % so we invert prior to improve speed
         inverted_state_matrix = inv(sys.state_mat);
         minus_bu = - sys.input_mat * sys.input_space;
+        if iscell(disturbance)
+            for lv = 1:length(n_disturbances)
+                if isa(disturbance, 'Polyhedron');
+                    disturbance{lv} = sys.dist_mat * disturbance;
+                elseif isa(disturbance, 'SReachEllipsoid')
+                    disturbance{lv} = SReachEllipsoid( ...
+                        sys.dist_mat * disturbance.center, ...
+                        sys.dist_mat' * disturbance.shape_matrix * sys.dist_mat);
+                end
+            end
+        else
+            if isa(disturbance, 'Polyhedron');
+                disturbance = sys.dist_mat * disturbance;
+            elseif isa(disturbance, 'SReachEllipsoid')
+                disturbance = SReachEllipsoid( ...
+                    sys.dist_mat * disturbance.center, ...
+                    sys.dist_mat' * disturbance.shape_matrix * sys.dist_mat);
+            end
+        end
+
+        if tube_length > 1
+            if sys.state_dim > 2 && n_disturbances > 1
+                % TODO [[url once note has been added to the google group]].'])
+                warning('SReachTools:runtime', ['The convex hull operation may', ...
+                    'produce inconsistent or inaccurate results for systems ', ...
+                    'with dimensions greater than 2.'])
+            end
+
+            % iterate backwards
+            for itt = tube_length-1:-1:1
+                % Computing effective target tube for current_time
+                current_time = itt - 1;
+
+                vertices = [];
+                for idist = 1:n_disturbances
+                    if n_disturbances > 1
+                        % Disturbance matrix has already been accounted for
+                        effective_dist = disturbance{idist};
+                    else
+                        effective_dist = disturbance;
+                    end
+
+                    if isa(effective_dist, 'Polyhedron') && ...
+                       effective_dist.isEmptySet
+                        % No requirement of robustness
+                        new_target = effective_target;
+                    elseif isa(effective_dist, 'SReachEllipsoid')
+                        %effective_target.minHRep();
+                        new_target_A = effective_target.A;            
+                        % support function of the effective_dist - vectorized to handle
+                        % Implementation of Kolmanovsky's 1998-based minkowski difference
+                        new_target_b = effective_target.b - ...
+                            effective_dist.support_fun(new_target_A);
+                        new_target = Polyhedron('H',[new_target_A new_target_b]);
+                    else
+                        % Compute a new target set for this iteration that is robust to 
+                        % the disturbance
+                        new_target = effective_target - effective_dist;
+                    end
+
+                    % One-step backward reach set
+                    one_step_backward_reach_set = inverted_state_matrix * ...
+                        (new_target + minus_bu);
+
+
+                    % Guarantee staying within target_tube by intersection
+                    effective_target = intersect(...
+                        one_step_backward_reach_set, ...
+                        target_tube(itt));
+
+                    if n_disturbances > 1
+                        % Don't trigger conversion unless you really have to
+                        vertices = [vertices; effective_target.V];                
+                    end
+                end
+
+                if n_disturbances > 1
+                    effective_target_tube(itt) = Polyhedron(vertices);
+                else
+                    effective_target_tube(itt) = effective_target;
+                end
+            end
+        end     
     else
+        % LTV System Recursion
+        % -------------------------------------------------------------------
+        % The recursion is very similar to the LTI system recursion but many
+        % of the sets cannot be precomputed for speed because the system
+        % matrices are time-dependent
+
         throw(SrtInternalError('LtvSystem development is on going!'));
         % Need to fix the SReachSetLagBset generation for LtvSystem
-    end
 
-    if tube_length > 1
-        if sys.state_dim > 2
-            % TODO [[url once note has been added to the google group]].'])
-            warning('SReachTools:runtime', ['The convex hull operation may', ...
-                'produce inconsistent or inaccurate results for systems ', ...
-                'with dimensions greater than 2.'])
-        end
-        
-        effective_target_tube = repmat(Polyhedron(), tube_length, 1);
-        effective_target_tube(end) = target_tube(end);
-        for itt = tube_length-1:-1:1
-            % Computing effective target tube for current_time
-            current_time = itt - 1
-            if ~sys.islti()
+
+
+        if tube_length > 1
+            if sys.state_dim > 2 && n_disturbances > 1
+                % TODO [[url once note has been added to the google group]].'])
+                warning('SReachTools:runtime', ['The convex hull operation may', ...
+                    'produce inconsistent or inaccurate results for systems ', ...
+                    'with dimensions greater than 2.'])
+            end
+
+            % iterate backwards
+            for itt = tube_length-1:-1:1
+                % Computing effective target tube for current_time
+                % adjustment is needed because of MATLAB's indexing at 1 instaed
+                % of 0
+                current_time = itt - 1;
+
+                % run recursion for an LTI system
+                % MPT does not support A \ P or P / A (P is Polyhedron and A is matrix)
+                % so we must invert prior
                 inverted_state_matrix = inv(sys.state_mat(current_time));
-                minus_bu = sys.input_mat(current_time) * sys.input_space;
-            end
+                minus_bu = - sys.input_mat(current_time) * sys.input_space;
 
-            vertices = [];
-            for idist = 1: n_disturbances
-                if n_disturbances > 1
-                    % Disturbance matrix has already been accounted for
-                    effective_dist = disturbance{idist};
+                if iscell(disturbance)
+                    for lv = 1:length(n_disturbances)
+                        if isa(disturbance, 'Polyhedron');
+                            disturbance{lv} = sys.dist_mat * disturbance;
+                        elseif isa(disturbance, 'SReachEllipsoid')
+                            disturbance{lv} = SReachEllipsoid( ...
+                                sys.dist_mat * disturbance.center, ...
+                                sys.dist_mat' * disturbance.shape_matrix * sys.dist_mat);
+                        end
+                    end
                 else
-                    effective_dist = disturbance;
+                    if isa(disturbance, 'Polyhedron');
+                        disturbance = sys.dist_mat * disturbance;
+                    elseif isa(disturbance, 'SReachEllipsoid')
+                        disturbance = SReachEllipsoid( ...
+                            sys.dist_mat * disturbance.center, ...
+                            sys.dist_mat' * disturbance.shape_matrix * sys.dist_mat);
+                    end
                 end
 
-                effective_target = computeUnderapproxsetRecursion(...
-                    effective_target_tube(itt+1), ...
-                    target_tube(itt), ...
-                    minus_bu, ...
-                    inverted_state_matrix, ....
-                    effective_dist, ...
-                    'standard');
+                vertices = [];
+                for idist = 1:n_disturbances
+                    if n_disturbances > 1
+                        % Disturbance matrix has already been accounted for
+                        effective_dist = disturbance{idist};
+                    else
+                        effective_dist = disturbance;
+                    end
+
+                    if isa(effective_dist, 'Polyhedron') && ....
+                       effective_dist.isEmptySet
+                        % No requirement of robustness
+                        new_target = effective_target;
+                    elseif isa(effective_dist, 'SReachEllipsoid')
+                        %effective_target.minHRep();
+                        new_target_A = effective_target.A;            
+                        % support function of the effective_dist - vectorized to handle
+                        % Implementation of Kolmanovsky's 1998-based minkowski difference
+                        new_target_b = effective_target.b -...
+                            effective_dist.support_fun(new_target_A);
+                        new_target = Polyhedron('H',[new_target_A new_target_b]);
+                    else
+                        % Compute a new target set for this iteration that is robust to 
+                        % the disturbance
+                        new_target = effective_target - effective_dist;
+                    end
+
+                    % One-step backward reach set
+                    one_step_backward_reach_set = inverted_state_matrix * ...
+                        (new_target + minus_bu);
+
+
+                    % Guarantee staying within target_tube by intersection
+                    effective_target = intersect(...
+                        one_step_backward_reach_set, ...
+                        target_tube(itt));
+
+                    if n_disturbances > 1
+                        % Don't trigger conversion unless you really have to
+                        vertices = [vertices; effective_target.V];                
+                    end
+                end
 
                 if n_disturbances > 1
-                    % Don't trigger conversion unless you really have to
-                    vertices = [vertices; effective_target.V];                
+                    effective_target_tube(itt) = Polyhedron(vertices);
+                else
+                    effective_target_tube(itt) = effective_target;
                 end
             end
-
-            if n_disturbances > 1
-                effective_target_tube(itt) = Polyhedron(vertices);
-            else
-                effective_target_tube(itt) = effective_target;
-            end
-        end
+        end    
     end
 
     underapprox_set = effective_target_tube(1);
+    if tube_length > 1
+        varargout{1} = effective_target_tube(2:end);
+    end
 end
 
 function back_recursion_set = computeUnderapproxsetRecursion(...
@@ -142,6 +290,7 @@ function back_recursion_set = computeUnderapproxsetRecursion(...
 % Do the one set backward recursion to obtain the effective target
 % =========================================================================
 %
+% THIS FUNCTION IS NOT CURRENTLY IN USE. IT IS NOT YET DELETED BUT IS NOT CALLED
 % Nested function to perform the one-step recursion of Algorithm 1 from:
 % 
 %      J. D. Gleason, A. P. Vinod, and M. M. K. Oishi. 2018. Lagrangian 
