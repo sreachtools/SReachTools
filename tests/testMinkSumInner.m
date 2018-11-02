@@ -1,5 +1,5 @@
-clc
- 
+cvx_clear
+
 %% 4D case
 clear
 A = Polyhedron('lb',-ones(4,1),'ub',ones(4,1));
@@ -10,7 +10,7 @@ disp('>>> C_inner = minkSumInner(A, B)');
 tic
 C_inner = minkSumInner(A, B);
 toc;
-if C.contains(C_inner)
+if C.contains(C_inner) && size(C_inner.V,1)>1
     disp('Containment rules satisfied');
 else
     disp('### Containment rules not satisfied');keyboard
@@ -21,7 +21,7 @@ D = Polyhedron('V',allcomb([-1,1],[-1,1],[-1,1],[-1,1]));
 tic
 D_inner = minkSumInner(A, B, D);
 toc;
-if C.contains(D_inner)
+if C.contains(D_inner) && size(D_inner.V,1)>1
     disp('Containment rules satisfied');
 else
     disp('### Containment rules not satisfied');keyboard
@@ -40,7 +40,7 @@ disp('>>> C_inner = minkSumInner(A, B)');
 tic;
 C_inner = minkSumInner(A,B);
 toc;
-if C.contains(C_inner)
+if C.contains(C_inner) && size(C_inner.V,1)>1
     disp('Containment rules satisfied');
 else
     disp('### Containment rules not satisfied');keyboard        
@@ -51,7 +51,7 @@ D = Polyhedron('V',[0,1;1,0;-1,0;0,-1]);
 tic;
 D_inner = minkSumInner(A, B, D);
 toc;
-if C.contains(D_inner)
+if C.contains(D_inner) && size(D_inner.V,1)>1
     disp('Containment rules satisfied');
 else
     disp('### Containment rules not satisfied');keyboard        
@@ -61,7 +61,7 @@ disp('>>> E_inner = minkSumInner(A, B, B)');
 tic;
 E_inner = minkSumInner(A, B, B - 10*ones(2,1));
 toc;
-if C.contains(E_inner)
+if C.contains(E_inner) && size(E_inner.V,1)>1
     disp('Containment rules satisfied');
 else
     disp('### Containment rules not satisfied');keyboard        

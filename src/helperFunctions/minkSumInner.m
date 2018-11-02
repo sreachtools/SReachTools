@@ -42,7 +42,11 @@ function polyInner = minkSumInner(polyA, polyB, varargin)
     t_lb = 0;
     bisect_tol = 5e-2;
     myzero_lb = -1e-6;
-    if outer_opt(t_ub, xc_guess, polyA, polyB, polyC) >= 0
+    
+    contain_chk = @(t) outer_opt(t, xc_guess, polyA, polyB, polyC) >= myzero_lb;
+%     contain_chk = @(t) bilin_opt(t, xc_guess, polyA, polyB, polyC) >= myzero_lb;
+    
+    if contain_chk(t_ub)
         warning('SReachTools:runtime',['10x magnification of the template',...
             ' is a subset of the Minkowski sum. Please use a larger ',...
             'polytope for better results.']);
@@ -52,8 +56,7 @@ function polyInner = minkSumInner(polyA, polyB, varargin)
         t_opt = 0;
         while abs(t_ub - t_lb) > bisect_tol
             t_try = (t_ub + t_lb)/2;
-            optval = outer_opt(t_try, xc_guess, polyA, polyB, polyC);
-            if optval >= myzero_lb
+            if contain_chk(t_try)
                 t_opt = t_try;
                 t_lb = t_try;
                 fprintf('t=%1.3f:   Feasible\n',t_try);
@@ -70,6 +73,29 @@ function polyInner = minkSumInner(polyA, polyB, varargin)
     end
     xc_opt = xc_guess;
     polyInner = t_opt * polyC + xc_opt;
+end
+
+function optval = bilin_opt(t, xc, polyA, polyB, polyC)
+    ell = sdpvar(polyA.Dim,1);
+    lambda1 = sdpvar(size(polyA.A,1),1);
+    lambda2 = sdpvar(size(polyB.A,1),1);
+    x = sdpvar(polyC.Dim,1);
+    obj_val = sdpvar;
+    constraints = [polyA.A'*lambda1 == ell, polyB.A'* lambda2 == ell,...
+        lambda1 >= 0, lambda2 >= 0, polyC.A * x <= polyC.b,...
+        polyA.b'*lambda1 + polyB.b'*lambda2 - ell'*x*t - ell'*xc <= obj_val,...
+        ell<= 1, ell >= -1];
+    options = sdpsettings('verbose',1,'solver','bmibnb');
+    sol = optimize(constraints, obj_val, options);
+    if sol.problem == 3
+        % Infeasible due to termination limit
+        optval = Inf;
+    elseif sol.problem == 2
+        % Unbounded, so set to -Inf
+        optval = -Inf;
+    else
+        optval = value(obj_val);
+    end
 end
 
 function optval = outer_opt(t, xc, polyA, polyB, polyC)
