@@ -1,5 +1,5 @@
 function [underapprox_set, varargout] = getSReachLagUnderapprox(sys, ...
-    target_tube, disturbance)
+    target_tube, scaled_disturbance)
 % Get underapproximation of stochastic reach set
 % =========================================================================
 %
@@ -53,7 +53,7 @@ function [underapprox_set, varargout] = getSReachLagUnderapprox(sys, ...
         {'Polyhedron','SReachEllipsoid'}, {'nonempty'}));
     
     try
-        inpar.parse(sys, target_tube, disturbance);
+        inpar.parse(sys, target_tube, scaled_disturbance);
     catch cause_exc
         exc = SrtInvalidArgsError.withFunctionName();
         exc = addCause(exc, cause_exc);
@@ -68,7 +68,7 @@ function [underapprox_set, varargout] = getSReachLagUnderapprox(sys, ...
     end
     
     tube_length = length(target_tube);
-    n_disturbances = length(disturbance);
+    n_disturbances = length(scaled_disturbance);
 
 
     % initialize polyhedron array
@@ -86,25 +86,6 @@ function [underapprox_set, varargout] = getSReachLagUnderapprox(sys, ...
         % so we invert prior to improve speed
         inverted_state_matrix = inv(sys.state_mat);
         minus_bu = - sys.input_mat * sys.input_space;
-        if iscell(disturbance)
-            for lv = 1:length(n_disturbances)
-                if isa(disturbance, 'Polyhedron');
-                    disturbance{lv} = sys.dist_mat * disturbance;
-                elseif isa(disturbance, 'SReachEllipsoid')
-                    disturbance{lv} = SReachEllipsoid( ...
-                        sys.dist_mat * disturbance.center, ...
-                        sys.dist_mat' * disturbance.shape_matrix * sys.dist_mat);
-                end
-            end
-        else
-            if isa(disturbance, 'Polyhedron');
-                disturbance = sys.dist_mat * disturbance;
-            elseif isa(disturbance, 'SReachEllipsoid')
-                disturbance = SReachEllipsoid( ...
-                    sys.dist_mat * disturbance.center, ...
-                    sys.dist_mat' * disturbance.shape_matrix * sys.dist_mat);
-            end
-        end
 
         if tube_length > 1
             if sys.state_dim > 2 && n_disturbances > 1
@@ -123,16 +104,12 @@ function [underapprox_set, varargout] = getSReachLagUnderapprox(sys, ...
                 for idist = 1:n_disturbances
                     if n_disturbances > 1
                         % Disturbance matrix has already been accounted for
-                        effective_dist = disturbance{idist};
+                        effective_dist = scaled_disturbance{idist};
                     else
-                        effective_dist = disturbance;
+                        effective_dist = scaled_disturbance;
                     end
 
-                    if isa(effective_dist, 'Polyhedron') && ...
-                       effective_dist.isEmptySet
-                        % No requirement of robustness
-                        new_target = effective_target;
-                    elseif isa(effective_dist, 'SReachEllipsoid')
+                    if isa(effective_dist, 'SReachEllipsoid')
                         %effective_target.minHRep();
                         new_target_A = effective_target.A;            
                         % support function of the effective_dist - vectorized to handle
@@ -140,20 +117,26 @@ function [underapprox_set, varargout] = getSReachLagUnderapprox(sys, ...
                         new_target_b = effective_target.b - ...
                             effective_dist.support_fun(new_target_A);
                         new_target = Polyhedron('H',[new_target_A new_target_b]);
-                    else
-                        % Compute a new target set for this iteration that is robust to 
-                        % the disturbance
-                        new_target = effective_target - effective_dist;
+                    else %if isa(effective_dist, 'Polyhedron') 
+                        if effective_dist.isEmptySet
+                            % No requirement of robustness
+                            new_target = effective_target;
+                        else
+                            % Compute a new target set for this iteration that is robust to 
+                            % the disturbance
+                            new_target = effective_target - effective_dist;
+                        end
                     end
 
                     % One-step backward reach set
-                    one_step_backward_reach_set = inverted_state_matrix * ...
-                        (new_target + minus_bu);
-
+%                     one_step_backward_reach_set = inverted_state_matrix * ...
+%                         (new_target + minus_bu);
+                    
+                    plusInner = minkSumInner(new_target, minus_bu);
+                    one_step_backward_reach_set=inverted_state_matrix*plusInner;
 
                     % Guarantee staying within target_tube by intersection
-                    effective_target = intersect(...
-                        one_step_backward_reach_set, ...
+                    effective_target = intersect(one_step_backward_reach_set,...
                         target_tube(itt));
 
                     if n_disturbances > 1
@@ -167,6 +150,17 @@ function [underapprox_set, varargout] = getSReachLagUnderapprox(sys, ...
                 else
                     effective_target_tube(itt) = effective_target;
                 end
+                
+%                 figure(itt);
+%                 clf
+%                 plot(target_tube(1).slice([3,4],zeros(2,1)),'color','y');
+%                 hold on;
+%                 plot(target_tube(end).slice([3,4],zeros(2,1)),'color','k');
+%                 clr_string = {'w','b','r','k','g'};
+%                 plot(one_step_backward_reach_set.projection([1,2]),'color',clr_string{itt},'alpha',0.2);
+% %                 plot(effective_target.projection([1,2]),'color',clr_string{itt},'alpha',0.2);
+%                 drawnow;              
+
             end
         end     
     else
@@ -202,23 +196,23 @@ function [underapprox_set, varargout] = getSReachLagUnderapprox(sys, ...
                 inverted_state_matrix = inv(sys.state_mat(current_time));
                 minus_bu = - sys.input_mat(current_time) * sys.input_space;
 
-                if iscell(disturbance)
+                if iscell(scaled_disturbance)
                     for lv = 1:length(n_disturbances)
-                        if isa(disturbance, 'Polyhedron');
-                            disturbance{lv} = sys.dist_mat * disturbance;
-                        elseif isa(disturbance, 'SReachEllipsoid')
-                            disturbance{lv} = SReachEllipsoid( ...
-                                sys.dist_mat * disturbance.center, ...
-                                sys.dist_mat' * disturbance.shape_matrix * sys.dist_mat);
+                        if isa(scaled_disturbance, 'Polyhedron');
+                            scaled_disturbance{lv} = sys.dist_mat * scaled_disturbance;
+                        elseif isa(scaled_disturbance, 'SReachEllipsoid')
+                            scaled_disturbance{lv} = SReachEllipsoid( ...
+                                sys.dist_mat * scaled_disturbance.center, ...
+                                sys.dist_mat' * scaled_disturbance.shape_matrix * sys.dist_mat);
                         end
                     end
                 else
-                    if isa(disturbance, 'Polyhedron');
-                        disturbance = sys.dist_mat * disturbance;
-                    elseif isa(disturbance, 'SReachEllipsoid')
-                        disturbance = SReachEllipsoid( ...
-                            sys.dist_mat * disturbance.center, ...
-                            sys.dist_mat' * disturbance.shape_matrix * sys.dist_mat);
+                    if isa(scaled_disturbance, 'Polyhedron');
+                        scaled_disturbance = sys.dist_mat * scaled_disturbance;
+                    elseif isa(scaled_disturbance, 'SReachEllipsoid')
+                        scaled_disturbance = SReachEllipsoid( ...
+                            sys.dist_mat * scaled_disturbance.center, ...
+                            sys.dist_mat' * scaled_disturbance.shape_matrix * sys.dist_mat);
                     end
                 end
 
@@ -226,9 +220,9 @@ function [underapprox_set, varargout] = getSReachLagUnderapprox(sys, ...
                 for idist = 1:n_disturbances
                     if n_disturbances > 1
                         % Disturbance matrix has already been accounted for
-                        effective_dist = disturbance{idist};
+                        effective_dist = scaled_disturbance{idist};
                     else
-                        effective_dist = disturbance;
+                        effective_dist = scaled_disturbance;
                     end
 
                     if isa(effective_dist, 'Polyhedron') && ....

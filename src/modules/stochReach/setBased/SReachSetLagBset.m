@@ -1,4 +1,4 @@
-function bounded_set = SReachSetLagBset(sys, onestep_prob_thresh, ...
+function scaled_bounded_set = SReachSetLagBset(sys, onestep_prob_thresh, ...
     options)
 % Get bounded disturbance set for approximation
 % ============================================================================
@@ -63,18 +63,19 @@ function bounded_set = SReachSetLagBset(sys, onestep_prob_thresh, ...
 
     if sys.isltv()
         throw(SrtInternalError('Development for LtvSystem is on going'));
-         % Need to fix the SReachSetLagBset generation for LtvSystem
-   else
-        disturbance = sys.dist_mat * sys.dist;
+        % Need to fix the SReachSetLagBset generation for LtvSystem
+    else
+        % Compute the disturbance v=Fw
+        scaled_disturbance = sys.dist_mat * sys.dist;
     end
     
     % only need to validate attributes if not loading from file
     if ~strcmpi(options.bound_set_method, 'load')
         % validate that the disturbance is a RandomVector object
         % then ensure that the disturbance is Gaussian
-        validateattributes(disturbance, {'RandomVector'}, ...
+        validateattributes(scaled_disturbance, {'RandomVector'}, ...
             {'nonempty'})
-        if ~strcmpi(disturbance.type, 'Gaussian')
+        if ~strcmpi(scaled_disturbance.type, 'Gaussian')
             exc = SrtInvalidArgsError('Disturbance must be of type Gaussian');
             throwAsCaller(exc);
         end
@@ -99,13 +100,14 @@ function bounded_set = SReachSetLagBset(sys, onestep_prob_thresh, ...
             validateattributes(options.num_dirs, {'numeric'}, ...
                 {'scalar', 'integer'});
 
-            bounded_set = boundedEllipseByRandomVectors(disturbance, ...
+            scaled_bounded_set = boundedEllipseByRandomVectors(scaled_disturbance, ...
                 onestep_prob_thresh, options.num_dirs);
     
         case 'ellipsoid'
             r_squared = chi2inv(onestep_prob_thresh, 2);
-            ellipse_shape_mat = disturbance.parameters.covariance * r_squared;
-            bounded_set = SReachEllipsoid(disturbance.parameters.mean,...
+            ellipse_shape_mat = scaled_disturbance.parameters.covariance *...
+                r_squared;
+            scaled_bounded_set = SReachEllipsoid(scaled_disturbance.parameters.mean,...
                 ellipse_shape_mat);
             
         case 'box'
@@ -113,14 +115,14 @@ function bounded_set = SReachSetLagBset(sys, onestep_prob_thresh, ...
             validateattributes(options.err_thresh, {'numeric'}, ...
                 {'scalar', 'positive'});
 
-            bounded_set = boxBisection(disturbance, ...
+            scaled_bounded_set = boxBisection(scaled_disturbance, ...
                 onestep_prob_thresh, options.err_thresh);
         case 'optim-box'
             % Has to be Gaussian
             validateattributes(options.box_center, {'numeric'}, {'nonempty', ...
-                'vector','size', [disturbance.dim 1]});
+                'vector','size', [scaled_disturbance.dim 1]});
             
-            bounded_set = getOptimizationBoxForGaussian(disturbance, ...
+            scaled_bounded_set = getOptimizationBoxForGaussian(scaled_disturbance, ...
                 onestep_prob_thresh, options.box_center);
         case 'load'
             % load a predefined bounded set, primarily used for comparison with
@@ -146,12 +148,12 @@ function bounded_set = SReachSetLagBset(sys, onestep_prob_thresh, ...
                     'must be structured.']);
                 throwAsCaller(exc);
             else
-                bounded_set = ls.(fnames{1});
+                scaled_bounded_set = ls.(fnames{1});
             end
             
             % validate that what was loaded from the mat is actually a
             % polyhedron
-            validateattributes(bounded_set, {'Polyhedron'}, {'nonempty'});
+            validateattributes(scaled_bounded_set, {'Polyhedron'}, {'nonempty'});
 %           TODO-Test: Need to check for disturbance dimension            
 %             if bounded_set.Dim ~= disturbance.dim
 %                 throw(SrtInvalidArgsError(['Mat file did not contain a ', ...

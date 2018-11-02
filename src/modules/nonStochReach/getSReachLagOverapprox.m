@@ -1,5 +1,5 @@
 function overapprox_set = getSReachLagOverapprox(sys, target_tube, ...
-    disturbance)
+    scaled_disturbance)
 % Get the overapproximation of the stoch reach set
 % ============================================================================
 %
@@ -48,7 +48,7 @@ function overapprox_set = getSReachLagOverapprox(sys, target_tube, ...
         {'Polyhedron'}, {'nonempty'}));
     
     try
-        inpar.parse(sys, target_tube, disturbance);
+        inpar.parse(sys, target_tube, scaled_disturbance);
     catch cause_exc
         exc = SrtInvalidArgsError.withFunctionName();
         exc = addCause(exc, cause_exc);
@@ -58,6 +58,9 @@ function overapprox_set = getSReachLagOverapprox(sys, target_tube, ...
     tube_length = length(target_tube);
     if sys.islti()
         inverted_state_matrix = inv(sys.state_mat);
+    else
+        throw(SrtInternalError('LtvSystem development is on going!'));
+
     end
 
     effective_target_tube = repmat(Polyhedron(), tube_length, 1);
@@ -69,14 +72,13 @@ function overapprox_set = getSReachLagOverapprox(sys, target_tube, ...
                 inverted_state_matrix = inv(sys.state_mat(current_time));
             end
             
-            if disturbance.isEmptySet
+            if scaled_disturbance.isEmptySet
                 % No augmentation
                 new_target = effective_target_tube(itt+1);
             else
                 % Compute a new target set for this iteration that is robust to 
                 % the disturbance
-                new_target = effective_target_tube(itt+1) + ...
-                    (-sys.dist_mat(current_time) * disturbance);
+                new_target = effective_target_tube(itt+1) + (-scaled_disturbance);
             end
 
             % One-step backward reach set

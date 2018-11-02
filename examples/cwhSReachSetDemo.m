@@ -64,7 +64,7 @@ covariance_disturbance = diag([1e-4, 1e-4, 5e-8, 5e-8]);
 % Define the CWH (planar) dynamics of the deputy spacecraft relative to the
 % chief spacecraft as a LtiSystem object
 sys = getCwhLtiSystem(4, Polyhedron('lb', -umax*ones(2,1), ...
-                                        'ub',  umax*ones(2,1)), ...
+                                    'ub',  umax*ones(2,1)), ...
        RandomVector('Gaussian', mean_disturbance,covariance_disturbance));
 
 %% Methods to run   
@@ -139,13 +139,13 @@ if ft_run
     elapsed_time_ft = toc(timer_ft);
 end
 
-%% Fourier transform (Genz's algorithm and MATLAB's patternsearch)
+%% Lagrangian approach
 if lagunder_run
     options = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
         'ellipsoid');
 
     timer_lagunder = tic;
-    polytope_lag = SReachSet('term', 'lag-under', sys,  prob_thresh, ...
+    polytope_lagunder = SReachSet('term', 'lag-under', sys,  prob_thresh, ...
         target_tube, options);
     elapsed_time_lagunder = toc(timer_lagunder);
 end
@@ -179,7 +179,7 @@ else
     elapsed_time_ft = NaN;
 end
 if exist('polytope_lagunder','var')
-    plot(polytope_lagunder.slice([3,4], slice_at_vx_vy), 'color','k','alpha',1);
+    plot(polytope_lagunder.slice([3,4], slice_at_vx_vy), 'color','r','alpha',1);
     legend_cell{end+1} = 'Underapprox. polytope (lag-under)';
 else
     polytope_lagunder = Polyhedron();
@@ -213,8 +213,8 @@ ylabel('$y$','interpreter','latex');
 if any(isnan([elapsed_time_ft, elapsed_time_cc_open, elapsed_time_lagunder]))
     disp('Skipped items would show up as NaN');
 end
-fprintf('Elapsed time: (genzps-open) %1.3f | (chance-open) %1.3f',...
-    ' | (lag-under) %1.3f seconds\n', ...
+fprintf(['Elapsed time: (genzps-open) %1.3f | (chance-open) %1.3f',...
+    ' | (lag-under) %1.3f seconds\n'], ...
     elapsed_time_ft, elapsed_time_cc_open, elapsed_time_lagunder);
 
 %% Helper functions
