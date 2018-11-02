@@ -86,7 +86,7 @@ function [underapprox_set, varargout] = getSReachLagUnderapprox(sys, ...
         % so we invert prior to improve speed
         inverted_state_matrix = inv(sys.state_mat);
         minus_bu = - sys.input_mat * sys.input_space;
-
+        Ainv_minus_bu = inverted_state_matrix * minus_bu;
         if tube_length > 1
             if sys.state_dim > 2 && n_disturbances > 1
                 % TODO [[url once note has been added to the google group]].'])
@@ -132,8 +132,10 @@ function [underapprox_set, varargout] = getSReachLagUnderapprox(sys, ...
 %                     one_step_backward_reach_set = inverted_state_matrix * ...
 %                         (new_target + minus_bu);
                     
-                    plusInner = minkSumInner(new_target, minus_bu);
-                    one_step_backward_reach_set=inverted_state_matrix*plusInner;
+%                     plusInner = minkSumInner(new_target, minus_bu);
+%                     one_step_backward_reach_set=inverted_state_matrix*plusInner;
+                    one_step_backward_reach_set = minkSumInner(...
+                        inverted_state_matrix*new_target, Ainv_minus_bu);
 
                     % Guarantee staying within target_tube by intersection
                     effective_target = intersect(one_step_backward_reach_set,...
