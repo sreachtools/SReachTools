@@ -1,4 +1,4 @@
-function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
+function [approx_stoch_reach, opt_input_vec] = SReachPointVoO(sys, ...
     initial_state, safety_tube, options)
 % Solve the problem of stochastic reachability of a target tube (a lower bound
 % on the maximal reach probability and an open-loop controller synthesis) using
@@ -123,8 +123,21 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
             fprintf('Done\n');
         end
 
-        % Implementation of Problem 2 in Lesser CDC 2013
-        % Solve the mixed-integer linear program
+        % Implementation of Problem 3 in  Sartipizadeh ACC 2019 (submitted)
+        % Step 1: Compute the Voronoi centers with prescribed number of
+        % bins --- Use k-means clustering
+        n_means = 10;
+        [idx, W_centroids] = kmeans(W_realizations, n_means);
+        % Step 2: Compute the buffers associated with each of the Voronoi
+        % centers
+        buffers = zeroes(n_lin_state, n_means);
+        for idx_indx = 1:n_means
+            W_realizations_in_idx = W_realizations(idx==idx_indx,:);
+            W_centroid_in_indx = W_centroids(idx_indx,:);
+            % Buffer: max_k G * F*W^(k) - G * W_centroid
+            buffers(:, idx_indx) = max(F*W_realizations_in_idx - F*W_centroid_in_indx);
+        end
+        % Step 3: Solve the undersampled MILP
         if options.verbose >= 1
             fprintf('Setting up CVX problem....');
         end
@@ -141,10 +154,10 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
             maximize sum(z)
             subject to
                 mean_X == repmat(Z * initial_state + H * U_vector, ...
-                    1, options.num_particles) + G * W_realizations;
+                    1, n_means) + G * W_centroids;
                 concat_input_space_A * U_vector <= concat_input_space_b;
-                concat_safety_tube_A * mean_X <= repmat( ...
-                    concat_safety_tube_b, 1, options.num_particles) + ...
+                concat_safety_tube_A * mean_X + buffer <= repmat( ...
+                    concat_safety_tube_b, 1, n_means) + ...
                     options.bigM * repmat(1-z,n_lin_state,1);
             if options.verbose >= 1
                 fprintf('Done\nParsing and solving the MILP....');
@@ -158,12 +171,14 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
             approx_stoch_reach = sum(z)/options.num_particles;
             opt_input_vec = U_vector; 
         end
+        % Step 4: Improve upon the estimate by a refined counting
+        % Solve the mixed-integer linear program
     end
 end
 
 function otherInputHandling(options, sys)
     if ~(strcmpi(options.prob_str, 'term') &&...
-            strcmpi(options.method_str, 'particle-open'))
+            strcmpi(options.method_str, 'voronoi-open'))
         throwAsCaller(SrtInvalidArgsError('Invalid options provided'));
     end
     if ~strcmpi(sys.dist.type,'Gaussian')

@@ -212,8 +212,18 @@ classdef RandomVector
         % Override of MATLAB multiplication command
         % ====================================================================
         % 
-        % Overriding of MATLAB built-in display function for the class
+        % Inputs:
+        % -------
+        %   obj - RandomVector object
+        %   F   - Linear transformation matrix for multiplication
         %
+        % Outputs:
+        % --------
+        %   newobj - RandomVector object (F*obj)
+        %
+        % Notes:
+        % ------
+        % * Requires Gaussian random vector assumption
         % ====================================================================
         % 
         % This function is part of the Stochastic Reachability Toolbox.
@@ -244,6 +254,46 @@ classdef RandomVector
                         F*obj.parameters.covariance*F');
                 otherwise
                     throwAsCaller(SrtInvalidArgsError(['Multiplication is ',...
+                        'supported only for Gaussian random vectors']));
+            end
+        end
+        
+        function newobj=concat(obj, time_horizon)
+        % Create a concatenated random vector of length time_horizon
+        % ====================================================================
+        % 
+        % Inputs:
+        % -------
+        %   obj           - RandomVector object (typically disturbance w_k)
+        %   time_horizon  - The number of time steps of interest N
+        %
+        % Outputs:
+        % --------
+        %   newobj        - RandomVector object (for disturbance, it can be used 
+        %                   as W = [w_0^\top w_1^\top ... w_{N-1}^\top])
+        %
+        % Notes:
+        % ------
+        % * Requires Gaussian random vector assumption
+        %
+        % ====================================================================
+        % 
+        % This function is part of the Stochastic Reachability Toolbox.
+        % License for the use of this function is given in
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        % 
+        %
+            
+            % Check if mean is a nonempty numeric column vector
+            validateattributes(time_horizon, {'numeric'},...
+                {'scalar','integer','>','0'});
+            switch obj.type
+                case 'Gaussian'
+                    muW = repmat(obj.parameters.mean,time_horizon,1);
+                    covW = kron(eye(time_horizon), obj.parameters.covariance);
+                    newobj=RandomVector('Gaussian', muW, covW);
+                otherwise
+                    throwAsCaller(SrtInvalidArgsError(['Concatenation is ',...
                         'supported only for Gaussian random vectors']));
             end
         end
