@@ -56,5 +56,14 @@ classdef RandomVectorTests < matlab.unittest.TestCase
             % Invalid input
             test_case.verifyError(@(x) r * 'ch', 'SReachTools:invalidArgs');            
         end
+        function concatTest(test_case)        
+            % Define a well-defined Gaussian
+            r = RandomVector('Gaussian',zeros(2,1), eye(2));
+            R = r.concat(10);
+            test_case.verifyTrue(nnz(R.parameters.mean)==0, ['Should have ',...
+                'all been zero']);
+            test_case.verifyTrue(isequal(size(R.parameters.mean), [20,1]),...
+                'Dimension mismatch');
+        end
     end
 end

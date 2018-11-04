@@ -114,6 +114,28 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %                         reachability for control of spacecraft relative
 %                         motion," In Proc. IEEE Conf. Dec. & Ctrl., 2013.
 %
+% 5. Scenario-based approach with undersampling via Voronoi partitions 
+%    (voronoi-open):
+%
+%    High-level desc.   : Sample scenarios based on the additive noise and solve
+%                         a mixed-integer linear program to make the maximum
+%                         number of scenarios satisfy the reachability objective
+%                         In addition, we use Voronoi partition to
+%                         drastically improve the tractability while
+%                         preserving the underapproximation quality
+%    Approximation      : Overapproximation bounded above by a
+%                         user-specified tolerance
+%    Controller type    : Open-loop controller that satisfies the hard input
+%                         bounds
+%    Optimality         : Optimal (w.r.t scenarios drawn) open-loop controller
+%                         for the underapproximation problem 
+%    Dependency (EXT)   : CVX, Gurobi
+%    SReachTool function: SReachPointVoO
+%    Paper              : H. Sartipizadeh, A. Vinod,  B. Acikmese, and M. Oishi, 
+%                         "Voronoi Partition-based Scenario Reduction for Fast 
+%                         Sampling-based Stochastic Reachability Computation of
+%                         LTI Systems", In Proc. Amer. Ctrl. Conf., 2019
+%
 % See also examples/cwhSReachPointDemo.m and examples/dubinsSReachPointDemo.m.
 %
 % =============================================================================
@@ -189,7 +211,8 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 
     % Input parsing
     valid_prob = {'term'}; % TODO-first: 'first',
-    valid_method= {'chance-open','chance-affine','genzps-open','particle-open'};
+    valid_method= {'chance-open','chance-affine','genzps-open',...
+        'particle-open','voronoi-open'};
 
     inpar = inputParser();
     inpar.addRequired('prob_str', @(x) any(validatestring(x,valid_prob)));
@@ -244,6 +267,12 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
                 [approx_reach_prob, opt_input_vec] = SReachPointPaO(sys, ...
                     initial_state, safety_tube, options);
                  opt_input_gain = [];
+            case 'voronoi-open'
+                % Chance-constrained formulation with piecewise-linear 
+                % approximations to compute open-loop controller (LP)
+                [approx_reach_prob, opt_input_vec] = SReachPointVoO(sys, ...
+                    initial_state, safety_tube, options);
+                 opt_input_gain = [];
             case 'chance-affine'
                 % Chance-constrained formulation with piecewise-linear 
                 % approximations to compute affine-loop controller (SOC program)
@@ -252,6 +281,8 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
                         initial_state, safety_tube, options);
                 varargout{1} = risk_alloc_state;
                 varargout{2} = risk_alloc_input;
+            otherwise
+                throw(SrtInternalError('Internal function not setup!'));
         end
         if approx_reach_prob<0
             approx_reach_prob = 0;

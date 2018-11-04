@@ -286,7 +286,8 @@ classdef RandomVector
             
             % Check if mean is a nonempty numeric column vector
             validateattributes(time_horizon, {'numeric'},...
-                {'scalar','integer','>','0'});
+                {'integer','>',0});
+            
             switch obj.type
                 case 'Gaussian'
                     muW = repmat(obj.parameters.mean,time_horizon,1);

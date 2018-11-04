@@ -79,8 +79,9 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 %
 
     valid_prob = {'term'};
-    valid_method= {'chance-open','chance-affine','genzps-open','particle-open'};
-
+    valid_method= {'chance-open','chance-affine','genzps-open',...
+        'particle-open','voronoi-open'};
+    
     % Input parsing
     inpar = inputParser();
     inpar.addRequired('prob_str', @(x) any(validatestring(x,valid_prob)));
@@ -108,6 +109,27 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
             % Number of particles to be used for approximation
             inpar.addParameter('num_particles', 1e2, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
+            % BigM notation requires a large value
+            inpar.addParameter('bigM', 5e3, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0}));
+            % Verbosity of the implementation
+            inpar.addParameter('verbose', 0, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar', 'integer', ...
+                    '>=',0,'<=',2}));                        
+         case 'voronoi-open'
+            % Risk of the probabilistic overapproximation bound failing
+            inpar.addParameter('failure_risk', 1e-8, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0}));
+            % Maximum overapproximation error (probabilistically) tolerable
+            inpar.addParameter('max_overapprox_err', 1e-4, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0}));
+            % Fraction of the associated particles that will be actually
+            % optimized for (Number of kmeans cluster points/ Voronoi centers)
+            inpar.addParameter('undersampling_fraction', 1/1000, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0}));
+            % Minimum number of particles to be used for approximation
+            inpar.addParameter('min_samples', 30, @(x)...
+                validateattributes(x, {'numeric'}, {'integer','>',0}));
             % BigM notation requires a large value
             inpar.addParameter('bigM', 5e3, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
