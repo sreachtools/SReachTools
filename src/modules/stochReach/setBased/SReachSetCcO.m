@@ -80,7 +80,7 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
 %
 %
 
-    myeps = 1e-10; % Ideally, we need eps but SDPT3 gets only 1e-13 accuracy
+    myeps = 1e-10; % Proxy for 0. Ideally, must be eps but MPT needs slack
     validatestring(method_str,{'chance-open'});
     
     inpar = inputParser();
