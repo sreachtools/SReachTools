@@ -146,5 +146,41 @@ classdef SReachEllipsoid
             sqrt_shape_matrix = chol(obj.shape_matrix);
             support_fun_val = l* obj.center + norms(l*sqrt_shape_matrix, 2,2);
         end
+        
+        function newobj=mtimes(obj, F)
+        % Override of MATLAB multiplication command
+        % ====================================================================
+        % 
+        % Inputs:
+        % -------
+        %   obj - SReachEllipsoid object
+        %   F   - Linear transformation matrix for multiplication
+        %
+        % Outputs:
+        % --------
+        %   newobj - SReachEllipsoid object (F*obj)
+        %
+        % ====================================================================
+        % 
+        % This function is part of the Stochastic Reachability Toolbox.
+        % License for the use of this function is given in
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        % 
+        %
+            
+            switch [class(obj), class(F)]
+                case ['SReachEllipsoid','double']
+                    % All ok
+                case ['double', 'SReachEllipsoid']
+                    % Need to switch the arguments
+                    Ftemp = obj;
+                    obj = F;
+                    F = Ftemp;
+                otherwise
+                    throwAsCaller(SrtInvalidArgsError(sprintf(['Operation *',...
+                       ' not defined between *%s, %s'], class(obj), class(F))));
+            end
+            newobj=SReachEllipsoid(F * obj.center, F * obj.shape_matrix * F');            
+        end
     end
 end

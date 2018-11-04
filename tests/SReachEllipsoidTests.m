@@ -78,5 +78,23 @@ classdef SReachEllipsoidTests < matlab.unittest.TestCase
                 abs(support_fun_vals- diag(v*[y1,y2])),...
                 1e-8, 'CVX and support function definition do not agree!');
         end
+        
+        function multiplyTest(test_case)
+            % Support function of a unit circle must be one
+            unit_cir = SReachEllipsoid(ones(2,1), eye(2));
+            
+            F = [1,0;
+                 0,3];
+            
+            ellipse_from_cir = F * unit_cir;
+            
+            % Square-root of eigenvalues is the semi-axis length
+            test_case.verifyTrue(isequal(eig(ellipse_from_cir.shape_matrix),...
+                [1;9]),...
+                'Incorrect axis lengths of the ellipse constructed by scaling');
+            test_case.verifyTrue(isequal(ellipse_from_cir.center,[1;3]),...
+                'Incorrect center of the ellipse constructed by scaling');
+            
+        end
     end
 end
