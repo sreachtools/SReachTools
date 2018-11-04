@@ -190,11 +190,11 @@ title: Tube.m
   safe_set^{time_horizon} x target_set, a huge polyhedron in the
   (obj.dim x time_horizon)-dimensional Euclidean space.
  
-  [concat_target_tube_A, concat_target_tube_b] = concat(obj);
+  [concat_tube_A, concat_tube_b] = concat(obj);
  
   The output matrices satisfy the relation that the a concatenated 
   state vector X lies in the reach-avoid tube if and only if
-  concat_target_tube_A * [initial_state;X] <= concat_target_tube_b 
+  concat_tube_A * [initial_state;X] <= concat_tube_b 
  
   When arguments are specified, it provides the Cartesian of
   specific time splice mentioned. Specifically, if the half space
@@ -202,7 +202,7 @@ title: Tube.m
   tube of length 10 (sets are defined for t=0 to 9), we
   provide
  
-  [concat_target_tube_A, concat_target_tube_b] = concat(obj, [4 6]);
+  [concat_tube_A, concat_tube_b] = concat(obj, [4 6]);
   
   The +1 added is to account for MATLAB's indexing which begins
   from 1. In other words, provide the starting and ending index of
@@ -212,7 +212,7 @@ title: Tube.m
  
   ======================================================================
  
-  [concat_target_tube_A, concat_target_tube_b] = concat(obj,varagin);
+  [concat_tube_A, concat_tube_b] = concat(obj,varagin);
  
   Inputs:
   -------
@@ -221,8 +221,8 @@ title: Tube.m
      
   Outputs:
   --------
-    concat_target_tube_A - State matrix concatenated for tube
-    concat_target_tube_b - Input matrix concatenated for tube
+    concat_tube_A - State matrix concatenated for tube
+    concat_tube_b - Input matrix concatenated for tube
  
   Notes:
   ------

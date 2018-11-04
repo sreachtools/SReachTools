@@ -18,19 +18,23 @@ title: getSReachLagUnderapprox.m
  
   =========================================================================
  
-  underapprox_set = getRobustEffTarget(sys, ...
-                                       target_tube, ...
-                                       disturbance, ...
-                                       Name, Value)
+  underapprox_set = getSReachLagUnderapprox(sys, target_tube, disturbance_set)
+ 
   Inputs:
   -------
-    sys          - LtiSystem object
-    target_tube  - Tube object
-    disturbance  - Polyhedron object (bounded disturbance set)
+    sys              - LtiSystem object
+    target_tube      - Tube object
+    disturbance_set  - Polyhedron/SReachEllipsoid object (bounded set) OR a
+                        collection of these objects which individually satisfy 
+                        the probability bound(a convex hull of the individual 
+                        results taken posteriori)
  
   Outputs:
   --------
-    underapprox_set - Polyhedron object
+    underapprox_set  - Polyhedron object
+    effective_target_tube
+                     - [Optional] Tube comprising of an underapproximation
+                            of the stochastic reach sets across the time horizon
  
   Notes:
   * From computational geometry, intersections and Minkowski differences are

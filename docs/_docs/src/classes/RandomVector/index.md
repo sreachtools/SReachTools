@@ -16,6 +16,8 @@ title: RandomVector.m
         </ul>
         <li>Methods</li>
         <ul class="doc-list">
+            <li class="doc-list"><a href="#RandomVector-method-concat">concat</a></li>
+            <li class="doc-list"><a href="#RandomVector-method-mtimes">mtimes</a></li>
         </ul>
     </ul>
 </ul>
@@ -193,5 +195,61 @@ title: RandomVector.m
   
   Probability density function of random vector
   
+```
+
+### Method: concat
+{:#RandomVector-method-concat}
+```
+  Create a concatenated random vector of length time_horizon
+  ====================================================================
+  
+  Inputs:
+  -------
+    obj           - RandomVector object (typically disturbance w_k)
+    time_horizon  - The number of time steps of interest N
+ 
+  Outputs:
+  --------
+    newobj        - RandomVector object (for disturbance, it can be used 
+                    as W = [w_0^\top w_1^\top ... w_{N-1}^\top])
+ 
+  Notes:
+  ------
+  * Requires Gaussian random vector assumption
+ 
+  ====================================================================
+  
+  This function is part of the Stochastic Reachability Toolbox.
+  License for the use of this function is given in
+       https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+  
+ 
+```
+
+### Method: mtimes
+{:#RandomVector-method-mtimes}
+```
+  Override of MATLAB multiplication command
+  ====================================================================
+  
+  Inputs:
+  -------
+    obj - RandomVector object
+    F   - Linear transformation matrix for multiplication
+ 
+  Outputs:
+  --------
+    newobj - RandomVector object (F*obj)
+ 
+  Notes:
+  ------
+  * Requires Gaussian random vector assumption
+  ====================================================================
+  
+  This function is part of the Stochastic Reachability Toolbox.
+  License for the use of this function is given in
+       https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+  
+ 
 ```
 

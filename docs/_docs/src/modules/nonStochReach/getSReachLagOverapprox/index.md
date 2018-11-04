@@ -18,11 +18,13 @@ title: getSReachLagOverapprox.m
     
   ============================================================================
  
+  overapprox_set = getSReachLagUnderapprox(sys, target_tube, disturbance_set)
+ 
   Inputs:
   -------
-    sys          - LtiSystem object
-    target_tube  - Tube object 
-    disturbance  - Polyhedron object (bounded disturbance set)
+    sys             - LtiSystem object
+    target_tube     - Tube object 
+    disturbance_set - Polyhedron object (bounded disturbance set)
  
   Outputs:
   --------

@@ -118,6 +118,28 @@ title: SReachPoint.m
                           reachability for control of spacecraft relative
                           motion," In Proc. IEEE Conf. Dec. & Ctrl., 2013.
  
+  5. Scenario-based approach with undersampling via Voronoi partitions 
+     (voronoi-open):
+ 
+     High-level desc.   : Sample scenarios based on the additive noise and solve
+                          a mixed-integer linear program to make the maximum
+                          number of scenarios satisfy the reachability objective
+                          In addition, we use Voronoi partition to
+                          drastically improve the tractability while
+                          preserving the underapproximation quality
+     Approximation      : Overapproximation bounded above by a
+                          user-specified tolerance
+     Controller type    : Open-loop controller that satisfies the hard input
+                          bounds
+     Optimality         : Optimal (w.r.t scenarios drawn) open-loop controller
+                          for the underapproximation problem 
+     Dependency (EXT)   : CVX, Gurobi
+     SReachTool function: SReachPointVoO
+     Paper              : H. Sartipizadeh, A. Vinod,  B. Acikmese, and M. Oishi, 
+                          "Voronoi Partition-based Scenario Reduction for Fast 
+                          Sampling-based Stochastic Reachability Computation of
+                          LTI Systems", In Proc. Amer. Ctrl. Conf., 2019
+ 
   See also examples/cwhSReachPointDemo.m and examples/dubinsSReachPointDemo.m.
  
   =============================================================================
@@ -169,6 +191,9 @@ title: SReachPoint.m
     risk_alloc_input
                 - [Available only for 'chance-affine'] Risk allocation for the
                   input constraints
+    kmeans_info - [Available only for 'voronoi-open'] MATLAB struct
+                  containing info about the kmeans-based undersampling used for 
+                  tractable particle control approach
  
   Notes:
   * SReachPoint() will call SReachPointOptions() internally if
