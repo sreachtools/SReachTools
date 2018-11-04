@@ -1,5 +1,4 @@
-function scaled_bounded_set = SReachSetLagBset(sys, onestep_prob_thresh, ...
-    options)
+function bounded_set = SReachSetLagBset(sys, onestep_prob_thresh, options)
 % Get bounded disturbance set for approximation
 % ============================================================================
 %
@@ -61,28 +60,18 @@ function scaled_bounded_set = SReachSetLagBset(sys, onestep_prob_thresh, ...
         throwAsCaller(exc);
     end
 
-    if sys.isltv()
-        throw(SrtInternalError('Development for LtvSystem is on going'));
-        % Need to fix the SReachSetLagBset generation for LtvSystem
-    else
-        % Compute the disturbance v=Fw
-        scaled_disturbance = sys.dist_mat * sys.dist;
-    end
+    disturbance = sys.dist;
     
     % only need to validate attributes if not loading from file
     if ~strcmpi(options.bound_set_method, 'load')
         % validate that the disturbance is a RandomVector object
         % then ensure that the disturbance is Gaussian
-        validateattributes(scaled_disturbance, {'RandomVector'}, ...
+        validateattributes(disturbance, {'RandomVector'}, ...
             {'nonempty'})
-        if ~strcmpi(scaled_disturbance.type, 'Gaussian')
+        if ~strcmpi(disturbance.type, 'Gaussian')
             exc = SrtInvalidArgsError('Disturbance must be of type Gaussian');
             throwAsCaller(exc);
         end
-
-        % check that the horizon is some nonzero integer
-        % validateattributes(time_horizon, {'numeric'}, ...
-        %     {'nonzero', 'positive', 'integer'});
 
         % check that onestep_prob_thresh is a value in [0,1]
         validateattributes(onestep_prob_thresh, {'double'}, {'>=', 0, '<=', 1})
@@ -94,36 +83,33 @@ function scaled_bounded_set = SReachSetLagBset(sys, onestep_prob_thresh, ...
 
     % check the option.bound_set_method and call appropriate sub-function
     switch(options.bound_set_method)
+        case 'ellipsoid'            
+            % Create the ellipsoid centered at the Gaussian mean and has a
+            % shape matrix that is an appropriately scaled version of the
+            % Gaussian covariance matrix
+            r_squared = chi2inv(onestep_prob_thresh, 2);
+            ellipse_shape_mat = disturbance.parameters.covariance *...
+                r_squared;
+            bounded_set = SReachEllipsoid(disturbance.parameters.mean,...
+                ellipse_shape_mat);
+            
         case 'random'
             % when choosing random direction need to specify the number of 
             % vectors to use
             validateattributes(options.num_dirs, {'numeric'}, ...
                 {'scalar', 'integer'});
-
-            scaled_bounded_set = boundedEllipseByRandomVectors(scaled_disturbance, ...
+            
+            % Create an outer approximation of the ellipse by randomly
+            % sampling the support function
+            bounded_set = boundedEllipseByRandomVectors(disturbance, ...
                 onestep_prob_thresh, options.num_dirs);
     
-        case 'ellipsoid'
-            r_squared = chi2inv(onestep_prob_thresh, 2);
-            ellipse_shape_mat = scaled_disturbance.parameters.covariance *...
-                r_squared;
-            scaled_bounded_set = SReachEllipsoid(scaled_disturbance.parameters.mean,...
-                ellipse_shape_mat);
-            
         case 'box'
-            % Has to be Gaussian
             validateattributes(options.err_thresh, {'numeric'}, ...
                 {'scalar', 'positive'});
 
-            scaled_bounded_set = boxBisection(scaled_disturbance, ...
+            bounded_set = boxBisection(disturbance, ...
                 onestep_prob_thresh, options.err_thresh);
-        case 'optim-box'
-            % Has to be Gaussian
-            validateattributes(options.box_center, {'numeric'}, {'nonempty', ...
-                'vector','size', [scaled_disturbance.dim 1]});
-            
-            scaled_bounded_set = getOptimizationBoxForGaussian(scaled_disturbance, ...
-                onestep_prob_thresh, options.box_center);
         case 'load'
             % load a predefined bounded set, primarily used for comparison with
             % previous works
@@ -148,12 +134,12 @@ function scaled_bounded_set = SReachSetLagBset(sys, onestep_prob_thresh, ...
                     'must be structured.']);
                 throwAsCaller(exc);
             else
-                scaled_bounded_set = ls.(fnames{1});
+                bounded_set = ls.(fnames{1});
             end
             
             % validate that what was loaded from the mat is actually a
             % polyhedron
-            validateattributes(scaled_bounded_set, {'Polyhedron'}, {'nonempty'});
+            validateattributes(bounded_set, {'Polyhedron'}, {'nonempty'});
 %           TODO-Test: Need to check for disturbance dimension            
 %             if bounded_set.Dim ~= disturbance.dim
 %                 throw(SrtInvalidArgsError(['Mat file did not contain a ', ...

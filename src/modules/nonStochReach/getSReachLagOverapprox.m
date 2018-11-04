@@ -1,5 +1,5 @@
 function overapprox_set = getSReachLagOverapprox(sys, target_tube, ...
-    scaled_disturbance)
+    disturbance_set)
 % Get the overapproximation of the stoch reach set
 % ============================================================================
 %
@@ -14,11 +14,13 @@ function overapprox_set = getSReachLagOverapprox(sys, target_tube, ...
 %   
 % ============================================================================
 %
+% overapprox_set = getSReachLagUnderapprox(sys, target_tube, disturbance_set)
+%
 % Inputs:
 % -------
-%   sys          - LtiSystem object
-%   target_tube  - Tube object 
-%   disturbance  - Polyhedron object (bounded disturbance set)
+%   sys             - LtiSystem object
+%   target_tube     - Tube object 
+%   disturbance_set - Polyhedron object (bounded disturbance set)
 %
 % Outputs:
 % --------
@@ -48,7 +50,7 @@ function overapprox_set = getSReachLagOverapprox(sys, target_tube, ...
         {'Polyhedron'}, {'nonempty'}));
     
     try
-        inpar.parse(sys, target_tube, scaled_disturbance);
+        inpar.parse(sys, target_tube, disturbance_set);
     catch cause_exc
         exc = SrtInvalidArgsError.withFunctionName();
         exc = addCause(exc, cause_exc);
@@ -58,9 +60,8 @@ function overapprox_set = getSReachLagOverapprox(sys, target_tube, ...
     tube_length = length(target_tube);
     if sys.islti()
         inverted_state_matrix = inv(sys.state_mat);
-    else
-        throw(SrtInternalError('LtvSystem development is on going!'));
-
+        minus_bu = (-sys.input_mat) * sys.input_space;
+        minus_scaled_dist_set = (-sys.dist_mat) * disturbance_set;
     end
 
     effective_target_tube = repmat(Polyhedron(), tube_length, 1);
@@ -68,22 +69,27 @@ function overapprox_set = getSReachLagOverapprox(sys, target_tube, ...
     if tube_length > 1
         for itt = tube_length-1:-1:1
             current_time = itt - 1;
-            if ~sys.islti()
+            if sys.isltv()
+                % Overwrite the following parameters with their
+                % time-varying counterparts
                 inverted_state_matrix = inv(sys.state_mat(current_time));
+                minus_bu = (-sys.input_mat(current_time)) * sys.input_space;
+                minus_scaled_dist_set = (-sys.dist_mat(current_time)) *...
+                    disturbance_set;
             end
             
-            if scaled_disturbance.isEmptySet
+            if disturbance_set.isEmptySet
                 % No augmentation
                 new_target = effective_target_tube(itt+1);
             else
                 % Compute a new target set for this iteration that is robust to 
                 % the disturbance
-                new_target = effective_target_tube(itt+1) + (-scaled_disturbance);
+                new_target = effective_target_tube(itt+1)+minus_scaled_dist_set;
             end
 
             % One-step backward reach set
             one_step_backward_reach_set = inverted_state_matrix * ...
-                (new_target + (-sys.input_mat(current_time) * sys.input_space));
+                (new_target + minus_bu);
 
             % Guarantee staying within target_tube by intersection
             effective_target_tube(itt) = intersect(...
