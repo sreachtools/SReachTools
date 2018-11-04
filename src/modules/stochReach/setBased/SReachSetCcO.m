@@ -120,12 +120,11 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
     [concat_safety_tube_A, ~] = safety_tube.concat([1 time_horizon]+1);
 
     sqrt_cov_X_sans_input = chol(cov_X_sans_input);
-    scaled_sigma_mat = diag(norms(concat_safety_tube_A*sqrt_cov_X_sans_input,...
-        2,2));
+    sigma_vec = norms(concat_safety_tube_A*sqrt_cov_X_sans_input, 2,2);
 
     %% Step 1: Find initial state (xmax) w/ max open-loop stochastic reach prob
     xmax_soln = computeWmax(sys, options, init_safe_set, prob_thresh, ...
-                    safety_tube, mean_X_zizs, scaled_sigma_mat);
+                    safety_tube, mean_X_zizs, sigma_vec);
     if ~strcmpi(xmax_soln.cvx_status, 'Solved') ||...
             xmax_soln.reach_prob < prob_thresh
         polytope = Polyhedron.emptySet(2);
@@ -158,17 +157,17 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
         if nargout > 1
             [polytope_wmax, extra_info_wmax] = computePolytopeFromXmax(...
                 xmax_soln, sys, options, init_safe_set, prob_thresh, ...
-                safety_tube, mean_X_zizs, scaled_sigma_mat);
+                safety_tube, mean_X_zizs, sigma_vec);
         else
             polytope_wmax = computePolytopeFromXmax(xmax_soln, sys, options, ...
                 init_safe_set, prob_thresh, safety_tube, mean_X_zizs, ...
-                scaled_sigma_mat);
+                sigma_vec);
         end
         % Step 3b: Shoot rays from Chebyshev center of init_safe_set with
         % W_0^\ast(x_cheby) >= prob_thresh
         % Step 3b-i: Find the Chebyshev center
         cheby_soln = computeChebyshev(sys, options, init_safe_set, ...
-                       prob_thresh, safety_tube, mean_X_zizs, scaled_sigma_mat);
+                       prob_thresh, safety_tube, mean_X_zizs, sigma_vec);
         % Step 3b-ii: Find the polytope                           
         if options.verbose >= 1
             disp('Computing the polytope via the Chebyshev center');
@@ -176,11 +175,11 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
         if nargout > 1
             [polytope_cheby, extra_info_cheby] = computePolytopeFromXmax( ...
                 cheby_soln, sys, options, init_safe_set, prob_thresh, ...
-                safety_tube, mean_X_zizs, scaled_sigma_mat);
+                safety_tube, mean_X_zizs, sigma_vec);
         else
             polytope_cheby = computePolytopeFromXmax(cheby_soln, sys, ....
                 options,init_safe_set, prob_thresh, safety_tube, ...
-                mean_X_zizs, scaled_sigma_mat);
+                mean_X_zizs, sigma_vec);
         end
         % Step 4: Convex hull of the vertices
         polytope = Polyhedron('V',[polytope_cheby.V;
@@ -232,7 +231,7 @@ end
 
 function [polytope, extra_info] = computePolytopeFromXmax(xmax_soln, sys, ...
     options, init_safe_set, prob_thresh, safety_tube, mean_X_zizs, ...
-    scaled_sigma_mat)
+    sigma_vec)
 
     %% Repeat of above lines --- get time_horizon, concat_XXX_A, concat_XXX_b, 
     %% n_lin_const, Z, H, invcdf_approx_{m,c}, lb_deltai
@@ -306,7 +305,7 @@ function [polytope, extra_info] = computePolytopeFromXmax(xmax_soln, sys, ...
                 mean_X == Z * boundary_point + H * U_vector + mean_X_zizs;
                 % (3) Ono's type of reformulation of chance
                 % constraints
-                concat_safety_tube_A * mean_X + scaled_sigma_mat * ...
+                concat_safety_tube_A * mean_X + sigma_vec .* ...
                     norminvover <= concat_safety_tube_b;
                 % (4) Lower bound on delta due to pwl's domain
                 deltai >= lb_deltai;
@@ -334,7 +333,7 @@ end
 
 
 function xmax_soln = computeWmax(sys, options, init_safe_set, prob_thresh, ...
-    safety_tube, mean_X_zizs, scaled_sigma_mat)
+    safety_tube, mean_X_zizs, sigma_vec)
 
     %% Repeat of above lines --- get time_horizon, concat_XXX_A, concat_XXX_b, 
     %% n_lin_const, Z, H, invcdf_approx_{m,c}, lb_deltai
@@ -379,7 +378,7 @@ function xmax_soln = computeWmax(sys, options, init_safe_set, prob_thresh, ...
             % (2) Trajectory
             mean_X == Z * xmax + H * Umax + mean_X_zizs;
             % (3) Ono's type of reformulation of chance constraints
-            concat_safety_tube_A* mean_X + scaled_sigma_mat * norminvover...  
+            concat_safety_tube_A* mean_X + sigma_vec .* norminvover...  
                     <= concat_safety_tube_b;
             % (4) Lower bound on delta due to pwl's domain
             deltai >= lb_deltai;
@@ -398,7 +397,7 @@ function xmax_soln = computeWmax(sys, options, init_safe_set, prob_thresh, ...
 end
 
 function cheby_soln = computeChebyshev(sys, options, init_safe_set, ...
-    prob_thresh, safety_tube, mean_X_zizs, scaled_sigma_mat)
+    prob_thresh, safety_tube, mean_X_zizs, sigma_vec)
     %% Repeat of above lines --- get time_horizon, concat_XXX_A, concat_XXX_b, 
     %% n_lin_const, Z, H, invcdf_approx_{m,c}, lb_deltai
     % This entire section evaluation took only 0.05 seconds on a 2.10 GHz
@@ -444,7 +443,7 @@ function cheby_soln = computeChebyshev(sys, options, init_safe_set, ...
             % (2) Trajectory
             mean_X == Z * xmax + H * Umax + mean_X_zizs;
             % (3) Ono's type of reformulation of chance constraints
-            concat_safety_tube_A* mean_X + scaled_sigma_mat * norminvover...
+            concat_safety_tube_A* mean_X + sigma_vec .* norminvover...
                     <= concat_safety_tube_b;
             % (4) Lower bound on delta due to pwl's domain
             deltai >= lb_deltai;

@@ -1,5 +1,5 @@
-function [approx_stoch_reach, opt_input_vec] = SReachPointVoO(sys, ...
-    initial_state, safety_tube, options)
+function [approx_stoch_reach, opt_input_vec, kmeans_info] = SReachPointVoO(...
+    sys, initial_state, safety_tube, options)
 % Solve the problem of stochastic reachability of a target tube (a lower bound
 % on the maximal reach probability and an open-loop controller synthesis) using
 % undersampled particle filter control
@@ -10,31 +10,28 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointVoO(sys, ...
 % tractability, we undersample the particles by utilizing the kmeans
 % clustering/Voronoi partitioning of the disturbance samples. 
 %
+% H. Sartipizadeh, A. Vinod,  B. Acikmese, and M. Oishi, "Voronoi
+% Partition-based Scenario Reduction for Fast Sampling-based Stochastic
+% Reachability Computation of LTI Systems", In Proc. Amer. Ctrl. Conf., 2019
+% 
+% In contrast to `particle-open' approach, implemented in SReachPointPaO and
+% described in
 %
-%    Paper              : H. Sartipizadeh, A. Vinod,  B. Acikmese, and M. Oishi, 
-%                         "Voronoi Partition-based Scenario Reduction for Fast 
-%                         Sampling-based Stochastic Reachability Computation of
-%                         LTI Systems", In Proc. Amer. Ctrl. Conf., 2019
-In contrast to
-%                   `particle-open' approach, this approximation permits a
-%                   user-defined upper-bound on the overapproximation
-%                   error.
+% K. Lesser, M. Oishi, and R. Erwin, "Stochastic reachability for control of
+% spacecraft relative motion," in IEEE Conference on Decision and Control (CDC),
+% 2013,
 %
-% This solution is
-% based off the particle filter control formulation (for the simpler terminal
-% hitting-time stochastic reach-avoid problem) discussed in
-
-%
-
+% SReachPointVoO permits a user-defined upper-bound on the overapproximation
+% error.
 %
 %    High-level desc.   : Sample scenarios based on the additive noise and solve
 %                         a mixed-integer linear program to make the maximum
-%                         number of scenarios satisfy the reachability objective
-%                         In addition, we use Voronoi partition to
-%                         drastically improve the tractability while
-%                         preserving the underapproximation quality
-%    Approximation      : Overapproximation bounded above by a
-%                         user-specified tolerance
+%                         number of scenarios satisfy the reachability
+%                         objective.  In addition, we use Voronoi partition to
+%                         drastically improve the tractability while preserving
+%                         the underapproximation quality
+%    Approximation      : Overapproximation bounded above by a user-specified
+%                         tolerance
 %    Controller type    : Open-loop controller that satisfies the hard input
 %                         bounds
 %    Optimality         : Optimal (w.r.t scenarios drawn) open-loop controller
@@ -42,7 +39,7 @@ In contrast to
 %
 % =============================================================================
 %
-% [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, initial_state,...
+% [approx_stoch_reach, opt_input_vec] = SReachPointVoO(sys, initial_state,...
 %   safety_tube, options)
 %
 % Inputs:
@@ -52,21 +49,28 @@ In contrast to
 %                  evaluated (A numeric vector of dimension sys.state_dim)
 %   safety_tube  - Collection of (potentially time-varying) safe sets that
 %                  define the safe states (Tube object)
-%   options      - Collection of user-specified options for 'particle-open'
+%   options      - Collection of user-specified options for 'voronoi-open'
 %                  (Matlab struct created using SReachPointOptions)
 %
 % Outputs:
 % --------
 %   approx_stoch_reach 
 %               - An approximation of the stochastic reachability of a target
-%                   tube problem computed using undersampled particle
-%                   control approach using kmeans. In contrast to
-%                   `particle-open' approach, this approximation permits a
-%                   user-defined upper-bound on the overapproximation
-%                   error.                   
+%                 tube problem computed using undersampled particle control
+%                 approach using kmeans. In contrast to `particle-open'
+%                 approach, this approximation permits a user-defined
+%                 upper-bound on the overapproximation error.                   
 %   opt_input_vec
 %               - Open-loop controller: column vector of dimension
 %                 (sys.input_dim*N) x 1
+%   kmeans_info - A MATLAB struct containing the information about partitioning
+%                 of GW space. The struct contains the following info:
+%                  n_particles - Number of particles based off Hoeffding's
+%                                inequality
+%                  n_kmeans    - Number of bins for kmeans clustering
+%                  GW_centroids- Centroids obtained from kmeans clustering
+%                  GW_realizations
+%                              - Realizations for the random vector GW
 %
 % See also SReachPoint.
 %
@@ -137,12 +141,12 @@ In contrast to
         % specified tolerance
         n_particles = ceil(-log(options.failure_risk)/...
             (2*options.max_overapprox_err));        
-        n_means = max(ceil(n_particles * options.undersampling_fraction),...
+        n_kmeans = max(ceil(n_particles * options.undersampling_fraction),...
             options.min_samples);
-        if n_means > 100
+        if n_kmeans > 100
             warning('SReachTools:runtime',sprintf(['Particle control with ',...
                 'more than 100 samples may cause computational problems.\n',...
-                'Going to analyze %d samples.'], n_means));
+                'Going to analyze %d samples.'], n_kmeans));
         end
         
         if options.verbose >= 1
@@ -150,8 +154,7 @@ In contrast to
         end        
         % Compute the stochasticity of the concatenated disturbance random vec
         GW = G * concat(sys.dist, time_horizon);        
-        % Create realizations of GW arranged columnwise: TODO: get particles
-        % from the inequality
+        % Create realizations of GW arranged columnwise
         GW_realizations = mvnrnd(GW.parameters.mean', GW.parameters.covariance,...
             n_particles)';
         if options.verbose >= 1
@@ -162,13 +165,14 @@ In contrast to
         % Step 2: Compute the Voronoi centers with prescribed number of
         % bins --- Use k-means clustering
         % Transposed input since kmeans expects each data point row-wise
-        [idx, GW_centroids_output] = kmeans(GW_realizations', n_means);
+        [idx, GW_centroids_output] = kmeans(GW_realizations', n_kmeans,...
+            'MaxIter',1000);
         GW_centroids = GW_centroids_output';
         % Step 3: Compute the buffers associated with each of the Voronoi
         % centers
-        buffers = zeros(n_lin_state, n_means);
-        voronoi_count = zeros(n_means,1);
-        for idx_indx = 1:n_means
+        buffers = zeros(n_lin_state, n_kmeans);
+        voronoi_count = zeros(n_kmeans,1);
+        for idx_indx = 1:n_kmeans
             relv_GW_realizations = (idx==idx_indx);
             voronoi_count(idx_indx) = nnz(relv_GW_realizations);
             GW_realizations_indx = GW_realizations(:, relv_GW_realizations);
@@ -193,15 +197,15 @@ In contrast to
             end
             cvx_solver Gurobi
             variable U_vector(sys.input_dim * time_horizon,1);
-            variable mean_X(sys.state_dim * time_horizon, n_means);
-            variable z(1,n_means) binary;
+            variable mean_X(sys.state_dim * time_horizon, n_kmeans);
+            variable z(1,n_kmeans) binary;
             maximize ((z*voronoi_count)/n_particles)
             subject to
                 mean_X == repmat(Z * initial_state + H * U_vector, ...
-                    1, n_means) + GW_centroids;
+                    1, n_kmeans) + GW_centroids;
                 concat_input_space_A * U_vector <= concat_input_space_b;
                 concat_safety_tube_A * mean_X + buffers <= repmat( ...
-                    concat_safety_tube_b, 1, n_means) + ...
+                    concat_safety_tube_b, 1, n_kmeans) + ...
                     options.bigM * repmat(1-z,n_lin_state,1);
             if options.verbose >= 1
                 fprintf('Done\nParsing and solving the MILP....');
@@ -228,10 +232,14 @@ In contrast to
                     ['Undersampled probability (with %d particles): %1.3f\n',...
                     'Underapproximation to the original MILP (with %d ',...
                     'particles): %1.3f\n'],...
-                    n_means, approx_voronoi_stoch_reach,...
+                    n_kmeans, approx_voronoi_stoch_reach,...
                     n_particles, approx_stoch_reach);
             end
-        end        
+        end
+        kmeans_info.n_particles = n_particles;
+        kmeans_info.n_kmeans = n_kmeans;
+        kmeans_info.GW_centroids = GW_centroids;
+        kmeans_info.GW_realizations = GW_realizations;
     end
 end
 

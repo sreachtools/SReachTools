@@ -5,26 +5,41 @@ classdef SReachPointTests < matlab.unittest.TestCase
             [sys, safety_tube, initial_state] = test_case.getDI();
             
             lb_stoch_prob = SReachPoint('term','chance-open', sys,...
-                initial_state, safety_tube)
+                initial_state, safety_tube);
+        end 
+        
+        function testPointParticleOpen(test_case)
+            [sys, safety_tube, initial_state] = test_case.getDI();
+            
+            lb_stoch_prob = SReachPoint('term','particle-open', sys,...
+                initial_state, safety_tube);
+        end 
+        
+        function testPointGenzpsOpen(test_case)
+            [sys, safety_tube, initial_state] = test_case.getDI();
+            
+            lb_stoch_prob = SReachPoint('term','genzps-open', sys,...
+                initial_state, safety_tube);
         end 
         
         function testPointVoronoiOpen(test_case)
             [sys, safety_tube, initial_state] = test_case.getDI();
             
-            options = SReachPointOptions('term','voronoi-open','verbose',1);
+            options = SReachPointOptions('term','voronoi-open','verbose', 0);
             lb_stoch_prob = SReachPoint('term','voronoi-open', sys,...
                 initial_state, safety_tube, options);
         end 
         
-%         function testPointChanceAffine(test_case)
-%             [sys, safety_tube, initial_state] = test_case.getDI();
-%             
-%             options = SReachPointOptions('term','chance-affine', ...
-%                 'max_input_viol_prob', 1e-2, 'verbose', 1);
-%             lb_stoch_prob = SReachPoint('term','chance-affine', sys,...
-%                 initial_state, safety_tube, options);
-%         end                  
+        function testPointChanceAffine(test_case)
+            [sys, safety_tube, initial_state] = test_case.getDI();
+            
+            options = SReachPointOptions('term','chance-affine', ...
+                'max_input_viol_prob', 1e-2, 'verbose', 1);
+            lb_stoch_prob = SReachPoint('term','chance-affine', sys,...
+                initial_state, safety_tube, options);
+        end                  
     end
+    
     methods (Static)
         function [sys, safety_tube, initial_state] = getDI()
             T = 0.25;

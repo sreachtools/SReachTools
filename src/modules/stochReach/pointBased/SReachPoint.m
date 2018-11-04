@@ -187,6 +187,9 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %   risk_alloc_input
 %               - [Available only for 'chance-affine'] Risk allocation for the
 %                 input constraints
+%   kmeans_info - [Available only for 'voronoi-open'] MATLAB struct
+%                 containing info about the kmeans-based undersampling used for 
+%                 tractable particle control approach
 %
 % Notes:
 % * SReachPoint() will call SReachPointOptions() internally if
@@ -270,9 +273,10 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
             case 'voronoi-open'
                 % Chance-constrained formulation with piecewise-linear 
                 % approximations to compute open-loop controller (LP)
-                [approx_reach_prob, opt_input_vec] = SReachPointVoO(sys, ...
-                    initial_state, safety_tube, options);
+                [approx_reach_prob, opt_input_vec, kmeans_info] =...
+                    SReachPointVoO(sys, initial_state, safety_tube, options);
                  opt_input_gain = [];
+                 varargout{1} = kmeans_info;
             case 'chance-affine'
                 % Chance-constrained formulation with piecewise-linear 
                 % approximations to compute affine-loop controller (SOC program)

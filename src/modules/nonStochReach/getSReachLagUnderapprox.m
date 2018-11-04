@@ -112,30 +112,28 @@ function [underapprox_set, varargout] = getSReachLagUnderapprox(sys, ...
                     if isa(effective_dist, 'SReachEllipsoid')
                         %effective_target.minHRep();
                         new_target_A = effective_target.A;            
-                        % support function of the effective_dist - vectorized to handle
-                        % Implementation of Kolmanovsky's 1998-based minkowski difference
+                        % support function of the effective_dist - vectorized to
+                        % handle Implementation of Kolmanovsky's 1998-based
+                        % minkowski difference
                         new_target_b = effective_target.b - ...
                             effective_dist.support_fun(new_target_A);
-                        new_target = Polyhedron('H',[new_target_A new_target_b]);
+                        new_target= Polyhedron('H',[new_target_A new_target_b]);
                     else %if isa(effective_dist, 'Polyhedron') 
                         if effective_dist.isEmptySet
                             % No requirement of robustness
                             new_target = effective_target;
                         else
-                            % Compute a new target set for this iteration that is robust to 
-                            % the disturbance
+                            % Compute a new target set for this iteration that
+                            % is robust to the disturbance
                             new_target = effective_target - effective_dist;
                         end
                     end
 
                     % One-step backward reach set
-%                     one_step_backward_reach_set = inverted_state_matrix * ...
-%                         (new_target + minus_bu);
-                    
-%                     plusInner = minkSumInner(new_target, minus_bu);
-%                     one_step_backward_reach_set=inverted_state_matrix*plusInner;
-                    one_step_backward_reach_set = minkSumInner(...
-                        inverted_state_matrix*new_target, Ainv_minus_bu);
+                    one_step_backward_reach_set = inverted_state_matrix * ...
+                        (new_target + minus_bu);                    
+%                     one_step_backward_reach_set = minkSumInner(...
+%                         inverted_state_matrix*new_target, Ainv_minus_bu);
 
                     % Guarantee staying within target_tube by intersection
                     effective_target = intersect(one_step_backward_reach_set,...
@@ -152,17 +150,6 @@ function [underapprox_set, varargout] = getSReachLagUnderapprox(sys, ...
                 else
                     effective_target_tube(itt) = effective_target;
                 end
-                
-%                 figure(itt);
-%                 clf
-%                 plot(target_tube(1).slice([3,4],zeros(2,1)),'color','y');
-%                 hold on;
-%                 plot(target_tube(end).slice([3,4],zeros(2,1)),'color','k');
-%                 clr_string = {'w','b','r','k','g'};
-%                 plot(one_step_backward_reach_set.projection([1,2]),'color',clr_string{itt},'alpha',0.2);
-% %                 plot(effective_target.projection([1,2]),'color',clr_string{itt},'alpha',0.2);
-%                 drawnow;              
-
             end
         end     
     else
@@ -193,15 +180,16 @@ function [underapprox_set, varargout] = getSReachLagUnderapprox(sys, ...
                 current_time = itt - 1;
 
                 % run recursion for an LTI system
-                % MPT does not support A \ P or P / A (P is Polyhedron and A is matrix)
-                % so we must invert prior
+                % MPT does not support A \ P or P / A (P is Polyhedron and A is
+                % matrix) so we must invert prior
                 inverted_state_matrix = inv(sys.state_mat(current_time));
                 minus_bu = - sys.input_mat(current_time) * sys.input_space;
 
                 if iscell(scaled_disturbance)
                     for lv = 1:length(n_disturbances)
                         if isa(scaled_disturbance, 'Polyhedron');
-                            scaled_disturbance{lv} = sys.dist_mat * scaled_disturbance;
+                            scaled_disturbance{lv} = sys.dist_mat *...
+                                scaled_disturbance;
                         elseif isa(scaled_disturbance, 'SReachEllipsoid')
                             scaled_disturbance{lv} = SReachEllipsoid( ...
                                 sys.dist_mat * scaled_disturbance.center, ...
@@ -387,5 +375,4 @@ function back_recursion_set = computeUnderapproxsetRecursion(...
         otherwise
             throw(SrtInternalError('Unhandled option'));
     end
-
 end

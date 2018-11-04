@@ -169,7 +169,8 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
     end
     inpar.parse(prob_str, method_str, varargin{:});
     options = inpar.Results;
-    
+ 
+    % Check for must-have parameters
     switch lower(method_str)
         case 'chance-affine'
             if any(strcmp(inpar.UsingDefaults, 'max_input_viol_prob'))
