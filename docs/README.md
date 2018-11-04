@@ -26,3 +26,6 @@ We use Github pages and Jekyll to power the documentation website for [SReachToo
     bundle install
     ```
 1. Pushing the changes on to github will deploy the website.
+
+
+Use `git tag -a <tag name> -f` to update a tag
