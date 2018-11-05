@@ -69,8 +69,8 @@ sys = getCwhLtiSystem(4, Polyhedron('lb', -umax*ones(2,1), ...
 
 %% Methods to run   
 ft_run = 0;
-cc_open_run = 0;
-lagunder_run = 1;
+cc_open_run = 1;
+lagunder_run = 0;
 %% Target tube construction --- reach-avoid specification
 time_horizon = 5;          % Stay within a line of sight cone for 4 time steps and 
                          % reach the target at t=5% Safe Set --- LoS cone

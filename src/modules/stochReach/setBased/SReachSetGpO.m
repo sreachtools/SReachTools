@@ -160,6 +160,10 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
                      + R * dual_norm_of_init_safe_set_A(i) <= init_safe_set.b(i)
             end
     cvx_end
+    if ~strcmpi(cvx_status, 'Solved')
+        warning('SReachTools:runtime', ['CVX failed to obtain the Chebyshev',...
+            'center, potentially due to numerical issues.']); 
+    end
     initial_guess_input_vector_and_xmax = [guess_concatentated_input_vector;
                                            initial_x_for_xmax];
     
@@ -269,6 +273,12 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
                 subject to
                     theta*A_times_dir_vec<=init_safe_set.b-init_safe_set.A*xmax
             cvx_end
+            if ~strcmpi(cvx_status, 'Solved')
+                warning('SReachTools:runtime', sprintf(['CVX failed to ',...
+                    'obtain the upper bound on theta for direction %d/%d, ',...
+                    'potentially due to numerical issues.'], dir_index,...
+                    n_dir_vecs); 
+            end
             ub_theta = theta;
             if options.verbose >= 1
                 fprintf('\b | Upper bound of theta: %1.2f\n',ub_theta);

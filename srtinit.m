@@ -240,14 +240,12 @@ function check_recommended_dependencies()
             warning('SReachTools:setup', ['Switching CVX backend default ',...
                 'solver to ''Gurobi''.']);
             cvx_solver Gurobi;
-            cvx_save_prefs;
-            evalc('cvx_setup');
+            evalc('cvx_save_prefs();cvx_setup()');
         else
             warning('SReachTools:setup', ['Switching CVX backend default ',...
                 'solver to ''SeDuMi''.']);
             cvx_solver SeDuMi;
-            cvx_save_prefs;
-            evalc('cvx_setup');
+            evalc('cvx_save_prefs();cvx_setup()');
         end
     end
 end

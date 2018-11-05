@@ -89,6 +89,10 @@ function varargout = ellipsoidsFromMonteCarloSims(...
             subject to
                 norms(A*x_points+b*ones(1,relv_n_mcarlo_sims), 2 ) <= 1;
         cvx_end
+        if ~strcmpi(cvx_status, 'Solved')
+            warning('SReachTools:runtime', ['CVX failed to obtain the ',...
+                'ellipsoid, potentially due to numerical issues.']); 
+        end
 
         % Construct the ellipsoid by matching coeff (x-q)^T Q^{-1} (x-q) =
         % (Ax + b)^2 = (x+A\b)'A'A(x+A\b)

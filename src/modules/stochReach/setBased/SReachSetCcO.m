@@ -256,6 +256,9 @@ function [polytope, extra_info] = computePolytopeFromXmax(xmax_soln, sys, ...
     vertices_underapprox_polytope = zeros(sys.state_dim, n_dir_vecs);
     
     %% Iterate over all direction vectors + xmax
+    if options.verbose >= 1
+        unsolved_directions = [];
+    end
     for direction_index = 1: n_dir_vecs
         % Get direction_index-th direction in the hyperplane
         direction = options.set_of_dir_vecs(:,direction_index);
@@ -287,18 +290,18 @@ function [polytope, extra_info] = computePolytopeFromXmax(xmax_soln, sys, ...
             maximize theta
             subject to
                 % Define boundary point
-                boundary_point == xmax_soln.xmax + theta *direction;
+                boundary_point == xmax_soln.xmax + theta * direction;
                 % Safe boundary point
                 init_safe_set.A * boundary_point <= init_safe_set.b;
-                init_safe_set.Ae* boundary_point == init_safe_set.be;
+                init_safe_set.Ae * boundary_point == init_safe_set.be;
                 % Input constraints
-                concat_input_space_A*U_vector<=concat_input_space_b;
+                concat_input_space_A * U_vector <= concat_input_space_b;
                 % Chance-constraint reformulation of safety
                 % prob(1-6) (1) Slack variables that are bounded
                 % below by the piecewise linear approximation of
                 % \phi^{-1}(1-\delta)
                 for deltai_indx = 1:n_lin_const
-                    norminvover(deltai_indx) >= invcdf_approx_m.* ...
+                    norminvover(deltai_indx) >= invcdf_approx_m .* ...
                         deltai(deltai_indx) + invcdf_approx_c; 
                 end
                 % (2) Trajectory
@@ -314,10 +317,33 @@ function [polytope, extra_info] = computePolytopeFromXmax(xmax_soln, sys, ...
                 % (6) W_0(x,U) >= alpha
                 1-sum(deltai) >= prob_thresh
         cvx_end
-        opt_theta_i(direction_index) = theta;
-        opt_input_vec_at_vertices(:,direction_index) = U_vector;
-        opt_reach_prob_i(direction_index) = 1 - sum(deltai);
-        vertices_underapprox_polytope(:, direction_index)= boundary_point;
+        if strcmpi(cvx_status,'Solved')
+            opt_theta_i(direction_index) = theta;
+            opt_input_vec_at_vertices(:,direction_index) = U_vector;
+            opt_reach_prob_i(direction_index) = 1 - sum(deltai);
+            vertices_underapprox_polytope(:, direction_index)= boundary_point;
+        else
+            warning('SReachTools:runtime', sprintf(['CVX could not solve ',...
+                'the line search problem %d/%d. CVX status: %s'],...
+                direction_index, n_dir_vecs, cvx_status));
+            if options.verbose == 1
+                unsolved_directions(end+1) = direction_index; 
+                inside_slack = max(init_safe_set.A * boundary_point -...
+                    init_safe_set.b);
+                inplane_slack = max(init_safe_set.Ae * boundary_point -...
+                    init_safe_set.be);
+                if inside_slack <= eps && abs(inplane_slack) < eps
+                    % All constraints satisfied
+                else
+                    fprintf(['CVX violated constraint requirements: Inequality:',...
+                        ' %1.2e | Equality: %1.2e\n'], inside_slack, inplane_slack);
+                end
+            end
+        end
+    end
+    if options.verbose >= 1
+        fprintf('Errored in %d direction vectors:',length(unsolved_directions));
+        disp(unsolved_directions);
     end
     polytope = Polyhedron('V', vertices_underapprox_polytope');
     if nargout > 1
@@ -390,6 +416,11 @@ function xmax_soln = computeWmax(sys, options, init_safe_set, prob_thresh, ...
             % (7) Input constraints
             concat_input_space_A * Umax <= concat_input_space_b;
     cvx_end
+    if ~strcmpi(cvx_status, 'Solved')
+        warning('SReachTools:runtime', ['CVX failed to obtain the initial',...
+            ' state with maximum reach probability, potentially due to ',...
+            'numerical issues.']); 
+    end
     xmax_soln.reach_prob = 1-sum(deltai);
     xmax_soln.xmax = xmax;
     xmax_soln.Umax = Umax; 
@@ -459,6 +490,10 @@ function cheby_soln = computeChebyshev(sys, options, init_safe_set, ...
             % Input constraints
             concat_input_space_A * Umax <= concat_input_space_b;
     cvx_end
+    if ~strcmpi(cvx_status, 'Solved')
+        warning('SReachTools:runtime', ['CVX failed to obtain the Chebyshev',...
+            ' centered trajectory, potentially due to numerical issues.']); 
+    end
     cheby_soln.reach_prob = 1-sum(deltai);
     cheby_soln.xmax = xmax;
     cheby_soln.Umax = Umax; 
