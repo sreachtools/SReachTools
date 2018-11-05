@@ -31,6 +31,7 @@ classdef RandomVectorTests < matlab.unittest.TestCase
             test_case.verifyError(@(x) RandomVector('Gaussian',zeros(2,1),...
                 eye(3)), 'SReachTools:invalidArgs');
             % Gaussian: Non-symmetric matrix
+            warning('on','SReachTools:runtime');
             test_case.verifyWarning(@(x) RandomVector('Gaussian',zeros(2,1),...
                 eye(2)+[0,3e-16;-3e-16,0]), 'SReachTools:runtime');
             RandomVector('Gaussian',zeros(2,1), eye(2)+[0,1e-18;-1e-18,0]);
@@ -49,6 +50,7 @@ classdef RandomVectorTests < matlab.unittest.TestCase
             eye(2) * r;
             r * eye(2);
             [1, 0 ] * r;
+            warning('on','SReachTools:runtime');
             test_case.verifyWarning(@(x) [1, 0;1, 0;1, 0] * r,...
                 'SReachTools:runtime');
             % Invalid dimension

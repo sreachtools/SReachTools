@@ -31,6 +31,7 @@ classdef SReachEllipsoidTests < matlab.unittest.TestCase
             test_case.verifyError(@(x) SReachEllipsoid(zeros(2,1),...
                 eye(3)), 'SReachTools:invalidArgs');
             % Gaussian: Non-symmetric matrix
+            warning('on','SReachTools:runtime');
             test_case.verifyWarning(@(x) SReachEllipsoid(zeros(2,1),...
                 eye(2)+[0,3e-16;-3e-16,0]), 'SReachTools:runtime');
             SReachEllipsoid(zeros(2,1), eye(2)+[0,1e-18;-1e-18,0]);
