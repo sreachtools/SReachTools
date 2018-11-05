@@ -39,7 +39,7 @@ function varargout = ellipsoidsFromMonteCarloSims(...
 %
 % Notes:
 % ------
-% * Requires CVX for solving the convex optimization problem using SeDuMi
+% * Requires CVX for solving the convex optimization problem using SDPT3
 % * Uses code obtained from
 %   http://web.cvxr.com/cvx/examples/cvxbook/Ch08_geometric_probs/min_vol_elp_finite_set.m
 % 
@@ -80,8 +80,8 @@ function varargout = ellipsoidsFromMonteCarloSims(...
         
         % Problem 8.11 in CVX optimization textbook
         cvx_begin quiet
-            % Gurobi can't handle this! So use SeDuMi
-            cvx_solver SeDuMi
+            % Gurobi can't handle this! So use SDPT3
+            cvx_solver SDPT3
             variable A(2, 2) symmetric;
             variable b(2, 1);
             

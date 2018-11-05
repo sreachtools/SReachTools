@@ -227,8 +227,8 @@ function check_recommended_dependencies()
             'SReachPoint() function in SReachTools requires MATLAB''s ', ...
             'Global Optimization Toolbox.']);
     end    
-    %% Check for Gurobi and if not default, switch to it if found else switch to
-    % SeDuMi, and warn the user
+    %% Check for Gurobi and if not default, switch to it if found, else switch
+    %% to SDPT3 (default), and warn the user
     [default_solver, solvers_cvx] = cvx_solver;
     options_mpt = mptopt;
     if ~(contains(default_solver,'Gurobi') && ...
@@ -242,10 +242,10 @@ function check_recommended_dependencies()
             cvx_solver Gurobi;
             evalc('cvx_save_prefs();cvx_setup()');
         else
-            warning('SReachTools:setup', ['Switching CVX backend default ',...
-                'solver to ''SeDuMi''.']);
-            cvx_solver SeDuMi;
-            evalc('cvx_save_prefs();cvx_setup()');
+            % warning('SReachTools:setup', ['Switching CVX backend default ',...
+            %     'solver to ''SeDuMi''.']);
+            % cvx_solver SeDuMi;
+            % evalc('cvx_save_prefs();cvx_setup()');
         end
     end
 end
