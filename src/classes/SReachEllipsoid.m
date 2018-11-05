@@ -143,8 +143,10 @@ classdef SReachEllipsoid
             if size(l,2) ~= obj.dim
                 throwAsCaller(SrtInvalidArgsError('l has incorrect dimensions.'));
             end
+            % cholesky > obj.shape_matrix = sqrt_shape_matrix'*sqrt_shape_matrix
             sqrt_shape_matrix = chol(obj.shape_matrix);
-            support_fun_val = l* obj.center + norms(l*sqrt_shape_matrix, 2,2);
+            % Hence, we need the transpose
+            support_fun_val = l* obj.center + norms(l*sqrt_shape_matrix', 2,2);
         end
         
         function newobj=mtimes(obj, F)

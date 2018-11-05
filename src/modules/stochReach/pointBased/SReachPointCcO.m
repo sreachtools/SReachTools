@@ -126,8 +126,10 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
     n_lin_state = size(concat_safety_tube_A,1);
 
     %% Compute \sqrt{h_i^\top * \Sigma_X_no_input * h_i} = ||\sqrt\Sigma_X*h_i||
+    % cholesky > cov_X_sans_input = sqrt_cov_X_sans_input'*sqrt_cov_X_sans_input
     sqrt_cov_X_sans_input = chol(cov_X_sans_input);
-    sigma_vector = norms(concat_safety_tube_A * sqrt_cov_X_sans_input, 2, 2);
+    % Hence, we need the transpose on sqrt_cov_X
+    sigma_vector = norms(concat_safety_tube_A * sqrt_cov_X_sans_input', 2, 2);
 
 
     %% Obtain the piecewise linear overapproximation of norminvcdf in [0,0.5]
@@ -153,8 +155,6 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
             deltai >= lb_deltai;
             deltai <= 0.5;
     cvx_end
-
-    %% Overwrite the solutions
     if strcmpi(cvx_status, 'Solved')
         lb_stoch_reach = 1-sum(deltai);
         opt_input_vec = U_vector; 

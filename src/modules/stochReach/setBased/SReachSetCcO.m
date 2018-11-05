@@ -108,19 +108,20 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
                                'He',[safety_tube(1).He;
                                      options.init_safe_set_affine.He]);
     
-    % Compute mean_X_sans_input, cov_X_sans_input
+    % Compute mean_X_zizs, cov_X_sans_input
     time_horizon = length(safety_tube)-1;
-    sys_no_input = LtvSystem('StateMatrix',sys.state_mat, ...
-        'DisturbanceMatrix', sys.dist_mat,'Disturbance',sys.dist);
-    % zizs - zero-input and zero state response
-    [mean_X_zizs, cov_X_sans_input] = SReachFwd('concat-stoch', ...
-        sys_no_input, zeros(sys.state_dim,1), time_horizon);
-
+    [~, ~, G] = sys.getConcatMats(time_horizon);
+    GW = G * sys.dist.concat(time_horizon);
+    mean_X_zizs = GW.parameters.mean;
+    cov_X_sans_input = GW.parameters.covariance;
+    
     % Compute \sqrt{h_i^\top * \Sigma_X_no_input * h_i}
     [concat_safety_tube_A, ~] = safety_tube.concat([1 time_horizon]+1);
 
+    % cholesky > sqrt_cov_X' * sqrt_cov_X = cov_X
     sqrt_cov_X_sans_input = chol(cov_X_sans_input);
-    sigma_vec = norms(concat_safety_tube_A*sqrt_cov_X_sans_input, 2,2);
+    % Hence, the transpose is needed
+    sigma_vec = norms(concat_safety_tube_A*sqrt_cov_X_sans_input', 2,2);
 
     %% Step 1: Find initial state (xmax) w/ max open-loop stochastic reach prob
     xmax_soln = computeWmax(sys, options, init_safe_set, prob_thresh, ...
@@ -339,9 +340,15 @@ function [polytope, extra_info] = computePolytopeFromXmax(xmax_soln, sys, ...
                         ' %1.2e | Equality: %1.2e\n'], inside_slack, inplane_slack);
                 end
             end
-        end
+            % Default values --- theta is zero, vertex is xmax, and inputs and
+            % reach probability as NaN
+            opt_theta_i(direction_index) = 0;
+            vertices_underapprox_polytope(:, direction_index)= xmax_soln.xmax;
+            opt_input_vec_at_vertices(:,direction_index) = NaN;
+            opt_reach_prob_i(direction_index) = NaN;            
+        end        
     end
-    if options.verbose >= 1
+    if options.verbose >= 1 && length(unsolved_directions) > 0
         fprintf('Errored in %d direction vectors:',length(unsolved_directions));
         disp(unsolved_directions);
     end

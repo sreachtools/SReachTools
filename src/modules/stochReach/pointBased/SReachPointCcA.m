@@ -135,7 +135,9 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
     
     %% Covariance of W vector
     cov_concat_disturb = kron(eye(time_horizon),sys.dist.parameters.covariance);
-    % Compute a sparse square root of a matrix
+    % Compute a sparse square root of a matrix: chol produces a sqrt such that
+    % sqrt' * sqrt = M. Hence, whenever, we left multiply (inside a norm), we
+    % must transpose.
     sqrt_cov_concat_disturb = chol(cov_concat_disturb);    
 
     %% Piecewise-affine approximation of norminvcdf
@@ -149,8 +151,9 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
 
     % Initializations for DC iterative algorithm
     obj_curr = Inf;      
+    % Slack initialization with gain as zero (search 'chol' for why transpose)
     norm_state_replace_slack_iter = norms(concat_safety_tube_A * G * ...
-                                                sqrt_cov_concat_disturb,2,2);
+                                                sqrt_cov_concat_disturb',2,2);
     norm_input_replace_slack_iter = zeros(n_lin_input,1);
     norminvdeltai_iter = norminv(lb_risk * ones(n_lin_state,1));
     norminvgammai_iter = norminv(lb_risk * ones(n_lin_input,1));
@@ -206,11 +209,11 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
                 % Risk allocation bounds --- input
                 lb_risk <= gammai  <= options.max_input_viol_prob;
                 sum(gammai) <= options.max_input_viol_prob;
-                % Norms in their epigraph form
+                % Norms in their epigraph form (search 'chol' for why transpose)
                 norms(concat_safety_tube_A* (H * M_matrix + G) * ...
-                    sqrt_cov_concat_disturb,2,2)<= norm_state_replace_slack;
+                    sqrt_cov_concat_disturb',2,2)<= norm_state_replace_slack;
                 norms(concat_input_space_A* M_matrix * ...
-                    sqrt_cov_concat_disturb,2,2)<= norm_input_replace_slack;
+                    sqrt_cov_concat_disturb',2,2)<= norm_input_replace_slack;
                 % Norminvcdf(1-x) in their epigraph form via
                 % piecewise-affine approximation
                 for deltai_indx = 1:n_lin_state

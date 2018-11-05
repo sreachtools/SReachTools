@@ -110,15 +110,14 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
         time_horizon);
     
     % Compute the concatenated state dynamic matrices
-    [Z, H, ~] = getConcatMats(sys, time_horizon); 
+    [Z, H, G] = getConcatMats(sys, time_horizon); 
     
     % Compute the mean of G*W vector --- mean of concatenated state vector
     % under zero input and zero state conditions
-    sysnoi = LtvSystem('StateMatrix',sys.state_mat,'DisturbanceMatrix', ...
-        sys.dist_mat,'Disturbance',sys.dist);
-    [mean_X_zizs, cov_X_sans_input] = SReachFwd('concat-stoch', sysnoi, ...
-        zeros(sys.state_dim,1), time_horizon);
-
+    GW = G * sys.dist.concat(time_horizon);
+    mean_X_zizs = GW.parameters.mean;
+    cov_X_sans_input = GW.parameters.covariance;
+    
     % Construct the constrained initial safe set
     init_safe_set = Polyhedron('H', safety_tube(1).H, ...
                       'He',[safety_tube(1).He;options.init_safe_set_affine.He]);
