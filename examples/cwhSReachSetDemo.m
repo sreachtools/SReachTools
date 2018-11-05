@@ -164,21 +164,21 @@ hold on;
 plot(safe_set.slice([3,4], slice_at_vx_vy), 'color', 'y');
 plot(target_set.slice([3,4], slice_at_vx_vy), 'color', 'g');
 legend_cell = {'Safe set','Target set'};
-if exist('polytope_cc_open','var')
+if exist('polytope_cc_open','var') && ~isEmptySet(polytope_cc_open)
     plot(polytope_cc_open.slice([3,4], slice_at_vx_vy), 'color','m','alpha',1);
     legend_cell{end+1} = 'Underapprox. polytope (chance-open)';
 else
     polytope_cc_open = Polyhedron();
     elapsed_time_cc_open = NaN;
 end
-if exist('polytope_ft','var')
+if exist('polytope_ft','var') && ~isEmptySet(polytope_ft)
     plot(polytope_ft.slice([3,4], slice_at_vx_vy), 'color','b','alpha',1);
     legend_cell{end+1} = 'Underapprox. polytope (genzps-open)';
 else
     polytope_ft = Polyhedron();
     elapsed_time_ft = NaN;
 end
-if exist('polytope_lagunder','var')
+if exist('polytope_lagunder','var') && ~isEmptySet(polytope_lagunder)
     plot(polytope_lagunder.slice([3,4], slice_at_vx_vy), 'color','r','alpha',1);
     legend_cell{end+1} = 'Underapprox. polytope (lag-under)';
 else
@@ -199,15 +199,16 @@ if ~isEmptySet(polytope_cc_open)
             input_vec);        
     
     % Check if the location is within the target_set or not
-    mcarlo_result = target_tube.contains([repmat(init_state,1,n_mcarlo_sims);
-                                          concat_state_realization]);
+    mcarlo_result = target_tube.contains(concat_state_realization);
     [legend_cell] = plotMonteCarlo(' (chance-open)', mcarlo_result, ...
         concat_state_realization, n_mcarlo_sims, n_sims_to_plot, ...
-        sys.state_dim,init_state, legend_cell);
+        sys.state_dim, init_state, legend_cell);
 end
 legend(legend_cell, 'Location','South');
 xlabel('$x$','interpreter','latex');
 ylabel('$y$','interpreter','latex');
+fprintf('Expected probability: %1.3f, Simulated probability: %1.3f\n',...
+    opt_reach_avoid, sum(mcarlo_result)/n_mcarlo_sims);
 
 %% Reporting solution times
 if any(isnan([elapsed_time_ft, elapsed_time_cc_open, elapsed_time_lagunder]))

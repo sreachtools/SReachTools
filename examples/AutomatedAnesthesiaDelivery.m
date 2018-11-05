@@ -134,9 +134,7 @@ if ~isEmptySet(underapprox_stoch_viab_polytope)
         sys.state_dim,[]);
     % Monte-Carlo estimate of the safety probability
     % ----------------------------------------------
-    mcarlo_result = safety_tube.contains(...
-        [repmat(initial_state,1,n_mcarlo_sims);
-         concat_state_realization]);
+    mcarlo_result = safety_tube.contains(concat_state_realization);
     stoch_viab_prob_mc_estim = sum(mcarlo_result)/n_mcarlo_sims;
     fprintf(['Open-loop-based lower bound and Monte-Carlo simulation ', ...
              '(%1.0e particles): %1.3f, %1.3f\n'], ...

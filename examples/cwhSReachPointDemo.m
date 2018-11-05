@@ -133,9 +133,7 @@ if ft_run
         concat_state_realization_ft = generateMonteCarloSims(n_mcarlo_sims, ...
             sys, initial_state, time_horizon, optimal_input_vector_ft);
         % Check if the location is within the target_set or not
-        mcarlo_result_ft = target_tube.contains(...
-            [repmat(initial_state,1,n_mcarlo_sims);
-             concat_state_realization_ft]);
+        mcarlo_result_ft = target_tube.contains(concat_state_realization_ft);
         % Optimal mean trajectory generation                         
         optimal_mean_X_ft = mean_X_sans_input + H * optimal_input_vector_ft;
         optimal_mean_trajectory_ft = reshape(optimal_mean_X_ft,sys.state_dim,[]);                                              
@@ -156,8 +154,7 @@ if cc_open_run
             optimal_input_vector_cc_pwl);
         % Check if the location is within the target_set or not
         mcarlo_result_cc_pwl = target_tube.contains(...
-            [repmat(initial_state,1,n_mcarlo_sims);
-             concat_state_realization_cc_pwl]);
+            concat_state_realization_cc_pwl);
         % Optimal mean trajectory generation                         
         optimal_mean_X_cc_pwl = mean_X_sans_input + ...
             H * optimal_input_vector_cc_pwl;
@@ -188,8 +185,7 @@ if cc_affine_run
 
         % Check if the location is within the target_set or not
         mcarlo_result_cc_affine = target_tube.contains(...
-            [repmat(initial_state,1,n_mcarlo_sims);
-             concat_state_realization_cc_affine]);
+            concat_state_realization_cc_affine);
         
         % Check if the input is within the tolerance
         [concat_input_space_A, concat_input_space_b] =...
@@ -218,9 +214,7 @@ if pa_open_run
             n_mcarlo_sims, sys, initial_state, time_horizon, ...
             optimal_input_vector_pa);
         % Check if the location is within the target_set or not
-        mcarlo_result_pa = target_tube.contains(...
-            [repmat(initial_state,1,n_mcarlo_sims);
-             concat_state_realization_pa]);
+        mcarlo_result_pa = target_tube.contains(concat_state_realization_pa);
         % Optimal mean trajectory generation                         
         optimal_mean_X_pa = mean_X_sans_input + ...
             H * optimal_input_vector_pa;

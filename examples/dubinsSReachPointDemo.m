@@ -153,16 +153,14 @@ legend(h_vec, legend_cell, 'Location','EastOutside', 'interpreter','latex');
 % n_mcarlo_sims = 1e5;
 % concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, ...
 %     sys, init_state_ccc_affine, time_horizon, opt_input_vec_ccc_affine, opt_input_gain_ccc_affine);
-% mcarlo_result = target_tube.contains([repmat(init_state_ccc_affine,1,n_mcarlo_sims);
-%                                       concat_state_realization]);
+% mcarlo_result = target_tube.contains(concat_state_realization);
 % fprintf('SReachPoint prob: %1.2f, Simulated prob: %1.2f', prob_ccc_affine, sum(mcarlo_result)/n_mcarlo_sims);
 %                                   
 % %% Check particle-open
 % n_mcarlo_sims = 1e5;
 % concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, ...
 %     sys, init_state_particle_open, time_horizon, opt_input_vec_particle_open);
-% mcarlo_result = target_tube.contains([repmat(init_state_particle_open,1,n_mcarlo_sims);
-%                                       concat_state_realization]);
+% mcarlo_result = target_tube.contains(concat_state_realization);
 % fprintf('SReachPoint prob: %1.2f, Simulated prob: %1.2f', prob_particle_open, sum(mcarlo_result)/n_mcarlo_sims);
 %              
 % Get a random point

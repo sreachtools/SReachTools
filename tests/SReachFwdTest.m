@@ -211,12 +211,13 @@ classdef SReachFwdTest < matlab.unittest.TestCase
                                                            init_state, ...
                                                            target_time);
             % Check if the location is within the target_set or not
-            mcarlo_result = target_tube.contains([repmat(init_state,1,n_mcarlo_sims);
-                                      concat_state_realization]);
+            mcarlo_result = target_tube.contains(concat_state_realization);
             mean_concat_state = mean(concat_state_realization,2);
             % Checking values
-            testCase.verifyLessThanOrEqual(abs(sum(mcarlo_result)/n_mcarlo_sims - prob), desired_accuracy);            
-            testCase.verifyLessThanOrEqual(max(abs(mean_vec - mean_concat_state)), 1e-2);            
+            testCase.verifyLessThanOrEqual(abs(sum(...
+                mcarlo_result)/n_mcarlo_sims - prob), desired_accuracy);            
+            testCase.verifyLessThanOrEqual(max(abs(mean_vec -...
+                mean_concat_state(sys.state_dim+1:end))), 1e-2);            
             %% Stochastic initial state
             init_state_rand = RandomVector('Gaussian',init_state,0.001*eye(4)); 
             % Testing
@@ -232,12 +233,13 @@ classdef SReachFwdTest < matlab.unittest.TestCase
                                                            init_state_rand, ...
                                                            target_time);
             % Check if the location is within the target_set or not
-            mcarlo_result = target_tube.contains([repmat(init_state,1,n_mcarlo_sims);
-                                      concat_state_realization]);
+            mcarlo_result = target_tube.contains(concat_state_realization);
             mean_concat_state = mean(concat_state_realization,2);
             % Checking values
-            testCase.verifyLessThanOrEqual(abs(sum(mcarlo_result)/n_mcarlo_sims - prob), desired_accuracy);            
-            testCase.verifyLessThanOrEqual(max(abs(mean_vec - mean_concat_state)), 1e-2);                    
+            testCase.verifyLessThanOrEqual(abs(sum(...
+                mcarlo_result)/n_mcarlo_sims - prob), desired_accuracy);            
+            testCase.verifyLessThanOrEqual(max(abs(mean_vec -...
+                mean_concat_state(sys.state_dim+1:end))), 1e-2);            
         end
     end
 end
