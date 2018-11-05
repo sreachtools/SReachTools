@@ -165,21 +165,22 @@ plot(safe_set.slice([3,4], slice_at_vx_vy), 'color', 'y');
 plot(target_set.slice([3,4], slice_at_vx_vy), 'color', 'g');
 legend_cell = {'Safe set','Target set'};
 if exist('polytope_cc_open','var') && ~isEmptySet(polytope_cc_open)
-    plot(polytope_cc_open.slice([3,4], slice_at_vx_vy), 'color','m','alpha',1);
+    plot(Polyhedron('V',polytope_cc_open.V(:,1:2)), 'color','m','alpha',1);
     legend_cell{end+1} = 'Underapprox. polytope (chance-open)';
 else
     polytope_cc_open = Polyhedron();
     elapsed_time_cc_open = NaN;
 end
 if exist('polytope_ft','var') && ~isEmptySet(polytope_ft)
-    plot(polytope_ft.slice([3,4], slice_at_vx_vy), 'color','b','alpha',1);
+    plot(Polyhedron('V',polytope_ft.V(:,1:2)), 'color','b','alpha',1);
     legend_cell{end+1} = 'Underapprox. polytope (genzps-open)';
 else
     polytope_ft = Polyhedron();
     elapsed_time_ft = NaN;
 end
 if exist('polytope_lagunder','var') && ~isEmptySet(polytope_lagunder)
-    plot(polytope_lagunder.slice([3,4], slice_at_vx_vy), 'color','r','alpha',1);
+    %plot(polytope_lagunder.slice([3,4], slice_at_vx_vy), 'color','r','alpha',1);
+    plot(Polyhedron('V',polytope_ft.V(:,1:2)), 'color','r','alpha',1);    
     legend_cell{end+1} = 'Underapprox. polytope (lag-under)';
 else
     polytope_lagunder = Polyhedron();
