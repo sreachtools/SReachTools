@@ -1,4 +1,4 @@
-%% Demonstration of controller synthesis via SReachPoint
+%% Demonstration of controller synthesis via SReachPoint: Spacecraft rendezvous
 % This example will demonstrate the use of SReachTools in controller synthesis
 % for stochastic continuous-state discrete-time linear time-invariant (LTI) 
 % systems.
@@ -9,11 +9,11 @@
 % chance constraints to synthesize open-loop controllers. We also synthesize an 
 % affine controller using difference-of-convex program.
 %
-% Our approaches is grid-free and recursion-free resulting in highly scalable
+% Our approaches are grid-free and recursion-free resulting in highly scalable
 % solutions, especially for Gaussian-perturbed LTI systems. 
 %
-% This Live Script is part of the SReachTools toolbox. License for the use 
-% of this function is given in 
+% This script is part of the SReachTools toolbox. License for the use of this 
+% function is given in  
 % <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE 
 % https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
 
