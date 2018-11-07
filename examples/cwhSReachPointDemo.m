@@ -3,17 +3,31 @@
 % for stochastic continuous-state discrete-time linear time-invariant (LTI) 
 % systems.
 % 
-% Specifically, we will discuss how SReachTools can use Fourier transforms
-% (<http://www.math.wsu.edu/faculty/genz/software/matlab/qsimvnv.m 
-% Genz's algorithm> and MATLAB's patternsearch), particle filter, or convex 
-% chance constraints to synthesize open-loop controllers. We also synthesize an 
-% affine controller using difference-of-convex program.
+% Specifically, we will discuss how we can use SReachPoint to synthesize 
+% open-loop controllers and affine-disturbance feedback controllers for
+% that maximize the probability of safety while respecting the system dynamics 
+% and control bounds. We demonstrate:
+% 
+% * |chance-open|: Chance-constrained approach that uses risk allocation and 
+%    piecewise-affine approximations to formulate a linear program to
+%    synthesize an open-loop controller
+% * |genzps-open|: Fourier transforms that uses
+%    <http://www.math.wsu.edu/faculty/genz/software/matlab/qsimvnv.m Genz's 
+%    algorithm> to formulate a nonlinear log-concave optimization problem to be
+%    solved using MATLAB's patternsearch to synthesize an open-loop controller
+% * |particle-open|: Particle control approach filter that formulates a 
+%    mixed-integer linear program to synthesize an open-loop controller
+% * |chance-affine|: Chance-constrained approach that uses risk allocation and 
+%    piecewise-affine approximations to formulate a difference-of-convex program 
+%    to synthesize a closed-loop (affine disturbance feedback) controller.
+%    The controller synthesis is done by solving a series of second-order
+%    cone programs.
 %
 % Our approaches are grid-free and recursion-free resulting in highly scalable
 % solutions, especially for Gaussian-perturbed LTI systems. 
 %
-% This script is part of the SReachTools toolbox. License for the use of this 
-% function is given in  
+% This script is part of the SReachTools toolbox, which is licensed under GPL v3
+% or (at your option) any later version. A copy of this license is given in 
 % <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE 
 % https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
 
@@ -68,16 +82,9 @@ sys = getCwhLtiSystem(4, Polyhedron('lb', -umax*ones(2,1), ...
                                         'ub',  umax*ones(2,1)), ...
        RandomVector('Gaussian', mean_disturbance,covariance_disturbance));
 
-%% Methods to run   
-ft_run = 1;
-cc_open_run = 1;
-cc_affine_run = 1;
-pa_open_run = 1;
-plot_traj_instead_of_ellipses = 0;
-
 %% Target tube construction --- reach-avoid specification
-time_horizon = 5;          % Stay within a line of sight cone for 4 time steps and 
-                         % reach the target at t=5% Safe Set --- LoS cone
+time_horizon = 5;   % Stay within a line of sight cone for 4 time steps and 
+                    % reach the target at t=5% Safe Set --- LoS cone
 % Safe set definition --- LoS cone |x|<=y and y\in[0,ymax] and |vx|<=vxmax and 
 % |vy|<=vymax
 ymax = 2;
@@ -101,15 +108,25 @@ safe_set = Polyhedron(A_safe_set, b_safe_set);
 % Target set --- Box [-0.1,0.1]x[-0.1,0]x[-0.01,0.01]x[-0.01,0.01]
 target_set = Polyhedron('lb', [-0.1; -0.1; -0.01; -0.01], ...
                         'ub', [0.1; 0; 0.01; 0.01]);
-target_tube = Tube('reach-avoid',safe_set, target_set, time_horizon);                    
-%%
+target_tube = Tube('reach-avoid',safe_set, target_set, time_horizon);
 
-%% Initial state definition
+
+%% Specifying initial states and which options to run
+cc_open_run = 1;
+ft_run = 1;
+pa_open_run = 1;
+cc_affine_run = 1;
+% Initial state definition
 initial_state = [-1.15;         % Initial x relative position
                  -1.15;         % Initial y relative position
                  0;             % Initial x relative velocity
                  0];            % Initial y relative velocity
-slice_at_vx_vy = initial_state(3:4);             
+slice_at_vx_vy = initial_state(3:4); 
+init_state_ccc_open = initial_state;
+init_state_genzps_open = initial_state;
+init_state_particle_open = initial_state;
+init_state_ccc_affine = initial_state;
+
 
 %% Preparation for Monte-Carlo simulations of the optimal controllers
 % Monte-Carlo simulation parameters
@@ -123,25 +140,15 @@ sysnoi = LtvSystem('StateMatrix',sys.state_mat,'DisturbanceMatrix', ...
 [mean_X_sans_input, ~] = SReachFwd('concat-stoch', sysnoi, initial_state, ...
     time_horizon);
 
-if ft_run
-    timer_ft = tic;
-    [lb_stoch_reach_avoid_ft, optimal_input_vector_ft] = SReachPoint(...
-        'term','genzps-open', sys, initial_state, target_tube);  
-    elapsed_time_ft = toc(timer_ft);
-    if lb_stoch_reach_avoid_ft > 0
-        % This function returns the concatenated state vector stacked columnwise
-        concat_state_realization_ft = generateMonteCarloSims(n_mcarlo_sims, ...
-            sys, initial_state, time_horizon, optimal_input_vector_ft);
-        % Check if the location is within the target_set or not
-        mcarlo_result_ft = target_tube.contains(concat_state_realization_ft);
-        % Optimal mean trajectory generation                         
-        optimal_mean_X_ft = mean_X_sans_input + H * optimal_input_vector_ft;
-        optimal_mean_trajectory_ft = reshape(optimal_mean_X_ft,sys.state_dim,[]);                                              
-    end
-end
-
-%% CC (Linear program approach)
-% We will use the default options   
+%% SReachPoint: |chance-open|
+% This implements the chance-constrained approach to compute a globally opt 
+% open-loop controller. This approach uses risk allocation and piecewise-affine 
+% overapproximation of the inverse normal cumulative density function to
+% formulate a linear program for this purpose. Naturally, this is one of
+% the fastest ways to compute an open-loop controller and an
+% underapproximative probabilistic guarantee of safety. However, due to the use
+% of Boole's inequality for risk allocation, it provides a conservative estimate
+% of safety using the open-loop controller.
 if cc_open_run
     timer_cc_pwl = tic;
     [lb_stoch_reach_avoid_cc_pwl, optimal_input_vector_cc_pwl] = SReachPoint(...
@@ -163,9 +170,45 @@ if cc_open_run
     end
 end
 
-%% CC with affine controllers (Second order cone program approach)     
-% We set $\Delta_U=0.01$ and define verbosity level of 1.
-max_input_viol_prob = 0.01;
+%% SReachPoint: |genzps-open|
+% This implements the Fourier transform-based approach to compute a globally
+% opt open-loop controller. This approach uses
+% <http://www.math.wsu.edu/faculty/genz/software/matlab/qsimvnv.m Genz's
+% algorithm> to compute the probability of safety and optimizes the joint chance
+% constraint involved in maximizing this probability. To handle the noisy
+% behaviour of the Genz's algorithm, we rely on MATLAB's |patternsearch| for the
+% nonlinear optimization. The global optity of the open-loop controller is
+% guaranteed by the log-concavity of the problem. Internally, we use the
+% |chance-open| to initialize the nonlinear solver. Hence, this approach will
+% return an open-loop controller with safety at least as good as |chance-open|.
+if ft_run
+    timer_ft = tic;
+    [lb_stoch_reach_avoid_ft, optimal_input_vector_ft] = SReachPoint(...
+        'term','genzps-open', sys, initial_state, target_tube);  
+    elapsed_time_ft = toc(timer_ft);
+    if lb_stoch_reach_avoid_ft > 0
+        % This function returns the concatenated state vector stacked columnwise
+        concat_state_realization_ft = generateMonteCarloSims(n_mcarlo_sims, ...
+            sys, initial_state, time_horizon, optimal_input_vector_ft);
+        % Check if the location is within the target_set or not
+        mcarlo_result_ft = target_tube.contains(concat_state_realization_ft);
+        % Optimal mean trajectory generation                         
+        optimal_mean_X_ft = mean_X_sans_input + H * optimal_input_vector_ft;
+        optimal_mean_trajectory_ft = reshape(optimal_mean_X_ft,sys.state_dim,[]);                                              
+    end
+end
+
+%% SReachPoint: |chance-affine|
+% This implements the chance-constrained approach to compute a locally opt 
+% affine disturbance feedback controller. This approach uses risk allocation and 
+% piecewise-affine overapproximation of the inverse normal cumulative density 
+% function to formulate a difference-of-convex program. We utilize penalty 
+% convex-concave procedure to solve this program to a local optimum. Due to
+% its construction of the affine feedback controller, this approach
+% typically permits the construction of the highest underapproximative
+% probability guarantee. Since affine disturbance feedback controllers can
+% not satisfy hard control bounds, we relax the control bounds to be
+% probabilistically violated with at most a probability of 0.01
 if cc_affine_run
     timer_cc_affine = tic;
     options = SReachPointOptions('term','chance-affine', ...
@@ -384,11 +427,10 @@ fprintf('Elapsed time: %1.3f, %1.3f, %1.3f, %1.3f seconds\n', ...
     elapsed_time_cc_affine);
 
 %% Helper functions
-% Plotting function
 function [legend_cell] = plotMonteCarlo(method_str, mcarlo_result, ...
     concat_state_realization, n_mcarlo_sims, n_sims_to_plot, state_dim, ...
     initial_state, legend_cell)
-% Plots a selection of Monte-Carlo simulations on top of the plot
+    % Plots a selection of Monte-Carlo simulations on top of the plot
 
     green_legend_updated = 0;
     red_legend_updated = 0;
