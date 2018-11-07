@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>dubinsSReachPointDemo</title><meta name="generator" content="MATLAB 9.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2018-11-06"><meta name="DC.source" content="dubinsSReachPointDemo.m"><style type="text/css">
+      --><title>dubinsSReachPointDemo</title><meta name="generator" content="MATLAB 9.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2018-11-07"><meta name="DC.source" content="dubinsSReachPointDemo.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -66,37 +66,36 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
 
-  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Demonstration of controller synthesis via SReachPoint: Dubin's vehicle</a></li><li><a href="#2">Problem: Stochastic reachability of a target tube for a Dubin's vehicle</a></li><li><a href="#3">LTV system definition</a></li><li><a href="#4">Target tube definition</a></li><li><a href="#5">Methods to run</a></li><li><a href="#6">Initial states for each of the method</a></li><li><a href="#7">Quantities needed to compute the optimal mean trajectory</a></li><li><a href="#8">SReachPoint: chance-open (with pwa_accuracy 1e-3)</a></li><li><a href="#9">SReachPoint: chance-affine (with \Delta_u = 0.01)</a></li><li><a href="#10">SReachPoint: genzps-open</a></li><li><a href="#11">SReachPoint: particle-open (use verbosity 1)</a></li><li><a href="#12">Plot the set</a></li></ul></div><h2 id="1">Demonstration of controller synthesis via SReachPoint: Dubin's vehicle</h2><p>This example will demonstrate the use of SReachTools in controller synthesis for stochastic continuous-state discrete-time linear time-varying (LTV) systems.</p><p>Specifically, we will discuss how SReachTools can use Fourier transforms (<a href="http://www.math.wsu.edu/faculty/genz/software/matlab/qsimvnv.m">Genz's algorithm</a> and MATLAB's patternsearch), particle filter, or convex chance constraints to synthesize open-loop controllers. We also synthesize an affine controller using difference-of-convex program.</p><p>Our approaches are grid-free and recursion-free resulting in highly scalable solutions, especially for Gaussian-perturbed LTV systems.</p><p>This script is part of the SReachTools toolbox. License for the use of this function is given in <a href="https://github.com/unm-hscl/SReachTools/blob/master/LICENSE">https://github.com/unm-hscl/SReachTools/blob/master/LICENSE</a>.</p><pre class="codeinput"><span class="comment">% Prescript running</span>
-close <span class="string">all</span>;
-<span class="comment">% clc;</span>
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Demonstration of controller synthesis via SReachPoint: Dubin's vehicle</a></li><li><a href="#2">Problem: Stochastic reachability of a target tube for a Dubin's vehicle</a></li><li><a href="#3">Target tube definition</a></li><li><a href="#4">Specifying initial states and which options to run</a></li><li><a href="#5">Quantities needed to compute the optimal mean trajectory</a></li><li><a href="#6">SReachPoint: <tt>chance-open</tt></a></li><li><a href="#7">SReachPoint: <tt>genzps-open</tt></a></li><li><a href="#8">SReachPoint: <tt>particle-open</tt></a></li><li><a href="#9">SReachPoint: <tt>chance-affine</tt></a></li><li><a href="#10">Plot of the optimal mean trajectories</a></li></ul></div><h2 id="1">Demonstration of controller synthesis via SReachPoint: Dubin's vehicle</h2><p>This example will demonstrate the use of SReachTools in controller synthesis for stochastic continuous-state discrete-time linear time-varying (LTV) systems.</p><p>Specifically, we will discuss how we can use SReachPoint to synthesize open-loop controllers and affine-disturbance feedback controllers for that maximize the probability of safety while respecting the system dynamics and control bounds. We demonstrate:</p><div><ul><li><tt>chance-open</tt>: Chance-constrained approach that uses risk allocation and    piecewise-affine approximations to formulate a linear program to    synthesize an open-loop controller</li><li><tt>genzps-open</tt>: Fourier transforms that uses    <a href="http://www.math.wsu.edu/faculty/genz/software/matlab/qsimvnv.m">Genz's    algorithm</a> to formulate a nonlinear log-concave optimization problem to be    solved using MATLAB's patternsearch to synthesize an open-loop controller</li><li><tt>particle-open</tt>: Particle control approach filter that formulates a    mixed-integer linear program to synthesize an open-loop controller</li><li><tt>chance-affine</tt>: Chance-constrained approach that uses risk allocation and    piecewise-affine approximations to formulate a difference-of-convex program    to synthesize a closed-loop (affine disturbance feedback) controller.    The controller synthesis is done by solving a series of second-order    cone programs.</li></ul></div><p>Our approaches are grid-free and recursion-free resulting in highly scalable solutions, especially for Gaussian-perturbed LTV systems.</p><p>This script is part of the SReachTools toolbox, which is licensed under GPL v3 or (at your option) any later version. A copy of this license is given in <a href="https://github.com/unm-hscl/SReachTools/blob/master/LICENSE">https://github.com/unm-hscl/SReachTools/blob/master/LICENSE</a>.</p><pre class="codeinput"><span class="comment">% Prescript running</span>
+close <span class="string">all</span>;clc;
 clearvars;
 srtinit
-</pre><h2 id="2">Problem: Stochastic reachability of a target tube for a Dubin's vehicle</h2><p>We consider a Dubin's vehicle with known turning rate sequence <img src="dubinsSReachPointDemo_eq07062630063191653858.png" alt="$\overline{\omega} = {[\omega_0\ \omega_1\ \ldots\ \omega_{T-1}]}^\top \in R^T$">, with additive Gaussian disturbance. The resulting dynamics are,</p><p><img src="dubinsSReachPointDemo_eq00577730323371698610.png" alt="$$x_{k+1} = x_k + T_s \cos\left(\theta_0 + \sum_{i=1}^{k-1} \omega_i T_s\right) v_k$$"></p><p><img src="dubinsSReachPointDemo_eq00641890286918727417.png" alt="$$y_{k+1} = y_k + T_s \sin\left(\theta_0 + \sum_{i=1}^{k-1} \omega_i T_s\right) v_k$$"></p><p>where <img src="dubinsSReachPointDemo_eq09465107182849804810.png" alt="$x,y$"> are the positions (state) of the Dubin's vehicle in <img src="dubinsSReachPointDemo_eq15238746908345155538.png" alt="$\mathrm{x}$">- and <img src="dubinsSReachPointDemo_eq06683332128004049953.png" alt="$\mathrm{y}$">- axes, <img src="dubinsSReachPointDemo_eq17921314802056622314.png" alt="$v_k$"> is the velocity of the vehicle (input), <img src="dubinsSReachPointDemo_eq15197243358923498023.png" alt="$T_s$"> is the sampling time, and <img src="dubinsSReachPointDemo_eq13137738365897093402.png" alt="$\theta_0$"> is the initial heading direction.</p><pre class="codeinput">time_horizon = 50;
-time_const = 1/2*time_horizon;
+</pre><h2 id="2">Problem: Stochastic reachability of a target tube for a Dubin's vehicle</h2><p>We consider a Dubin's vehicle with known turning rate sequence <img src="dubinsSReachPointDemo_eq07062630063191653858.png" alt="$\overline{\omega} = {[\omega_0\ \omega_1\ \ldots\ \omega_{T-1}]}^\top \in R^T$">, with additive Gaussian disturbance. The resulting dynamics are,</p><p><img src="dubinsSReachPointDemo_eq00577730323371698610.png" alt="$$x_{k+1} = x_k + T_s \cos\left(\theta_0 + \sum_{i=1}^{k-1} \omega_i T_s\right) v_k$$"></p><p><img src="dubinsSReachPointDemo_eq00641890286918727417.png" alt="$$y_{k+1} = y_k + T_s \sin\left(\theta_0 + \sum_{i=1}^{k-1} \omega_i T_s\right) v_k$$"></p><p>where <img src="dubinsSReachPointDemo_eq09465107182849804810.png" alt="$x,y$"> are the positions (state) of the Dubin's vehicle in <img src="dubinsSReachPointDemo_eq15238746908345155538.png" alt="$\mathrm{x}$">- and <img src="dubinsSReachPointDemo_eq06683332128004049953.png" alt="$\mathrm{y}$">- axes, <img src="dubinsSReachPointDemo_eq17921314802056622314.png" alt="$v_k$"> is the velocity of the vehicle (input), <img src="dubinsSReachPointDemo_eq15197243358923498023.png" alt="$T_s$"> is the sampling time, and <img src="dubinsSReachPointDemo_eq13137738365897093402.png" alt="$\theta_0$"> is the initial heading direction.</p><pre class="codeinput">n_mcarlo_sims = 1e5;
+time_horizon = 50;
 init_heading = pi/10;
 sampling_time = 0.1;
-box_halflength = 4;
 omega = pi/time_horizon/sampling_time;
 turning_rate = omega*ones(time_horizon,1);
 dist_cov = 0.001;
-v_nominal = 10;
-umax = v_nominal/3*2;
-</pre><h2 id="3">LTV system definition</h2><pre class="codeinput">[sys, heading_vec] = getDubinsCarLtv(<span class="string">'add-dist'</span>, <span class="keyword">...</span>
-turning_rate, <span class="keyword">...</span>
-init_heading, <span class="keyword">...</span>
-sampling_time, <span class="keyword">...</span>
-Polyhedron(<span class="string">'lb'</span>,0,<span class="string">'ub'</span>,umax), <span class="keyword">...</span>
-eye(2), <span class="keyword">...</span>
-RandomVector(<span class="string">'Gaussian'</span>,zeros(2,1), dist_cov * eye(2)));
+umax = 6;
 
+[sys, heading_vec] = getDubinsCarLtv(<span class="string">'add-dist'</span>, turning_rate, init_heading, <span class="keyword">...</span>
+    sampling_time, Polyhedron(<span class="string">'lb'</span>,0,<span class="string">'ub'</span>,umax), eye(2), <span class="keyword">...</span>
+    RandomVector(<span class="string">'Gaussian'</span>,zeros(2,1), dist_cov * eye(2)));
+</pre><h2 id="3">Target tube definition</h2><p>We define the target tube to be a collection of boxes centered about the nominal trajectory with fixed velocity of <img src="dubinsSReachPointDemo_eq02001841902916578240.png" alt="$umax * 3/2$"> (faster than the maximum velocity allowed) and the heading angle sequence with <img src="dubinsSReachPointDemo_eq10205113142531059609.png" alt="$\pi/2$"> removed. The boxes have an exponentially decaying half-length with time constant as half of the time horizon.</p><pre class="codeinput">box_halflength = 4;
+v_nominal = umax * 3/2;
+time_const = 1/2*time_horizon;
 target_tube_cell = cell(time_horizon + 1,1);
-</pre><h2 id="4">Target tube definition</h2><pre class="codeinput">figure(100);clf;hold <span class="string">on</span>
-angle_at_the_center = (heading_vec) - pi/2;
+figure(100);clf;hold <span class="string">on</span>
+angle_at_the_center = (heading_vec)-pi/2;
 center_box = zeros(2, time_horizon + 1);
 <span class="keyword">for</span> itt = 0:time_horizon
-    center_box(:, itt+1) = v_nominal * [cos(angle_at_the_center(itt+1))-cos(angle_at_the_center(1));
-                                        sin(angle_at_the_center(itt+1))-sin(angle_at_the_center(1))];
-    target_tube_cell{itt+1} = Polyhedron(<span class="string">'lb'</span>,center_box(:, itt+1) - box_halflength * exp(- itt/time_const), <span class="string">'ub'</span>, center_box(:, itt+1) + box_halflength*exp(- itt/time_const));
+    center_box(:, itt+1) = v_nominal *<span class="keyword">...</span>
+        [cos(angle_at_the_center(itt+1))-cos(angle_at_the_center(1));
+         sin(angle_at_the_center(itt+1))-sin(angle_at_the_center(1))];
+    target_tube_cell{itt+1} = Polyhedron(<span class="keyword">...</span>
+        <span class="string">'lb'</span>,center_box(:, itt+1) - box_halflength * exp(- itt/time_const),<span class="keyword">...</span>
+        <span class="string">'ub'</span>, center_box(:, itt+1) + box_halflength*exp(- itt/time_const));
     plot(target_tube_cell{itt+1},<span class="string">'alpha'</span>,0.5,<span class="string">'color'</span>,<span class="string">'y'</span>);
 <span class="keyword">end</span>
 axis <span class="string">equal</span>
@@ -104,68 +103,218 @@ axis([-8    10   -5   21]);
 box <span class="string">on</span>;
 grid <span class="string">on</span>;
 target_tube = Tube(target_tube_cell{:});
-</pre><img vspace="5" hspace="5" src="dubinsSReachPointDemo_01.png" alt=""> <h2 id="5">Methods to run</h2><pre class="codeinput">ft_run = 0;
-cc_open_run = 0;
-cc_affine_run = 0;
-pa_open_run = 0;
-</pre><h2 id="6">Initial states for each of the method</h2><pre class="codeinput">init_state_ccc_open = [2;2] + [-1;1];
+</pre><img vspace="5" hspace="5" src="dubinsSReachPointDemo_01.png" alt=""> <h2 id="4">Specifying initial states and which options to run</h2><pre class="codeinput">chance_open_run = 1;
+genzps_open_run = 1;
+particle_open_run = 1;
+chance_affine_run = 1;
+<span class="comment">% Initial states for each of the method</span>
+init_state_chance_open = [2;2] + [-1;1];
 init_state_genzps_open = [2;2] + [1;-1];
 init_state_particle_open = [2;2] + [0;1];
-init_state_ccc_affine = [2;2] + [2;1];
-</pre><h2 id="7">Quantities needed to compute the optimal mean trajectory</h2><p>Compute the H matrix</p><pre class="codeinput">[Z,H,G] = sys.getConcatMats(time_horizon);
-<span class="comment">% Compute the zero input mean trajectory</span>
-GW = G * sys.dist.concat(time_horizon);
-mean_X_zizs = GW.parameters.mean;
-</pre><h2 id="8">SReachPoint: chance-open (with pwa_accuracy 1e-3)</h2><pre class="codeinput"><span class="keyword">if</span> cc_open_run
+init_state_chance_affine = [2;2] + [2;1];
+</pre><h2 id="5">Quantities needed to compute the optimal mean trajectory</h2><p>We first compute the dynamics of the concatenated state vector <img src="dubinsSReachPointDemo_eq11848142257603145676.png" alt="$X = Z x_0 + H U + G W$">, and compute the concatentated random vector <img src="dubinsSReachPointDemo_eq14900514129597942148.png" alt="$W$"> and its mean.</p><pre class="codeinput">[Z,H,G] = sys.getConcatMats(time_horizon);
+<span class="comment">% Compute the mean trajectory of the concatenated disturbance vector</span>
+muW = sys.dist.concat(time_horizon).parameters.mean;
+</pre><h2 id="6">SReachPoint: <tt>chance-open</tt></h2><p>This implements the chance-constrained approach to compute a globally opt open-loop controller. This approach uses risk allocation and piecewise-affine overapproximation of the inverse normal cumulative density function to formulate a linear program for this purpose. Naturally, this is one of the fastest ways to compute an open-loop controller and an underapproximative probabilistic guarantee of safety. However, due to the use of Boole's inequality for risk allocation, it provides a conservative estimate of safety using the open-loop controller.</p><pre class="codeinput"><span class="keyword">if</span> chance_open_run
+    fprintf(<span class="string">'\n\nSReachPoint with chance-open\n'</span>);
+    <span class="comment">% Set the maximum piecewise-affine overapproximation error to 1e-3</span>
     opts = SReachPointOptions(<span class="string">'term'</span>, <span class="string">'chance-open'</span>,<span class="string">'pwa_accuracy'</span>,1e-3);
     tic;
-    [prob_ccc_open, opt_input_vec_ccc_open] = SReachPoint(<span class="string">'term'</span>, <span class="keyword">...</span>
-        <span class="string">'chance-open'</span>, sys, init_state_ccc_open, target_tube, opts);
-    elapsed_time_ccc_open = toc;
-    optimal_mean_X_ccc_open = Z * init_state_ccc_open + <span class="keyword">...</span>
-        H * opt_input_vec_ccc_open + mean_X_zizs;
-    optimal_mean_trajectory_ccc_open = reshape(optimal_mean_X_ccc_open, <span class="keyword">...</span>
-        sys.state_dim,[]);
+    [prob_chance_open, opt_input_vec_chance_open] = SReachPoint(<span class="string">'term'</span>, <span class="keyword">...</span>
+        <span class="string">'chance-open'</span>, sys, init_state_chance_open, target_tube, opts);
+    elapsed_time_chance_open = toc;
+    <span class="keyword">if</span> prob_chance_open
+        <span class="comment">% Optimal mean trajectory construction</span>
+        <span class="comment">% mean_X = Z * x_0 + H * U + G * \mu_W</span>
+        opt_mean_X_chance_open = Z * init_state_chance_open + <span class="keyword">...</span>
+            H * opt_input_vec_chance_open + G * muW;
+        opt_mean_traj_chance_open = reshape(opt_mean_X_chance_open, <span class="keyword">...</span>
+            sys.state_dim,[]);
+        <span class="comment">% Check via Monte-Carlo simulation</span>
+        concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, <span class="keyword">...</span>
+            sys, init_state_chance_open, time_horizon,<span class="keyword">...</span>
+            opt_input_vec_chance_open);
+        mcarlo_result = target_tube.contains(concat_state_realization);
+        simulated_prob_chance_open = sum(mcarlo_result)/n_mcarlo_sims;
+    <span class="keyword">else</span>
+        simulated_prob_chance_open = NaN;
+    <span class="keyword">end</span>
+    fprintf(<span class="string">'SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n'</span>,<span class="keyword">...</span>
+        prob_chance_open, simulated_prob_chance_open);
+    fprintf(<span class="string">'Computation time: %1.3f\n'</span>, elapsed_time_chance_open);
 <span class="keyword">end</span>
-</pre><h2 id="9">SReachPoint: chance-affine (with \Delta_u = 0.01)</h2><pre class="codeinput"><span class="keyword">if</span> cc_affine_run
-    opts = SReachPointOptions(<span class="string">'term'</span>, <span class="string">'chance-affine'</span>,<span class="string">'max_input_viol_prob'</span>,1e-2, <span class="keyword">...</span>
-        <span class="string">'verbose'</span>,2);
-    tic
-    [prob_ccc_affine, opt_input_vec_ccc_affine, opt_input_gain_ccc_affine] =<span class="keyword">...</span>
-        SReachPoint(<span class="string">'term'</span>, <span class="string">'chance-affine'</span>, sys, init_state_ccc_affine, <span class="keyword">...</span>
-            target_tube, opts);
-    elapsed_time_ccc_affine = toc;
-    <span class="comment">% X = Z * x_0 + H * (M \mu_W + d) + G * \mu_W</span>
-    muW = sys.dist.concat(time_horizon).parameters.mean;
-    optimal_mean_X_ccc_affine = Z * init_state_ccc_affine + <span class="keyword">...</span>
-        H * (opt_input_gain_ccc_affine * muW + opt_input_vec_ccc_affine) + G * muW;
-    optimal_mean_trajectory_ccc_affine = reshape(optimal_mean_X_ccc_affine, <span class="keyword">...</span>
-        sys.state_dim,[]);
-<span class="keyword">end</span>
-</pre><h2 id="10">SReachPoint: genzps-open</h2><pre class="codeinput"><span class="keyword">if</span> ft_run
+</pre><pre class="codeoutput">
+
+SReachPoint with chance-open
+SReachPoint underapprox. prob: 0.90 | Simulated prob: 0.97
+Computation time: 1.789
+</pre><h2 id="7">SReachPoint: <tt>genzps-open</tt></h2><p>This implements the Fourier transform-based approach to compute a globally opt open-loop controller. This approach uses <a href="http://www.math.wsu.edu/faculty/genz/software/matlab/qsimvnv.m">Genz's algorithm</a> to compute the probability of safety and optimizes the joint chance constraint involved in maximizing this probability. To handle the noisy behaviour of the Genz's algorithm, we rely on MATLAB's <tt>patternsearch</tt> for the nonlinear optimization. The global optity of the open-loop controller is guaranteed by the log-concavity of the problem. Internally, we use the <tt>chance-open</tt> to initialize the nonlinear solver. Hence, this approach will return an open-loop controller with safety at least as good as <tt>chance-open</tt>.</p><pre class="codeinput"><span class="keyword">if</span> genzps_open_run
+    fprintf(<span class="string">'\n\nSReachPoint with genzps-open\n'</span>);
     opts = SReachPointOptions(<span class="string">'term'</span>, <span class="string">'genzps-open'</span>, <span class="keyword">...</span>
         <span class="string">'PSoptions'</span>,psoptimset(<span class="string">'display'</span>,<span class="string">'iter'</span>));
     tic
     [prob_genzps_open, opt_input_vec_genzps_open] = SReachPoint(<span class="string">'term'</span>, <span class="keyword">...</span>
         <span class="string">'genzps-open'</span>, sys, init_state_genzps_open, target_tube, opts);
     elapsed_time_genzps = toc;
-    optimal_mean_X_genzps_open =  Z * init_state_genzps_open + <span class="keyword">...</span>
-        H * opt_input_vec_genzps_open + mean_X_zizs;
-    optimal_mean_trajectory_genzps_open = reshape(optimal_mean_X_genzps_open, <span class="keyword">...</span>
-        sys.state_dim,[]);
+    <span class="keyword">if</span> prob_genzps_open &gt; 0
+        <span class="comment">% Optimal mean trajectory construction</span>
+        <span class="comment">% mean_X = Z * x_0 + H * U + G * \mu_W</span>
+        opt_mean_X_genzps_open =  Z * init_state_genzps_open + <span class="keyword">...</span>
+            H * opt_input_vec_genzps_open + G * muW;
+        opt_mean_traj_genzps_open= reshape(opt_mean_X_genzps_open, <span class="keyword">...</span>
+            sys.state_dim,[]);
+        <span class="comment">% Check via Monte-Carlo simulation</span>
+        concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, <span class="keyword">...</span>
+            sys, init_state_genzps_open, time_horizon,<span class="keyword">...</span>
+            opt_input_vec_genzps_open);
+        mcarlo_result = target_tube.contains(concat_state_realization);
+        simulated_prob_genzps_open = sum(mcarlo_result)/n_mcarlo_sims;
+    <span class="keyword">else</span>
+        simulated_prob_genzps_open = NaN;
+    <span class="keyword">end</span>
+    fprintf(<span class="string">'SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n'</span>,<span class="keyword">...</span>
+        prob_genzps_open, simulated_prob_genzps_open);
+    fprintf(<span class="string">'Computation time: %1.3f\n'</span>, elapsed_time_genzps);
 <span class="keyword">end</span>
-</pre><h2 id="11">SReachPoint: particle-open (use verbosity 1)</h2><pre class="codeinput"><span class="keyword">if</span> pa_open_run
-    opts = SReachPointOptions(<span class="string">'term'</span>,<span class="string">'particle-open'</span>,<span class="string">'verbose'</span>,1,<span class="string">'num_particles'</span>,50);
+</pre><pre class="codeoutput">
+
+SReachPoint with genzps-open
+
+
+Iter     Func-count       f(x)      MeshSize     Method
+    0           1      0.0325232             1      
+    1         124      0.0325232           0.5     Refine Mesh
+    2         229      0.0314907             1     Successful Poll
+    3         350      0.0314907           0.5     Refine Mesh
+    4         474      0.0314907          0.25     Refine Mesh
+    5         609      0.0314907         0.125     Refine Mesh
+    6         744      0.0314907        0.0625     Refine Mesh
+    7         879      0.0314907       0.03125     Refine Mesh
+    8        1014      0.0314907       0.01563     Refine Mesh
+    9        1149      0.0314907      0.007813     Refine Mesh
+   10        1284      0.0314907      0.003906     Refine Mesh
+   11        1419      0.0314907      0.001953     Refine Mesh
+   12        1554      0.0314907     0.0009766     Refine Mesh
+   13        1724      0.0314907     0.0004883     Refine Mesh
+   14        1894      0.0314907     0.0002441     Refine Mesh
+   15        2064      0.0314907     0.0001221     Refine Mesh
+   16        2234      0.0314907     6.104e-05     Refine Mesh
+   17        2404      0.0314907     3.052e-05     Refine Mesh
+   18        2574      0.0314907     1.526e-05     Refine Mesh
+   19        2744      0.0314907     7.629e-06     Refine Mesh
+   20        2914      0.0314907     3.815e-06     Refine Mesh
+   21        3084      0.0314907     1.907e-06     Refine Mesh
+   22        3254      0.0314907     9.537e-07     Refine Mesh
+Optimization terminated: mesh size less than options.MeshTolerance.
+SReachPoint underapprox. prob: 0.97 | Simulated prob: 0.97
+Computation time: 381.219
+</pre><h2 id="8">SReachPoint: <tt>particle-open</tt></h2><p>This implements the particle control approach to compute an open-loop controller. This approach is a sampling-based technique and hence the resulting probability estimate is random with its variance going to zero as the number of samples considered goes to infinity. Note that since a mixed-integer linear program is solved underneath with the number of binary variables corresponding to the number of particles, using too many particles can cause an exponential increase in computational time.</p><pre class="codeinput"><span class="keyword">if</span> particle_open_run
+    fprintf(<span class="string">'\n\nSReachPoint with particle-open\n'</span>);
+    opts = SReachPointOptions(<span class="string">'term'</span>,<span class="string">'particle-open'</span>,<span class="string">'verbose'</span>,1,<span class="keyword">...</span>
+        <span class="string">'num_particles'</span>,50);
     tic
     [prob_particle_open, opt_input_vec_particle_open] = SReachPoint(<span class="string">'term'</span>, <span class="keyword">...</span>
         <span class="string">'particle-open'</span>, sys, init_state_particle_open, target_tube, opts);
     elapsed_time_particle = toc;
-    optimal_mean_X_particle_open =  Z * init_state_particle_open + <span class="keyword">...</span>
-        H * opt_input_vec_particle_open + mean_X_zizs;
-    optimal_mean_trajectory_particle_open = reshape(optimal_mean_X_particle_open, <span class="keyword">...</span>
-        sys.state_dim,[]);
+    <span class="keyword">if</span> prob_particle_open &gt; 0
+        <span class="comment">% Optimal mean trajectory construction</span>
+        <span class="comment">% mean_X = Z * x_0 + H * U + G * \mu_W</span>
+        opt_mean_X_particle_open =  Z * init_state_particle_open + <span class="keyword">...</span>
+            H * opt_input_vec_particle_open + G * muW;
+        opt_mean_traj_particle_open =<span class="keyword">...</span>
+            reshape(opt_mean_X_particle_open, sys.state_dim,[]);
+        <span class="comment">% Check via Monte-Carlo simulation</span>
+        concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, <span class="keyword">...</span>
+            sys, init_state_particle_open,time_horizon,<span class="keyword">...</span>
+            opt_input_vec_particle_open);
+        mcarlo_result = target_tube.contains(concat_state_realization);
+        simulated_prob_particle_open = sum(mcarlo_result)/n_mcarlo_sims;
+    <span class="keyword">else</span>
+        simulated_prob_particle_open = NaN;
+    <span class="keyword">end</span>
+    fprintf(<span class="string">'SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n'</span>,<span class="keyword">...</span>
+        prob_particle_open, simulated_prob_particle_open);
+    fprintf(<span class="string">'Computation time: %1.3f\n'</span>, elapsed_time_particle);
 <span class="keyword">end</span>
-</pre><h2 id="12">Plot the set</h2><pre class="codeinput">figure(101);
+</pre><pre class="codeoutput">
+
+SReachPoint with particle-open
+Creating Gaussian random variable realizations....Done
+Setting up CVX problem....Done
+Parsing and solving the MILP....Done
+SReachPoint approx. prob: 0.98 | Simulated prob: 0.80
+Computation time: 27.310
+</pre><h2 id="9">SReachPoint: <tt>chance-affine</tt></h2><p>This implements the chance-constrained approach to compute a locally opt affine disturbance feedback controller. This approach uses risk allocation and piecewise-affine overapproximation of the inverse normal cumulative density function to formulate a difference-of-convex program. We utilize penalty convex-concave procedure to solve this program to a local optimum. Due to its construction of the affine feedback controller, this approach typically permits the construction of the highest underapproximative probability guarantee. Since affine disturbance feedback controllers can not satisfy hard control bounds, we relax the control bounds to be probabilistically violated with at most a probability of 0.01</p><pre class="codeinput"><span class="keyword">if</span> chance_affine_run
+    fprintf(<span class="string">'\n\nSReachPoint with chance-affine\n'</span>);
+    opts = SReachPointOptions(<span class="string">'term'</span>, <span class="string">'chance-affine'</span>,<span class="keyword">...</span>
+        <span class="string">'max_input_viol_prob'</span>, 1e-2, <span class="string">'verbose'</span>,2);
+    tic
+    [prob_chance_affine, opt_input_vec_chance_affine,<span class="keyword">...</span>
+        opt_input_gain_chance_affine] = SReachPoint(<span class="string">'term'</span>, <span class="string">'chance-affine'</span>,<span class="keyword">...</span>
+            sys, init_state_chance_affine, target_tube, opts);
+    elapsed_time_chance_affine = toc;
+    <span class="keyword">if</span> prob_chance_affine &gt; 0
+        <span class="comment">% mean_X = Z * x_0 + H * (M \mu_W + d) + G * \mu_W</span>
+        opt_mean_X_chance_affine = Z * init_state_chance_affine +<span class="keyword">...</span>
+            H * opt_input_vec_chance_affine + <span class="keyword">...</span>
+            (H * opt_input_gain_chance_affine + G) * muW;
+        <span class="comment">% Optimal mean trajectory construction</span>
+        opt_mean_traj_chance_affine = reshape(opt_mean_X_chance_affine, <span class="keyword">...</span>
+            sys.state_dim,[]);
+        <span class="comment">% Check via Monte-Carlo simulation</span>
+        concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, <span class="keyword">...</span>
+            sys, init_state_chance_affine, time_horizon,<span class="keyword">...</span>
+            opt_input_vec_chance_affine, opt_input_gain_chance_affine);
+        mcarlo_result = target_tube.contains(concat_state_realization);
+        simulated_prob_chance_affine = sum(mcarlo_result)/n_mcarlo_sims;
+    <span class="keyword">else</span>
+        simulated_prob_chance_affine = NaN;
+    <span class="keyword">end</span>
+    fprintf(<span class="string">'SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n'</span>,<span class="keyword">...</span>
+        prob_chance_affine, simulated_prob_chance_affine);
+    fprintf(<span class="string">'Computation time: %1.3f\n'</span>, elapsed_time_chance_affine);
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">
+
+SReachPoint with chance-affine
+Setting up the CVX problem
+ 0. CVX status: Inaccurate/Solved | Max iterations : &lt;200
+Current probabilty: 0.010 | tau_iter: 1
+DC slack-total sum --- state: 4.63e+03 | input: 3.02e+03
+
+Setting up the CVX problem
+ 1. CVX status: Solved | Max iterations : &lt;200
+Current probabilty: 0.967 | tau_iter: 2
+DC slack-total sum --- state: 1.21e-12 | input: 6.05e-13 | Acceptable: &lt;1.000e-08
+DC convergence error: 7.65e+03 | Acceptable: &lt;1.000e-04
+
+Setting up the CVX problem
+ 2. CVX status: Solved | Max iterations : &lt;200
+Current probabilty: 0.996 | tau_iter: 4
+DC slack-total sum --- state: 3.47e-13 | input: 1.71e-13 | Acceptable: &lt;1.000e-08
+DC convergence error: 2.90e-02 | Acceptable: &lt;1.000e-04
+
+Setting up the CVX problem
+ 3. CVX status: Solved | Max iterations : &lt;200
+Current probabilty: 0.999 | tau_iter: 8
+DC slack-total sum --- state: 1.62e-11 | input: 8.33e-12 | Acceptable: &lt;1.000e-08
+DC convergence error: 2.33e-03 | Acceptable: &lt;1.000e-04
+
+Setting up the CVX problem
+ 4. CVX status: Solved | Max iterations : &lt;200
+Current probabilty: 0.999 | tau_iter: 16
+DC slack-total sum --- state: 1.82e-10 | input: 1.14e-10 | Acceptable: &lt;1.000e-08
+DC convergence error: 2.39e-04 | Acceptable: &lt;1.000e-04
+
+Setting up the CVX problem
+ 5. CVX status: Solved | Max iterations : &lt;200
+Current probabilty: 0.999 | tau_iter: 32
+DC slack-total sum --- state: 1.66e-14 | input: 8.31e-15 | Acceptable: &lt;1.000e-08
+DC convergence error: 1.50e-05 | Acceptable: &lt;1.000e-04
+
+SReachPoint underapprox. prob: 1.00 | Simulated prob: 1.00
+Computation time: 361.388
+</pre><h2 id="10">Plot of the optimal mean trajectories</h2><pre class="codeinput">figure(101);
 clf;
 hold <span class="string">on</span>;
 <span class="keyword">for</span> itt = 0:time_horizon
@@ -180,35 +329,35 @@ axis <span class="string">equal</span>
 h_nominal_traj = scatter(center_box(1,:), center_box(2,:), 50,<span class="string">'ks'</span>,<span class="string">'filled'</span>);
 h_vec = [h_target_tube, h_nominal_traj];
 legend_cell = {<span class="string">'Target tube'</span>, <span class="string">'Nominal trajectory'</span>};
-<span class="comment">% Plot the optimal mean trajectory from the vertex under study</span>
-<span class="keyword">if</span> cc_open_run
+<span class="comment">% Plot the opt mean trajectory from the vertex under study</span>
+<span class="keyword">if</span> chance_open_run
     h_opt_mean_ccc = scatter(<span class="keyword">...</span>
-          [init_state_ccc_open(1), optimal_mean_trajectory_ccc_open(1,:)], <span class="keyword">...</span>
-          [init_state_ccc_open(2), optimal_mean_trajectory_ccc_open(2,:)], <span class="keyword">...</span>
+          [init_state_chance_open(1), opt_mean_traj_chance_open(1,:)], <span class="keyword">...</span>
+          [init_state_chance_open(2), opt_mean_traj_chance_open(2,:)], <span class="keyword">...</span>
           30, <span class="string">'bo'</span>, <span class="string">'filled'</span>,<span class="string">'DisplayName'</span>, <span class="string">'Mean trajectory (chance-open)'</span>);
     legend_cell{end+1} = <span class="string">'Mean trajectory (chance-open)'</span>;
     h_vec(end+1) = h_opt_mean_ccc;
 <span class="keyword">end</span>
-<span class="keyword">if</span> cc_affine_run
-    h_opt_mean_ccc_affine = scatter(<span class="keyword">...</span>
-          [init_state_ccc_affine(1), optimal_mean_trajectory_ccc_affine(1,:)], <span class="keyword">...</span>
-          [init_state_ccc_affine(2), optimal_mean_trajectory_ccc_affine(2,:)], <span class="keyword">...</span>
+<span class="keyword">if</span> chance_affine_run
+    h_opt_mean_chance_affine = scatter(<span class="keyword">...</span>
+          [init_state_chance_affine(1), opt_mean_traj_chance_affine(1,:)], <span class="keyword">...</span>
+          [init_state_chance_affine(2), opt_mean_traj_chance_affine(2,:)], <span class="keyword">...</span>
           30, <span class="string">'ms'</span>, <span class="string">'filled'</span>,<span class="string">'DisplayName'</span>, <span class="string">'Mean trajectory (chance-affine)'</span>);
     legend_cell{end+1} = <span class="string">'Mean trajectory (chance-affine)'</span>;
-    h_vec(end+1) = h_opt_mean_ccc_affine;
+    h_vec(end+1) = h_opt_mean_chance_affine;
 <span class="keyword">end</span>
-<span class="keyword">if</span> ft_run
+<span class="keyword">if</span> genzps_open_run
     h_opt_mean_genzps = scatter(<span class="keyword">...</span>
-          [init_state_genzps_open(1), optimal_mean_trajectory_genzps_open(1,:)], <span class="keyword">...</span>
-          [init_state_genzps_open(2), optimal_mean_trajectory_genzps_open(2,:)], <span class="keyword">...</span>
+          [init_state_genzps_open(1), opt_mean_traj_genzps_open(1,:)], <span class="keyword">...</span>
+          [init_state_genzps_open(2), opt_mean_traj_genzps_open(2,:)], <span class="keyword">...</span>
           30, <span class="string">'kd'</span>,<span class="string">'DisplayName'</span>, <span class="string">'Mean trajectory (genzps-open)'</span>);
     legend_cell{end+1} = <span class="string">'Mean trajectory (genzps-open)'</span>;
     h_vec(end+1) = h_opt_mean_genzps;
 <span class="keyword">end</span>
-<span class="keyword">if</span> pa_open_run
+<span class="keyword">if</span> particle_open_run
     h_opt_mean_particle = scatter(<span class="keyword">...</span>
-          [init_state_particle_open(1), optimal_mean_trajectory_particle_open(1,:)], <span class="keyword">...</span>
-          [init_state_particle_open(2), optimal_mean_trajectory_particle_open(2,:)], <span class="keyword">...</span>
+          [init_state_particle_open(1), opt_mean_traj_particle_open(1,:)], <span class="keyword">...</span>
+          [init_state_particle_open(2), opt_mean_traj_particle_open(2,:)], <span class="keyword">...</span>
           30, <span class="string">'r^'</span>, <span class="string">'filled'</span>,<span class="string">'DisplayName'</span>, <span class="string">'Mean trajectory (particle-open)'</span>);
     legend_cell{end+1} = <span class="string">'Mean trajectory (particle-open)'</span>;
     h_vec(end+1) = h_opt_mean_particle;
@@ -219,47 +368,43 @@ ylabel(<span class="string">'y'</span>);
 axis <span class="string">equal</span>
 box <span class="string">on</span>;
 set(gca,<span class="string">'FontSize'</span>,30);
-
-<span class="comment">% %% Check ccc-affine</span>
-<span class="comment">% n_mcarlo_sims = 1e5;</span>
-<span class="comment">% concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, ...</span>
-<span class="comment">%     sys, init_state_ccc_affine, time_horizon, opt_input_vec_ccc_affine, opt_input_gain_ccc_affine);</span>
-<span class="comment">% mcarlo_result = target_tube.contains(concat_state_realization);</span>
-<span class="comment">% fprintf('SReachPoint prob: %1.2f, Simulated prob: %1.2f', prob_ccc_affine, sum(mcarlo_result)/n_mcarlo_sims);</span>
-<span class="comment">%</span>
-<span class="comment">% %% Check particle-open</span>
-<span class="comment">% n_mcarlo_sims = 1e5;</span>
-<span class="comment">% concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, ...</span>
-<span class="comment">%     sys, init_state_particle_open, time_horizon, opt_input_vec_particle_open);</span>
-<span class="comment">% mcarlo_result = target_tube.contains(concat_state_realization);</span>
-<span class="comment">% fprintf('SReachPoint prob: %1.2f, Simulated prob: %1.2f', prob_particle_open, sum(mcarlo_result)/n_mcarlo_sims);</span>
-<span class="comment">%</span>
-<span class="comment">% Get a random point</span>
-<span class="comment">% init_state_ccc_open = ccc_polytope.randomPoint();</span>
-</pre><img vspace="5" hspace="5" src="dubinsSReachPointDemo_02.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017b</a><br></p></div><!--
+</pre><img vspace="5" hspace="5" src="dubinsSReachPointDemo_02.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Demonstration of controller synthesis via SReachPoint: Dubin's vehicle
 % This example will demonstrate the use of SReachTools in controller synthesis
 % for stochastic continuous-state discrete-time linear time-varying (LTV) 
 % systems.
 % 
-% Specifically, we will discuss how SReachTools can use Fourier transforms
-% (<http://www.math.wsu.edu/faculty/genz/software/matlab/qsimvnv.m 
-% Genz's algorithm> and MATLAB's patternsearch), particle filter, or convex 
-% chance constraints to synthesize open-loop controllers. We also synthesize an 
-% affine controller using difference-of-convex program.
+% Specifically, we will discuss how we can use SReachPoint to synthesize 
+% open-loop controllers and affine-disturbance feedback controllers for
+% that maximize the probability of safety while respecting the system dynamics 
+% and control bounds. We demonstrate:
+% 
+% * |chance-open|: Chance-constrained approach that uses risk allocation and 
+%    piecewise-affine approximations to formulate a linear program to
+%    synthesize an open-loop controller
+% * |genzps-open|: Fourier transforms that uses
+%    <http://www.math.wsu.edu/faculty/genz/software/matlab/qsimvnv.m Genz's 
+%    algorithm> to formulate a nonlinear log-concave optimization problem to be
+%    solved using MATLAB's patternsearch to synthesize an open-loop controller
+% * |particle-open|: Particle control approach filter that formulates a 
+%    mixed-integer linear program to synthesize an open-loop controller
+% * |chance-affine|: Chance-constrained approach that uses risk allocation and 
+%    piecewise-affine approximations to formulate a difference-of-convex program 
+%    to synthesize a closed-loop (affine disturbance feedback) controller.
+%    The controller synthesis is done by solving a series of second-order
+%    cone programs.
 %
 % Our approaches are grid-free and recursion-free resulting in highly scalable
 % solutions, especially for Gaussian-perturbed LTV systems. 
 %
-% This script is part of the SReachTools toolbox. License for the use of this 
-% function is given in 
+% This script is part of the SReachTools toolbox, which is licensed under GPL v3
+% or (at your option) any later version. A copy of this license is given in 
 % <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE 
 % https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
 
 % Prescript running
-close all;
-% clc;
+close all;clc;
 clearvars;
 srtinit
 
@@ -275,37 +420,40 @@ srtinit
 % where $x,y$ are the positions (state) of the Dubin's vehicle in $\mathrm{x}$- 
 % and $\mathrm{y}$- axes, $v_k$ is the velocity of the vehicle (input), $T_s$ is
 % the sampling time, and $\theta_0$ is the initial heading direction.
-
+n_mcarlo_sims = 1e5;    
 time_horizon = 50;
-time_const = 1/2*time_horizon;
 init_heading = pi/10;
 sampling_time = 0.1;
-box_halflength = 4;
 omega = pi/time_horizon/sampling_time;
 turning_rate = omega*ones(time_horizon,1);
 dist_cov = 0.001;
-v_nominal = 10;
-umax = v_nominal/3*2;
+umax = 6;
 
-%% LTV system definition
-[sys, heading_vec] = getDubinsCarLtv('add-dist', ...
-turning_rate, ...
-init_heading, ...
-sampling_time, ...
-Polyhedron('lb',0,'ub',umax), ...
-eye(2), ...
-RandomVector('Gaussian',zeros(2,1), dist_cov * eye(2)));
+[sys, heading_vec] = getDubinsCarLtv('add-dist', turning_rate, init_heading, ...
+    sampling_time, Polyhedron('lb',0,'ub',umax), eye(2), ...
+    RandomVector('Gaussian',zeros(2,1), dist_cov * eye(2)));
 
-target_tube_cell = cell(time_horizon + 1,1);
 
 %% Target tube definition
+% We define the target tube to be a collection of boxes centered about the
+% nominal trajectory with fixed velocity of $umax * 3/2$ (faster than the
+% maximum velocity allowed) and the heading angle sequence with $\pi/2$ removed.
+% The boxes have an exponentially decaying half-length with time constant
+% as half of the time horizon.
+box_halflength = 4;
+v_nominal = umax * 3/2;
+time_const = 1/2*time_horizon;
+target_tube_cell = cell(time_horizon + 1,1);
 figure(100);clf;hold on
-angle_at_the_center = (heading_vec) - pi/2;
+angle_at_the_center = (heading_vec)-pi/2;
 center_box = zeros(2, time_horizon + 1);        
 for itt = 0:time_horizon
-    center_box(:, itt+1) = v_nominal * [cos(angle_at_the_center(itt+1))-cos(angle_at_the_center(1));
-                                        sin(angle_at_the_center(itt+1))-sin(angle_at_the_center(1))];
-    target_tube_cell{itt+1} = Polyhedron('lb',center_box(:, itt+1) - box_halflength * exp(- itt/time_const), 'ub', center_box(:, itt+1) + box_halflength*exp(- itt/time_const));
+    center_box(:, itt+1) = v_nominal *...
+        [cos(angle_at_the_center(itt+1))-cos(angle_at_the_center(1));
+         sin(angle_at_the_center(itt+1))-sin(angle_at_the_center(1))];
+    target_tube_cell{itt+1} = Polyhedron(...
+        'lb',center_box(:, itt+1) - box_halflength * exp(- itt/time_const),...
+        'ub', center_box(:, itt+1) + box_halflength*exp(- itt/time_const));
     plot(target_tube_cell{itt+1},'alpha',0.5,'color','y');
 end
 axis equal
@@ -314,83 +462,183 @@ box on;
 grid on;
 target_tube = Tube(target_tube_cell{:});
 
-%% Methods to run   
-ft_run = 0;
-cc_open_run = 0;
-cc_affine_run = 0;
-pa_open_run = 0;
-
-%% Initial states for each of the method
-init_state_ccc_open = [2;2] + [-1;1];
+%% Specifying initial states and which options to run
+chance_open_run = 1;
+genzps_open_run = 1;
+particle_open_run = 1;
+chance_affine_run = 1;
+% Initial states for each of the method
+init_state_chance_open = [2;2] + [-1;1];
 init_state_genzps_open = [2;2] + [1;-1];
 init_state_particle_open = [2;2] + [0;1];
-init_state_ccc_affine = [2;2] + [2;1];
+init_state_chance_affine = [2;2] + [2;1];
+
 
 %% Quantities needed to compute the optimal mean trajectory 
-% Compute the H matrix
+% We first compute the dynamics of the concatenated state vector $X = Z x_0
+% + H U + G W$, and compute the concatentated random vector $W$ and its mean.
 [Z,H,G] = sys.getConcatMats(time_horizon);
-% Compute the zero input mean trajectory
-GW = G * sys.dist.concat(time_horizon);
-mean_X_zizs = GW.parameters.mean;
+% Compute the mean trajectory of the concatenated disturbance vector
+muW = sys.dist.concat(time_horizon).parameters.mean;
 
-%% SReachPoint: chance-open (with pwa_accuracy 1e-3)
-if cc_open_run
+%% SReachPoint: |chance-open|
+% This implements the chance-constrained approach to compute a globally opt 
+% open-loop controller. This approach uses risk allocation and piecewise-affine 
+% overapproximation of the inverse normal cumulative density function to
+% formulate a linear program for this purpose. Naturally, this is one of
+% the fastest ways to compute an open-loop controller and an
+% underapproximative probabilistic guarantee of safety. However, due to the use
+% of Boole's inequality for risk allocation, it provides a conservative estimate
+% of safety using the open-loop controller.
+if chance_open_run
+    fprintf('\n\nSReachPoint with chance-open\n');
+    % Set the maximum piecewise-affine overapproximation error to 1e-3
     opts = SReachPointOptions('term', 'chance-open','pwa_accuracy',1e-3);
     tic;
-    [prob_ccc_open, opt_input_vec_ccc_open] = SReachPoint('term', ...
-        'chance-open', sys, init_state_ccc_open, target_tube, opts);
-    elapsed_time_ccc_open = toc;
-    optimal_mean_X_ccc_open = Z * init_state_ccc_open + ...
-        H * opt_input_vec_ccc_open + mean_X_zizs;
-    optimal_mean_trajectory_ccc_open = reshape(optimal_mean_X_ccc_open, ...
-        sys.state_dim,[]);
+    [prob_chance_open, opt_input_vec_chance_open] = SReachPoint('term', ...
+        'chance-open', sys, init_state_chance_open, target_tube, opts);
+    elapsed_time_chance_open = toc;
+    if prob_chance_open
+        % Optimal mean trajectory construction
+        % mean_X = Z * x_0 + H * U + G * \mu_W
+        opt_mean_X_chance_open = Z * init_state_chance_open + ...
+            H * opt_input_vec_chance_open + G * muW;
+        opt_mean_traj_chance_open = reshape(opt_mean_X_chance_open, ...
+            sys.state_dim,[]);
+        % Check via Monte-Carlo simulation
+        concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, ...
+            sys, init_state_chance_open, time_horizon,...
+            opt_input_vec_chance_open);
+        mcarlo_result = target_tube.contains(concat_state_realization);
+        simulated_prob_chance_open = sum(mcarlo_result)/n_mcarlo_sims;
+    else
+        simulated_prob_chance_open = NaN;
+    end
+    fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
+        prob_chance_open, simulated_prob_chance_open);
+    fprintf('Computation time: %1.3f\n', elapsed_time_chance_open);
 end
 
-%% SReachPoint: chance-affine (with \Delta_u = 0.01)
-if cc_affine_run
-    opts = SReachPointOptions('term', 'chance-affine','max_input_viol_prob',1e-2, ...
-        'verbose',2);
-    tic
-    [prob_ccc_affine, opt_input_vec_ccc_affine, opt_input_gain_ccc_affine] =...
-        SReachPoint('term', 'chance-affine', sys, init_state_ccc_affine, ...
-            target_tube, opts);
-    elapsed_time_ccc_affine = toc;
-    % X = Z * x_0 + H * (M \mu_W + d) + G * \mu_W
-    muW = sys.dist.concat(time_horizon).parameters.mean;
-    optimal_mean_X_ccc_affine = Z * init_state_ccc_affine + ...
-        H * (opt_input_gain_ccc_affine * muW + opt_input_vec_ccc_affine) + G * muW;
-    optimal_mean_trajectory_ccc_affine = reshape(optimal_mean_X_ccc_affine, ...
-        sys.state_dim,[]);
-end
-
-%% SReachPoint: genzps-open
-if ft_run
+%% SReachPoint: |genzps-open|
+% This implements the Fourier transform-based approach to compute a globally
+% opt open-loop controller. This approach uses
+% <http://www.math.wsu.edu/faculty/genz/software/matlab/qsimvnv.m Genz's
+% algorithm> to compute the probability of safety and optimizes the joint chance
+% constraint involved in maximizing this probability. To handle the noisy
+% behaviour of the Genz's algorithm, we rely on MATLAB's |patternsearch| for the
+% nonlinear optimization. The global optity of the open-loop controller is
+% guaranteed by the log-concavity of the problem. Internally, we use the
+% |chance-open| to initialize the nonlinear solver. Hence, this approach will
+% return an open-loop controller with safety at least as good as |chance-open|.
+if genzps_open_run
+    fprintf('\n\nSReachPoint with genzps-open\n');
     opts = SReachPointOptions('term', 'genzps-open', ...
         'PSoptions',psoptimset('display','iter'));
     tic
     [prob_genzps_open, opt_input_vec_genzps_open] = SReachPoint('term', ...
         'genzps-open', sys, init_state_genzps_open, target_tube, opts);
     elapsed_time_genzps = toc;
-    optimal_mean_X_genzps_open =  Z * init_state_genzps_open + ...
-        H * opt_input_vec_genzps_open + mean_X_zizs;
-    optimal_mean_trajectory_genzps_open = reshape(optimal_mean_X_genzps_open, ...
-        sys.state_dim,[]);
+    if prob_genzps_open > 0
+        % Optimal mean trajectory construction
+        % mean_X = Z * x_0 + H * U + G * \mu_W
+        opt_mean_X_genzps_open =  Z * init_state_genzps_open + ...
+            H * opt_input_vec_genzps_open + G * muW;
+        opt_mean_traj_genzps_open= reshape(opt_mean_X_genzps_open, ...
+            sys.state_dim,[]);
+        % Check via Monte-Carlo simulation
+        concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, ...
+            sys, init_state_genzps_open, time_horizon,...
+            opt_input_vec_genzps_open);
+        mcarlo_result = target_tube.contains(concat_state_realization);
+        simulated_prob_genzps_open = sum(mcarlo_result)/n_mcarlo_sims;
+    else
+        simulated_prob_genzps_open = NaN;
+    end
+    fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
+        prob_genzps_open, simulated_prob_genzps_open);
+    fprintf('Computation time: %1.3f\n', elapsed_time_genzps);    
 end
 
-%% SReachPoint: particle-open (use verbosity 1)
-if pa_open_run
-    opts = SReachPointOptions('term','particle-open','verbose',1,'num_particles',50);
+%% SReachPoint: |particle-open|
+% This implements the particle control approach to compute an open-loop
+% controller. This approach is a sampling-based technique and hence the
+% resulting probability estimate is random with its variance going to zero as
+% the number of samples considered goes to infinity. Note that since a
+% mixed-integer linear program is solved underneath with the number of binary
+% variables corresponding to the number of particles, using too many particles
+% can cause an exponential increase in computational time.
+if particle_open_run
+    fprintf('\n\nSReachPoint with particle-open\n');
+    opts = SReachPointOptions('term','particle-open','verbose',1,...
+        'num_particles',50);
     tic
     [prob_particle_open, opt_input_vec_particle_open] = SReachPoint('term', ...
         'particle-open', sys, init_state_particle_open, target_tube, opts);
     elapsed_time_particle = toc;
-    optimal_mean_X_particle_open =  Z * init_state_particle_open + ...
-        H * opt_input_vec_particle_open + mean_X_zizs;
-    optimal_mean_trajectory_particle_open = reshape(optimal_mean_X_particle_open, ...
-        sys.state_dim,[]);
+    if prob_particle_open > 0
+        % Optimal mean trajectory construction
+        % mean_X = Z * x_0 + H * U + G * \mu_W
+        opt_mean_X_particle_open =  Z * init_state_particle_open + ...
+            H * opt_input_vec_particle_open + G * muW;
+        opt_mean_traj_particle_open =...
+            reshape(opt_mean_X_particle_open, sys.state_dim,[]);
+        % Check via Monte-Carlo simulation
+        concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, ...
+            sys, init_state_particle_open,time_horizon,...
+            opt_input_vec_particle_open);
+        mcarlo_result = target_tube.contains(concat_state_realization);
+        simulated_prob_particle_open = sum(mcarlo_result)/n_mcarlo_sims;
+    else
+        simulated_prob_particle_open = NaN;
+    end
+    fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
+        prob_particle_open, simulated_prob_particle_open);
+    fprintf('Computation time: %1.3f\n', elapsed_time_particle);
 end
 
-%% Plot the set
+%% SReachPoint: |chance-affine|
+% This implements the chance-constrained approach to compute a locally opt 
+% affine disturbance feedback controller. This approach uses risk allocation and 
+% piecewise-affine overapproximation of the inverse normal cumulative density 
+% function to formulate a difference-of-convex program. We utilize penalty 
+% convex-concave procedure to solve this program to a local optimum. Due to
+% its construction of the affine feedback controller, this approach
+% typically permits the construction of the highest underapproximative
+% probability guarantee. Since affine disturbance feedback controllers can
+% not satisfy hard control bounds, we relax the control bounds to be
+% probabilistically violated with at most a probability of 0.01
+if chance_affine_run
+    fprintf('\n\nSReachPoint with chance-affine\n');
+    opts = SReachPointOptions('term', 'chance-affine',...
+        'max_input_viol_prob', 1e-2, 'verbose',2);
+    tic
+    [prob_chance_affine, opt_input_vec_chance_affine,...
+        opt_input_gain_chance_affine] = SReachPoint('term', 'chance-affine',...
+            sys, init_state_chance_affine, target_tube, opts);
+    elapsed_time_chance_affine = toc;
+    if prob_chance_affine > 0
+        % mean_X = Z * x_0 + H * (M \mu_W + d) + G * \mu_W
+        opt_mean_X_chance_affine = Z * init_state_chance_affine +...
+            H * opt_input_vec_chance_affine + ...
+            (H * opt_input_gain_chance_affine + G) * muW;
+        % Optimal mean trajectory construction
+        opt_mean_traj_chance_affine = reshape(opt_mean_X_chance_affine, ...
+            sys.state_dim,[]);
+        % Check via Monte-Carlo simulation
+        concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, ...
+            sys, init_state_chance_affine, time_horizon,...
+            opt_input_vec_chance_affine, opt_input_gain_chance_affine);
+        mcarlo_result = target_tube.contains(concat_state_realization);
+        simulated_prob_chance_affine = sum(mcarlo_result)/n_mcarlo_sims;
+    else
+        simulated_prob_chance_affine = NaN;
+    end
+    fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
+        prob_chance_affine, simulated_prob_chance_affine);
+    fprintf('Computation time: %1.3f\n', elapsed_time_chance_affine);
+end
+
+%% Plot of the optimal mean trajectories
 figure(101);
 clf;
 hold on;
@@ -406,35 +654,35 @@ axis equal
 h_nominal_traj = scatter(center_box(1,:), center_box(2,:), 50,'ks','filled');        
 h_vec = [h_target_tube, h_nominal_traj];
 legend_cell = {'Target tube', 'Nominal trajectory'};
-% Plot the optimal mean trajectory from the vertex under study
-if cc_open_run
+% Plot the opt mean trajectory from the vertex under study
+if chance_open_run
     h_opt_mean_ccc = scatter(...
-          [init_state_ccc_open(1), optimal_mean_trajectory_ccc_open(1,:)], ...
-          [init_state_ccc_open(2), optimal_mean_trajectory_ccc_open(2,:)], ...
+          [init_state_chance_open(1), opt_mean_traj_chance_open(1,:)], ...
+          [init_state_chance_open(2), opt_mean_traj_chance_open(2,:)], ...
           30, 'bo', 'filled','DisplayName', 'Mean trajectory (chance-open)');
     legend_cell{end+1} = 'Mean trajectory (chance-open)';       
     h_vec(end+1) = h_opt_mean_ccc;
 end
-if cc_affine_run
-    h_opt_mean_ccc_affine = scatter(...
-          [init_state_ccc_affine(1), optimal_mean_trajectory_ccc_affine(1,:)], ...
-          [init_state_ccc_affine(2), optimal_mean_trajectory_ccc_affine(2,:)], ...
+if chance_affine_run
+    h_opt_mean_chance_affine = scatter(...
+          [init_state_chance_affine(1), opt_mean_traj_chance_affine(1,:)], ...
+          [init_state_chance_affine(2), opt_mean_traj_chance_affine(2,:)], ...
           30, 'ms', 'filled','DisplayName', 'Mean trajectory (chance-affine)');
     legend_cell{end+1} = 'Mean trajectory (chance-affine)';
-    h_vec(end+1) = h_opt_mean_ccc_affine;
+    h_vec(end+1) = h_opt_mean_chance_affine;
 end
-if ft_run
+if genzps_open_run
     h_opt_mean_genzps = scatter(...
-          [init_state_genzps_open(1), optimal_mean_trajectory_genzps_open(1,:)], ...
-          [init_state_genzps_open(2), optimal_mean_trajectory_genzps_open(2,:)], ...
+          [init_state_genzps_open(1), opt_mean_traj_genzps_open(1,:)], ...
+          [init_state_genzps_open(2), opt_mean_traj_genzps_open(2,:)], ...
           30, 'kd','DisplayName', 'Mean trajectory (genzps-open)');
     legend_cell{end+1} = 'Mean trajectory (genzps-open)';  
     h_vec(end+1) = h_opt_mean_genzps;
 end
-if pa_open_run
+if particle_open_run
     h_opt_mean_particle = scatter(...
-          [init_state_particle_open(1), optimal_mean_trajectory_particle_open(1,:)], ...
-          [init_state_particle_open(2), optimal_mean_trajectory_particle_open(2,:)], ...
+          [init_state_particle_open(1), opt_mean_traj_particle_open(1,:)], ...
+          [init_state_particle_open(2), opt_mean_traj_particle_open(2,:)], ...
           30, 'r^', 'filled','DisplayName', 'Mean trajectory (particle-open)');  
     legend_cell{end+1} = 'Mean trajectory (particle-open)';    
     h_vec(end+1) = h_opt_mean_particle;
@@ -445,23 +693,6 @@ ylabel('y');
 axis equal
 box on;
 set(gca,'FontSize',30);
-
-% %% Check ccc-affine
-% n_mcarlo_sims = 1e5;
-% concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, ...
-%     sys, init_state_ccc_affine, time_horizon, opt_input_vec_ccc_affine, opt_input_gain_ccc_affine);
-% mcarlo_result = target_tube.contains(concat_state_realization);
-% fprintf('SReachPoint prob: %1.2f, Simulated prob: %1.2f', prob_ccc_affine, sum(mcarlo_result)/n_mcarlo_sims);
-%                                   
-% %% Check particle-open
-% n_mcarlo_sims = 1e5;
-% concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, ...
-%     sys, init_state_particle_open, time_horizon, opt_input_vec_particle_open);
-% mcarlo_result = target_tube.contains(concat_state_realization);
-% fprintf('SReachPoint prob: %1.2f, Simulated prob: %1.2f', prob_particle_open, sum(mcarlo_result)/n_mcarlo_sims);
-%              
-% Get a random point
-% init_state_ccc_open = ccc_polytope.randomPoint();
 
 
 ##### SOURCE END #####
