@@ -1,6 +1,6 @@
 %% Demonstration of controller synthesis via SReachPoint: Dubin's vehicle
 % This example will demonstrate the use of SReachTools in controller synthesis
-% for stochastic continuous-state discrete-time linear time-varying (LTV) 
+% for a stochastic continuous-state discrete-time linear time-varying (LTV) 
 % systems.
 % 
 % Specifically, we will discuss how we can use SReachPoint to synthesize 
@@ -24,42 +24,50 @@
 %    cone programs.
 %
 % Our approaches are grid-free and recursion-free resulting in highly scalable
-% solutions, especially for Gaussian-perturbed LTV systems. 
+% solutions, especially for Gaussian-perturbed linear systems. 
 %
 % This script is part of the SReachTools toolbox, which is licensed under GPL v3
 % or (at your option) any later version. A copy of this license is given in 
 % <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE 
 % https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
 
-% Prescript running
-close all;clc;
-clearvars;
-srtinit
+% Commands to ensure clean setup
+close all;clc;clearvars;srtinit
 
 %% Problem: Stochastic reachability of a target tube for a Dubin's vehicle
 % We consider a Dubin's vehicle with known turning rate sequence
 % $\overline{\omega} = {[\omega_0\ \omega_1\ \ldots\ \omega_{T-1}]}^\top
 % \in R^T$, with additive Gaussian disturbance. The resulting dynamics are,
 % 
-% $$x_{k+1} = x_k + T_s \cos\left(\theta_0 + \sum_{i=1}^{k-1} \omega_i T_s\right) v_k$$
+% $$x_{k+1} = x_k + T_s \cos\left(\theta_0 + \sum_{i=1}^{k-1} 
+% \omega_i T_s\right) v_k + \eta^x_k$$
 %
-% $$y_{k+1} = y_k + T_s \sin\left(\theta_0 + \sum_{i=1}^{k-1} \omega_i T_s\right) v_k$$
+% $$y_{k+1} = y_k + T_s \sin\left(\theta_0 + \sum_{i=1}^{k-1} 
+% \omega_i T_s\right) v_k + \eta^y_k$$
 %
 % where $x,y$ are the positions (state) of the Dubin's vehicle in $\mathrm{x}$- 
-% and $\mathrm{y}$- axes, $v_k$ is the velocity of the vehicle (input), $T_s$ is
-% the sampling time, and $\theta_0$ is the initial heading direction.
-n_mcarlo_sims = 1e5;    
+% and $\mathrm{y}$- axes, $v_k$ is the velocity of the vehicle (input), 
+% $\eta^{(\cdot)}_k$ is the additive Gaussian disturbance affecting the dynamics, 
+% $T_s$ is the sampling time, and $\theta_0$ is the initial heading direction. 
+% We define the disturbance as 
+% $[\eta^x_k\ \eta^y_k]\sim \mathcal{N}([0 0], 10^{-3}I_2)$.
+
+n_mcarlo_sims = 1e5;                        % Monte-Carlo simulation particles
+sampling_time = 0.1;                        % Sampling time
+init_heading = pi/10;                       % Initial heading 
+% Known turning rate sequence
 time_horizon = 50;
-init_heading = pi/10;
-sampling_time = 0.1;
 omega = pi/time_horizon/sampling_time;
 turning_rate = omega*ones(time_horizon,1);
-dist_cov = 0.001;
+% Input space definition
 umax = 6;
+input_space = Polyhedron('lb',0,'ub',umax);
+% Disturbance matrix and random vector definition
+dist_matrix = eye(2);
+eta_dist = RandomVector('Gaussian',zeros(2,1), 0.001 * eye(2));
 
 [sys, heading_vec] = getDubinsCarLtv('add-dist', turning_rate, init_heading, ...
-    sampling_time, Polyhedron('lb',0,'ub',umax), eye(2), ...
-    RandomVector('Gaussian',zeros(2,1), dist_cov * eye(2)));
+    sampling_time, input_space, dist_matrix, eta_dist);
 
 
 %% Target tube definition
@@ -91,14 +99,15 @@ grid on;
 target_tube = Tube(target_tube_cell{:});
 
 %% Specifying initial states and which options to run
-chance_open_run = 1;
-genzps_open_run = 1;
-particle_open_run = 1;
-chance_affine_run = 1;
+chance_open_run = 0;
+genzps_open_run = 0;
+particle_open_run = 0;
+chance_affine_run = 0;
 % Initial states for each of the method
 init_state_chance_open = [2;2] + [-1;1];
 init_state_genzps_open = [2;2] + [1;-1];
 init_state_particle_open = [2;2] + [0;1];
+
 init_state_chance_affine = [2;2] + [2;1];
 
 
