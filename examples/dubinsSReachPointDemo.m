@@ -442,7 +442,10 @@ if chance_affine_run
     fprintf('Computation time: %1.3f\n', elapsed_time_chance_affine);
 end
 
-%% Plot of the optimal mean trajectories
+%% Summary of results
+% For ease of comparison, we list the probability estimates, the
+% Monte-Carlo simulation validations, and the computation times once again.
+% We also plot the mean trajectories.
 figure(101);
 clf;
 hold on;
@@ -466,6 +469,10 @@ if chance_open_run
           30, 'bo', 'filled','DisplayName', 'Mean trajectory (chance-open)');
     legend_cell{end+1} = 'Mean trajectory (chance-open)';       
     h_vec(end+1) = h_opt_mean_ccc;
+    disp('>>> SReachPoint with chance-open')
+    fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
+        prob_chance_open, simulated_prob_chance_open);
+    fprintf('Computation time: %1.3f\n', elapsed_time_chance_open);    
 end
 if genzps_open_run
     h_opt_mean_genzps = scatter(...
@@ -474,6 +481,10 @@ if genzps_open_run
           30, 'kd','DisplayName', 'Mean trajectory (genzps-open)');
     legend_cell{end+1} = 'Mean trajectory (genzps-open)';  
     h_vec(end+1) = h_opt_mean_genzps;
+    disp('>>> SReachPoint with genzps-open')
+    fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
+        prob_genzps_open, simulated_prob_genzps_open);
+    fprintf('Computation time: %1.3f\n', elapsed_time_genzps);    
 end
 if particle_open_run
     h_opt_mean_particle = scatter(...
@@ -482,6 +493,10 @@ if particle_open_run
           30, 'r^', 'filled','DisplayName', 'Mean trajectory (particle-open)');  
     legend_cell{end+1} = 'Mean trajectory (particle-open)';    
     h_vec(end+1) = h_opt_mean_particle;
+    disp('>>> SReachPoint with particle-open')
+    fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
+        prob_particle_open, simulated_prob_particle_open);
+    fprintf('Computation time: %1.3f\n', elapsed_time_particle);
 end
 if voronoi_open_run
     h_opt_mean_voronoi = scatter(...
@@ -490,6 +505,10 @@ if voronoi_open_run
           30, 'cv', 'filled','DisplayName', 'Mean trajectory (voronoi-open)');  
     legend_cell{end+1} = 'Mean trajectory (voronoi-open)';    
     h_vec(end+1) = h_opt_mean_voronoi;
+    disp('>>> SReachPoint with voronoi-open')
+    fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
+        prob_voronoi_open, simulated_prob_voronoi_open);
+    fprintf('Computation time: %1.3f\n', elapsed_time_voronoi);    
 end
 if chance_affine_run
     h_opt_mean_chance_affine = scatter(...
@@ -498,6 +517,10 @@ if chance_affine_run
           30, 'ms', 'filled','DisplayName', 'Mean trajectory (chance-affine)');
     legend_cell{end+1} = 'Mean trajectory (chance-affine)';
     h_vec(end+1) = h_opt_mean_chance_affine;
+    disp('>>> SReachPoint with chance-affine')
+    fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
+        prob_chance_affine, simulated_prob_chance_affine);
+    fprintf('Computation time: %1.3f\n', elapsed_time_chance_affine);    
 end
 legend(h_vec, legend_cell, 'Location','EastOutside', 'interpreter','latex');
 xlabel('x');

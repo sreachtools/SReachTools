@@ -447,7 +447,10 @@ if chance_affine_run
     fprintf('Computation time: %1.3f\n', elapsed_time_chance_affine);
 end
 
-%% Plot of the optimal mean trajectories
+%% Summary of results
+% For ease of comparison, we list the probability estimates, the
+% Monte-Carlo simulation validations, and the computation times once again.
+% We also plot the mean trajectories.
 dims_to_consider = [1,2];
 figure(101);
 clf;
@@ -546,4 +549,3 @@ hf = gcf;
 hf.Units = 'inches';
 hf.Position = [0    0.4167   18.0000   10.0313];
 set(gca,'FontSize',20);
-
