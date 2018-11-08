@@ -230,14 +230,15 @@ muW = sys.dist.concat(time_horizon).parameters.mean;
 % <http://doi.org/10.1109/CDC.2013.6760626 Lesser et. al., Conference on
 % Decision and Control, 2013>.
 %
-% This approach implements the chance-constrained approach to compute a globally
-% optimal open-loop controller. It uses risk allocation and piecewise-affine
+% This approach implements the chance-constrained approach to compute an optimal 
+% open-loop controller. It uses risk allocation and piecewise-affine
 % overapproximation of the inverse normal cumulative density function to
 % formulate a linear program for this purpose. Naturally, this is one of the
 % fastest ways to compute an open-loop controller and an underapproximative
 % probabilistic guarantee of safety. However, due to the use of Boole's
 % inequality for risk allocation, it provides a conservative estimate of safety
 % using the open-loop controller.
+
 if chance_open_run
     fprintf('\n\nSReachPoint with chance-open\n');
     % Set the maximum piecewise-affine overapproximation error to 1e-3
@@ -271,14 +272,13 @@ end
 % This method is discussed in <http://doi.org/10.1109/LCSYS.2017.2716364
 % Vinod and Oishi, Control System Society- Letters, 2017>.
 %
-% This approach implements the Fourier transform-based approach to compute a
-% globally optimal open-loop controller. It uses
+% This approach implements the Fourier transform-based approach to compute an
+% optimal open-loop controller. It uses
 % <http://www.math.wsu.edu/faculty/genz/software/matlab/qsimvnv.m Genz's
 % algorithm> to compute the probability of safety and optimizes the joint chance
 % constraint involved in maximizing this probability. To handle the noisy
 % behaviour of the Genz's algorithm, we rely on MATLAB's |patternsearch| for the
-% nonlinear optimization. The global optimality of the open-loop controller is
-% guaranteed by the log-concavity of the problem. Internally, we use the
+% nonlinear optimization. Internally, we use the
 % |chance-open| to initialize the nonlinear solver. Hence, this approach will
 % return an open-loop controller with safety at least as good as |chance-open|.
 if genzps_open_run

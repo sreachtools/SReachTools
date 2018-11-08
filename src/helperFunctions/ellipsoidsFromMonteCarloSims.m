@@ -92,20 +92,21 @@ function varargout = ellipsoidsFromMonteCarloSims(...
         if ~strcmpi(cvx_status, 'Solved')
             warning('SReachTools:runtime', ['CVX failed to obtain the ',...
                 'ellipsoid, potentially due to numerical issues.']); 
-        end
+            set_of_ellipsoids(tindx) = {{q,zeros(size(b))}};
+        else
+            % Construct the ellipsoid by matching coeff (x-q)^T Q^{-1} (x-q) =
+            % (Ax + b)^2 = (x+A\b)'A'A(x+A\b)
+            Q = inv(A*A');
+            q = -A\b;
 
-        % Construct the ellipsoid by matching coeff (x-q)^T Q^{-1} (x-q) =
-        % (Ax + b)^2 = (x+A\b)'A'A(x+A\b)
-        Q = inv(A*A');
-        q = -A\b;
+            % Prepare the output
+            set_of_ellipsoids(tindx) = {{q,Q}};
 
-        % Prepare the output
-        set_of_ellipsoids(tindx) = {{q,Q}};
-        
-        if ~isempty(plot_options)
-            ellipse  = A \ [ cos(angles) - b(1) ; sin(angles) - b(2) ];
-            h=plot(ellipse(1,:), ellipse(2,:), plot_options{:});
-            h.Annotation.LegendInformation.IconDisplayStyle = 'off';
+            if ~isempty(plot_options)
+                ellipse  = A \ [ cos(angles) - b(1) ; sin(angles) - b(2) ];
+                h=plot(ellipse(1,:), ellipse(2,:), plot_options{:});
+                h.Annotation.LegendInformation.IconDisplayStyle = 'off';
+            end
         end
     end    
     varargout{1} = set_of_ellipsoids;
