@@ -150,7 +150,9 @@ function [approx_stoch_reach, opt_input_vec, kmeans_info] = SReachPointVoO(...
         end
         
         if options.verbose >= 1
-            fprintf('\nCreating Gaussian random variable realizations....');
+            fprintf(['\nRequired number of particles: %1.4e | Samples ',...
+                'used: %3d\n'], n_particles, n_kmeans);
+            fprintf('Creating Gaussian random variable realizations....');
         end        
         % Compute the stochasticity of the concatenated disturbance random vec
         GW = G * concat(sys.dist, time_horizon);        
@@ -165,9 +167,15 @@ function [approx_stoch_reach, opt_input_vec, kmeans_info] = SReachPointVoO(...
         % Step 2: Compute the Voronoi centers with prescribed number of
         % bins --- Use k-means clustering
         % Transposed input since kmeans expects each data point row-wise
+        if options.verbose >= 1
+            fprintf('Using k-means for undersampling....');
+        end        
         [idx, GW_centroids_output] = kmeans(GW_realizations', n_kmeans,...
-            'MaxIter',1000);
+            'MaxIter',1000);        
         GW_centroids = GW_centroids_output';
+        if options.verbose >= 1
+            fprintf('Done\n');
+        end
         % Step 3: Compute the buffers associated with each of the Voronoi
         % centers
         buffers = zeros(n_lin_state, n_kmeans);
