@@ -1,6 +1,6 @@
-%% Verification of satellite rendezvous problem via SReachSet This example will
-%demonstrate the use of SReachTools in verification of stochastic
-%continuous-state discrete-time linear time-invariant (LTI) systems.
+%% Verification of satellite rendezvous problem via SReachSet 
+% This example will demonstrate the use of SReachTools in verification of
+% stochastic continuous-state discrete-time linear time-invariant (LTI) systems.
 % 
 % Specifically, we will discuss how SReachTools can use Fourier transforms
 % (<http://www.math.wsu.edu/faculty/genz/software/matlab/qsimvnv.m Genz's
@@ -29,10 +29,10 @@ srtinit
 % a likelihood above a user-specified threshold.
 %%
 % <<cwh_sketch.png>>
-%% Dynamics model for the deputy relative to the chief spacecraft The relative
-%planar dynamics of the deputy with respect to the chief are described by the
-%<https://doi.org/10.1109/CDC.2013.6760626 Clohessy-Wiltshire-Hill (CWH)
-%equations,> 
+%% Dynamics model for the deputy relative to the chief spacecraft 
+% The relative planar dynamics of the deputy with respect to the chief are
+% described by the <https://doi.org/10.1109/CDC.2013.6760626
+% Clohessy-Wiltshire-Hill (CWH) equations,> 
 % 
 % $$\ddot{x} - 3 \omega x - 2 \omega \dot{y} = \frac{F_{x}}{m_{d}}$$
 % 

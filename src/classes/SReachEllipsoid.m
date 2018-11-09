@@ -144,7 +144,12 @@ classdef SReachEllipsoid
                 throwAsCaller(SrtInvalidArgsError('l has incorrect dimensions.'));
             end
             % cholesky > obj.shape_matrix = sqrt_shape_matrix'*sqrt_shape_matrix
-            sqrt_shape_matrix = chol(obj.shape_matrix);
+            [sqrt_shape_matrix, p] = chol(obj.shape_matrix);    
+            if p > 0
+                % Non-positive definite matrix can not use Cholesky's decompose
+                % Use sqrt to obtain a symmetric non-sparse square-root matrix
+                sqrt_shape_matrix = sqrt(obj.shape_matrix);
+            end
             % Hence, we need the transpose
             support_fun_val = l* obj.center + norms(l*sqrt_shape_matrix', 2,2);
         end

@@ -2,10 +2,12 @@ function publish_examples(varargin)
 
     exclusions = {'publish_examples.m'};
 
-    if strcmp(varargin{1}, '--exclude')
-        exclusions = [exclusions, varargin(2:end)];
-    else
-        error('Unhandled option');
+    if ~isempty(varargin)
+        if strcmp(varargin{1}, '--exclude')
+            exclusions = [exclusions, varargin(2:end)];
+        else
+            error('Unhandled option');
+        end
     end
 
     % clc

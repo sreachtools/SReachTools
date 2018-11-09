@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>doubleIntegratorDynamicProgramming</title><meta name="generator" content="MATLAB 9.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2018-10-22"><meta name="DC.source" content="doubleIntegratorDynamicProgramming.m"><style type="text/css">
+      --><title>doubleIntegratorDynamicProgramming</title><meta name="generator" content="MATLAB 9.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2018-11-08"><meta name="DC.source" content="doubleIntegratorDynamicProgramming.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -147,7 +147,7 @@ zlabel(<span class="string">'Safety probability'</span>)
 title(<span class="string">'Optimal value function $V_{SR}^\ast(\cdot)$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
 box <span class="string">on</span>
 view(45, 45)
-</pre><pre class="codeoutput">Elapsed time is 3.715847 seconds.
+</pre><pre class="codeoutput">Elapsed time is 2.651867 seconds.
 </pre><img vspace="5" hspace="5" src="doubleIntegratorDynamicProgramming_02.png" alt=""> <pre class="codeinput"><span class="comment">% Obtain the stochastic viability sets</span>
 <span class="comment">% ------------------------------------</span>
 poly_array1 = getDynProgLevelSets2D(cell_of_xvec_x1, prob_x1, <span class="keyword">...</span>
@@ -167,6 +167,10 @@ axis(axis_vec)
 axis <span class="string">equal</span>
 legend(legend_str)
 title(<span class="string">'Stochastic viability sets $L_{SR}^\ast(\cdot)$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+</pre><pre class="codeoutput">Warning: MATLAB's contour matrix missed a corner!
+Adding (1, -1) to polytope vertex list for level=0.20. 
+Warning: MATLAB's contour matrix missed a corner!
+Adding (-1, 1) to polytope vertex list for level=0.20. 
 </pre><img vspace="5" hspace="5" src="doubleIntegratorDynamicProgramming_03.png" alt=""> <h2 id="6">Case 2: Terminal hitting-time stochastic reach-avoid</h2><p>Stochastic reach-avoid problems have a time-invariant safety set uptil time horizon (uptill <img src="doubleIntegratorDynamicProgramming_eq05291766496614484047.png" alt="$k=N-1$">), and a different target set at time horizon <img src="doubleIntegratorDynamicProgramming_eq10077191877953251971.png" alt="$k=N$">.</p><p>Specifically, we are interested in assessing the safety of this double integrator system to stay within the safe set of <img src="doubleIntegratorDynamicProgramming_eq04712238727479698605.png" alt="$[-1,1]^2$"> for <img src="doubleIntegratorDynamicProgramming_eq04941290416507909356.png" alt="$4$"> time steps and then reach <img src="doubleIntegratorDynamicProgramming_eq05409236955776165217.png" alt="$[-0.5,0.5]^2$">. Here, the car at <img src="doubleIntegratorDynamicProgramming_eq17398102134707384461.png" alt="$k=0$"> has some initial position and velocity in <img src="doubleIntegratorDynamicProgramming_eq04712238727479698605.png" alt="$[-1,1]^2$"> as before.</p><p>To perform this safety analysis, we need to do the following steps</p><div><ol><li>Provide parameters for dynamic programming like grid size and thresholds (if stochastic reach-avoid sets are of interest) [*Reused from above*]</li><li>Construct the safety tube using 'reach-avoid' option (and plot it as well)</li><li>Obtain the dynamic programming solution via SReachDynProg</li><li>Obtain the stochastic reach-avoid sets at desired thresholds using   getDynProgLevelSets2D</li></ol></div><pre class="codeinput"><span class="comment">% Safety tube definition</span>
 <span class="comment">% ----------------------</span>
 <span class="comment">% Safety tube is a generalization of the reach problem. The reach avoid</span>
@@ -221,7 +225,7 @@ zlabel(<span class="string">'Safety probability'</span>)
 box <span class="string">on</span>
 view(45, 45)
 title(<span class="string">'Optimal value function $V_{SR}^\ast(\cdot)$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
-</pre><pre class="codeoutput">Elapsed time is 3.757519 seconds.
+</pre><pre class="codeoutput">Elapsed time is 2.528341 seconds.
 </pre><img vspace="5" hspace="5" src="doubleIntegratorDynamicProgramming_05.png" alt=""> <pre class="codeinput"><span class="comment">% Obtain the stochastic reach-avoid sets</span>
 <span class="comment">% --------------------------------------</span>
 poly_array2 = getDynProgLevelSets2D(cell_of_xvec_x2, prob_x2, <span class="keyword">...</span>
@@ -292,7 +296,7 @@ zlabel(<span class="string">'Safety probability'</span>)
 box <span class="string">on</span>
 view(45, 45)
 title(<span class="string">'Optimal value function $V_{SR}^\ast(\cdot)$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
-</pre><pre class="codeoutput">Elapsed time is 3.622785 seconds.
+</pre><pre class="codeoutput">Elapsed time is 2.529007 seconds.
 </pre><img vspace="5" hspace="5" src="doubleIntegratorDynamicProgramming_08.png" alt=""> <pre class="codeinput"><span class="comment">% Obtain the stochastic reach sets</span>
 <span class="comment">% --------------------------------</span>
 poly_array3 = getDynProgLevelSets2D(cell_of_xvec_x3, prob_x3, <span class="keyword">...</span>
@@ -313,7 +317,7 @@ box <span class="string">on</span>
 axis <span class="string">equal</span>
 legend(legend_str)
 title(<span class="string">'Stochastic reach sets $L_{SR}^\ast(\cdot)$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
-</pre><img vspace="5" hspace="5" src="doubleIntegratorDynamicProgramming_09.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017b</a><br></p></div><!--
+</pre><img vspace="5" hspace="5" src="doubleIntegratorDynamicProgramming_09.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Double Integrator Reach-Avoid Via Dynamic Programming
 % This example demonstrates how to use the SReachTools toolbox to solve a

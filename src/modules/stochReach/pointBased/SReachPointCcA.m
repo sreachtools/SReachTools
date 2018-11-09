@@ -138,7 +138,13 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
     % Compute a sparse square root of a matrix: chol produces a sqrt such that
     % sqrt' * sqrt = M. Hence, whenever, we left multiply (inside a norm), we
     % must transpose.
-    sqrt_cov_concat_disturb = chol(cov_concat_disturb);    
+    [sqrt_cov_concat_disturb, p] = chol(cov_concat_disturb);    
+    if p > 0
+        % Non-positive definite matrix can not use Cholesky's decomposition
+        % Use sqrt to obtain a symmetric non-sparse square-root matrix
+        sqrt_cov_concat_disturb = sqrt(cov_concat_disturb);
+    end
+    
 
     %% Piecewise-affine approximation of norminvcdf
     [invcdf_approx_m, invcdf_approx_c, lb_risk] =...

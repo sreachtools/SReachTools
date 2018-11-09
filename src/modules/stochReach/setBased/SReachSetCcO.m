@@ -118,8 +118,13 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
     % Compute \sqrt{h_i^\top * \Sigma_X_no_input * h_i}
     [concat_safety_tube_A, ~] = safety_tube.concat([1 time_horizon]+1);
 
-    % cholesky > sqrt_cov_X' * sqrt_cov_X = cov_X
-    sqrt_cov_X_sans_input = chol(cov_X_sans_input);
+    % cholesky > cov_X_sans_input = sqrt_cov_X_sans_input'*sqrt_cov_X_sans_input
+    [sqrt_cov_X_sans_input, p] = chol(cov_X_sans_input);
+    if p > 0
+        % Non-positive definite matrix can not use Cholesky's decomposition
+        % Use sqrt to obtain a symmetric non-sparse square-root matrix
+        sqrt_cov_X_sans_input = sqrt(cov_X_sans_input);
+    end
     % Hence, the transpose is needed
     sigma_vec = norms(concat_safety_tube_A*sqrt_cov_X_sans_input', 2,2);
 

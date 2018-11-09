@@ -92,7 +92,7 @@ function varargout = ellipsoidsFromMonteCarloSims(...
         if ~strcmpi(cvx_status, 'Solved')
             warning('SReachTools:runtime', ['CVX failed to obtain the ',...
                 'ellipsoid, potentially due to numerical issues.']); 
-            set_of_ellipsoids(tindx) = {{q,zeros(size(b))}};
+            set_of_ellipsoids(tindx) = {{mean(x_points),Inf(size(b))}};
         else
             % Construct the ellipsoid by matching coeff (x-q)^T Q^{-1} (x-q) =
             % (Ax + b)^2 = (x+A\b)'A'A(x+A\b)

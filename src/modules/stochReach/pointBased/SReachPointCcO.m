@@ -127,7 +127,12 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
 
     %% Compute \sqrt{h_i^\top * \Sigma_X_no_input * h_i} = ||\sqrt\Sigma_X*h_i||
     % cholesky > cov_X_sans_input = sqrt_cov_X_sans_input'*sqrt_cov_X_sans_input
-    sqrt_cov_X_sans_input = chol(cov_X_sans_input);
+    [sqrt_cov_X_sans_input, p] = chol(cov_X_sans_input);
+    if p > 0
+        % Non-positive definite matrix can not use Cholesky's decomposition
+        % Use sqrt to obtain a symmetric non-sparse square-root matrix
+        sqrt_cov_X_sans_input = sqrt(cov_X_sans_input);
+    end
     % Hence, we need the transpose on sqrt_cov_X
     sigma_vector = norms(concat_safety_tube_A * sqrt_cov_X_sans_input', 2, 2);
 

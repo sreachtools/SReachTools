@@ -52,7 +52,7 @@
 %
 
 % Commands to ensure clean setup
-close all;clc;clearvars;
+close all;clearvars;
 
 %% Problem formulation: Stochastic reachability of a target tube
 % Given an initial state $x_0$, a time horizon $N$, a linear system dynamics

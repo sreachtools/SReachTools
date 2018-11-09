@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>AutomatedAnesthesiaDelivery</title><meta name="generator" content="MATLAB 9.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2018-10-22"><meta name="DC.source" content="AutomatedAnesthesiaDelivery.m"><style type="text/css">
+      --><title>AutomatedAnesthesiaDelivery</title><meta name="generator" content="MATLAB 9.2"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2018-11-08"><meta name="DC.source" content="AutomatedAnesthesiaDelivery.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -69,7 +69,7 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
   </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Underapproximative verification of an automated anesthesia delivery system</a></li><li><a href="#2">Problem Formulation</a></li><li><a href="#3">Safety specifications</a></li><li><a href="#4">Computation of the underapproximation of the stochastic viability set</a></li><li><a href="#5">Plotting the stochastic viable set</a></li><li><a href="#6">Validate the underapproximative set and the controller using Monte-Carlo</a></li></ul></div><h2 id="1">Underapproximative verification of an automated anesthesia delivery system</h2><p>This example will demonstrate the use of <a href="https://abyvinod.github.io/SReachTools/SReachTools">https://abyvinod.github.io/SReachTools/SReachTools</a> in verification and controller synthesis for stochastic continuous-state discrete-time linear time-invariant (LTI) systems.</p><p>In this example, we will verify an automated anesthesia delivery model.</p><p>We wish to ascertain the set of intial states (patient sedation levels) from which the automated anesthesia delivery system can continue to maintain within pre-specified safe bounds.</p><p>This Live Script is part of the SReachTools toolbox. License for the use of this function is given in <a href="https://github.com/unm-hscl/SReachTools/blob/master/LICENSE">https://github.com/unm-hscl/SReachTools/blob/master/LICENSE</a>.</p><pre class="codeinput"><span class="comment">% Prescript running</span>
 close <span class="string">all</span>;
 <span class="comment">% clc;</span>
-<span class="comment">% clear;</span>
+clear;
 srtinit
 </pre><h2 id="2">Problem Formulation</h2><p>We first define a <tt>LtiSystem</tt> object corresponding to the discrete-time approximation of the three-compartment pharmacokinetic system model.</p><p>We bound the anesthesia the automation can deliver to <img src="AutomatedAnesthesiaDelivery_eq14614078222077133723.png" alt="$[0,7]$"> mg/dL and account for patient model mismatch via an additive Gaussian noise.</p><pre class="codeinput"><span class="comment">% System matrices: State matrix and input matrix</span>
 <span class="comment">% ----------------------------------------------</span>
@@ -123,7 +123,8 @@ timer_val = tic;
     <span class="string">'chance-open'</span>, sys, prob_thresh, safety_tube, options);
 elapsed_time = toc(timer_val);
 disp(elapsed_time)
-</pre><pre class="codeoutput">   31.5089
+</pre><pre class="codeoutput">Warning: Creating a Gaussian which might have a deterministic component 
+   16.4183
 
 </pre><h2 id="5">Plotting the stochastic viable set</h2><pre class="codeinput">figure(1);
 hold <span class="string">on</span>;
@@ -161,9 +162,7 @@ vertex_indx = 8;
         sys.state_dim,[]);
     <span class="comment">% Monte-Carlo estimate of the safety probability</span>
     <span class="comment">% ----------------------------------------------</span>
-    mcarlo_result = safety_tube.contains(<span class="keyword">...</span>
-        [repmat(initial_state,1,n_mcarlo_sims);
-         concat_state_realization]);
+    mcarlo_result = safety_tube.contains(concat_state_realization);
     stoch_viab_prob_mc_estim = sum(mcarlo_result)/n_mcarlo_sims;
     fprintf([<span class="string">'Open-loop-based lower bound and Monte-Carlo simulation '</span>, <span class="keyword">...</span>
              <span class="string">'(%1.0e particles): %1.3f, %1.3f\n'</span>], <span class="keyword">...</span>
@@ -197,26 +196,13 @@ vertex_indx = 8;
     ylabel(<span class="string">'$x_2$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
 <span class="keyword">end</span>
 </pre><pre class="codeoutput">Open-loop-based lower bound and Monte-Carlo simulation (1e+05 particles): 0.990, 1.000
-</pre><pre class="codeoutput error">Undefined function 'vec' for input arguments of type 'double'.
-
-Error in cvx/sparsify&gt;replcols (line 142)
-    cvx___.readonly( ndxs ) = vec( cvx_readlevel( bN ) );
-
-Error in cvx/sparsify (line 105)
-    [ x, forms, repls ] = replcols( x, tt, 'none', forms, repls, isobj );
-
-Error in cvx_end (line 212)
-            x = sparsify( x, 'objective' );
-
-Error in cvx/det_rootn (line 32)
-    cvx_end
-
-Error in ellipsoidsFromMonteCarloSims (line 88)
-            maximize( det_rootn( A ) )
-
-Error in AutomatedAnesthesiaDelivery (line 162)
-    ellipsoidsFromMonteCarloSims(concat_state_realization, sys.state_dim, ...
-</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017b</a><br></p></div><!--
+Warning: CVX failed to obtain the ellipsoid, potentially due to numerical
+issues. 
+Warning: CVX failed to obtain the ellipsoid, potentially due to numerical
+issues. 
+Warning: CVX failed to obtain the ellipsoid, potentially due to numerical
+issues. 
+</pre><img vspace="5" hspace="5" src="AutomatedAnesthesiaDelivery_02.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017a</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Underapproximative verification of an automated anesthesia delivery system
 % This example will demonstrate the use of 
@@ -238,7 +224,7 @@ Error in AutomatedAnesthesiaDelivery (line 162)
 % Prescript running
 close all;
 % clc;
-% clear;
+clear;
 srtinit
 %% Problem Formulation
 % We first define a |LtiSystem| object corresponding to the discrete-time 
@@ -354,9 +340,7 @@ if ~isEmptySet(underapprox_stoch_viab_polytope)
         sys.state_dim,[]);
     % Monte-Carlo estimate of the safety probability
     % REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
-    mcarlo_result = safety_tube.contains(...
-        [repmat(initial_state,1,n_mcarlo_sims);
-         concat_state_realization]);
+    mcarlo_result = safety_tube.contains(concat_state_realization);
     stoch_viab_prob_mc_estim = sum(mcarlo_result)/n_mcarlo_sims;
     fprintf(['Open-loop-based lower bound and Monte-Carlo simulation ', ...
              '(%1.0e particles): %1.3f, %1.3f\n'], ...
