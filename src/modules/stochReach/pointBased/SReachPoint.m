@@ -235,12 +235,13 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
         throwAsCaller(exc);
     end
         
+    time_horizon = length(safety_tube) - 1;
+        
     % Check if safe set contains the initial state
     if ~safety_tube(1).contains(initial_state)
         % Stochastic reach-avoid probability is zero and no admissible open-loop
         % policy exists, if given an unsafe initial state
         approx_reach_prob = 0;
-        time_horizon = length(safety_tube) - 1;
         opt_input_vec = nan(sys.input_dim * time_horizon, 1);
         opt_input_gain = [];        
     elseif strcmpi(prob_str,'term')

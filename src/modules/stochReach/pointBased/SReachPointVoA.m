@@ -163,98 +163,89 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain] = SReachPointVoA(..
             voronoi_count(idx_indx) = nnz(idx==idx_indx);
         end
         
-        not_converged = 1;
-        prev_approx_stoch_reach = -10;
-        % Until converge, repeat steps 2 and 3
-        % X = Z * x0 + H * D + (H * M + G) * W
-        while not_converged
-            % Step 3: Solve the undersampled MILP that computes buffers online
+        % Step 3: Solve the undersampled MILP that computes buffers online
+        if options.verbose >= 1
+            fprintf('Done\n');
+            fprintf('Setting up CVX problem....');
+        end
+        cvx_begin
+            if options.verbose >= 2
+                cvx_quiet false
+            else
+                cvx_quiet true
+            end
+            cvx_solver Gurobi
+            variable M(sys.input_dim * time_horizon, sys.dist_dim*time_horizon);
+            variable D(sys.input_dim * time_horizon,1);
+            variable X_realization(sys.state_dim * time_horizon, n_kmeans);
+            variable U_realization(sys.input_dim * time_horizon, n_kmeans);
+            variable zx(1,n_kmeans) binary;
+            variable zu(1,n_kmeans) binary;
+            variable zxu(1,n_kmeans) binary;
+            variable buffers_x(n_lin_state, n_kmeans);
+            variable buffers_u(n_lin_input, n_kmeans);
+            maximize ((zxu*voronoi_count)/n_particles)
+            subject to
+                X_realization == repmat(Z * initial_state + H * D, ...
+                    1, n_kmeans) + (H * M + G) * W_centroids;
+                U_realization == M * W_centroids + repmat(D, 1, n_kmeans);
+                % Chance constraints for the state: Definition
+                concat_safety_tube_A * X_realization + buffers_x <= repmat( ...
+                    concat_safety_tube_b, 1, n_kmeans) + ...
+                    options.bigM * repmat(1-zx, n_lin_state, 1);
+                % Chance constraints for the input: Definition
+                concat_input_space_A * U_realization + buffers_u <= repmat( ...
+                    concat_input_space_b, 1, n_kmeans) + ...
+                    options.bigM * repmat(1-zu, n_lin_input, 1);
+                % Chance constraints for the input: Constraint imposition
+                (zu*voronoi_count)/n_particles >= 1 - options.max_input_viol_prob;
+                % zxu = zx && zu
+                % http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.42.7380&rep=rep1&type=pdf
+                zxu <= zx;
+                zxu <= zu;
+                zx + zu <= 1 + zxu;
+                for idx_indx = 1:n_kmeans
+                    % buffers_x: Definition
+                    buffers_x(:, idx_indx) >= max(concat_safety_tube_A *...
+                        (H * M + G) * (W_realizations(:, idx==idx_indx) -...
+                            W_centroids(:, idx_indx)), [], 2);
+                    % buffers_u: Definition                
+                    buffers_u(:, idx_indx) >= max(concat_input_space_A *...
+                        M * (W_realizations(:, idx==idx_indx) - ...
+                            W_centroids(:, idx_indx)), [], 2);
+                end
             if options.verbose >= 1
-                fprintf('Done\n');
-                fprintf('Setting up CVX problem....');
+                fprintf('Done\nParsing and solving the MILP....');
             end
-            cvx_begin
-                if options.verbose >= 2
-                    cvx_quiet false
-                else
-                    cvx_quiet true
-                end
-                cvx_solver Gurobi
-                variable M(sys.input_dim * time_horizon, sys.dist_dim*time_horizon);
-                variable D(sys.input_dim * time_horizon,1);
-                variable X_realization(sys.state_dim * time_horizon, n_kmeans);
-                variable U_realization(sys.input_dim * time_horizon, n_kmeans);
-                variable zx(1,n_kmeans) binary;
-                variable zu(1,n_kmeans) binary;
-                variable zxu(1,n_kmeans) binary;
-                variable buffers_x(n_lin_state, n_kmeans);
-                variable buffers_u(n_lin_input, n_kmeans);
-                maximize ((zxu*voronoi_count)/n_particles)
-                subject to
-                    X_realization == repmat(Z * initial_state + H * D, ...
-                        1, n_kmeans) + (H * M + G) * W_centroids;
-                    U_realization == M * W_centroids + repmat(D, 1, n_kmeans);
-                    % Chance constraints for the state: Definition
-                    concat_safety_tube_A * X_realization + buffers_x <= repmat( ...
-                        concat_safety_tube_b, 1, n_kmeans) + ...
-                        options.bigM * repmat(1-zx, n_lin_state, 1);
-                    % Chance constraints for the input: Definition
-                    concat_input_space_A * U_realization + buffers_u <= repmat( ...
-                        concat_input_space_b, 1, n_kmeans) + ...
-                        options.bigM * repmat(1-zu, n_lin_input, 1);
-                    % Chance constraints for the input: Constraint imposition
-                    (zu*voronoi_count)/n_particles >= 1 - options.max_input_viol_prob;
-                    % zxu = zx && zu
-                    zxu <= zx;
-                    zxu <= zu;
-                    zx + zu <= 1 + zxu;
-                    for idx_indx = 1:n_kmeans
-                        % buffers_x: Definition
-                        buffers_x(:, idx_indx) >= max(concat_safety_tube_A *...
-                            (H * M + G) * (W_realizations(:, idx==idx_indx) -...
-                                W_centroids(:, idx_indx)), [], 2);
-                        % buffers_u: Definition                
-                        buffers_u(:, idx_indx) >= max(concat_input_space_A *...
-                            M * (W_realizations(:, idx==idx_indx) - ...
-                                W_centroids(:, idx_indx)), [], 2);
-                    end
-                if options.verbose >= 1
-                    fprintf('Done\nParsing and solving the MILP....');
-                end
-            cvx_end       
+        cvx_end       
+        if options.verbose >= 1
+            fprintf('Done\n');
+        end
+        %% Overwrite the solutions
+        if strcmpi(cvx_status, 'Solved')
+            approx_voronoi_stoch_reach = cvx_optval;
+            opt_input_vec = D; 
+            opt_input_gain = M;
+            % Step 4b: Improve upon the estimate by a refined counting
+            % Solve the mixed-integer linear program
+            opt_U_realizations = M * W_realizations + repmat(D, 1, n_particles);
+            opt_X_realizations = repmat(Z*initial_state,1,n_particles) + ...
+                H * opt_U_realizations + G * W_realizations;
+            % All by default does columnwise (A particle succeeds only if
+            % it clears all hyperplanes --- has a column of ones)
+            zx_orig = all(concat_safety_tube_A * opt_X_realizations <=...
+                concat_safety_tube_b);
+            zu_orig = all(concat_input_space_A * opt_U_realizations <=...
+                concat_input_space_b);
+            approx_stoch_reach = sum(zx_orig.*zu_orig)/n_particles;            
             if options.verbose >= 1
-                fprintf('Done\n');
+                fprintf(...
+                    ['Undersampled probability (with %d particles): %1.3f\n',...
+                    'Underapproximation to the original MILP (with %d ',...
+                    'particles): %1.3f\n'],...
+                    n_kmeans, approx_voronoi_stoch_reach,...
+                    n_particles, approx_stoch_reach);
             end
-            %% Overwrite the solutions
-            if strcmpi(cvx_status, 'Solved')
-                approx_voronoi_stoch_reach = cvx_optval;
-                opt_input_vec = D; 
-                opt_input_gain = M;
-                % Step 4b: Improve upon the estimate by a refined counting
-                % Solve the mixed-integer linear program
-                opt_U_realizations = M * W_realizations + repmat(D, 1, n_particles);
-                opt_X_realizations = repmat(Z*initial_state,1,n_particles) + ...
-                    H * opt_U_realizations + G * W_realizations;
-                % All by default does columnwise (A particle succeeds only if
-                % it clears all hyperplanes --- has a column of ones)
-                zx_orig = all(concat_safety_tube_A * opt_X_realizations <=...
-                    concat_safety_tube_b);
-                zu_orig = all(concat_input_space_A * opt_U_realizations <=...
-                    concat_input_space_b);
-                approx_stoch_reach = sum(zx_orig.*zu_orig)/n_particles;            
-                if options.verbose >= 1
-                    fprintf(...
-                        ['Undersampled probability (with %d particles): %1.3f\n',...
-                        'Underapproximation to the original MILP (with %d ',...
-                        'particles): %1.3f\n'],...
-                        n_kmeans, approx_voronoi_stoch_reach,...
-                        n_particles, approx_stoch_reach);
-                end
-            end
-            if abs(approx_stoch_reach - prev_approx_stoch_reach) <= 1e-2
-                not_converged = 0;
-            end
-            prev_approx_stoch_reach = approx_stoch_reach;
         end
     end
 end
@@ -269,3 +260,11 @@ function otherInputHandling(options, sys)
             'linear system']));
     end
 end
+
+% Implemented the buffer assignment via max(M*(W^{(j)}_i - W^{(j)}_c) <=
+% buffer which in turn is equivalent to a collection of linear constraints.
+% Currently implements the chance constraint approach
+% Cost is zx & zu since we need P{X safe | acceptable input}.
+% 1. Fix comments
+% 2. Fix input handling
+% 3. Fix docstrings here and in SReachPointOptions
