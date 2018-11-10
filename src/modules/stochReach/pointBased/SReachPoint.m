@@ -215,7 +215,7 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
     % Input parsing
     valid_prob = {'term'}; % TODO-first: 'first',
     valid_method= {'chance-open','chance-affine','genzps-open',...
-        'particle-open','voronoi-open'};
+        'particle-open','voronoi-open','voronoi-affine'};
 
     inpar = inputParser();
     inpar.addRequired('prob_str', @(x) any(validatestring(x,valid_prob)));
@@ -265,14 +265,13 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
                  opt_input_gain = [];
                  varargout{1} = risk_alloc_state;
             case 'particle-open'
-                % Chance-constrained formulation with piecewise-linear 
-                % approximations to compute open-loop controller (LP)
+                % Scenario-based approach to compute open-loop controller (MILP)
                 [approx_reach_prob, opt_input_vec] = SReachPointPaO(sys, ...
                     initial_state, safety_tube, options);
                  opt_input_gain = [];
             case 'voronoi-open'
-                % Chance-constrained formulation with piecewise-linear 
-                % approximations to compute open-loop controller (LP)
+                % Undersampled particle control approach to compute
+                % open-loop controller (MILP)
                 [approx_reach_prob, opt_input_vec, kmeans_info] =...
                     SReachPointVoO(sys, initial_state, safety_tube, options);
                  opt_input_gain = [];
@@ -285,18 +284,23 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
                         initial_state, safety_tube, options);
                 varargout{1} = risk_alloc_state;
                 varargout{2} = risk_alloc_input;
+            case 'voronoi-affine'
+                % Undersampled particle control approach to compute
+                % affine disturbance feedback controller (MILP)
+                [approx_reach_prob, opt_input_vec, opt_input_gain] =...
+                    SReachPointVoA(sys, initial_state, safety_tube, options);
             otherwise
                 throw(SrtInternalError('Internal function not setup!'));
         end
         if approx_reach_prob<0
             approx_reach_prob = 0;
-            opt_input_vec = opt_input_vec;
+            opt_input_vec = nan(sys.input_dim * time_horizon, 1);
             opt_input_gain = [];
             if strcmpi(method_str,'chance-open') ||...
                     strcmpi(method_str,'chance-affine')    %TODO: Do MILP
-                warn_str = ['Note that ''chance-open/chance-affine'' ', ...
+                warn_str = sprintf(['Note that ''%s''', ...
                     'works only if all the individual hyperplanes is ', ...
-                    'satisfied with a probability above 0.5.'];
+                    'satisfied with a probability above 0.5.'], method_str);
             else
                 warn_str = 'The problem may be infeasible';
             end

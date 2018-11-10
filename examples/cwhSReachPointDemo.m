@@ -202,11 +202,12 @@ target_set = Polyhedron('lb', [-0.1; -0.1; -0.01; -0.01], ...
 target_tube = Tube('reach-avoid',safe_set, target_set, time_horizon);
 
 %% Specifying initial states and which options to run
-chance_open_run = 1;
-genzps_open_run = 1;
-particle_open_run = 1;
-voronoi_open_run = 1;
-chance_affine_run = 1;
+chance_open_run = 0;
+genzps_open_run = 0;
+particle_open_run = 0;
+voronoi_open_run = 0;
+chance_affine_run = 0;
+voronoi_affine_run = 1;
 % Initial state definition
 initial_state = [-0.75;         % Initial x relative position
                  -0.75;         % Initial y relative position
@@ -219,6 +220,7 @@ init_state_genzps_open = initial_state;
 init_state_particle_open = initial_state;
 init_state_voronoi_open = initial_state;
 init_state_chance_affine = initial_state;
+init_state_voronoi_affine = initial_state;
 
 
 %% Quantities needed to compute the optimal mean trajectory and Monte-Carlo sims
@@ -447,6 +449,41 @@ if chance_affine_run
     fprintf('Computation time: %1.3f\n', elapsed_time_chance_affine);
 end
 
+%% |SReachPoint|: |voronoi-affine|
+% This method is discussed in <http://hscl.unm.edu/affinecontrollersynthesis
+% Vinod and Oishi, Hybrid Systems: Computation and Control, 2019 (submitted)>.
+%
+if voronoi_affine_run
+    fprintf('\n\nSReachPoint with voronoi-affine\n');
+    opts = SReachPointOptions('term', 'voronoi-affine',...
+        'max_input_viol_prob', 1e-2, 'verbose',2);
+    tic
+    [prob_voronoi_affine, opt_input_vec_voronoi_affine,...
+        opt_input_gain_voronoi_affine] = SReachPoint('term', 'voronoi-affine',...
+            sys, init_state_voronoi_affine, target_tube, opts);
+    elapsed_time_voronoi_affine = toc;
+    if prob_voronoi_affine > 0
+        % mean_X = Z * x_0 + H * (M \mu_W + d) + G * \mu_W
+        opt_mean_X_voronoi_affine = Z * init_state_voronoi_affine +...
+            H * opt_input_vec_voronoi_affine + ...
+            (H * opt_input_gain_voronoi_affine + G) * muW;
+        % Optimal mean trajectory construction
+        opt_mean_traj_voronoi_affine = reshape(opt_mean_X_voronoi_affine, ...
+            sys.state_dim,[]);
+        % Check via Monte-Carlo simulation
+        concat_state_realization_cca = generateMonteCarloSims(n_mcarlo_sims, ...
+            sys, init_state_voronoi_affine, time_horizon,...
+            opt_input_vec_voronoi_affine, opt_input_gain_voronoi_affine);
+        mcarlo_result = target_tube.contains(concat_state_realization_cca);
+        simulated_prob_voronoi_affine = sum(mcarlo_result)/n_mcarlo_sims;
+    else
+        simulated_prob_voronoi_affine = NaN;
+    end
+    fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
+        prob_voronoi_affine, simulated_prob_voronoi_affine);
+    fprintf('Computation time: %1.3f\n', elapsed_time_voronoi_affine);
+end
+
 %% Summary of results
 % For ease of comparison, we list the probability estimates, the
 % Monte-Carlo simulation validations, and the computation times once again.
@@ -462,7 +499,7 @@ legend_cell = {'Safe set','Target set','Initial state'};
 axis equal        
 h_vec = [h_safe_set, h_target_set, h_init_state];
 % Plot the optimal mean trajectory from the vertex under study
-if chance_open_run
+if chance_open_run && prob_chance_open > 0
     h_opt_mean_ccc = scatter(...
           [init_state_chance_open(1), opt_mean_traj_chance_open(1,:)], ...
           [init_state_chance_open(2), opt_mean_traj_chance_open(2,:)], ...
@@ -477,7 +514,7 @@ if chance_open_run
         prob_chance_open, simulated_prob_chance_open);
     fprintf('Computation time: %1.3f\n', elapsed_time_chance_open);    
 end
-if genzps_open_run
+if genzps_open_run && prob_genz_open > 0
     h_opt_mean_genzps = scatter(...
           [init_state_genzps_open(1), opt_mean_traj_genzps_open(1,:)], ...
           [init_state_genzps_open(2), opt_mean_traj_genzps_open(2,:)], ...
@@ -536,6 +573,21 @@ if chance_affine_run
     fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
         prob_chance_affine, simulated_prob_chance_affine);
     fprintf('Computation time: %1.3f\n', elapsed_time_chance_affine);    
+end
+if voronoi_affine_run
+    h_opt_mean_voronoi_affine = scatter(...
+          [init_state_voronoi_affine(1), opt_mean_traj_voronoi_affine(1,:)], ...
+          [init_state_voronoi_affine(2), opt_mean_traj_voronoi_affine(2,:)], ...
+          30, 'ms', 'filled','DisplayName', 'Mean trajectory (voronoi-affine)');
+    legend_cell{end+1} = 'Mean trajectory (voronoi-affine)';
+    h_vec(end+1) = h_opt_mean_voronoi_affine;
+    ellipsoidsFromMonteCarloSims(...
+        concat_state_realization_cca(sys.state_dim+1:end,:), sys.state_dim,...
+        dims_to_consider, {'m'});
+    disp('>>> SReachPoint with voronoi-affine')
+    fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
+        prob_voronoi_affine, simulated_prob_voronoi_affine);
+    fprintf('Computation time: %1.3f\n', elapsed_time_voronoi_affine);    
 end
 legend(h_vec, legend_cell, 'Location','EastOutside', 'interpreter','latex');
 title(['Plot with ellipsoid fit for 100 randomly chosen Monte-Carlo ',...
