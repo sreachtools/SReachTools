@@ -91,6 +91,7 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain] = SReachPointVoA(..
 
     approx_stoch_reach = -1;
     opt_input_vec = nan(sys.input_dim * time_horizon,1);
+    opt_input_gain = [];
 
     % Requires Gurobi since we are solving a MILP
     [default_solver, solvers_cvx] = cvx_solver;
@@ -228,6 +229,7 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain] = SReachPointVoA(..
             if strcmpi(cvx_status, 'Solved')
                 approx_voronoi_stoch_reach = cvx_optval;
                 opt_input_vec = D; 
+                opt_input_gain = M;
                 % Step 4b: Improve upon the estimate by a refined counting
                 % Solve the mixed-integer linear program
                 opt_U_realizations = M * W_realizations + repmat(D, 1, n_particles);
