@@ -57,7 +57,7 @@ folder.
 This toolbox provides MATLAB APIs to tackle this problem[^1] for
 Gaussian-perturbed linear systems using chance-constrained approaches[^2],
 Fourier transforms[^3], particle filter control [^4], Lagrangian
-(set-operations)[^5], and dynamic programming[^6][^7] methods. We currently
+(set-operations)[^5], and dynamic programming[^6]<sup>,</sup>[^7] methods. We currently
 provide polytopic underapproximation and (open-loop and affine) controller
 synthesis for this problem.
 
