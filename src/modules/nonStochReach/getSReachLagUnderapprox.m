@@ -1,5 +1,5 @@
 function [underapprox_set, varargout] = getSReachLagUnderapprox(sys, ...
-    target_tube, disturbance_set)
+    target_tube, disturbance_set, equi_dir_vecs)
 % Get underapproximation of stochastic reach set
 % =========================================================================
 %
@@ -83,7 +83,7 @@ function [underapprox_set, varargout] = getSReachLagUnderapprox(sys, ...
         inverted_state_matrix = inv(sys.state_mat);
         minus_bu = (-sys.input_mat) * sys.input_space;
         dist_mat = sys.dist_mat;
-        % % For Minkowski inner approximation: TODO
+        % minkSumInner TODO                    
         % Ainv_minus_bu = inverted_state_matrix * minus_bu;
     end
     
@@ -105,7 +105,7 @@ function [underapprox_set, varargout] = getSReachLagUnderapprox(sys, ...
                 inverted_state_matrix = inv(sys.state_mat(current_time));
                 minus_bu = (-sys.input_mat(current_time)) * sys.input_space;
                 dist_mat = sys.dist_mat(current_time);
-                % % For Minkowski inner approximation: TODO
+                % minkSumInner TODO                    
                 % Ainv_minus_bu = inverted_state_matrix * minus_bu;
             end
                 
@@ -138,12 +138,16 @@ function [underapprox_set, varargout] = getSReachLagUnderapprox(sys, ...
                     end
                 end
 
-                % One-step backward reach set via MPT
-                one_step_backward_reach_set = inverted_state_matrix *...
-                        (new_target + minus_bu);                    
-%               % ALTERNATIVELY, use minkSumInner TODO                    
+%               % One-step backward reach set via MPT
+%               one_step_backward_reach_set = inverted_state_matrix *...
+%                         (new_target + minus_bu);                    
+%               % minkSumInner TODO                    
 %                 one_step_backward_reach_set = minkSumInner(...
 %                     inverted_state_matrix * new_target, Ainv_minus_bu);
+                % Use ray-shooting algorithm to underapproximate one-step
+                % backward reach set
+                one_step_backward_reach_set = oneStepBackReachSet(sys,...
+                    new_target, equi_dir_vecs);
 
                 % Guarantee staying within target_tube by intersection
                 effective_target = intersect(one_step_backward_reach_set,...
@@ -158,7 +162,7 @@ function [underapprox_set, varargout] = getSReachLagUnderapprox(sys, ...
             end
 
             if n_disturbances > 1
-                % Compute the convex hull
+                % Compute the polyhedron from the vertices
                 effective_target_tube(itt) = Polyhedron(vertices);
             else
                 effective_target_tube(itt) = effective_target;
@@ -170,4 +174,63 @@ function [underapprox_set, varargout] = getSReachLagUnderapprox(sys, ...
     if tube_length > 1 && nargout > 1
         varargout{1} = effective_target_tube;
     end
+end
+
+function under_polytope = oneStepBackReachSet(sys, target_set, equi_dir_vecs)
+    [dir_vecs_dim, n_vertices] = size(equi_dir_vecs);
+    if dir_vecs_dim ~= (sys.state_dim + sys.input_dim)
+        throw(SrtInvalidArgsError(['Direction vectors should be a ',...
+            'collection of column vectors, each (sys.state_dim + ',...
+            'sys.input_dim)-dimensional.']));
+    end
+    
+    % Compute the polytope in X*U
+    x_u_reaches_target_set_A = [target_set.A*state_mat target_set.A*input_mat];
+    x_u_reaches_target_set_Ae = [target_set.Ae*state_mat target_set.Ae*input_mat];
+    x_u_reaches_target_set_b = target_set.b;
+    x_u_reaches_target_set_be = target_set.be;
+    x_u_reaches_target_set = Polyhedron('A',x_u_reaches_target_set_A,...
+        'b', x_u_reaches_target_set_b, 'Ae',x_u_reaches_target_set_Ae,...
+        'be', x_u_reaches_target_set_be);
+    
+    % Compute the chebyshev-center of x_u_reaches_target_set
+    x_u_reaches_target_set_cheby = x_u_reaches_target_set.chebyCenter();
+    
+    % Compute vrep-based underapproximation
+    boundary_point_mat = zeros(dir_vecs_dim, n_vertices);
+    for dir_indx = 1:n_vertices
+        cvx_begin quiet
+            variable theta;
+            variable boundary_point;
+            
+            maximize opt_theta;
+            subject to
+                theta >= 0;
+                boundary_point == x_u_reaches_target_set_cheby +...
+                    theta * equi_dir_vecs(:, dir_indx);
+                x_u_reaches_target_set_A * boundary_point <=...
+                    x_u_reaches_target_set_b;
+                x_u_reaches_target_set_Ae * boundary_point ==...
+                    x_u_reaches_target_set_be;
+        cvx_end        
+        switch cvx_status
+            case 'Solved'
+                boundary_point_mat (:, dir_indx) = boundary_point;
+            case 'Inaccurate/Solved'
+                warning('SReachTools:runTime', ['CVX returned ',...
+                    'Inaccurate/Solved, while solving a subproblem for ',...
+                    'Lagrangian underapproximation. Continuing nevertheless!']);
+                boundary_point_mat (:, dir_indx) = boundary_point;
+            otherwise
+                throw(SrtDevError(sprintf(['Underapproximation failed! ',...
+                    'CVX_status: %s'], cvx_status)));
+        end
+    end
+    x_u_reaches_target_set_vrep_underapprox=Polyhedron('V',boundary_point_mat');
+    
+    % Compute projection onto the x space
+    under_polytope =...
+        x_u_reaches_target_set_vrep_underapprox.projection(1:sys.state_dim);    
+    % Compute the half-space representation
+    under_polytope.computeHRep();
 end
