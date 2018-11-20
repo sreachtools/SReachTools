@@ -8,11 +8,7 @@ about: Create a report to help us improve
 A clear and concise description of what the bug is.
 
 **To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+Provide a minimum working example that reproduces the error. If you prefer privacy, please contact the developers at [aby.vinod@gmail.com](mailto:aby.vinod@gmail.com).
 
 **Expected behavior**
 A clear and concise description of what you expected to happen.
@@ -21,11 +17,10 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **System configuration:**
- - OS: [e.g. iOS]
- - SReachTools version [e.g. 22]
- - Is MPT installed?
- - Is CVX installed?
- - Is Gurobi installed?
+ - Which OS are you using? [e.g.: Windows/iOS/Linux]
+ - Output of `ver` command in MATLAB
+ - Is CVX installed? What version number?
+ - Is Gurobi installed? What version version number, if yes?
 
 **Additional context**
 Add any other context about the problem here.
