@@ -100,15 +100,18 @@ title('Target tube');
 %%
 % bounded set for Lagrangian
 tic;
-opts = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
-    'ellipsoid');
-luSet = SReachSet('term', 'lag-under', sys, 0.8, target_tube, opts);
+luOpts = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
+    'ellipsoid', 'system', sys, 'n_underapprox_vertices', 8*20 + 6);
+toc;
+tic;
+[luSet, extra_info] = SReachSet('term', 'lag-under', sys, 0.8, target_tube, luOpts);
 lagrange_under_time = toc();
 
+%%
 tic;
-opts = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'random', ...
-    'num_dirs', 50);
-loSet = SReachSet('term', 'lag-over', sys, 0.8, target_tube, opts);
+loOpts = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'random', ...
+    'num_dirs_random', 50);
+loSet = SReachSet('term', 'lag-over', sys, 0.8, target_tube, loOpts);
 lagrange_over_time = toc();
 %% 
 % Now we can compute the Lagrangian under and overapproximations which we 

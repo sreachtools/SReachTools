@@ -25,7 +25,11 @@ function [opt_locations, separation] = spreadPointsOnUnitSphere(n_dim,...
 % using difference-of-convex approach. Specifically, constraints (2), (3), and
 % (5), which are reverse-convex, are tightened to their first-order Taylor
 % series (under)approximation and the resulting linear constraints are enforced
-% in their place.
+% in their place. This method is discussed in: (TODO)
+%
+%      J. D. Gleason, A. P. Vinod, and M. M. K. Oishi. 2018. Lagrangian 
+%      Approximations for Stochastic Reachability of a Target Tube. 
+%      online. (2018). https://arxiv.org/abs/1810.07118
 %
 % Next, we reflect/rotate these vectors in the first quadrant to occupy in all
 % other quadrants. In the end, we tack on e_j and -e_j for each dimension j
