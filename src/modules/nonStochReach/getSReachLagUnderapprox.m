@@ -1,5 +1,5 @@
 function varargout = getSReachLagUnderapprox(sys, target_tube,...
-    disturbance_set, equi_dir_vecs)
+    disturbance_set, options)
 % Get underapproximation of stochastic reach set
 % =========================================================================
 %
@@ -25,11 +25,7 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,...
 %                       collection of these objects which individually satisfy 
 %                       the probability bound(a convex hull of the individual 
 %                       results taken posteriori)
-%   equi_dir_vecs    - A collection of column vectors, each 
-%                      (sys.state_dim + sys.input_dim)-dimensional which will
-%                      used with the ray-shooting algorithm to compute a
-%                      vertex-based underapproximation of an intermediate
-%                      polytope. 
+%   options          - Struct of reach set options, see SReachSetOptions
 %
 % Outputs:
 % --------
@@ -44,6 +40,14 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,...
 %   performed in vertex representation. However, since in this computation,
 %   all three operations are required, scalability of the algorithm is severly
 %   hampered, despite theoretical elegance.
+% * Since box and random approaches in SReachSetOptions produce Polyhedron
+%   objects for disturbance sets, we rely on MPT for all the set operations.
+%   This means we do have scalability issues mentioned above.
+% * For ellipsoid approach in SReachSetOptions, we seek a purely facet-based
+%   operation and utilize the ray-shooting algorithm to compute a facet-based
+%   underapproximation of the Minkowski sum step (via vertex-based
+%   underapproximation, followed by projection, followed by convex hull
+%   operation)
 % * Use spreadPointsOnUnitSphere.m to compute equi_dir_vecs. 
 % * equi_dir_vecs is automatically generated as part of SReachSetOptions.
 %   
@@ -63,11 +67,9 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,...
         {'Tube'}, {'nonempty'}));
     inpar.addRequired('disturbance', @(x) validateattributes(x, ...
         {'Polyhedron','SReachEllipsoid'}, {'nonempty'}));
-    inpar.addRequired('equi_dir_vecs', @(x) validateattributes(x, ...
-        {'numeric'}, {'nonempty'}));
     
     try
-        inpar.parse(sys, target_tube, disturbance_set, equi_dir_vecs);
+        inpar.parse(sys, target_tube, disturbance_set);
     catch cause_exc
         exc = SrtInvalidArgsError.withFunctionName();
         exc = addCause(exc, cause_exc);
@@ -79,11 +81,6 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,...
             'representation of polyhedra are required for the necessary set', ...
             ' recursion operations, computing for systems greater than 4 ', ...
             'dimensions can take significant computational time and effort.']);
-    end
-    if size(equi_dir_vecs,1) ~= (sys.state_dim + sys.input_dim)
-        throw(SrtInvalidArgsError(['Direction vectors should be a ',...
-            'collection of column vectors, each (sys.state_dim + ',...
-            'sys.input_dim)-dimensional.']));
     end
     
     tube_length = length(target_tube);
@@ -109,11 +106,17 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,...
                 'produce inconsistent or inaccurate results for systems ', ...
                 'with dimensions greater than 2.'])
         end
-
+        if options.verbose
+            fprintf('Time_horizon: %d\n', tube_length-1);
+        end
+            
         % iterate backwards
         for itt = tube_length-1:-1:1
             % Computing effective target tube for current_time
             current_time = itt - 1;
+            if options.verbose
+                fprintf('Computation for time step: %d\n', current_time);
+            end
             if sys.isltv()
                 % Overwrite the following parameters with their
                 % time-varying counterparts
@@ -142,6 +145,14 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,...
                     new_target_b = effective_target.b - ...
                         effective_dist.support_fun(new_target_A);
                     new_target= Polyhedron('H',[new_target_A new_target_b]);
+                    % minkSumInner TODO                    
+                    % one_step_backward_reach_set = minkSumInner(...
+                    %     inverted_state_matrix * new_target, Ainv_minus_bu);
+                    % Use ray-shooting algorithm to underapproximate one-step
+                    % backward reach set
+                    one_step_backward_reach_set = oneStepBackReachSet(sys,...
+                        new_target, options.equi_dir_vecs, options.verbose);
+
                 else                                   % MPT's Polyhedron object
                     if effective_dist.isEmptySet
                         % No requirement of robustness
@@ -151,18 +162,10 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,...
                         % is robust to the disturbance
                         new_target = effective_target - effective_dist;
                     end
+                    % One-step backward reach set via MPT
+                    one_step_backward_reach_set = inverted_state_matrix *...
+                        (new_target + minus_bu);                    
                 end
-
-%               % One-step backward reach set via MPT
-%               one_step_backward_reach_set = inverted_state_matrix *...
-%                         (new_target + minus_bu);                    
-%               % minkSumInner TODO                    
-%                 one_step_backward_reach_set = minkSumInner(...
-%                     inverted_state_matrix * new_target, Ainv_minus_bu);
-                % Use ray-shooting algorithm to underapproximate one-step
-                % backward reach set
-                one_step_backward_reach_set = oneStepBackReachSet(sys,...
-                    new_target, equi_dir_vecs);
 
                 % Guarantee staying within target_tube by intersection
                 effective_target = intersect(one_step_backward_reach_set,...
@@ -191,7 +194,7 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,...
 end
 
 function one_step_back_reach_polytope_underapprox = oneStepBackReachSet(sys, ...
-    target_set, equi_dir_vecs)
+    target_set, equi_dir_vecs, verbose)
     % Compute the one-step back reach of target_set = {z\in X: Fz<=g} by 
     % {(x,u) \in X x U: F*(Ax + Bu)<=g}, and then projecting this set to X.
     % Here, X is the state space and U is the input space
@@ -204,7 +207,8 @@ function one_step_back_reach_polytope_underapprox = oneStepBackReachSet(sys, ...
     x_u_reaches_target_set_A = [target_set.A * [sys.state_mat sys.input_mat];
         [zeros(size(sys.input_space.A,1), sys.state_dim), sys.input_space.A]];
     x_u_reaches_target_set_Ae = target_set.Ae * [sys.state_mat sys.input_mat];
-    x_u_reaches_target_set_b = [target_set.b;sys.input_space.b];
+    x_u_reaches_target_set_b = [target_set.b;
+                                sys.input_space.b];
     x_u_reaches_target_set_be = target_set.be;
     x_u_reaches_target_set = Polyhedron('A', x_u_reaches_target_set_A,...
         'b', x_u_reaches_target_set_b, 'Ae', x_u_reaches_target_set_Ae,...
@@ -216,7 +220,7 @@ function one_step_back_reach_polytope_underapprox = oneStepBackReachSet(sys, ...
     % Compute the analytic-center of x_u_reaches_target_set
     % http://web.cvxr.com/cvx/examples/cvxbook/Ch08_geometric_probs/html/analytic_center.html
     % See Boyd and Vanderberghe's convex optimization textbook, section 8.5.3
-    if ~isempty(x_u_reaches_target_set)
+    if ~isEmptySet(x_u_reaches_target_set)
         cvx_begin quiet
             cvx_solver SDPT3;     % Require SDPT3 for exponential cone solving
             variable analytic_center(dir_vecs_dim,1);
@@ -227,9 +231,21 @@ function one_step_back_reach_polytope_underapprox = oneStepBackReachSet(sys, ...
                 x_u_reaches_target_set_Ae * analytic_center ==...
                     x_u_reaches_target_set_be;
         cvx_end
+        switch cvx_status
+            case 'Solved'
+            case 'Inaccurate/Solved'
+                warning('SReachTools:runTime', ['CVX returned ',...
+                    'Inaccurate/Solved, while solving a subproblem for ',...
+                    'Lagrangian underapproximation (analytic center ',...
+                    'computation). Continuing nevertheless!']);
+            otherwise
+                throw(SrtDevError(sprintf(['Analytic center computation',...
+                    ' failed! CVX_status: %s'], cvx_status)));
+        end
     else
-        throw(SrtInvalidArgsError(['No (x,u) for the given dynamics lies in',...
-            'the set']));
+        throw(SrtInvalidArgsError(['Recursion led to an empty target set!',...
+            ' Increasing the number of underapproximative vertices might ',...
+            'help.']));
     end
     
     %% Compute vrep-based underapproximation of one-step backward reach set

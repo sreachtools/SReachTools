@@ -65,7 +65,11 @@ function varargout = SReachSetLag(method_str, sys, prob_thresh, safety_tube,...
     % Obtain time horizon
     time_horizon = length(safety_tube) - 1;
     
-    if time_horizon > 0 && prob_thresh > 0        
+    if time_horizon > 0 && prob_thresh > 0   
+        if options.verbose
+            under_or_over=strsplit(method_str,'-');
+            fprintf('Computing Lagragian %s approximation\n', under_or_over{2});
+        end
         switch(lower(method_str))
             case 'lag-under'
                 % get bounded scaled_disturbance set
@@ -73,7 +77,7 @@ function varargout = SReachSetLag(method_str, sys, prob_thresh, safety_tube,...
                     prob_thresh^(1/time_horizon), options);
                 
                 [approx_set, approx_tube] = getSReachLagUnderapprox(...
-                    sys, safety_tube, bounded_set, options.equi_dir_vecs);
+                    sys, safety_tube, bounded_set, options);
             case 'lag-over'
                 % get bounded disturbance set
                 bounded_set = SReachSetLagBset(sys, ...

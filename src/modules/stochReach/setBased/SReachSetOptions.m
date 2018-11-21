@@ -108,6 +108,11 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %                   scalability
 %            3. system - [Only for 'lag-under'] LtvSystem/LtiSystem object that
 %                   is being analyzed
+%            4. verbose
+%               - Verbosity of the implementation {0,1}
+%                  0 - No output 
+%                  1 - Provides feedback on the progress of the direction
+%                       vector computation
 %
 % Outputs:
 % --------
@@ -153,8 +158,17 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
         inpar.addParameter('n_underapprox_vertices', 100,...
             @(x) validateattributes(x, {'numeric'}, {'scalar', 'integer',...
             'positive'}));
-        inpar.addParameter('system', LtvSystem('StateMatrix',1),...
+        % Verbosity
+        inpar.addParameter('verbose',0, @(x) validateattributes(x, ...
+            {'numeric'}, {'scalar','>=',0,'<=',1}));
+        % System object for computation of equi-directional vector
+        % generation
+        inpar.addParameter('system', [],...
             @(x) validateattributes(x,{'LtvSystem','LtiSystem'}, {'nonempty'}));
+        % System object for computation of equi-directional vector
+        % generation
+        inpar.addParameter('equi_dir_vecs', [],...
+            @(x) validateattributes(x,{'numeric'}, {'nonempty'}));
     else
         % Hyperplane intersecting the stochastic reach set underapprox.
         inpar.addParameter('init_safe_set_affine', Polyhedron(), ...
@@ -202,12 +216,6 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
             throw(SrtInvalidArgsError(['bound_set_method is a required ', ...
                 'input for SReachSet when using ''lag-over''/''lag-under''.']));
         end
-        if strcmpi(method_str,'lag-under') &&...
-                any(contains(inpar.UsingDefaults,'system'))
-            throw(SrtInvalidArgsError(['system (LtvSystem/LtiSystem object)',...
-                'is a required input for SReachSet when using ',...
-                '''lag-over''/''lag-under''.']));
-        end
         switch(lower(options.bound_set_method))
             case 'box'
                 if any(contains(inpar.UsingDefaults,'err_thresh'))
@@ -227,15 +235,20 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
                         'matfile with bounded set (only) as input for ', ...
                         'bound_set_method: load']));
                 end
-        end
-        if strcmpi(method_str,'lag-under')
-            % get underapproximated level set (robust effective target)
-            options.equi_dir_vecs = spreadPointsOnUnitSphere(...,
-                options.system.state_dim + options.system.input_dim,...
-                options.n_underapprox_vertices, 1);                
-        else
-            options.equi_dir_vecs = [];
-        end
+            case 'ellipsoid'
+                if strcmpi(method_str,'lag-under') 
+                    if any(contains(inpar.UsingDefaults,'system'))
+                        throw(SrtInvalidArgsError(['system ',...
+                            '(LtvSystem/LtiSystem object) is a required ',...
+                            'input for SReachSet when using ',...
+                            '''lag-over''/''lag-under''.']));
+                    end
+                    % get underapproximated level set (robust effective target)
+                    options.equi_dir_vecs = spreadPointsOnUnitSphere(...,
+                        options.system.state_dim + options.system.input_dim,...
+                        options.n_underapprox_vertices, options.verbose);                
+                end        
+        end        
     elseif strcmpi(method_str,'chance-open') || ...
            strcmpi(method_str,'genzps-open')
         % Must have for non-lag options: init_safe_set_affine, set_of_dir_vecs
