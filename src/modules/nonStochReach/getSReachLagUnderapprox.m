@@ -150,9 +150,14 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,...
                     %     inverted_state_matrix * new_target, Ainv_minus_bu);
                     % Use ray-shooting algorithm to underapproximate one-step
                     % backward reach set
-                    one_step_backward_reach_set = oneStepBackReachSet(sys,...
-                        new_target, options.equi_dir_vecs, options.verbose);
-
+                    effective_target = safeOneStepBackReachSet(sys,...
+                        new_target, target_tube(itt), options.equi_dir_vecs,...
+                        options.verbose);
+                    if options.verbose
+                        title(sprintf(['Safe one-step back reach set at',... 
+                            ' t=%d'],current_time));
+                        drawnow;
+                    end
                 else                                   % MPT's Polyhedron object
                     if effective_dist.isEmptySet
                         % No requirement of robustness
@@ -165,11 +170,11 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,...
                     % One-step backward reach set via MPT
                     one_step_backward_reach_set = inverted_state_matrix *...
                         (new_target + minus_bu);                    
-                end
 
-                % Guarantee staying within target_tube by intersection
-                effective_target = intersect(one_step_backward_reach_set,...
-                    target_tube(itt));
+                    % Guarantee staying within target_tube by intersection
+                    effective_target = intersect(one_step_backward_reach_set,...
+                        target_tube(itt));
+                end
 
                 % Collect the vertices of the effective_target for each 
                 % disturbance set to compute the convex hull. However, don't 
@@ -193,8 +198,8 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,...
     end
 end
 
-function one_step_back_reach_polytope_underapprox = oneStepBackReachSet(sys, ...
-    target_set, equi_dir_vecs, verbose)
+function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
+    sys, target_set, current_safe_set, equi_dir_vecs, verbose)
     % Compute the one-step back reach of target_set = {z\in X: Fz<=g} by 
     % {(x,u) \in X x U: F*(Ax + Bu)<=g}, and then projecting this set to X.
     % Here, X is the state space and U is the input space
@@ -203,45 +208,73 @@ function one_step_back_reach_polytope_underapprox = oneStepBackReachSet(sys, ...
     [dir_vecs_dim, n_vertices] = size(equi_dir_vecs);
 
     % Compute the polytope in X*U such that there is some x and u in the current
-    % time which on application of dynamics will lie in target_set
+    % time which on application of dynamics will lie in target_set. We also add
+    % the constraints defined by the current safe set as well as the input
+    % space. This ensures that when we project 1) we will lie in a subset of
+    % current_safe_set (effect of intersection after projection), and 2) the
+    % input "selected" during the projection remains feasible.
     x_u_reaches_target_set_A = [target_set.A * [sys.state_mat sys.input_mat];
-        [zeros(size(sys.input_space.A,1), sys.state_dim), sys.input_space.A]];
+        [zeros(size(sys.input_space.A,1), sys.state_dim), sys.input_space.A];
+        [current_safe_set.A zeros(size(current_safe_set.A,1), sys.input_dim)]];
     x_u_reaches_target_set_Ae = target_set.Ae * [sys.state_mat sys.input_mat];
     x_u_reaches_target_set_b = [target_set.b;
-                                sys.input_space.b];
+                                sys.input_space.b;
+                                current_safe_set.b];
     x_u_reaches_target_set_be = target_set.be;
     x_u_reaches_target_set = Polyhedron('A', x_u_reaches_target_set_A,...
         'b', x_u_reaches_target_set_b, 'Ae', x_u_reaches_target_set_Ae,...
         'be', x_u_reaches_target_set_be);
     
     %% Find a point within the 'deep enough'
-    % Compute the chebyshev-center of x_u_reaches_target_set
-    % cheby_center = x_u_reaches_target_set.chebyCenter().x;
-    % Compute the analytic-center of x_u_reaches_target_set
-    % http://web.cvxr.com/cvx/examples/cvxbook/Ch08_geometric_probs/html/analytic_center.html
-    % See Boyd and Vanderberghe's convex optimization textbook, section 8.5.3
     if ~isEmptySet(x_u_reaches_target_set)
+        % OPTION 1: Compute the chebyshev-center of x_u_reaches_target_set
+        % center_point = x_u_reaches_target_set.chebyCenter().x;
+
+        % OPTION 2: Compute the analytic-center of x_u_reaches_target_set
+        % http://web.cvxr.com/cvx/examples/cvxbook/Ch08_geometric_probs/html/analytic_center.html
+        % See Boyd and Vanderberghe's convex optimization textbook, section 8.5.3
+        % cvx_begin quiet
+        %     cvx_solver SDPT3;     % Require SDPT3 for exponential cone solving
+        %     variable analytic_center(dir_vecs_dim,1);
+        %     
+        %     maximize sum(log(x_u_reaches_target_set_b -...
+        %         x_u_reaches_target_set_A * analytic_center))
+        %     subject to
+        %         x_u_reaches_target_set_Ae * analytic_center ==...
+        %             x_u_reaches_target_set_be;
+        % cvx_end
+        % switch cvx_status
+        %     case 'Solved'
+        %     case 'Inaccurate/Solved'
+        %         warning('SReachTools:runTime', ['CVX returned ',...
+        %             'Inaccurate/Solved, while solving a subproblem for ',...
+        %             'Lagrangian underapproximation (analytic center ',...
+        %             'computation). Continuing nevertheless!']);
+        %     otherwise
+        %         throw(SrtDevError(sprintf(['Analytic center computation',...
+        %             ' failed! CVX_status: %s'], cvx_status)));
+        % end
+        % center_point = analytic_center;
+
+        % OPTION 3: Compute the maximum volume inscribed ellipsoid
+        % Given the polytope {a_i^T x <= b_i, i = 1,...,m }, compute an
+        % ellipsoid { Bu + d | || u || <= 1 } that sits within the polytope as
+        % well as has the maximum volume
         cvx_begin quiet
-            cvx_solver SDPT3;     % Require SDPT3 for exponential cone solving
-            variable analytic_center(dir_vecs_dim,1);
-            
-            maximize sum(log(x_u_reaches_target_set_b -...
-                x_u_reaches_target_set_A * analytic_center))
+            cvx_solver SDPT3;
+            variable mve_shape(dir_vecs_dim,dir_vecs_dim) symmetric
+            variable mve_center(dir_vecs_dim)
+            maximize( det_rootn( mve_shape ) )
             subject to
-                x_u_reaches_target_set_Ae * analytic_center ==...
-                    x_u_reaches_target_set_be;
+               for i = 1:size(x_u_reaches_target_set_A,1)
+                   norm(mve_shape*x_u_reaches_target_set_A(i,:)', 2 ) +...
+                        x_u_reaches_target_set_A(i,:) * mve_center <=...
+                            x_u_reaches_target_set_b(i);
+               end
         cvx_end
-        switch cvx_status
-            case 'Solved'
-            case 'Inaccurate/Solved'
-                warning('SReachTools:runTime', ['CVX returned ',...
-                    'Inaccurate/Solved, while solving a subproblem for ',...
-                    'Lagrangian underapproximation (analytic center ',...
-                    'computation). Continuing nevertheless!']);
-            otherwise
-                throw(SrtDevError(sprintf(['Analytic center computation',...
-                    ' failed! CVX_status: %s'], cvx_status)));
-        end
+        center_point = mve_center;
+        equi_dir_vecs_transf = mve_shape * equi_dir_vecs;
+        equi_dir_vecs = (equi_dir_vecs_transf)./norms(equi_dir_vecs_transf,2);
     else
         throw(SrtInvalidArgsError(['Recursion led to an empty target set!',...
             ' Increasing the number of underapproximative vertices might ',...
@@ -259,7 +292,7 @@ function one_step_back_reach_polytope_underapprox = oneStepBackReachSet(sys, ...
             maximize theta;
             subject to
                 theta >= 0;
-                boundary_point == analytic_center + ... %cheby_center +...
+                boundary_point == center_point + ...
                     theta * equi_dir_vecs(:, dir_indx);
                 x_u_reaches_target_set_A * boundary_point <=...
                     x_u_reaches_target_set_b;
