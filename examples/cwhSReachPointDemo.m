@@ -202,15 +202,15 @@ target_set = Polyhedron('lb', [-0.1; -0.1; -0.01; -0.01], ...
 target_tube = Tube('reach-avoid',safe_set, target_set, time_horizon);
 
 %% Specifying initial states and which options to run
-chance_open_run = 0;
-genzps_open_run = 0;
-particle_open_run = 0;
-voronoi_open_run = 0;
-chance_affine_run = 0;
+chance_open_run = 1;
+genzps_open_run = 1;
+particle_open_run = 1;
+voronoi_open_run = 1;
+chance_affine_run = 1;
 voronoi_affine_run = 1;
 % Initial state definition
-initial_state = [-1.2;         % Initial x relative position
-                 -1.2;         % Initial y relative position
+initial_state = [-0.75;         % Initial x relative position
+                 -0.75;         % Initial y relative position
                  0;             % Initial x relative velocity
                  0];            % Initial y relative velocity
 slice_at_vx_vy = initial_state(3:4); 
@@ -358,8 +358,8 @@ if particle_open_run
 end
 
 %% |SReachPoint|: |voronoi-open|
-% This method is discussed in <arxiv_link_TODO Sartipizadeh et. al., 
-% American Control Conference, 2019 (submitted)>
+% This method is discussed in <https://arxiv.org/abs/1811.03643 Sartipizadeh,
+% et. al., American Control Conference, 2019 (submitted)>
 %
 % This approach implements the undersampled particle control approach to compute
 % an open-loop controller. It computes, using k-means, a representative sample
@@ -450,14 +450,16 @@ if chance_affine_run
 end
 
 %% |SReachPoint|: |voronoi-affine|
-% This method is discussed in <http://hscl.unm.edu/affinecontrollersynthesis
-% Vinod and Oishi, Hybrid Systems: Computation and Control, 2019 (submitted)>.
+% This method extends our previous work in <https://arxiv.org/abs/1811.03643 
+% Sartipizadeh, et. al., American Control Conference, 2019 (submitted)> to
+% compute an affine controller. This work will be made available online
+% soon. TODO
 %
 if voronoi_affine_run
     fprintf('\n\nSReachPoint with voronoi-affine\n');
     opts = SReachPointOptions('term', 'voronoi-affine',...
         'max_input_viol_prob', 1e-2, 'verbose',1,...
-        'min_samples', 100, 'max_overapprox_err', 1e-2);
+        'min_samples', 30, 'max_overapprox_err', 1e-2);
     tic
     [prob_voronoi_affine, opt_input_vec_voronoi_affine,...
         opt_input_gain_voronoi_affine] = SReachPoint('term', 'voronoi-affine',...
@@ -583,7 +585,7 @@ if voronoi_affine_run && prob_voronoi_affine > 0
     legend_cell{end+1} = 'Mean trajectory (voronoi-affine)';
     h_vec(end+1) = h_opt_mean_voronoi_affine;
     ellipsoidsFromMonteCarloSims(...
-        concat_state_realization_cca(sys.state_dim+1:end,:), sys.state_dim,...
+        concat_state_realization_voa(sys.state_dim+1:end,:), sys.state_dim,...
         dims_to_consider, {'m'});
     disp('>>> SReachPoint with voronoi-affine')
     fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
