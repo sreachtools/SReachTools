@@ -44,13 +44,25 @@ classdef SReachSetTests < matlab.unittest.TestCase
             luSet = SReachSet('term', 'lag-under', sys, 0.8, safety_tube, ...
                 opts);
 
-            % overapproximation
-            opts = SReachSetOptions('term', 'lag-under', ...
-                'bound_set_method', 'box', 'err_thresh', 1e-3);
-            loSet = SReachSet('term', 'lag-under', sys, 0.8, safety_tube, ...
-                opts);
+            test_case.verifyInstanceOf(luSet, 'Polyhedron');
+
+            disp('Skipped testing the ellipsoid. Takes 70 s.');
+%             n_dim = (sys.state_dim + sys.input_dim);
+%             opts = SReachSetOptions('term', 'lag-under', ...
+%                 'bound_set_method', 'ellipsoid', 'err_thresh', 1e-3,...
+%                 'system', sys, 'verbose', 0, ...
+%                 'n_underapprox_vertices',2^n_dim * 10 + 2*n_dim);
+%             luSet = SReachSet('term', 'lag-under', sys, 0.8, safety_tube, ...
+%                 opts);
 
             test_case.verifyInstanceOf(luSet, 'Polyhedron');
+            
+            
+            opts = SReachSetOptions('term', 'lag-over', ...
+                'bound_set_method', 'box', 'err_thresh', 1e-3);
+            loSet = SReachSet('term', 'lag-over', sys, 0.8, safety_tube, ...
+                opts);
+
             test_case.verifyInstanceOf(loSet, 'Polyhedron');
         end
     end
@@ -69,7 +81,7 @@ classdef SReachSetTests < matlab.unittest.TestCase
                 'InputMatrix', [T^2/2; T], ...
                 'InputSpace', U, ...
                 'DisturbanceMatrix', eye(2), ...
-                'Disturbance', RandomVector('Gaussian', zeros(2,1), 5e-3*eye(2)));
+                'Disturbance', RandomVector('Gaussian', zeros(2,1), 1e-3*eye(2)));
 
             % target_tube = {K, K, K, K, K, K};
             safety_tube = Tube('viability', safe_set, time_horizon);

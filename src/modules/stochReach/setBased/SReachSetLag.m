@@ -1,6 +1,6 @@
-function approx_level_set = SReachSetLag(method_str, sys, prob_thresh, ...
-    safety_tube, options)
-% Get approximate level set using lagrangian methods
+function varargout = SReachSetLag(method_str, sys, prob_thresh, safety_tube,...
+    options)
+% Get approximate stochastic reach set using Lagrangian methods
 % ============================================================================
 %
 % This function will get the approximate prob_thresh level set for a stochastic
@@ -27,8 +27,10 @@ function approx_level_set = SReachSetLag(method_str, sys, prob_thresh, ...
 %
 % Outputs:
 % --------
-%   approx_level_set - Polyhedron object
-%
+%   approx_set - Polyhedron object for the over-/under-approximation of the 
+%                stochastic reach set
+%   approx_tube- [Optional] Tube comprising of an over-/under-approximation of
+%                the stochastic reach sets across the time horizon
 % ============================================================================
 % 
 %   This function is part of the Stochastic Reachability Toolbox.
@@ -63,31 +65,37 @@ function approx_level_set = SReachSetLag(method_str, sys, prob_thresh, ...
     % Obtain time horizon
     time_horizon = length(safety_tube) - 1;
     
-    if time_horizon > 0 && prob_thresh > 0        
+    if time_horizon > 0 && prob_thresh > 0   
+        if options.verbose
+            under_or_over=strsplit(method_str,'-');
+            fprintf('Computing Lagragian %s approximation\n', under_or_over{2});
+        end
         switch(lower(method_str))
             case 'lag-under'
                 % get bounded scaled_disturbance set
                 bounded_set = SReachSetLagBset(sys, ...
                     prob_thresh^(1/time_horizon), options);
                 
-                % get underapproximated level set (robust effective target)
-                approx_level_set = getSReachLagUnderapprox(sys, ...
-                    safety_tube, bounded_set);
+                [approx_set, approx_tube] = getSReachLagUnderapprox(...
+                    sys, safety_tube, bounded_set, options);
             case 'lag-over'
                 % get bounded disturbance set
                 bounded_set = SReachSetLagBset(sys, ...
                     (1-prob_thresh)^(1/time_horizon), options);
-                % get overapproximated level set (augmented effective target)
-                approx_level_set = getSReachLagOverapprox(sys, ...
-                    safety_tube, bounded_set);
+                % get overapproximated set (augmented effective target)
+                [approx_set, approx_tube] = getSReachLagOverapprox(...
+                    sys, safety_tube, bounded_set);
             otherwise
                 throw(SrtInvalidArgsError('Unhandled method_str: %s', ...
                     method_str));
         end
+        varargout{1} = approx_set;
+        varargout{2} = approx_tube;
     elseif time_horizon == 0 || prob_thresh == 0
         % return set in target tube if length is 1
-        approx_level_set = safety_tube(1);
-    else
+        varargout{1} = safety_tube(1);
+        varargout{2} = safety_tube;
+    else        
         throw(SrtDevError('Unknown problem configuration'));
     end
 end

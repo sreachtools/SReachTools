@@ -82,7 +82,7 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %                      disturbances;
 %                      **This method requires the additional following option 
 %                        specifications:**
-%                    i. num_dirs 
+%                    i. num_dirs_random 
 %                        - Number of directions to sample 
 %                          the ellipsoid for a polytopic representation
 %               b. box 
@@ -102,6 +102,17 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %                      other inputs are IRRELEVANT for this option.
 %                      Mat files to be loaded must have only contain
 %                      the bounded set (Polyhedron object).
+%            2. n_underapprox_vertices - [Only for 'lag-under'] Number of
+%                   vertices to use when underapproximating one-step backward
+%                   reach set computation for lag-under approach for
+%                   scalability
+%            3. system - [Only for 'lag-under'] LtvSystem/LtiSystem object that
+%                   is being analyzed
+%            4. verbose
+%               - Verbosity of the implementation {0,1}
+%                  0 - No output 
+%                  1 - Provides feedback on the progress of the direction
+%                       vector computation
 %
 % Outputs:
 % --------
@@ -135,14 +146,29 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
             valid_bound_method)));
         %% Optional arguments that are made REQUIRED based on bound_set_method
         % Get number of directions for random option
-        inpar.addParameter('num_dirs', 10, @(x) validateattributes(x, ...
-            {'numeric'}, {'scalar', 'integer'}));
+        inpar.addParameter('num_dirs_random', 10, @(x) validateattributes(x, ...
+            {'numeric'}, {'scalar', 'integer','positive'}));
         % Get bisection error threshold for box option
         inpar.addParameter('err_thresh', 1e-3, @(x) validateattributes(x, ...
             {'numeric'}, {'scalar', 'positive'}));
         % Get load string for load option
         inpar.addParameter('load_str', ' ', @(x) validateattributes(x, ...
             {'char'}, {'nonempty'}));
+        % Equi-directional vector generation
+        inpar.addParameter('n_underapprox_vertices', 100,...
+            @(x) validateattributes(x, {'numeric'}, {'scalar', 'integer',...
+            'positive'}));
+        % Verbosity
+        inpar.addParameter('verbose',0, @(x) validateattributes(x, ...
+            {'numeric'}, {'scalar','>=',0,'<=',1}));
+        % System object for computation of equi-directional vector
+        % generation
+        inpar.addParameter('system', [],...
+            @(x) validateattributes(x,{'LtvSystem','LtiSystem'}, {'nonempty'}));
+        % System object for computation of equi-directional vector
+        % generation
+        inpar.addParameter('equi_dir_vecs', [],...
+            @(x) validateattributes(x,{'numeric'}, {'nonempty'}));
     else
         % Hyperplane intersecting the stochastic reach set underapprox.
         inpar.addParameter('init_safe_set_affine', Polyhedron(), ...
@@ -198,8 +224,8 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
                         'bound_set_method: box']));
                 end
             case 'random'
-                if any(contains(inpar.UsingDefaults,'num_dirs'))
-                    throw(SrtInvalidArgsError(['num_dirs (no. of ', ...
+                if any(contains(inpar.UsingDefaults,'num_dirs_random'))
+                    throw(SrtInvalidArgsError(['num_dirs_random (no. of ', ...
                         'direction vectors to create bounded polytope) is ', ...
                         'a required input for bound_set_method: random']));
                 end
@@ -209,10 +235,22 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
                         'matfile with bounded set (only) as input for ', ...
                         'bound_set_method: load']));
                 end
-        end
+            case 'ellipsoid'
+                if strcmpi(method_str,'lag-under') 
+                    if any(contains(inpar.UsingDefaults,'system'))
+                        throw(SrtInvalidArgsError(['system ',...
+                            '(LtvSystem/LtiSystem object) is a required ',...
+                            'input for SReachSet when using ',...
+                            '''lag-over''/''lag-under''.']));
+                    end
+                    % get underapproximated level set (robust effective target)
+                    options.equi_dir_vecs = spreadPointsOnUnitSphere(...,
+                        options.system.state_dim + options.system.input_dim,...
+                        options.n_underapprox_vertices, options.verbose);                
+                end        
+        end        
     elseif strcmpi(method_str,'chance-open') || ...
            strcmpi(method_str,'genzps-open')
-           
         % Must have for non-lag options: init_safe_set_affine, set_of_dir_vecs
         if any(strcmp(inpar.UsingDefaults, 'init_safe_set_affine')) || ...
                 any(strcmp(inpar.UsingDefaults, 'set_of_dir_vecs'))

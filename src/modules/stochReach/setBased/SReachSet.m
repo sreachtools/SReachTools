@@ -142,16 +142,31 @@ function [stoch_reach_set, varargout] = SReachSet(prob_str, method_str, sys, ...
 %   stoch_reach_set 
 %               - Approximation (over- or under-approximation) of the
 %                 stochastic reach set
-%   extra_info  - [Available for 'chance-open'/'genzps-open'] A MATLAB struct
-%                 containing additional info, like optimal open-loop input vector
-%                 from the vertices and the initial state with maximum reach
-%                 probability.
+%   extra_info  - A MATLAB struct containing additional info, like optimal
+%                 open-loop input vector from the vertices and the initial state
+%                 with maximum reach probability in case of
+%                 'chance-open'/'genzps-open', and the effective_target_tube in
+%                 case of 'lag-over/lag-under'.
 %
 % Notes:
 % * 'set_of_dirs' and 'init_safe_set_affine' needs to be provided to the options
 %   if 'chance-open' or 'genzps-open' is to be used. See SReachSetOptions() for
 %   more details
 % * See @LtiSystem/getConcatMats for more information about the notation used.
+% * For lagrangian underapproximation approach, see getSReachLagUnderapprox.
+%     - From computational geometry, intersections and Minkowski differences are
+%       best performed in facet representation and Minkowski sums are best
+%       performed in vertex representation. However, since in this computation,
+%       all three operations are required, scalability of the algorithm is
+%       severly hampered, despite theoretical elegance.
+%     - Since box and random approaches in SReachSetOptions produce Polyhedron
+%       objects for disturbance sets, we rely on MPT for all the set operations.
+%       This means we do have scalability issues mentioned above.
+%     - For ellipsoid approach in SReachSetOptions, we seek a purely facet-based
+%       operation and utilize the ray-shooting algorithm to compute a
+%       facet-based underapproximation of the Minkowski sum step (via
+%       vertex-based underapproximation, followed by projection, followed by
+%       convex hull operation)
 %
 % =============================================================================
 % 
@@ -210,12 +225,16 @@ function [stoch_reach_set, varargout] = SReachSet(prob_str, method_str, sys, ...
                     stoch_reach_set = SReachSetCcO(method_str, sys, ...
                         prob_thresh, safety_tube, options);
                 end
-            case 'lag-under'
-                stoch_reach_set = SReachSetLag(method_str, sys, prob_thresh, ...
-                    safety_tube, options);
-            case 'lag-over'                
-                stoch_reach_set = SReachSetLag(method_str, sys, prob_thresh, ...
-                    safety_tube, options);
+            case {'lag-under','lag-over'}
+                if nargout > 1
+                    [stoch_reach_set, stoch_reach_tube] = SReachSetLag(...
+                        method_str, sys, prob_thresh, safety_tube, options);
+                    extra_info.stoch_reach_tube = stoch_reach_tube;
+                    varargout{1} = extra_info;
+                else
+                    stoch_reach_set = SReachSetLag(method_str, sys,...
+                        prob_thresh, safety_tube, options);                    
+                end
         end
     elseif strcmpi(prob_str,'first')
         % Exhausted all options => prob_str can be first or term only due

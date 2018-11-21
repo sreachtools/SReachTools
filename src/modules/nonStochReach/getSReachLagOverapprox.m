@@ -1,5 +1,4 @@
-function overapprox_set = getSReachLagOverapprox(sys, target_tube, ...
-    disturbance_set)
+function varargout = getSReachLagOverapprox(sys, target_tube, disturbance_set)
 % Get the overapproximation of the stoch reach set
 % ============================================================================
 %
@@ -14,7 +13,8 @@ function overapprox_set = getSReachLagOverapprox(sys, target_tube, ...
 %   
 % ============================================================================
 %
-% overapprox_set = getSReachLagUnderapprox(sys, target_tube, disturbance_set)
+% [overapprox_set, overapprox_tube] = getSReachLagUnderapprox(sys,...
+%       target_tube, disturbance_set)
 %
 % Inputs:
 % -------
@@ -26,6 +26,8 @@ function overapprox_set = getSReachLagOverapprox(sys, target_tube, ...
 % --------
 %   overapprox_set - Polyhedron object for the overapproximation of the 
 %                    stochastic reach set
+%   overapprox_tube- [Optional] Tube comprising of an overapproximation of the
+%                    stochastic reach sets across the time horizon
 %
 % Notes:
 % * From computational geometry, intersections and Minkowski differences are
@@ -96,5 +98,8 @@ function overapprox_set = getSReachLagOverapprox(sys, target_tube, ...
                 one_step_backward_reach_set, target_tube(itt));
         end
     end
-    overapprox_set = effective_target_tube(1);
+    varargout{1} = effective_target_tube(1);
+    if nargout > 1
+        varargout{2} = effective_target_tube;
+    end
 end

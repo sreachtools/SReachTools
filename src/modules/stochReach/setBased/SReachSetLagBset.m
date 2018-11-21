@@ -96,13 +96,13 @@ function bounded_set = SReachSetLagBset(sys, onestep_prob_thresh, options)
         case 'random'
             % when choosing random direction need to specify the number of 
             % vectors to use
-            validateattributes(options.num_dirs, {'numeric'}, ...
+            validateattributes(options.num_dirs_random, {'numeric'}, ...
                 {'scalar', 'integer'});
             
             % Create an outer approximation of the ellipse by randomly
             % sampling the support function
             bounded_set = boundedEllipseByRandomVectors(disturbance, ...
-                onestep_prob_thresh, options.num_dirs);
+                onestep_prob_thresh, options.num_dirs_random);
     
         case 'box'
             validateattributes(options.err_thresh, {'numeric'}, ...

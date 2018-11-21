@@ -87,6 +87,7 @@ xlabel('x');
 ylabel('y');
 zlabel('time');
 title('Target tube');
+axis equal;
 %% Lagrangian approximation for stochastic reachability of a target tube
 % For the Lagrangian methods we compute robust and augmented effective target 
 % sets---for the under and overapproximations, respectively. For this computation 
@@ -99,16 +100,24 @@ title('Target tube');
 % through random direction choices.
 %%
 % bounded set for Lagrangian
+fprintf('Setting up options for lag-under with bound_set_method: ellipsoid\n');
 tic;
-opts = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
-    'ellipsoid');
-luSet = SReachSet('term', 'lag-under', sys, 0.8, target_tube, opts);
+n_dim = sys.state_dim + sys.input_dim;
+luOpts = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
+    'ellipsoid', 'system', sys, 'n_underapprox_vertices', 2^n_dim*10+2*n_dim,...
+    'verbose',1);
+options_time = toc;
+fprintf('This took %2.3f seconds.\n', options_time);
+tic;
+[luSet, extra_info] = SReachSet('term', 'lag-under', sys, 0.8, target_tube,...
+    luOpts);
 lagrange_under_time = toc();
 
+%%
 tic;
-opts = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'random', ...
-    'num_dirs', 50);
-loSet = SReachSet('term', 'lag-over', sys, 0.8, target_tube, opts);
+loOpts = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'random', ...
+    'num_dirs_random', 50);
+loSet = SReachSet('term', 'lag-over', sys, 0.8, target_tube, loOpts);
 lagrange_over_time = toc();
 %% 
 % Now we can compute the Lagrangian under and overapproximations which we 
@@ -130,12 +139,13 @@ ylabel('$x_2$', 'Interpreter', 'latex')
 box on;
 leg = legend('Safe set','Overapproximation','Underapproximation');
 set(leg,'Location','EastOutside');
+axis equal;
 %% 
 % Because of the choice or random directions for the ellipse |robust_eff_target| 
 % and |robust_target_2| are not exactly equivalent (same for the augmented sets). 
 % However they can be seen to be visually near identical.
 %% Dynamic programming solution
-% We can compare the results with <https://doi.org/10.1016/j.automatica.2010.08.006 
+% We compare the results with <https://doi.org/10.1016/j.automatica.2010.08.006 
 % dynamic programming> to see how the approximations appear and how they compare 
 % in simulation times.
 %%
@@ -173,6 +183,8 @@ plot(luSet, 'color', 'g');
 hold off;
 xlabel('$x_1$', 'Interpreter', 'latex')
 ylabel('$x_2$', 'Interpreter', 'latex')
-leg = legend('Safe set','Overapproximation', 'Dyn. prog. soln.','Underapproximation');
+leg = legend('Safe set','Overapproximation', 'Dyn. prog. soln.',...
+    'Underapproximation');
 set(leg,'Location','EastOutside');
 box on;
+axis equal;
