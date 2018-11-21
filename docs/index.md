@@ -131,7 +131,7 @@ This will disable some of the features of SReachTools or hamper performance.
 1. MATLAB (>2017a)
     1. Toolboxes
         1. MATLAB's Statistics and Machine Learning Toolbox
-        1. MATLAB's Global Optimization Toolbox (**Optional**)
+        1. (**Optional**) MATLAB's Global Optimization Toolbox
 1. MPT3 ([https://www.mpt3.org/](https://www.mpt3.org/))
     1. Copy the MATLAB script [install_mpt3.m](https://www.mpt3.org/Main/Installation?action=download&upname=install_mpt3.m)
        provided by MPT3 from the browser, and run it in MATLAB to automatically
@@ -139,11 +139,17 @@ This will disable some of the features of SReachTools or hamper performance.
 1. CVX ([http://cvxr.com/cvx/](http://cvxr.com/cvx/))
     1. Install the CVX (Standard bundle, including Gurobi and/or MOSEK)
     1. Installation instructions are given in [http://cvxr.com/cvx/download/](http://cvxr.com/cvx/download/).
-1. (**Optional**) We recommend using Gurobi as the backend solver for the convex programs
-   formulated by SReachTools. In practice, we find both CVX and MPT3 perform
-   much better with Gurobi. See
-   [http://www.gurobi.com/registration/download-reg](http://www.gurobi.com/registration/download-reg)
-   for more details. Note that Gurobi offers free academic license.
+1. (**Optional**) We recommend using Gurobi as the backend solver for the convex
+   programs formulated by SReachTools. In practice, we find both CVX and MPT3
+   perform much better with Gurobi.
+    1. To use Gurobi, a license is required from Gurobi Inc. Note that Gurobi
+       offers free academic license. For more details, see
+       [http://www.gurobi.com/registration/download-reg](http://www.gurobi.com/registration/download-reg).
+    1. MPT3 automatically updates its backend solver to Gurobi, when gurobi is
+       in the path and the license is found.
+    1. CVX requires a professional license to use Gurobi. CVX Research Inc.
+       provides free academic license, which can be requested at
+       [http://cvxr.com/cvx/academic/](http://cvxr.com/cvx/academic/).
 
 ### Installation
 

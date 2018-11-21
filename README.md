@@ -53,17 +53,25 @@ This will disable some of the features of SReachTools or hamper performance.
 1. MATLAB (>2017a)
     1. Toolboxes
         1. MATLAB's Statistics and Machine Learning Toolbox
-        1. MATLAB's Global Optimization Toolbox (**Optional**)
+        1. (**Optional**) MATLAB's Global Optimization Toolbox
 1. MPT3 ([https://www.mpt3.org/](https://www.mpt3.org/))
-    1. Copy the MATLAB script [install_mpt3.m](https://www.mpt3.org/Main/Installation?action=download&upname=install_mpt3.m) provided by MPT3 from the browser, and run it in MATLAB to automatically download MPT3 and its dependencies.
+    1. Copy the MATLAB script [install_mpt3.m](https://www.mpt3.org/Main/Installation?action=download&upname=install_mpt3.m)
+       provided by MPT3 from the browser, and run it in MATLAB to automatically
+       download MPT3 and its dependencies.
 1. CVX ([http://cvxr.com/cvx/](http://cvxr.com/cvx/))
     1. Install the CVX (Standard bundle, including Gurobi and/or MOSEK)
     1. Installation instructions are given in [http://cvxr.com/cvx/download/](http://cvxr.com/cvx/download/).
-1. (**Optional**) We recommend using Gurobi as the backend solver for the convex programs
-   formulated by SReachTools. In practice, we find both CVX and MPT3 perform
-   much better with Gurobi. See
-   [http://www.gurobi.com/registration/download-reg](http://www.gurobi.com/registration/download-reg)
-   for more details. Note that Gurobi offers free academic license.
+1. (**Optional**) We recommend using Gurobi as the backend solver for the convex
+   programs formulated by SReachTools. In practice, we find both CVX and MPT3
+   perform much better with Gurobi.
+    1. To use Gurobi, a license is required from Gurobi Inc. Note that Gurobi
+       offers free academic license. For more details, see
+       [http://www.gurobi.com/registration/download-reg](http://www.gurobi.com/registration/download-reg).
+    1. MPT3 automatically updates its backend solver to Gurobi, when gurobi is
+       in the path and the license is found.
+    1. CVX requires a professional license to use Gurobi. CVX Research Inc.
+       provides free academic license, which can be requested at
+       [http://cvxr.com/cvx/academic/](http://cvxr.com/cvx/academic/).
 
 ### Installation
 
@@ -76,7 +84,7 @@ This will disable some of the features of SReachTools or hamper performance.
    must-have dependencies are properly installed.
    - You can add `cd <path_to_sreachtools_repo>;srtinit` to your MATLAB's
      `startup.m` to automatically have this done in future.
-   - Additional steps (optional):
+   - (**Optional**) Additional steps:
        - Run `srtinit -t` to run all the unit tests.
        - Run `srtinit -v` to visualize the steps the changes to the path and
          check for recommended dependencies.  
@@ -99,11 +107,22 @@ us.
 
 ## License
 
-The Stochastic Reachability Toolbox (SReachTools) is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+The Stochastic Reachability Toolbox (SReachTools) is free software: you can
+redistribute it and/or modify it under the terms of the GNU General Public
+License as published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
 
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.  You should have received a copy of the GNU General Public License along with this toolbox (see [LICENSE](./LICENSE)).  If not, see <https://www.gnu.org/licenses/>.
+This program is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  See the GNU General Public License for more details.  You
+should have received a copy of the GNU General Public License along with this
+toolbox (see [LICENSE](./LICENSE)).  If not, see
+<https://www.gnu.org/licenses/>.
 
-It is the user's responsibility in assessing the correctness of the theory and software implementation before putting it to use in their own research or exploiting the results commercially. We are, however, very happy to answer any questions and investigate any bug reports.
+It is the user's responsibility in assessing the correctness of the theory and
+software implementation before putting it to use in their own research or
+exploiting the results commercially. We are, however, very happy to answer any
+questions and investigate any bug reports.
 
 ## Credits
 
@@ -114,4 +133,6 @@ papers](https://scholar.google.com/citations?user=yb5Z7AwAAAAJ&hl=en) when using
 the toolbox.  The authors are PhD advisees of [Prof. Meeko
 Oishi](http://www.unm.edu/~oishi/).
 
-We have submitted a tool paper to the 22nd ACM International Conference on Hybrid Systems: Computation and Control summarizing the features of SReachTools. A copy of this submission is [available in the repository](./SReachTools.pdf).
+We have submitted a tool paper to the 22nd ACM International Conference on
+Hybrid Systems: Computation and Control summarizing the features of SReachTools.
+A copy of this submission is [available in the repository](./SReachTools.pdf).
