@@ -70,7 +70,7 @@ sys = getCwhLtiSystem(4, Polyhedron('lb', -umax*ones(2,1), ...
 %% Methods to run   
 ft_run = 0;
 cc_open_run = 1;
-lagunder_run = 0;
+lagunder_run = 1;
 %% Target tube construction --- reach-avoid specification
 time_horizon = 5;          % Stay within a line of sight cone for 4 time steps and 
                          % reach the target at t=5% Safe Set --- LoS cone
@@ -118,35 +118,37 @@ init_safe_set_affine = Polyhedron('He',[zeros(2,2) eye(2,2) slice_at_vx_vy]);
 
 %% CC (Linear program approach)
 if cc_open_run
-    options = SReachSetOptions('term', 'chance-open', ...
+    cc_options = SReachSetOptions('term', 'chance-open', ...
         'set_of_dir_vecs', set_of_dir_vecs_cc_open, ...
         'init_safe_set_affine', init_safe_set_affine, ...
         'verbose', 0);
     timer_cc_open = tic;
     [polytope_cc_open, extra_info] = SReachSet('term','chance-open', sys, ...
-        prob_thresh, target_tube, options);  
+        prob_thresh, target_tube, cc_options);  
     elapsed_time_cc_open = toc(timer_cc_open);
 end
 
 %% Fourier transform (Genz's algorithm and MATLAB's patternsearch)
 if ft_run
-    options = SReachSetOptions('term', 'genzps-open', ...
+    ft_options = SReachSetOptions('term', 'genzps-open', ...
         'set_of_dir_vecs', set_of_dir_vecs_ft, ...
         'init_safe_set_affine', init_safe_set_affine, 'verbose', 1);
     timer_ft = tic;
     polytope_ft = SReachSet('term','genzps-open', sys, prob_thresh, ...
-        target_tube, options);  
+        target_tube, ft_options);  
     elapsed_time_ft = toc(timer_ft);
 end
 
 %% Lagrangian approach
 if lagunder_run
-    options = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
-        'ellipsoid');
-
+    n_dim = sys.state_dim + sys.input_dim;
+    lag_options = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
+         'ellipsoid', 'system', sys, 'verbose', 1,...
+         'n_underapprox_vertices', 2^n_dim * 100 + 2*n_dim);
+    
     timer_lagunder = tic;
     polytope_lagunder = SReachSet('term', 'lag-under', sys,  prob_thresh, ...
-        target_tube, options);
+        target_tube, lag_options);
     elapsed_time_lagunder = toc(timer_lagunder);
 end
 

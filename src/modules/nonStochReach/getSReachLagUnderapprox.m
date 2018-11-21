@@ -285,4 +285,13 @@ function one_step_back_reach_polytope_underapprox = oneStepBackReachSet(sys, ...
         before_projection_vrep_underapprox.projection(1:sys.state_dim,'vrep');    
     % Compute the half-space representation using MPT3
     one_step_back_reach_polytope_underapprox.minHRep();
+    if verbose
+        figure();
+        if x_u_reaches_target_set.Dim <= 3
+            plot(x_u_reaches_target_set,'alpha',0.3);
+            hold on;plot(before_projection_vrep_underapprox);
+        else
+            plot(before_projection_vrep_underapprox.projection(1:3));
+        end
+    end    
 end
