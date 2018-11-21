@@ -136,7 +136,7 @@ This will disable some of the features of SReachTools or hamper performance.
     1. Copy the MATLAB script [install_mpt3.m](https://www.mpt3.org/Main/Installation?action=download&upname=install_mpt3.m)
        provided by MPT3 from the browser, and run it in MATLAB to automatically
        download MPT3 and its dependencies.
-1. CVX ([http://cvxr.com/cvx/](http://cvxr.com/cvx/))
+1. CVX v2.1 ([http://cvxr.com/cvx/](http://cvxr.com/cvx/))
     1. Install the CVX (Standard bundle, including Gurobi and/or MOSEK)
     1. Installation instructions are given in [http://cvxr.com/cvx/download/](http://cvxr.com/cvx/download/).
 1. (**Optional**) We recommend using Gurobi as the backend solver for the convex
