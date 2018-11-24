@@ -100,6 +100,13 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
         % skipping the first time step
         [concat_safety_tube_A, concat_safety_tube_b] =...
             safety_tube.concat([2 time_horizon+1]);
+       
+        % Normalize the hyperplanes so that Ax <= b + M(1-bin_x) can be 
+        % implemented with M = 100 (numerically stable compared to using large
+        % M). Here, b<=1e-3 or 1
+        [concat_safety_tube_A, concat_safety_tube_b] =...
+            normalizeForParticleControl(concat_safety_tube_A,...
+                concat_safety_tube_b);
 
         % Halfspace-representation of U^N, and matrices Z, H, and G
         % GUARANTEES: Non-empty input sets (polyhedron)
@@ -118,14 +125,18 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
         W = concat(sys.dist, time_horizon);        
         % Create realizations of W arranged columnwise
         W_realizations = mvnrnd(W.parameters.mean', W.parameters.covariance,...
-            options.num_particles)';
+            options.n_particles)';
         if options.verbose >= 1
             fprintf('Done\n');
         end
-
+        
         % Implementation of Problem 2 in Lesser CDC 2013
         % Solve the mixed-integer linear program
         if options.verbose >= 1
+            if options.verbose >= 2
+                fprintf('Objective value needs to be scaled by %1.3f\n',...
+                    1/options.n_particles);
+            end
             fprintf('Setting up CVX problem....');
         end
         cvx_begin
@@ -136,16 +147,16 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
             end
             cvx_solver Gurobi
             variable U_vector(sys.input_dim * time_horizon,1);
-            variable mean_X(sys.state_dim * time_horizon,options.num_particles);
-            variable z(1,options.num_particles) binary;
-            maximize sum(z)
+            variable mean_X(sys.state_dim * time_horizon,options.n_particles);
+            variable bin_x(1,options.n_particles) binary;            
+            maximize sum(bin_x)/options.n_particles
             subject to
                 mean_X == repmat(Z * initial_state + H * U_vector, ...
-                    1, options.num_particles) + G * W_realizations;
+                    1, options.n_particles) + G * W_realizations;
                 concat_input_space_A * U_vector <= concat_input_space_b;
                 concat_safety_tube_A * mean_X <= repmat( ...
-                    concat_safety_tube_b, 1, options.num_particles) + ...
-                    options.bigM * repmat(1-z,n_lin_state,1);
+                    concat_safety_tube_b, 1, options.n_particles) + ...
+                    options.bigM * repmat(1-bin_x,n_lin_state,1);
             if options.verbose >= 1
                 fprintf('Done\nParsing and solving the MILP....');
             end
@@ -154,9 +165,12 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
             fprintf('Done\n');
         end
         %% Overwrite the solutions
-        if strcmpi(cvx_status, 'Solved')
-            approx_stoch_reach = sum(z)/options.num_particles;
-            opt_input_vec = U_vector; 
+        switch cvx_status
+            case {'Solved', 'Inaccurate/Solved'}
+                approx_stoch_reach = sum(bin_x)/options.n_particles;
+                opt_input_vec = U_vector; 
+            otherwise
+                
         end
     end
 end

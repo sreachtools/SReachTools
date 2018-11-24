@@ -31,7 +31,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 %                                               using psoptimset()
 %                     'particle-open'-- Particle control approach that uses
 %                                       mixed-integer linear programming
-%                                       1. num_particles: Number of particles to
+%                                       1. n_particles: Number of particles to
 %                                               use [Default: 100]
 %                                       2. bigM: A large positive constant value
 %                                               that is used in the mixed
@@ -45,7 +45,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 %                                       control approach to compute open loop
 %                                       1. failure_risk: Risk of the
 %                                               probabilistic overapproximation
-%                                               bound failing [Default: 1e-8]
+%                                               bound failing [Default: 1e-10]
 %                                       2. max_overapprox_err: Maximum
 %                                               overapproximation error
 %                                               (probabilistically) tolerable up
@@ -59,13 +59,12 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 %                                               [Default: 1e-3]
 %                                       4. min_samples: Minimum number of
 %                                               particles to be used for
-%                                               approximation | Useful when
+%                                               approximation | Used when
 %                                               undersampling_fraction is very
-%                                               strict [Default: 0]
+%                                               strict [Default: 30]
 %                                       5. bigM: A large positive constant value
-%                                               that is used in the mixed
-%                                               integer formulation [Default:
-%                                               5000]
+%                                               used in the mixed integer 
+%                                               formulation [Default: 100]
 %                                       6. verbose: Verbosity of the 
 %                                               implementation (feedback for the
 %                                               user) | Takes values from 0 to 2
@@ -78,7 +77,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 %                                               [Default: 1e-2]
 %                                       2. failure_risk: Risk of the
 %                                               probabilistic overapproximation
-%                                               bound failing [Default: 1e-8]
+%                                               bound failing [Default: 1e-10]
 %                                       3. max_overapprox_err: Maximum
 %                                               overapproximation error
 %                                               (probabilistically) tolerable up
@@ -92,13 +91,12 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 %                                               [Default: 1e-3]
 %                                       5. min_samples: Minimum number of
 %                                               particles to be used for
-%                                               approximation | Useful when
+%                                               approximation | Used when
 %                                               undersampling_fraction is very
-%                                               strict [Default: 0]
-%                                       6. bigM: A large positive constant value
-%                                               that is used in the mixed
-%                                               integer formulation [Default:
-%                                               5000]
+%                                               strict [Default: 30]
+%                                       5. bigM: A large positive constant value
+%                                               used in the mixed integer 
+%                                               formulation [Default: 100]
 %                                       7. verbose: Verbosity of the 
 %                                               implementation (feedback for the
 %                                               user) | Takes values from 0 to 2
@@ -116,7 +114,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 %                                       3. pwa_accuracy: Accuracy of the
 %                                               piecewise affine approximation
 %                                               of norminvcdf used [Default:
-%                                               1e-2]
+%                                               1e-3]
 %                                       Difference-of-convex parameters: 
 %                                       4. tau_initial: Initialization of the 
 %                                               slack multiplier [Default: 1]
@@ -145,6 +143,9 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 % * SReachPoint() will call this function internally using the default
 %   values if SReachPointOptions()-based options is not explicitly provided
 %   to SReachPoint().
+% * To specify a desired set of samples V to use when undersampling in 
+%   voronoi-X, set the undersampling fraction to be very small (say 1e-4/1e-5) 
+%   and set min_samples to V.
 % ============================================================================
 % 
 % This function is part of the Stochastic Reachability Toolbox.
@@ -182,10 +183,10 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
         case 'particle-open'
             % Number of particles to be used for approximation
-            inpar.addParameter('num_particles', 1e2, @(x)...
+            inpar.addParameter('n_particles', 1e2, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
             % BigM notation requires a large value
-            inpar.addParameter('bigM', 5e3, @(x)...
+            inpar.addParameter('bigM', 100, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
             % Verbosity of the implementation
             inpar.addParameter('verbose', 0, @(x)...
@@ -193,7 +194,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
                     '>=',0,'<=',2}));                        
          case 'voronoi-open'
             % Risk of the probabilistic overapproximation bound failing
-            inpar.addParameter('failure_risk', 1e-8, @(x)...
+            inpar.addParameter('failure_risk', 1e-10, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
             % Maximum overapproximation error (probabilistically) tolerable
             inpar.addParameter('max_overapprox_err', 1e-4, @(x)...
@@ -206,7 +207,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
             inpar.addParameter('min_samples', 30, @(x)...
                 validateattributes(x, {'numeric'}, {'integer','>',0}));
             % BigM notation requires a large value
-            inpar.addParameter('bigM', 5e3, @(x)...
+            inpar.addParameter('bigM', 100, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
             % Verbosity of the implementation
             inpar.addParameter('verbose', 0, @(x)...
@@ -217,7 +218,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
             inpar.addParameter('max_input_viol_prob',1e-2, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0,'<',1}));
             % Risk of the probabilistic overapproximation bound failing
-            inpar.addParameter('failure_risk', 1e-8, @(x)...
+            inpar.addParameter('failure_risk', 1e-10, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
             % Maximum overapproximation error (probabilistically) tolerable
             inpar.addParameter('max_overapprox_err', 1e-2, @(x)...
@@ -227,7 +228,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
             inpar.addParameter('undersampling_fraction', 1/1000, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
             % Minimum number of particles to be used for approximation
-            inpar.addParameter('min_samples', 50, @(x)...
+            inpar.addParameter('min_samples', 30, @(x)...
                 validateattributes(x, {'numeric'}, {'integer','>',0}));
             % BigM notation requires a large value
             inpar.addParameter('bigM', 5e4, @(x)...
@@ -245,7 +246,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
                 validateattributes(x, {'numeric'}, {'scalar', 'integer', ...
                     '>=',0,'<=',2}));            
             % Accuracy of piecewise-affine approximation of norminvcdf
-            inpar.addParameter('pwa_accuracy',1e-2, @(x)...
+            inpar.addParameter('pwa_accuracy',1e-3, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
             % Difference-of-convex: Initialization of the slack multiplier
             inpar.addParameter('tau_initial',1, @(x)...

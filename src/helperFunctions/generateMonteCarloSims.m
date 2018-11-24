@@ -212,7 +212,7 @@ function [concat_state_realization, ...
         if verbose
             disp('Done');
             fprintf(['We need to saturate %d realizations. We will provide'...
-                ' progress report in steps of %d\n'], length(proj_req), disp_x);
+                ' progress in %d quantiles.\n'], length(proj_req), disp_x);
         end
         
         % Saturate these realizations
@@ -223,7 +223,7 @@ function [concat_state_realization, ...
             % concat_disturb_realization (U = MW + D)
             realization_counter = realization_counter + 1;            
             if verbose && (mod(realization_counter, realization_frac_disp)==0)
-                fprintf('Completed saturating %d/%d input realizations\n',...
+                fprintf('Completed saturating %5d/%5d input realizations\n',...
                    realization_counter, length(proj_req));
             end
             % Saturate the resulting inputs

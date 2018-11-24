@@ -334,8 +334,8 @@ end
 % increase in computational time.
 if particle_open_run
     fprintf('\n\nSReachPoint with particle-open\n');
-    opts = SReachPointOptions('term','particle-open','verbose',1,...
-        'num_particles',50);
+    opts = SReachPointOptions('term','particle-open','verbose', 1,...
+        'n_particles',50);
     tic
     [prob_particle_open, opt_input_vec_particle_open] = SReachPoint('term', ...
         'particle-open', sys, init_state_particle_open, target_tube, opts);
@@ -426,7 +426,7 @@ end
 if chance_affine_run
     fprintf('\n\nSReachPoint with chance-affine\n');
     opts = SReachPointOptions('term', 'chance-affine',...
-        'max_input_viol_prob', 1e-2, 'verbose',2);
+        'max_input_viol_prob', 1e-2, 'verbose', 2);
     tic
     [prob_chance_affine, opt_input_vec_chance_affine,...
         opt_input_gain_chance_affine] = SReachPoint('term', 'chance-affine',...
@@ -464,8 +464,8 @@ end
 if voronoi_affine_run
     fprintf('\n\nSReachPoint with voronoi-affine\n');
     opts = SReachPointOptions('term', 'voronoi-affine',...
-        'max_input_viol_prob', 1e-3, 'verbose', 2, 'bigM', 1e2,...
-        'min_samples', 50, 'max_overapprox_err', 1e-2, 'failure_risk', 1e-14);
+        'max_input_viol_prob', 1e-2, 'verbose', 1, 'min_samples', 30,...
+        'max_overapprox_err', 1e-2);
     tic
     [prob_voronoi_affine, opt_input_vec_voronoi_affine,...
         opt_input_gain_voronoi_affine, kmeans_info_affine] = SReachPoint( ...
@@ -607,9 +607,8 @@ box on;
 grid on;
 xlabel('$x$','interpreter','latex');
 ylabel('$y$','interpreter','latex');
+set(gca,'FontSize',20);
+axis([initial_state(1)-0.25,-initial_state(1)+0.25,initial_state(2)-0.25,0.1]);
 hf = gcf;
 hf.Units = 'inches';
 hf.Position = [0    0.4167   18.0000   10.0313];
-set(gca,'FontSize',20);
-axis([initial_state(1)-0.25,-initial_state(1)+0.25,initial_state(2)-0.25,...
-0.1]);
