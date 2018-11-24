@@ -89,6 +89,10 @@ function [concat_state_realization, ...
 % 
 %
 
+    % Give progress reports in fractions defined by 1/disp_x when doing
+    % saturation for affine controllers
+    disp_x = 5;
+
     %% Input handling 
     % Ensure that n_monte_carlo_sims is a scalar and positive
     validateattributes(n_monte_carlo_sims, {'numeric'}, {'scalar',...
@@ -184,6 +188,9 @@ function [concat_state_realization, ...
     % Realization of the random vector X (columnwise)
     % See @LtiSystem/getConcatMats for more info on the notation used
     if verbose
+        fprintf(['Computing the reach probability associated with the given',...
+            ' controller via %1.2e Monte-Carlo simulation\n'],...
+            n_monte_carlo_sims);
         disp(['Affine disturbance feedback controller will be saturated to',...
             ' the input space via projection']);
     end
@@ -204,20 +211,20 @@ function [concat_state_realization, ...
         proj_req = find(saturation_indx == 0);
         if verbose
             disp('Done');
-            fprintf('We need to saturate %d realizations.\n', length(proj_req));
+            fprintf(['We need to saturate %d realizations. We will provide'...
+                ' progress report in steps of %d\n'], length(proj_req), disp_x);
         end
         
         % Saturate these realizations
         realization_counter = 0;            
-        realization_frac_disp = round(length(proj_req)/5);%disp every
+        realization_frac_disp = round(length(proj_req)/disp_x); %disp every x
         for realization_indx = proj_req
             % Affine disturbance feedback controller associated with
             % concat_disturb_realization (U = MW + D)
             realization_counter = realization_counter + 1;            
             if verbose && (mod(realization_counter, realization_frac_disp)==0)
-                fprintf(['Completed saturating %d/%d input realizations',...
-                   ' out of %d realizations\n'], realization_counter,...
-                   length(proj_req), n_monte_carlo_sims);
+                fprintf('Completed saturating %d/%d input realizations\n',...
+                   realization_counter, length(proj_req));
             end
             % Saturate the resulting inputs
             cvx_begin quiet

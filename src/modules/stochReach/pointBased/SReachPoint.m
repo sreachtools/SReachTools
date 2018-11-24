@@ -97,16 +97,16 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %                         High-Dimensional LTI Systems using Fourier
 %                         Transforms," in IEEE Control Systems Letters, 2017.
 %
-% 4. Scenario-based approach (scenario-open):
+% 4. Particle control approach (particle-open):
 %
-%    High-level desc.   : Sample scenarios based on the additive noise and solve
+%    High-level desc.   : Sample particles based on the additive noise and solve
 %                         a mixed-integer linear program to make the maximum
-%                         number of scenarios satisfy the reachability objective
+%                         number of particles satisfy the reachability objective
 %    Approximation      : No direct approximation guarantees. Accuracy improves
-%                         as the number of scenarios considered increases.
+%                         as the number of particles considered increases.
 %    Controller type    : Open-loop controller that satisfies the hard input
 %                         bounds
-%    Optimality         : Optimal (w.r.t scenarios drawn) open-loop controller
+%    Optimality         : Optimal (w.r.t particles drawn) open-loop controller
 %                         for the underapproximation problem 
 %    Dependency (EXT)   : CVX, Gurobi
 %    SReachTool function: SReachPointPaO
@@ -114,27 +114,48 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %                         reachability for control of spacecraft relative
 %                         motion," In Proc. IEEE Conf. Dec. & Ctrl., 2013.
 %
-% 5. Scenario-based approach with undersampling via Voronoi partitions 
+% 5. Particle control-based approach with undersampling via Voronoi partitions 
 %    (voronoi-open):
 %
-%    High-level desc.   : Sample scenarios based on the additive noise and solve
+%    High-level desc.   : Sample particles based on the additive noise and solve
 %                         a mixed-integer linear program to make the maximum
-%                         number of scenarios satisfy the reachability objective
+%                         number of particles satisfy the reachability objective
 %                         In addition, we use Voronoi partition to
 %                         drastically improve the tractability while
 %                         preserving the underapproximation quality
-%    Approximation      : Overapproximation bounded above by a
+%    Approximation      : Overapproximation bounded above (in probability) by a
 %                         user-specified tolerance
 %    Controller type    : Open-loop controller that satisfies the hard input
 %                         bounds
-%    Optimality         : Optimal (w.r.t scenarios drawn) open-loop controller
+%    Optimality         : Optimal (w.r.t particles drawn) open-loop controller
 %                         for the underapproximation problem 
 %    Dependency (EXT)   : CVX, Gurobi
 %    SReachTool function: SReachPointVoO
-%    Paper              : H. Sartipizadeh, A. Vinod,  B. Acikmese, and M. Oishi, 
+%    Paper              : H. Sartipizadeh, A. Vinod, B. Acikmese, and M. Oishi, 
 %                         "Voronoi Partition-based Scenario Reduction for Fast 
 %                         Sampling-based Stochastic Reachability Computation of
 %                         LTI Systems", In Proc. Amer. Ctrl. Conf., 2019
+%
+% 6. Particle control-based approach with undersampling via Voronoi partitions 
+%    (voronoi-affine):
+%
+%    High-level desc.   : Sample particles based on the additive noise and solve
+%                         a mixed-integer linear program to make the maximum
+%                         number of particles satisfy the reachability objective
+%                         In addition, we use Voronoi partition to
+%                         drastically improve the tractability while
+%                         preserving the underapproximation quality
+%    Approximation      : Overapproximation bounded above (in probability) by a
+%                         user-specified tolerance
+%    Controller type    : A history-dependent affine controller that satisfies
+%                         softened input constraints (controller satisfies the
+%                         hard input bounds upto a user-specified probabilistic
+%                         threshold)
+%    Optimality         : Suboptimal (w.r.t particles drawn) affine disturbance
+%                         feedback controller 
+%    Dependency (EXT)   : CVX, Gurobi
+%    SReachTool function: SReachPointVoA
+%    Paper              : TODO
 %
 % See also examples/cwhSReachPointDemo.m and examples/dubinsSReachPointDemo.m.
 %
@@ -154,8 +175,16 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %                                        an open-loop controller synthesis
 %                      'chance-affine'-- Convex chance-constrained approach for
 %                                        an affine controller synthesis
-%                      'genzps-open'  -- Genz's algorithm + Patternsearch
-%                      'scenario-open'-- Scenario-based 
+%                      'genzps-open'  -- Genz's algorithm + Patternsearch for an
+%                                        open-loop controller synthesis
+%                      'particle-open'-- Particle control-based approach for an
+%                                        open-loop controller synthesis
+%                      'voronoi-open' -- Voronoi undersampling of Particle
+%                                        control-based approach for an open-loop
+%                                        controller synthesis
+%                     'voronoi-affine'-- Voronoi undersampling of Particle
+%                                        control-based approach for an affine
+%                                        controller synthesis
 %   sys          - System description (LtvSystem/LtiSystem object)
 %   initial_state- Initial state for which the maximal reach probability must be
 %                  evaluated (A numeric vector of dimension sys.state_dim)
@@ -187,7 +216,7 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %   risk_alloc_input
 %               - [Available only for 'chance-affine'] Risk allocation for the
 %                 input constraints
-%   kmeans_info - [Available only for 'voronoi-open'] MATLAB struct
+%   kmeans_info - [Available only for 'voronoi-X'] MATLAB struct
 %                 containing info about the kmeans-based undersampling used for 
 %                 tractable particle control approach
 %
@@ -266,7 +295,8 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
                  opt_input_gain = [];
                  varargout{1} = risk_alloc_state;
             case 'particle-open'
-                % Scenario-based approach to compute open-loop controller (MILP)
+                % Particle control-based approach to compute open-loop
+                % controller (MILP)
                 [approx_reach_prob, opt_input_vec] = SReachPointPaO(sys, ...
                     initial_state, safety_tube, options);
                  opt_input_gain = [];
@@ -277,6 +307,13 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
                     SReachPointVoO(sys, initial_state, safety_tube, options);
                  opt_input_gain = [];
                  varargout{1} = kmeans_info;
+            case 'voronoi-affine'
+                % Undersampled particle control approach to compute
+                % affine disturbance feedback controller (MILP)
+                [approx_reach_prob, opt_input_vec, opt_input_gain,...
+                    kmeans_info] = SReachPointVoA(sys, initial_state,...
+                        safety_tube, options);
+                 varargout{1} = kmeans_info;
             case 'chance-affine'
                 % Chance-constrained formulation with piecewise-linear 
                 % approximations to compute affine-loop controller (SOC program)
@@ -285,11 +322,6 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
                         initial_state, safety_tube, options);
                 varargout{1} = risk_alloc_state;
                 varargout{2} = risk_alloc_input;
-            case 'voronoi-affine'
-                % Undersampled particle control approach to compute
-                % affine disturbance feedback controller (MILP)
-                [approx_reach_prob, opt_input_vec, opt_input_gain] =...
-                    SReachPointVoA(sys, initial_state, safety_tube, options);
             otherwise
                 throw(SrtInternalError('Internal function not setup!'));
         end

@@ -1,5 +1,5 @@
-function [approx_stoch_reach, opt_input_vec, opt_input_gain] = SReachPointVoA(...
-    sys, initial_state, safety_tube, options)
+function [approx_stoch_reach, opt_input_vec, opt_input_gain, kmeans_info] =...
+    SReachPointVoA(sys, initial_state, safety_tube, options)
 % Solve the problem of stochastic reachability of a target tube (a lower bound
 % on the maximal reach probability and an affine controller synthesis) using
 % under-sampled particle control and coordinate descent algorithm
@@ -7,10 +7,24 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain] = SReachPointVoA(..
 %
 % SReachPointVoA implements the under-sampled particle control to the problem of
 % stochastic reachability of a target tube to construct an affine controller.
-% This technique is discussed in detail in the paper,
 %
-% TODO: Add paper
-% TODO: Add summary
+%    High-level desc.   : Sample particles based on the additive noise and solve
+%                         a mixed-integer linear program to make the maximum
+%                         number of particles satisfy the reachability objective
+%                         In addition, we use Voronoi partition to
+%                         drastically improve the tractability while
+%                         preserving the underapproximation quality
+%    Approximation      : Overapproximation bounded above (in probability) by a
+%                         user-specified tolerance
+%    Controller type    : A history-dependent affine controller that satisfies
+%                         softened input constraints (controller satisfies the
+%                         hard input bounds upto a user-specified probabilistic
+%                         threshold)
+%    Optimality         : Suboptimal (w.r.t particles drawn) affine disturbance
+%                         feedback controller 
+%    Dependency (EXT)   : CVX, Gurobi
+%    SReachTool function: SReachPointVoA
+%    Paper              : TODO
 %
 % =============================================================================
 %
@@ -44,10 +58,14 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain] = SReachPointVoA(..
 %                   - opt_input_vec: Open-loop controller: column vector 
 %                     dimension
 %                       (sys.input_dim*N) x 1
-%   risk_alloc_state 
-%               - Risk allocation for the state constraints
-%   risk_alloc_input
-%               - Risk allocation for the input constraints
+%   kmeans_info - A MATLAB struct containing the information about partitioning
+%                 of W space. The struct contains the following info:
+%                  n_particles    - Number of particles based off Hoeffding's
+%                                   inequality
+%                  n_kmeans       - Number of bins for kmeans clustering
+%                  W_centroids    - Centroids obtained from kmeans clustering
+%                  W_realizations - Realizations for the random vector W
+%
 %
 % See also SReachPoint.
 %
@@ -59,6 +77,8 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain] = SReachPointVoA(..
 %   transformation of the maximal reach probability associated with the
 %   unsaturated affine controller using the user-specified likelihood threshold
 %   on the hard input constraints. See Theorem 1 of the paper cited above.
+% * Due to numerical issues, we add a small positive perturbation to the
+%   b term, whenever determining containment --- Ax<=b
 % * See @LtiSystem/getConcatMats for more information about the notation used.
 % 
 % ============================================================================
@@ -68,7 +88,10 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain] = SReachPointVoA(..
 %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 %
-
+    
+    % Due to numerical issues, we add a small positive perturbation to the
+    % b term whenever determining containment --- Ax<=b
+    my_eps = 1e-10;
     % Input parsing
     inpar = inputParser();
     inpar.addRequired('sys', @(x) validateattributes(x, ...
@@ -92,6 +115,7 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain] = SReachPointVoA(..
     approx_stoch_reach = -1;
     opt_input_vec = nan(sys.input_dim * time_horizon,1);
     opt_input_gain = [];
+    kmeans_info = [];
 
     % Requires Gurobi since we are solving a MILP
     [default_solver, solvers_cvx] = cvx_solver;
@@ -133,7 +157,8 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain] = SReachPointVoA(..
             disp(['Undersampling fraction is too severe. Use the minimum',...
                  ' number of particles prescribed.']);
         end
-        
+
+        % Step 2: Obtain the Gaussian random vector realizations
         if options.verbose >= 1
             fprintf(['Required number of particles: %1.4e | Samples ',...
                 'used: %3d\n'], n_particles, n_kmeans);
@@ -148,26 +173,41 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain] = SReachPointVoA(..
             fprintf('Done\n');
         end
 
-        % Step 2: Compute the Voronoi centers with prescribed number of
-        % bins --- Use k-means clustering to undersample (H*M + G)*W
-        % Transposed input since kmeans expects each data point row-wise
+        % Step 3: Compute the Voronoi centers with prescribed number of bins
+        % --- Use k-means clustering to undersample W | Count the particles
+        % associated with each center | Transposed input since kmeans expects
+        % each data point row-wise
         if options.verbose >= 1
             fprintf('Using k-means for undersampling....');
-        end        
+        end 
+        
         [idx, W_centroids_output] = kmeans(W_realizations', n_kmeans,...
             'MaxIter',1000);        
         W_centroids = W_centroids_output';
-        % Count the number of disturbance realizations in each of the partition
         voronoi_count = zeros(n_kmeans,1);
         for idx_indx = 1:n_kmeans
-            voronoi_count(idx_indx) = nnz(idx==idx_indx);
+            relv_idx = (idx==idx_indx);
+            % Count the particles associated with the partition
+            voronoi_count(idx_indx) = nnz(relv_idx);
         end
         
-        % Step 3: Solve the undersampled MILP that computes buffers online
+        
+        % Step 4a: Solve the undersampled MILP that computes buffers online
         if options.verbose >= 1
             fprintf('Done\n');
-            fprintf('Setting up CVX problem....');
+            fprintf('Setting up CVX problem....\n');
+            fprintf(['Fraction of buffer constraints enforced (out of 1):',...
+                '0.000\n']);
         end
+        % Normalize the hyperplanes so that Ax <= b + M is good. Here, b<=1e-3
+        % or 1
+        [concat_safety_tube_A, concat_safety_tube_b] =...
+            normalizeForParticleControl(concat_safety_tube_A,...
+                concat_safety_tube_b);
+        [concat_input_space_A, concat_input_space_b] =...
+            normalizeForParticleControl(concat_input_space_A,...
+                concat_input_space_b);
+        cvx_clear
         cvx_begin
             if options.verbose >= 2
                 cvx_quiet false
@@ -175,78 +215,102 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain] = SReachPointVoA(..
                 cvx_quiet true
             end
             cvx_solver Gurobi
-            variable M(sys.input_dim * time_horizon, sys.dist_dim*time_horizon);
+            variable M(sys.input_dim * time_horizon, sys.dist_dim *time_horizon)
             variable D(sys.input_dim * time_horizon,1);
             variable X_realization(sys.state_dim * time_horizon, n_kmeans);
             variable U_realization(sys.input_dim * time_horizon, n_kmeans);
-            variable zx(1,n_kmeans) binary;
-            variable zu(1,n_kmeans) binary;
-            variable zxu(1,n_kmeans) binary;
-            variable buffers_x(n_lin_state, n_kmeans);
-            variable buffers_u(n_lin_input, n_kmeans);
-            maximize ((zxu*voronoi_count)/n_particles)
+            variable bin_x(1,n_kmeans) binary;
+            variable bin_u(1,n_kmeans) binary;
+            variable bin_xu(1,n_kmeans) binary;
+            maximize ((bin_xu * voronoi_count)/n_particles)
             subject to
-                X_realization == repmat(Z * initial_state + H * D, ...
-                    1, n_kmeans) + (H * M + G) * W_centroids;
+                % Causality constraints on M_matrix
+                for time_indx = 1:time_horizon
+                    M((time_indx-1)*sys.input_dim + 1:...
+                        time_indx*sys.input_dim, ...
+                        (time_indx-1)*sys.dist_dim+1:end) == 0; 
+                end
+                X_realization == repmat(Z * initial_state, 1, n_kmeans) + ...
+                    H * U_realization + G * W_centroids;
                 U_realization == M * W_centroids + repmat(D, 1, n_kmeans);
-                % Chance constraints for the state: Definition
-                concat_safety_tube_A * X_realization + buffers_x <= repmat( ...
-                    concat_safety_tube_b, 1, n_kmeans) + ...
-                    options.bigM * repmat(1-zx, n_lin_state, 1);
-                % Chance constraints for the input: Definition
-                concat_input_space_A * U_realization + buffers_u <= repmat( ...
-                    concat_input_space_b, 1, n_kmeans) + ...
-                    options.bigM * repmat(1-zu, n_lin_input, 1);
                 % Chance constraints for the input: Constraint imposition
-                (zu*voronoi_count)/n_particles >= 1 - options.max_input_viol_prob;
-                % zxu = zx && zu
+                (bin_u * voronoi_count)/n_particles >=...
+                    1 - options.max_input_viol_prob;
+                % bin_xu = bin_x AND bin_u
                 % http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.42.7380&rep=rep1&type=pdf
-                zxu <= zx;
-                zxu <= zu;
-                zx + zu <= 1 + zxu;
+                bin_xu <= bin_x;
+                bin_xu <= bin_u;
+                bin_x + bin_u <= 1 + bin_xu;
                 for idx_indx = 1:n_kmeans
-                    % buffers_x: Definition
-                    buffers_x(:, idx_indx) >= max(concat_safety_tube_A *...
-                        (H * M + G) * (W_realizations(:, idx==idx_indx) -...
-                            W_centroids(:, idx_indx)), [], 2);
-                    % buffers_u: Definition                
-                    buffers_u(:, idx_indx) >= max(concat_input_space_A *...
-                        M * (W_realizations(:, idx==idx_indx) - ...
-                            W_centroids(:, idx_indx)), [], 2);
+                    if options.verbose >= 1
+                        fprintf('\b\b\b\b\b\b%1.3f\n', idx_indx/n_kmeans);
+                    end
+                    W_disp = W_realizations(:, idx==idx_indx) -...
+                        W_centroids(:,idx_indx);
+                    n_particles_partition = size(W_disp,2);
+                    % Chance constraints for the state: Definition
+                    repmat(concat_safety_tube_A *X_realization(:, idx_indx) -...
+                            (concat_safety_tube_b +...
+                                options.bigM * (1 - bin_x(idx_indx))),...
+                        1, n_particles_partition) +...
+                        concat_safety_tube_A * (H * M + G) * W_disp <= 0;
+                    % Chance constraints for the input: Definition
+                    repmat(concat_input_space_A *U_realization(:, idx_indx) -...
+                            (concat_input_space_b +...
+                                options.bigM * (1 - bin_u(idx_indx))),...
+                        1, n_particles_partition) +...
+                        concat_input_space_A * M * W_disp <= 0;
                 end
             if options.verbose >= 1
-                fprintf('Done\nParsing and solving the MILP....');
+                disp('Setup of CVX problem complete');
+                fprintf('Parsing and solving the MILP....');
             end
         cvx_end       
         if options.verbose >= 1
             fprintf('Done\n');
         end
         %% Overwrite the solutions
-        if strcmpi(cvx_status, 'Solved')
-            approx_voronoi_stoch_reach = cvx_optval;
-            opt_input_vec = D; 
-            opt_input_gain = M;
-            % Step 4b: Improve upon the estimate by a refined counting
-            % Solve the mixed-integer linear program
-            opt_U_realizations = M * W_realizations + repmat(D, 1, n_particles);
-            opt_X_realizations = repmat(Z*initial_state,1,n_particles) + ...
-                H * opt_U_realizations + G * W_realizations;
-            % All by default does columnwise (A particle succeeds only if
-            % it clears all hyperplanes --- has a column of ones)
-            zx_orig = all(concat_safety_tube_A * opt_X_realizations <=...
-                concat_safety_tube_b);
-            zu_orig = all(concat_input_space_A * opt_U_realizations <=...
-                concat_input_space_b);
-            approx_stoch_reach = sum(zx_orig.*zu_orig)/n_particles;            
-            if options.verbose >= 1
-                fprintf(...
-                    ['Undersampled probability (with %d particles): %1.3f\n',...
-                    'Underapproximation to the original MILP (with %d ',...
-                    'particles): %1.3f\n'],...
-                    n_kmeans, approx_voronoi_stoch_reach,...
-                    n_particles, approx_stoch_reach);
-            end
+        switch cvx_status
+            case {'Solved','Inaccurate/Solved'}
+                approx_voronoi_stoch_reach = cvx_optval;
+                opt_input_vec = D; 
+                opt_input_gain = M;
+                % Step 4b: Improve upon the estimate by a refined counting
+                % Solve the mixed-integer linear program
+                opt_U_realizations = M * W_realizations +...
+                    repmat(D, 1, n_particles);
+                opt_X_realizations = repmat(Z*initial_state,1,n_particles) + ...
+                    H * opt_U_realizations + G * W_realizations;
+                
+                % All by default does columnwise (A particle succeeds only if
+                % it clears all hyperplanes --- has a column of ones) | Due to 
+                % numerical issues, we add a small positive perturbation to the
+                % b term, whenever determining containment --- Ax<=b
+                bin_x_orig = all(concat_safety_tube_A * opt_X_realizations <=...
+                    concat_safety_tube_b + my_eps);
+                bin_u_orig = all(concat_input_space_A * opt_U_realizations <=...
+                    concat_input_space_b + my_eps);
+                approx_stoch_reach_noc =sum(bin_x_orig.*bin_u_orig)/n_particles;            
+                
+                % Step 5: Account for the saturation via HSCC 2019 (submitted)
+                % result TODO
+                approx_stoch_reach = (approx_stoch_reach_noc -...
+                   options.max_input_viol_prob)/(1-options.max_input_viol_prob);
+                if options.verbose >= 1
+                    fprintf(...
+                        ['Undersampled probability (with %d particles): ',...
+                        '%1.4f\nUnderapproximation to the original MILP (',...
+                        'with %d particles): %1.4f\nAfter correction for',...
+                        ' saturation: %1.4f\n'],...
+                        n_kmeans, approx_voronoi_stoch_reach,...
+                        n_particles, approx_stoch_reach_noc,approx_stoch_reach);
+                end
+            otherwise
         end
+        kmeans_info.n_particles = n_particles;
+        kmeans_info.n_kmeans = n_kmeans;
+        kmeans_info.W_centroids = W_centroids;
+        kmeans_info.W_realizations = W_realizations;
     end
 end
 
@@ -260,11 +324,3 @@ function otherInputHandling(options, sys)
             'linear system']));
     end
 end
-
-% Implemented the buffer assignment via max(M*(W^{(j)}_i - W^{(j)}_c) <=
-% buffer which in turn is equivalent to a collection of linear constraints.
-% Currently implements the chance constraint approach
-% Cost is zx & zu since we need P{X safe | acceptable input}.
-% 1. Fix comments
-% 2. Fix input handling
-% 3. Fix docstrings here and in SReachPointOptions

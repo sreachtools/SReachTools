@@ -381,8 +381,9 @@ if voronoi_open_run
     opts = SReachPointOptions('term','voronoi-open','verbose',1,...
         'max_overapprox_err', 1e-3, 'undersampling_fraction', 0.001);
     tic
-    [prob_voronoi_open, opt_input_vec_voronoi_open] = SReachPoint('term', ...
-        'voronoi-open', sys, init_state_voronoi_open, target_tube, opts);
+    [prob_voronoi_open, opt_input_vec_voronoi_open, kmeans_info_open] =...
+        SReachPoint('term', 'voronoi-open', sys, init_state_voronoi_open,...
+            target_tube, opts);
     elapsed_time_voronoi = toc;
     if prob_voronoi_open > 0
         % Optimal mean trajectory construction
@@ -431,6 +432,7 @@ if chance_affine_run
         opt_input_gain_chance_affine] = SReachPoint('term', 'chance-affine',...
             sys, init_state_chance_affine, target_tube, opts);
     elapsed_time_chance_affine = toc;
+    fprintf('Computation time: %1.3f\n', elapsed_time_chance_affine);
     if prob_chance_affine > 0
         % mean_X = Z * x_0 + H * (M \mu_W + d) + G * \mu_W
         opt_mean_X_chance_affine = Z * init_state_chance_affine +...
@@ -451,7 +453,6 @@ if chance_affine_run
     end
     fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
         prob_chance_affine, simulated_prob_chance_affine);
-    fprintf('Computation time: %1.3f\n', elapsed_time_chance_affine);
 end
 
 %% |SReachPoint|: |voronoi-affine|
@@ -464,12 +465,14 @@ if voronoi_affine_run
     fprintf('\n\nSReachPoint with voronoi-affine\n');
     opts = SReachPointOptions('term', 'voronoi-affine',...
         'max_input_viol_prob', 1e-3, 'verbose', 2, 'bigM', 1e2,...
-        'min_samples', 170, 'max_overapprox_err', 1e-2);
+        'min_samples', 50, 'max_overapprox_err', 1e-2, 'failure_risk', 1e-14);
     tic
     [prob_voronoi_affine, opt_input_vec_voronoi_affine,...
-        opt_input_gain_voronoi_affine] = SReachPoint('term', 'voronoi-affine',...
-            sys, init_state_voronoi_affine, target_tube, opts);
+        opt_input_gain_voronoi_affine, kmeans_info_affine] = SReachPoint( ...
+            'term', 'voronoi-affine', sys, init_state_voronoi_affine,...
+                target_tube, opts);
     elapsed_time_voronoi_affine = toc;
+    fprintf('Computation time: %1.3f\n', elapsed_time_voronoi_affine);
     if prob_voronoi_affine > 0
         % mean_X = Z * x_0 + H * (M \mu_W + d) + G * \mu_W
         opt_mean_X_voronoi_affine = Z * init_state_voronoi_affine +...
@@ -490,7 +493,6 @@ if voronoi_affine_run
     end
     fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
         prob_voronoi_affine, simulated_prob_voronoi_affine);
-    fprintf('Computation time: %1.3f\n', elapsed_time_voronoi_affine);
 end
 
 %% Summary of results
