@@ -311,7 +311,6 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
                     contains_check(bisection_ub) == 0
                 % all ok
             else
-                keyboard
                 throw(SrtDevError('Bisection algorithm failed!'));
             end
         end
@@ -370,7 +369,6 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
             throw(MException('SReachTools:badConv','no-contain'));
         end
     catch ME
-        keyboard
         if strcmpi(ME.identifier, 'SReachTools:badConv')
             throw(SrtDevError(['Conversion from vertex to facet worked, ',...
             'but the halfspace returned was garbage!\nThis is most likely ',...
