@@ -69,7 +69,7 @@ sys = getCwhLtiSystem(4, Polyhedron('lb', -umax*ones(2,1), ...
 
 %% Methods to run   
 ft_run = 0;
-cc_open_run = 1;
+cc_open_run = 0;
 lagunder_run = 1;
 %% Target tube construction --- reach-avoid specification
 time_horizon = 5;          % Stay within a line of sight cone for 4 time steps and 
@@ -205,12 +205,13 @@ if ~isEmptySet(polytope_cc_open)
     [legend_cell] = plotMonteCarlo(' (chance-open)', mcarlo_result, ...
         concat_state_realization, n_mcarlo_sims, n_sims_to_plot, ...
         sys.state_dim, init_state, legend_cell);
+    fprintf('Expected probability: %1.3f, Simulated probability: %1.3f\n',...
+        opt_reach_avoid, sum(mcarlo_result)/n_mcarlo_sims);
+
 end
 legend(legend_cell, 'Location','South');
 xlabel('$x$','interpreter','latex');
 ylabel('$y$','interpreter','latex');
-fprintf('Expected probability: %1.3f, Simulated probability: %1.3f\n',...
-    opt_reach_avoid, sum(mcarlo_result)/n_mcarlo_sims);
 
 %% Reporting solution times
 if any(isnan([elapsed_time_ft, elapsed_time_cc_open, elapsed_time_lagunder]))

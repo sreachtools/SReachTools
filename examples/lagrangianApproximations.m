@@ -101,17 +101,17 @@ axis equal;
 %%
 % bounded set for Lagrangian
 fprintf('Setting up options for lag-under with bound_set_method: ellipsoid\n');
-tic;
+timerVal=tic;
 n_dim = sys.state_dim + sys.input_dim;
 luOpts = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
     'ellipsoid', 'system', sys, 'n_underapprox_vertices', 2^n_dim*10+2*n_dim,...
     'verbose',1);
-options_time = toc;
+options_time = toc(timerVal);
 fprintf('This took %2.3f seconds.\n', options_time);
-tic;
+timerVal=tic;
 [luSet, extra_info] = SReachSet('term', 'lag-under', sys, 0.8, target_tube,...
     luOpts);
-lagrange_under_time = toc();
+lagrange_under_time = toc(timerVal);
 
 %%
 tic;

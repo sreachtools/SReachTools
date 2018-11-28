@@ -150,9 +150,11 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,...
                     %     inverted_state_matrix * new_target, Ainv_minus_bu);
                     % Use ray-shooting algorithm to underapproximate one-step
                     % backward reach set
+                    timerVal = tic;
                     effective_target = safeOneStepBackReachSet(sys,...
                         new_target, target_tube(itt), options.equi_dir_vecs,...
                         options.verbose);
+                    fprintf('oneStepBack: %1.3f\n',toc(timerVal));
                     if options.verbose
                         title(sprintf(['Safe one-step back reach set at',... 
                             ' t=%d'],current_time));
@@ -207,6 +209,7 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
     % Get size of equi_dir_vecs
     [dir_vecs_dim, n_vertices] = size(equi_dir_vecs);
 
+    timerVal = tic;
     % Compute the polytope in X*U such that there is some x and u in the current
     % time which on application of dynamics will lie in target_set. We also add
     % the constraints defined by the current safe set as well as the input
@@ -224,6 +227,7 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
     x_u_reaches_target_set = Polyhedron('A', x_u_reaches_target_set_A,...
         'b', x_u_reaches_target_set_b, 'Ae', x_u_reaches_target_set_Ae,...
         'be', x_u_reaches_target_set_be);
+    fprintf('Setup of x_u_reaches_target_set_be: %1.3f\n',toc(timerVal));
     
     %% Find a point within the 'deep enough'
     if ~isEmptySet(x_u_reaches_target_set)
@@ -260,6 +264,7 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
         % Given the polytope {a_i^T x <= b_i, i = 1,...,m }, compute an
         % ellipsoid { Bu + d | || u || <= 1 } that sits within the polytope as
         % well as has the maximum volume
+        timerVal = tic;
         cvx_begin quiet
             cvx_solver SDPT3;
             variable mve_shape(dir_vecs_dim,dir_vecs_dim) symmetric
@@ -275,6 +280,7 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
         center_point = mve_center;
         equi_dir_vecs_transf = mve_shape * equi_dir_vecs;
         equi_dir_vecs = (equi_dir_vecs_transf)./norms(equi_dir_vecs_transf,2);
+        fprintf('MVE computation: %1.3f\n',toc(timerVal));
     else
         throw(SrtInvalidArgsError(['Recursion led to an empty target set!',...
             ' Increasing the number of underapproximative vertices might ',...
@@ -285,46 +291,101 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
     % Use the ray-shooting algorithm to compute a vertex-based
     % underapproximation of x_u_reaches_target_set
     boundary_point_mat = zeros(dir_vecs_dim, n_vertices);
+    timerVal = tic;
     for dir_indx = 1:n_vertices
-        cvx_begin quiet
-            variable theta;
-            variable boundary_point(dir_vecs_dim,1);            
-            maximize theta;
-            subject to
-                theta >= 0;
-                boundary_point == center_point + ...
-                    theta * equi_dir_vecs(:, dir_indx);
-                x_u_reaches_target_set_A * boundary_point <=...
-                    x_u_reaches_target_set_b;
-                x_u_reaches_target_set_Ae * boundary_point ==...
-                    x_u_reaches_target_set_be;
-        cvx_end        
-        switch cvx_status
-            case 'Solved'
-                boundary_point_mat(:, dir_indx) = boundary_point;
-            case 'Inaccurate/Solved'
-                warning('SReachTools:runTime', ['CVX returned ',...
-                    'Inaccurate/Solved, while solving a subproblem for ',...
-                    'Lagrangian underapproximation. Continuing nevertheless!']);
-                boundary_point_mat(:, dir_indx) = boundary_point;
-            otherwise
-                throw(SrtDevError(sprintf(['Underapproximation failed! ',...
-                    'CVX_status: %s'], cvx_status)));
+        dir_vec = equi_dir_vecs(:, dir_indx);
+        if any(abs(x_u_reaches_target_set_Ae * (center_point + dir_vec) -...
+                x_u_reaches_target_set_be) > 1e-10)
+            % Skipping the direction vector since it does not satisfy the
+            % equality constraint
+            warning('SReachTools:runTime', ['Given vector did not satisfy ',...
+                    'the equality constraint imposed. Continuing nevertheless!']);
+        else
+            % Bracketting the bounds for the bisection
+            bisection_lb = 0;
+            bisection_ub = 1;
+            while all(x_u_reaches_target_set_A * (center_point +...
+                    bisection_ub * dir_vec) <= x_u_reaches_target_set_b)
+                bisection_lb = bisection_ub;
+                bisection_ub = 2 * bisection_ub;                
+            end
         end
+                
+        iter_count = 0;
+        while abs(bisection_lb-bisection_ub) > 1e-6
+            iter_count = iter_count + 1;
+            bisection_test = (bisection_lb + bisection_ub) / 2;
+            contains_check = all(x_u_reaches_target_set_A * (center_point +...
+                    bisection_test * dir_vec) <= x_u_reaches_target_set_b);
+%             fprintf('%2d. LB: %1.3e | UB: %1.3e | test: %1.3e | check: %d\n',...
+%                 iter_count, bisection_lb, bisection_ub, bisection_test,...
+%                 contains_check);
+            if contains_check
+                bisection_lb = bisection_test;
+            else
+                bisection_ub = bisection_test;
+            end
+        end
+        boundary_point_mat(:, dir_indx) = center_point + bisection_lb * dir_vec;
+%           cvx_begin quiet
+%             variable theta;
+%             variable boundary_point(dir_vecs_dim,1);            
+%             maximize theta;
+%             subject to
+%                 theta >= 0;
+%                 boundary_point == center_point + ...
+%                     theta * equi_dir_vecs(:, dir_indx);
+%                 x_u_reaches_target_set_A * boundary_point <=...
+%                     x_u_reaches_target_set_b;
+%                 x_u_reaches_target_set_Ae * boundary_point ==...
+%                     x_u_reaches_target_set_be;
+%         cvx_end        
+%         switch cvx_status
+%             case 'Solved'
+%                 boundary_point_mat(:, dir_indx) = boundary_point;
+%             case 'Inaccurate/Solved'
+%                 warning('SReachTools:runTime', ['CVX returned ',...
+%                     'Inaccurate/Solved, while solving a subproblem for ',...
+%                     'Lagrangian underapproximation. Continuing nevertheless!']);
+%                 boundary_point_mat(:, dir_indx) = boundary_point;
+%             otherwise
+%                 throw(SrtDevError(sprintf(['Underapproximation failed! ',...
+%                     'CVX_status: %s'], cvx_status)));
+%         end
     end
-    before_projection_vrep_underapprox = Polyhedron('V',boundary_point_mat');
-    % Compute projection onto the x space
-    one_step_back_reach_polytope_underapprox =...
-        before_projection_vrep_underapprox.projection(1:sys.state_dim,'vrep');    
+    fprintf('Getting the v-rep underapproximation: %1.3f\n',toc(timerVal));
+    % Compute projection onto the x space --- ignore the u dimensions and
+    % define the polytope using the resulting vertices (their convex hull)
+    one_step_back_reach_polytope_underapprox = ...
+        Polyhedron('V',boundary_point_mat(1:sys.state_dim,:)');
+    % Remove the redundant vertices
+    one_step_back_reach_polytope_underapprox.minVRep();
     % Compute the half-space representation using MPT3
-    one_step_back_reach_polytope_underapprox.minHRep();
+    timerVal = tic;
+    try
+        one_step_back_reach_polytope_underapprox.minHRep();
+    catch
+        warning('SReachTools:runTime', ['Conversion from vertex to facet',...
+            ' failed! We recommend using a fewer direction vectors.']);
+        keyboard;
+        one_step_back_reach_polytope_underapprox = ...
+            Polyhedron('V',boundary_point_mat(1:sys.state_dim,1:3:end)');
+        one_step_back_reach_polytope_underapprox.minVRep();
+        one_step_back_reach_polytope_underapprox.minHRep();    
+    end
+    fprintf('Getting the H-rep underapproximation: %1.3f\n',toc(timerVal));
     if verbose
         figure();
         if x_u_reaches_target_set.Dim <= 3
+            before_projection_vrep_underapprox = ...
+                Polyhedron('V',boundary_point_mat');            
             plot(x_u_reaches_target_set,'alpha',0.3);
-            hold on;plot(before_projection_vrep_underapprox);
+            hold on;
+            plot(before_projection_vrep_underapprox);
         else
-            plot(before_projection_vrep_underapprox.projection(1:3));
+            before_projection_vrep_underapprox_first_three_dim = ...
+                Polyhedron('V',boundary_point_mat(1:3,:)');            
+            plot(before_projection_vrep_underapprox_first_three_dim);
         end
     end    
 end
