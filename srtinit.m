@@ -42,8 +42,22 @@ function varargout = srtinit(varargin)
 % 
 % 
     
-    SRTINIT_PATH = fileparts(which('srtinit.m'));
-
+    % Check if SReachTools has already been initialized
+    current_path = pwd();
+    cd(userpath());
+    try
+        SRTINIT_PATH = fileparts(which('srtinit.m'));
+        srtinit_prev_init = 1;
+    catch
+        SRTINIT_PATH = [];
+        srtinit_prev_init = 0;
+    end
+    if isempty(SRTINIT_PATH)
+        srtinit_prev_init = 0;
+    end
+        
+    cd(current_path);
+    
     verbose   = false;
     deinit    = false;
     run_tests = false;
@@ -75,6 +89,20 @@ function varargout = srtinit(varargin)
             throwAsCaller(SrtInvalidArgsError(['Invalid input option, ', ...
                 'see help srtinit']));
         end
+    end
+
+    % SReachTools has not been initialized
+    if srtinit_prev_init &&...
+            ~strcmpi(SRTINIT_PATH, fileparts(which('srtinit.m')))
+        warning('SReachTools:setup', sprintf(['SReachTools ',...
+            'was initialized from a different toolbox folder.\n',...
+            'Initialized toolbox directory path : %s\n',...
+            'Current directory path             : %s\n',...
+            'srtinit will STOP HERE to avoid function overload.\nTo use ',...
+            'this directory instead, please do\n',...
+            '>> cd %s;\n>> srtinit -x;\n>> cd %s;\n>> srtinit'],...
+            SRTINIT_PATH, pwd(),SRTINIT_PATH, pwd()));
+        return
     end
     
     % get the parent dir of this function
