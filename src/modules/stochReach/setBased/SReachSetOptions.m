@@ -109,10 +109,12 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %            3. system - [Only for 'lag-under'] LtvSystem/LtiSystem object that
 %                   is being analyzed
 %            4. verbose
-%               - Verbosity of the implementation {0,1}
+%               - Verbosity of the implementation {0,1,2,3}
 %                  0 - No output 
 %                  1 - Provides feedback on the progress of the direction
 %                       vector computation
+%                  2 - Provides timing information about each step
+%                  3 - Provides plots of the intermediate recursions
 %
 % Outputs:
 % --------
@@ -160,7 +162,7 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
             'positive'}));
         % Verbosity
         inpar.addParameter('verbose',0, @(x) validateattributes(x, ...
-            {'numeric'}, {'scalar','>=',0,'<=',1}));
+            {'numeric'}, {'scalar','>=',0,'<=',3}));
         % System object for computation of equi-directional vector
         % generation
         inpar.addParameter('system', [],...
@@ -244,9 +246,16 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
                             '''lag-over''/''lag-under''.']));
                     end
                     % get underapproximated level set (robust effective target)
+                    if options.verbose >= 2
+                        timerVal = tic;
+                    end
                     options.equi_dir_vecs = spreadPointsOnUnitSphere(...,
                         options.system.state_dim + options.system.input_dim,...
                         options.n_underapprox_vertices, options.verbose);                
+                    if options.verbose >= 2
+                        fprintf('Time to spread the vectors: %1.3f s\n\n',...
+                            toc(timerVal));
+                    end                    
                 end        
         end        
     elseif strcmpi(method_str,'chance-open') || ...

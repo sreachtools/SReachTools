@@ -143,8 +143,8 @@ end
 if lagunder_run
     n_dim = sys.state_dim + sys.input_dim;
     lag_options = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
-         'ellipsoid', 'system', sys, 'verbose', 1,...
-         'n_underapprox_vertices', 2^n_dim * 10 + 2*n_dim);
+         'ellipsoid', 'system', sys, 'verbose', 2,...
+         'n_underapprox_vertices', 2^n_dim * 6 + 2*n_dim);
     
     timer_lagunder = tic;
     polytope_lagunder = SReachSet('term', 'lag-under', sys,  prob_thresh, ...
@@ -159,7 +159,7 @@ n_mcarlo_sims = 1e5;
 n_sims_to_plot = 5;
 
 %% Plotting and Monte-Carlo simulation-based validation
-figure(1);
+figure(101);
 clf
 box on;
 hold on;
