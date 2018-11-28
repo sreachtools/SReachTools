@@ -25,7 +25,8 @@ classdef SReachPointTests < matlab.unittest.TestCase
         function testPointVoronoiOpen(test_case)
             [sys, safety_tube, initial_state] = test_case.getDI();
             
-            options = SReachPointOptions('term','voronoi-open','verbose', 0);
+            options = SReachPointOptions('term','voronoi-open',...
+                'verbose', 0, 'undersampling_fraction', 1e-4);
             lb_stoch_prob = SReachPoint('term','voronoi-open', sys,...
                 initial_state, safety_tube, options);
         end 
