@@ -217,12 +217,11 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain, kmeans_info] =...
             cvx_solver Gurobi
             variable M(sys.input_dim * time_horizon, sys.dist_dim *time_horizon)
             variable D(sys.input_dim * time_horizon,1);
-            variable X_realization(sys.state_dim * time_horizon, n_kmeans);
-            variable U_realization(sys.input_dim * time_horizon, n_kmeans);
+            variable X_centroids(sys.state_dim * time_horizon, n_kmeans);
+            variable U_centroids(sys.input_dim * time_horizon, n_kmeans);
             variable bin_x(1,n_kmeans) binary;
             variable bin_u(1,n_kmeans) binary;
-            variable bin_xu(1,n_kmeans) binary;
-            maximize ((bin_xu * voronoi_count)/n_particles)
+            maximize ((bin_x * voronoi_count)/n_particles)
             subject to
                 % Causality constraints on M_matrix
                 for time_indx = 1:time_horizon
@@ -230,32 +229,37 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain, kmeans_info] =...
                         time_indx*sys.input_dim, ...
                         (time_indx-1)*sys.dist_dim+1:end) == 0; 
                 end
-                X_realization == repmat(Z * initial_state, 1, n_kmeans) + ...
-                    H * U_realization + G * W_centroids;
-                U_realization == M * W_centroids + repmat(D, 1, n_kmeans);
+                % X = Z x_0 + H D + (H M + G) W
+                X_centroids == repmat(Z*initial_state + H*D, 1, n_kmeans)+ ...
+                    (H * M + G) * W_centroids;
+                % U = D + M W
+                U_centroids == M * W_centroids + repmat(D, 1, n_kmeans);
                 % Chance constraints for the input: Constraint imposition
                 (bin_u * voronoi_count)/n_particles >=...
                     1 - options.max_input_viol_prob;
-                % bin_xu = bin_x AND bin_u
-                % http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.42.7380&rep=rep1&type=pdf
-                bin_xu <= bin_x;
-                bin_xu <= bin_u;
-                bin_x + bin_u <= 1 + bin_xu;
+                % Chance constraints: Definition
                 for idx_indx = 1:n_kmeans
                     if options.verbose >= 1
                         fprintf('\b\b\b\b\b\b%1.3f\n', idx_indx/n_kmeans);
                     end
+                    % Displacement of actual realizations from the centroids
                     W_disp = W_realizations(:, idx==idx_indx) -...
                         W_centroids(:,idx_indx);
                     n_particles_partition = size(W_disp,2);
-                    % Chance constraints for the state: Definition
-                    repmat(concat_safety_tube_A *X_realization(:, idx_indx) -...
+                    % Chance constraints for the state centroids: Definition
+                    % concat_safety_tube_A * X_centroid +
+                    %   concat_safety_tube_A * (HM + G) * W_disp <=
+                    %       concat_safety_tub_b + M ( 1-bin_x)
+                    repmat(concat_safety_tube_A * X_centroids(:, idx_indx) -...
                             (concat_safety_tube_b +...
                                 options.bigM * (1 - bin_x(idx_indx))),...
                         1, n_particles_partition) +...
                         concat_safety_tube_A * (H * M + G) * W_disp <= 0;
-                    % Chance constraints for the input: Definition
-                    repmat(concat_input_space_A *U_realization(:, idx_indx) -...
+                    % Chance constraints for the input centroids: Definition
+                    % concat_input_space_A * U_centroid +
+                    %   concat_input_space_A * M * W_disp <=
+                    %       concat_input_space_b + M ( 1-bin_u)
+                    repmat(concat_input_space_A * U_centroids(:, idx_indx) -...
                             (concat_input_space_b +...
                                 options.bigM * (1 - bin_u(idx_indx))),...
                         1, n_particles_partition) +...

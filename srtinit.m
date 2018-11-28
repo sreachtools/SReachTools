@@ -54,8 +54,7 @@ function varargout = srtinit(varargin)
     end
     if isempty(SRTINIT_PATH)
         srtinit_prev_init = 0;
-    end
-        
+    end        
     cd(current_path);
     
     verbose   = false;
