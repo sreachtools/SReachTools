@@ -608,7 +608,7 @@ grid on;
 xlabel('$x$','interpreter','latex');
 ylabel('$y$','interpreter','latex');
 set(gca,'FontSize',20);
-axis([initial_state(1)-0.25,-initial_state(1)+0.25,initial_state(2)-0.25,0.1]);
+axis([initial_state(1)-0.1,-initial_state(1)+0.1,initial_state(2)-0.1,0.1]);
 hf = gcf;
 hf.Units = 'inches';
 hf.Position = [0    0.4167   18.0000   10.0313];

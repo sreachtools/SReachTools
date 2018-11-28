@@ -273,7 +273,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
     % Check for must-have parameters
     switch lower(method_str)
         case {'chance-affine','voronoi-affine'}
-            if any(strcmp(inpar.UsingDefaults, 'max_input_viol_prob'))
+            if any(strcmpi(inpar.UsingDefaults, 'max_input_viol_prob'))
                  throwAsCaller(SrtInvalidArgsError(['Expected ', ...
                      'max_input_viol_prob, the maximum allowed likelihood ', ...
                      'of violating the input constraints.']));
