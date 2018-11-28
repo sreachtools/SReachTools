@@ -243,34 +243,11 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
     %% Find a point within the 'deep enough'
     if ~isEmptySet(x_u_reaches_target_set)
         % OPTION 1: Compute the chebyshev-center of x_u_reaches_target_set
-        % center_point = x_u_reaches_target_set.chebyCenter().x;
-
+        %   Abandoned because the point is not a center and no transformation
+        %   of the equi-spaced vectors is available
         % OPTION 2: Compute the analytic-center of x_u_reaches_target_set
-        % http://web.cvxr.com/cvx/examples/cvxbook/Ch08_geometric_probs/html/analytic_center.html
-        % See Boyd and Vanderberghe's convex optimization textbook, section 8.5.3
-        % cvx_begin quiet
-        %     cvx_solver SDPT3;     % Require SDPT3 for exponential cone solving
-        %     variable analytic_center(dir_vecs_dim,1);
-        %     
-        %     maximize sum(log(x_u_reaches_target_set_b -...
-        %         x_u_reaches_target_set_A * analytic_center))
-        %     subject to
-        %         x_u_reaches_target_set_Ae * analytic_center ==...
-        %             x_u_reaches_target_set_be;
-        % cvx_end
-        % switch cvx_status
-        %     case 'Solved'
-        %     case 'Inaccurate/Solved'
-        %         warning('SReachTools:runTime', ['CVX returned ',...
-        %             'Inaccurate/Solved, while solving a subproblem for ',...
-        %             'Lagrangian underapproximation (analytic center ',...
-        %             'computation). Continuing nevertheless!']);
-        %     otherwise
-        %         throw(SrtDevError(sprintf(['Analytic center computation',...
-        %             ' failed! CVX_status: %s'], cvx_status)));
-        % end
-        % center_point = analytic_center;
-
+        %   Abandoned because no transformation of the equi-spaced vectors is 
+        %   available
         % OPTION 3: Compute the maximum volume inscribed ellipsoid
         % Given the polytope {a_i^T x <= b_i, i = 1,...,m }, compute an
         % ellipsoid { Bu + d | || u || <= 1 } that sits within the polytope as
@@ -284,11 +261,9 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
             variable mve_center(dir_vecs_dim)
             maximize( det_rootn( mve_shape ) )
             subject to
-               for i = 1:size(x_u_reaches_target_set_A,1)
-                   norm(mve_shape*x_u_reaches_target_set_A(i,:)', 2 ) +...
-                        x_u_reaches_target_set_A(i,:) * mve_center <=...
-                            x_u_reaches_target_set_b(i);
-               end
+               norms(mve_shape*x_u_reaches_target_set_A', 2)' +...
+                    x_u_reaches_target_set_A * mve_center <=...
+                        x_u_reaches_target_set_b;
         cvx_end
         center_point = mve_center;
         equi_dir_vecs_transf = mve_shape * equi_dir_vecs;
@@ -357,33 +332,6 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
             end
         end
         boundary_point_mat(:, dir_indx) = boundary_point(bisection_lb);
-        
-        % OPTION 2: CVX 
-%           cvx_begin quiet
-%             variable theta;
-%             variable boundary_point(dir_vecs_dim,1);            
-%             maximize theta;
-%             subject to
-%                 theta >= 0;
-%                 boundary_point == center_point + theta * dir_vec;
-%                 x_u_reaches_target_set_A * boundary_point <=...
-%                     x_u_reaches_target_set_b;
-%                 x_u_reaches_target_set_Ae * boundary_point ==...
-%                     x_u_reaches_target_set_be;
-%         cvx_end        
-%         switch cvx_status
-%             case 'Solved'
-%                 boundary_point_mat(:, dir_indx) = boundary_point;
-%             case 'Inaccurate/Solved'
-%                 warning('SReachTools:runTime', ['CVX returned ',...
-%                     'Inaccurate/Solved, while solving a subproblem for ',...
-%                     'Lagrangian underapproximation. Continuing nevertheless!']);
-%                 boundary_point_mat(:, dir_indx) = boundary_point;
-%             otherwise
-%                 throw(SrtDevError(sprintf(['Underapproximation failed! ',...
-%                     'CVX_status: %s'], cvx_status)));
-%         end
-
     end
     if verbose >= 2
         fprintf('Time to get v-rep underapprox.: %1.3f s\n',toc(timerVal));
