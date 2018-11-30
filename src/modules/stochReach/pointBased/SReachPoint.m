@@ -263,6 +263,10 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
         exc = exc.addCause(err);
         throwAsCaller(exc);
     end
+
+    if ~isa(sys.dist,'RandomVector')
+        throwAsCaller(SrtInvalidArgsError('Expected a stochastic system'));
+    end
         
     time_horizon = length(safety_tube) - 1;
         

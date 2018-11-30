@@ -386,8 +386,10 @@ function otherInputHandling(method_str, sys, options)
     % Consider updating SReachSetCcO.m if any changes are made here
     
     % Ensure Gaussian-perturbed system
-    validateattributes(sys.dist, {'RandomVector'}, {'nonempty'});
-    validatestring(sys.dist.type, {'Gaussian'}, {'nonempty'});
+    validateattributes(sys.dist, {'RandomVector'}, {'nonempty'},...
+        'SReachSetGpO/otherInputHandling', 'sys.dist'});
+    validatestring(sys.dist.type, {'Gaussian'}, {'nonempty'},...;
+        'SReachSetGpO/otherInputHandling', 'sys.dist.type'});
     
     % Check if prob_str and method_str are consistent        
     if ~strcmpi(options.prob_str,'term')

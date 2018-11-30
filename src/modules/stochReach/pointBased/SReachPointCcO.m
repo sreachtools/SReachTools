@@ -97,6 +97,11 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
         exc = exc.addCause(err);
         throwAsCaller(exc);
     end
+
+    % Ensure that system is stochastic and has Gaussian disturbance 
+    if ~isa(sys.dist,'RandomVector')
+        throwAsCaller(SrtInvalidArgsError('Expected a stochastic system'));
+    end
     if ~strcmpi(sys.dist.type,'Gaussian')
         throw(SrtInvalidArgsError(['SReachPointCcO requires Gaussian-',...
             'perturbed LTV/LTI system']));

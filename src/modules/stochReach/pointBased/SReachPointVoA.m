@@ -108,6 +108,11 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain, kmeans_info] =...
         exc = exc.addCause(err);
         throwAsCaller(exc);
     end
+
+    % Ensure that system is stochastic
+    if ~isa(sys.dist,'RandomVector')
+        throwAsCaller(SrtInvalidArgsError('Expected a stochastic system'));
+    end
     
     % Target tubes has polyhedra T_0, T_1, ..., T_{time_horizon}
     time_horizon = length(safety_tube)-1;

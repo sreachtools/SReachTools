@@ -102,9 +102,9 @@ end
 
 function otherInputHandling(method_str, sys, options)
     
-    % Ensure Gaussian-perturbed system
-    validateattributes(sys.dist, {'RandomVector'}, {'nonempty'});
-    validatestring(sys.dist.type, {'Gaussian'}, {'nonempty'});
+    % Ensure stochastic system
+    validateattributes(sys.dist, {'RandomVector'}, {'nonempty'},...
+        'SReachSetLag/otherInputHandling', 'sys.dist'});
     
     % Check if prob_str and method_str are consistent        
     if ~strcmpi(options.prob_str,'term')
@@ -115,5 +115,9 @@ function otherInputHandling(method_str, sys, options)
         throwAsCaller(...
             SrtInvalidArgsError('Mismatch in method_str in the options'));
     end        
+
+    % Based on the RandomVector, decide allowable methods TODO
+    validatestring(sys.dist.type, {'Gaussian'}, {'nonempty'},...;
+        'SReachSetLag/otherInputHandling', 'sys.dist.type'});
 end
     
