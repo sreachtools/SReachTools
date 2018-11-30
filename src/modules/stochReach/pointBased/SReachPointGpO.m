@@ -76,6 +76,10 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state, ..
     optionsCc.desired_accuracy = options.desired_accuracy;
     [guess_lb_stoch_reach, guess_opt_input_vec, ~, extra_info] =...
         SReachPointCcO(sys, initial_state, safety_tube, optionsCc);
+    if ~strcmpi(sys.dist.type,'Gaussian')
+        throw(SrtInvalidArgsError(['SReachPointGpO requires Gaussian-',...
+            'perturbed LTV/LTI system']));
+    end
 
     % Unpack the other necessary data from SReachPointCcO
     concat_safety_tube_A = extra_info.concat_safety_tube_A;

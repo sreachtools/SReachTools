@@ -94,7 +94,7 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
             'result since Gurobi (a MILP solver) was not setup.']);
     else
         % Ensure options is good
-        otherInputHandling(options, sys);
+        otherInputHandling(options);
         
         % Get half space representation of the target tube and time horizon
         % skipping the first time step
@@ -119,13 +119,12 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
         n_lin_state = size(concat_safety_tube_A,1);
 
         if options.verbose >= 1
-            fprintf('Creating Gaussian random variable realizations....');
+            fprintf('Creating random variable realizations....');
         end    
         % Compute the stochasticity of the concatenated disturbance random vec
         W = concat(sys.dist, time_horizon);        
         % Create realizations of W arranged columnwise
-        W_realizations = mvnrnd(W.parameters.mean', W.parameters.covariance,...
-            options.n_particles)';
+        W_realizations = W.getRealizations(options.n_particles);
         if options.verbose >= 1
             fprintf('Done\n');
         end
@@ -175,13 +174,9 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
     end
 end
 
-function otherInputHandling(options, sys)
+function otherInputHandling(options)
     if ~(strcmpi(options.prob_str, 'term') &&...
             strcmpi(options.method_str, 'particle-open'))
         throwAsCaller(SrtInvalidArgsError('Invalid options provided'));
-    end
-    if ~strcmpi(sys.dist.type,'Gaussian')
-        throwAsCaller(SrtInvalidArgsError(['Expected a Gaussian-perturbed', ...
-            'linear system']));
     end
 end

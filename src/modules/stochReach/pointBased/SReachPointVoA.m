@@ -125,7 +125,7 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain, kmeans_info] =...
             'result since Gurobi (a MILP solver) was not setup.']);
     else
         % Ensure options is good
-        otherInputHandling(options, sys);
+        otherInputHandling(options);
         
         % Get half space representation of the target tube and time horizon
         % skipping the first time step
@@ -158,17 +158,16 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain, kmeans_info] =...
                  ' number of particles prescribed.']);
         end
 
-        % Step 2: Obtain the Gaussian random vector realizations
+        % Step 2: Obtain the random vector realizations
         if options.verbose >= 1
             fprintf(['Required number of particles: %1.4e | Samples ',...
                 'used: %3d\n'], n_particles, n_kmeans);
-            fprintf('Creating Gaussian random variable realizations....');
+            fprintf('Creating random variable realizations....');
         end        
         % Compute the stochasticity of the concatenated disturbance random vec
         W = concat(sys.dist, time_horizon);        
         % Create realizations of W arranged columnwise
-        W_realizations = mvnrnd(W.parameters.mean', W.parameters.covariance,...
-            n_particles)';
+        W_realizations = W.getRealizations(n_particles);
         if options.verbose >= 1
             fprintf('Done\n');
         end
@@ -314,13 +313,9 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain, kmeans_info] =...
     end
 end
 
-function otherInputHandling(options, sys)
+function otherInputHandling(options)
     if ~(strcmpi(options.prob_str, 'term') &&...
             strcmpi(options.method_str, 'voronoi-affine'))
         throwAsCaller(SrtInvalidArgsError('Invalid options provided'));
-    end
-    if ~strcmpi(sys.dist.type,'Gaussian')
-        throwAsCaller(SrtInvalidArgsError(['Expected a Gaussian-perturbed', ...
-            'linear system']));
     end
 end

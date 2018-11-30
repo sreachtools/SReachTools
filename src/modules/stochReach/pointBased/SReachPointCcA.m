@@ -102,6 +102,10 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
         exc = exc.addCause(err);
         throwAsCaller(exc);
     end
+    if ~strcmpi(sys.dist.type,'Gaussian')
+        throw(SrtInvalidArgsError(['SReachPointCcA requires Gaussian-',...
+            'perturbed LTV/LTI system']));
+    end
     
     % Ensure options is good
     otherInputHandling(options);
@@ -120,8 +124,7 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
         time_horizon);
     % GUARANTEES: Compute the input concat and disturb concat transformations
     [~, H, G] = getConcatMats(sys, time_horizon);
-    % GUARANTEES: Gaussian-perturbed LTI system (sys) and well-defined
-    % initial_state and time_horizon
+    % GUARANTEES: well-defined initial_state and time_horizon
     sysnoi = LtvSystem('StateMatrix',sys.state_mat,'DisturbanceMatrix', ...
         sys.dist_mat,'Disturbance',sys.dist);
     [mean_X_zi, ~] = SReachFwd('concat-stoch', sysnoi, initial_state, ...
