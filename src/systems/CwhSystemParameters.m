@@ -1,4 +1,33 @@
 classdef CwhSystemParameters
+% A MATLAB class to store/retrive the default parameters used in CWH dynamics
+% with modifications, if any
+% =============================================================================
+%
+% Notes:
+% ------
+% * This code and the parameters were obtained from Lesser's repeatability code
+%   for the 2013 CDC paper.
+% * The default parameters (with their Names to specify changes) are:
+%       sampling_period : sampling period        = 20 s
+%       orbital_radius  : orbital radius         = 850 + 6378.1 m
+%       grav_constant   : gravitational constant = 6.673e-11
+%       celes_mass      : celestial body mass    = 5.9472e24 kg
+%       chief_mass      : chief mass             = 300 kg
+% * Along with these parameters, the class provides these parameters that are
+%   computed using the above parameters
+%       grav_body       : gravitational body           = grav_constant *
+%                                                           celes_mass / 1e6
+%       orbit_ang_vel   : orbital angular velocity     = sqrt(grav_body /
+%                                                              orbital_radius^3)
+%       disc_orbit_dist : discretized orbital distance = orbit_ang_vel *
+%                                                           sampling_period rad
+%
+% =============================================================================
+%
+%   This function is part of the Stochastic Reachability Toolbox.
+%   License for the use of this function is given in
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+% 
 
     properties
         % sampling period in sec

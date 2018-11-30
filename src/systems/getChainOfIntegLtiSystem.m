@@ -39,7 +39,7 @@ function sys = getChainOfIntegLtiSystem(dim, T, inputSpace, varargin)
 % 
 % Outputs:
 % --------
-%   sys - LtiSystem object
+%   sys         - LtiSystem object describing the chain of integrators
 % 
 % =============================================================================
 %

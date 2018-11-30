@@ -1,34 +1,51 @@
-function [sys, heading_vec] = getDubinsCarLtv(type, ...
-    turning_rate_seq, ...
-    initial_heading, ...
-    sampling_time, ...
-    varargin)
-% Get an LTV system object for the Dubins car model with known turning rate
+function [sys, heading_vec] = getDubinsCarLtv(type, turning_rate_seq, ...
+    initial_heading, sampling_time, varargin)
+% Get a LtvSystem object for the Dubins car model with known turning rate
 % sequence
 % ============================================================================
 % 
-% 
 % Usage:
 % ------
-%   % 3-d chain of integrators with U = [-1,1] and no (empty) disturbance
-%   sys = getChainOfIntegLtiSystem(3, 0.2, ...
-%       Polyhedron('lb', -1, 'ub', 1), ...
-%       Polyhedron());
+% % Known turning rate sequence
+% time_horizon = 50;
+% omega = pi/time_horizon/sampling_time;
+% turning_rate = omega*ones(time_horizon,1);
+% init_heading = pi/10;                       % Initial heading 
+% sampling_time = 0.1;                        % Sampling time
+% % Input space definition
+% umax = 6;
+% input_space = Polyhedron('lb',0,'ub',umax);
+% % Disturbance matrix and random vector definition
+% dist_matrix = eye(2);
+% eta_dist = RandomVector('Gaussian',zeros(2,1), 0.001 * eye(2));
+% 
+% [sys, heading_vec] = getDubinsCarLtv('add-dist', turning_rate, ...
+%   init_heading, sampling_time, input_space, dist_matrix, eta_dist);
 %
 % ============================================================================
 % 
-% sys = getChainOfIntegLtiSystem(dim, T, input_space, disturb)
-% 
+% sys = getDubinsCarLtv(type, turning_rate_seq, initial_heading, sampling_time,
+%   varargin)
+%
 % Inputs:
 % -------
-%   dim         - Dimensions
-%   T           - Discretization time step
-%   input_space - Input space (Polyhedron)
-%   disturb     - Disturbance object (Polyhedron / RandomVector / empty)
+%   type        - 
+%   turning_rate_seq    - Known turning rate sequence (column vector of length
+%                         time_horizon) 
+%   initial_heading     - Initial heading angle
+%   sampling_time       - Sampling time for the system
+%   Required additional arguments for different types:
+%   type: 'add-dist' (Additive disturbance with velocity as input)
+%       velocity_input  - Bounds on the velocity (1-dimensional Polyhedron
+%                         object)
+%       dist_matrix     - Disturbance matrix for the additive disturbance 
+%       dist            - Disturbance
+%   type = 'vel-dist' (Velocity is the disturbance) 
+%       velocity_dist   - Velocity disturbance
 % 
 % Outputs:
 % --------
-%   sys - LtiSystem object
+%   sys                 - LtvSystem object describing the Dubin's car
 % 
 % =============================================================================
 %
@@ -38,31 +55,62 @@ function [sys, heading_vec] = getDubinsCarLtv(type, ...
 % 
 %
 
-    %TODO: Incorporate input handling
+    valid_types = {'add-dist','vel-dist'};
+    validatestring(type, valid_types, 'getDubinsCarLtv', 'type');
+    validateattributes(initial_heading, {'numeric'}, {'scalar'}, ...
+        'getDubinsCarLtv', 'initial_heading');
+    validateattributes(sampling_time, {'numeric'}, {'scalar','>',0}, ...
+        'getDubinsCarLtv', 'sampling_time');
+    validateattributes(turning_rate_seq, {'numeric'}, {'column'}, ...
+        'getDubinsCarLtv', 'turning_rate_seq');
 
     heading_vec = initial_heading + sampling_time * ...
         cumsum([0;turning_rate_seq]);
 
+    time_varying_matrix = @(t) sampling_time * [cos(heading_vec(t+1)); ...
+                                                sin(heading_vec(t+1))];
     switch(lower(type))
         case 'add-dist'
-            % TODO: Check if it is a proper Gaussian variable            
-            assert(isa(varargin{1}, 'Polyhedron') && varargin{1}.Dim == 1, ...
-               'SReachTools:invalidArgs', ...
-               'Input space is a polytope');           
-           
+            if length(varargin) < 3
+                throwAsCaller(SrtInvalidArgs('Too few arguments'));
+            end
+            velocity_input = varargin{1};
+            validateattributes(velocity_input, {'Polyhedron'},...
+                {'nonempty'}, 'getDubinsCarLtv',...
+                'velocity_input with add-dist option');
+            if velocity_input.Dim ~= 1
+                throwAsCaller(SrtInvalidArgs(['Velocity bounds ',...
+                    '(velocity_input) must be one-dimensional polyhedron']));
+            end
+            dist_matrix = varargin{2};
+            validateattributes(dist_matrix, {'numeric'},...
+                {'nonempty'}, 'getDubinsCarLtv',...
+                'dist_matrix with add-dist option');
+            dist = varargin{3};
+            validateattributes(dist, {'RandomVector', 'Polyhedron'},...
+                {'nonempty'}, 'getDubinsCarLtv',...
+                'dist with add-dist option');
+            if length(varargin) > 3
+                throwAsCaller(SrtInvalidArgs('Too many input arguments'));
+            end
             sys = LtvSystem('StateMatrix', @(t) eye(2), ...
-                'InputMatrix', @(t) sampling_time * [cos(heading_vec(t+1)); ...
-                                                     sin(heading_vec(t+1))], ...
-                'InputSpace', varargin{1}, ...
-                'DisturbanceMatrix', varargin{2}, ...
-                'Disturbance', varargin{3});            
+                'InputMatrix', time_varying_matrix, ...
+                'InputSpace', velocity_input, 'Disturbance', dist, ...
+                'DisturbanceMatrix', dist_matrix);
         case 'vel-dist'
-            % TODO: Throw error if more than 1 varargin
-            % TODO: Check if it is a proper Gaussian variable
+            if isempty(varargin)
+                throwAsCaller(SrtInvalidArgs('Too few arguments'));
+            end
+            velocity_dist = varargin{1};
+            validateattributes(velocity_dist, {'RandomVector', 'Polyhedron'},...
+                {'nonempty'}, 'getDubinsCarLtv',...
+                'velocity_dist with vel-dist option');
+            if length(varargin) > 1
+                throwAsCaller(SrtInvalidArgs('Too many input arguments'));
+            end
             sys = LtvSystem('StateMatrix', @(t) eye(2), ...
-                'DisturbanceMatrix', @(t) sampling_time * [cos(heading_vec(t+1)); ...
-                                                           sin(heading_vec(t+1))], ...
-                'Disturbance', varargin{1});
+                'DisturbanceMatrix', time_varying_matrix, ...
+                'Disturbance', velocity_dist);
         otherwise
     end    
 end
