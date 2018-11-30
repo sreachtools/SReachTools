@@ -60,8 +60,12 @@ classdef RandomVector
 %   exponential               - Get an exponential random vector for a
 %                               specified lambda vector
 %
-%   Apart from these methods, you can do disp(rv) as well as F*rv, where F
-%   is an appropriately dimensioned matrix.
+%   Apart from these methods, for a RandomVector object rv, you can do:
+%   disp(rv)                  - Display information about rv
+%   F*rv, rv*F                - Both work as F x rv (NO TRANSPOSE enforced)
+%                               where F is an appropriately dimensioned matrix
+%   rv + v                    - Add v, a deterministic vector of appropriate
+%                               dimension, to rv
 % 
 % Notes:
 % ------
@@ -328,7 +332,8 @@ classdef RandomVector
                     F = Ftemp;
                 otherwise
                     throwAsCaller(SrtInvalidArgsError(sprintf(['Operation *',...
-                       ' not defined between *%s, %s'], class(obj), class(F))));
+                       ' not defined between %s and %s'], class(obj),...
+                       class(F))));
             end
             if isequal(size(F),[1 1])
                 % F is a scalar
@@ -347,6 +352,66 @@ classdef RandomVector
                 otherwise
                     throwAsCaller(SrtInvalidArgsError(sprintf(...
                         ['Multiplication is not supported for %s-type ',...
+                         'random vectors'], obj.type)));
+            end
+        end
+        
+        function newobj = plus(obj, v)
+        % Override of MATLAB plus command
+        % ====================================================================
+        % 
+        % Inputs:
+        % -------
+        %   obj - RandomVector object
+        %   v   - Deterministic vector to be added to the random vector
+        %
+        % Outputs:
+        % --------
+        %   newobj - RandomVector object (obj + v)
+        %
+        % Notes:
+        % ------
+        % * While this function updates the generator for a UserDefined random
+        %   vector, it is HIGHLY RECOMMENDED to redefine the random vector
+        %   separately with an updated generator function to avoid nested
+        %   generator functions
+        % ====================================================================
+        % 
+        % This function is part of the Stochastic Reachability Toolbox.
+        % License for the use of this function is given in
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        % 
+        %
+            
+            switch [class(obj), class(v)]
+                case ['RandomVector','double']
+                    % All ok
+                case ['double', 'RandomVector']
+                    % Need to switch the arguments
+                    vtemp = obj;
+                    obj = v;
+                    v = vtemp;
+                otherwise
+                    throwAsCaller(SrtInvalidArgsError(sprintf(['Operation +',...
+                       ' not defined between %s and %s'], class(obj),...
+                       class(v))));
+            end
+            validateattributes(v, {'numeric'}, ...
+                {'column', 'size', [obj.dim 1]}, 'RandomVector/plus', 'v');
+            if isequal(size(v),[1 1])
+                % F is a scalar
+                v = v * ones(obj.dim,1);
+            end
+            switch obj.type
+                case 'Gaussian'
+                    newobj=RandomVector('Gaussian', v + obj.parameters.mean,...
+                        obj.parameters.covariance);
+                case 'UserDefined'
+                    newobj=RandomVector('UserDefined',...
+                        @(N) repmat(v, 1, N) + obj.generator(N));
+                otherwise
+                    throwAsCaller(SrtInvalidArgsError(sprintf(...
+                        ['Plus is not supported for %s-type ',...
                          'random vectors'], obj.type)));
             end
         end

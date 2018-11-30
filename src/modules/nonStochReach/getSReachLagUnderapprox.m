@@ -75,6 +75,16 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,...
         exc = addCause(exc, cause_exc);
         throwAsCaller(exc);
     end
+ 
+    % Check if prob_str and method_str of options are consistent        
+    if ~strcmpi(options.prob_str, 'term')
+        throwAsCaller(...
+            SrtInvalidArgsError('Mismatch in prob_str in the options'));
+    end
+    if ~strcmpi(options.method_str, 'lag-under')
+        throwAsCaller(...
+            SrtInvalidArgsError('Mismatch in method_str in the options'));
+    end            
     
     if sys.state_dim > 4
         warning('SReachTools:runtime',['Because both vertex and facet ', ...

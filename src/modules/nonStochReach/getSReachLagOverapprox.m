@@ -1,4 +1,5 @@
-function varargout = getSReachLagOverapprox(sys, target_tube, disturbance_set)
+function varargout = getSReachLagOverapprox(sys, target_tube,...
+    disturbance_set, options)
 % Get the overapproximation of the stoch reach set
 % ============================================================================
 %
@@ -21,6 +22,7 @@ function varargout = getSReachLagOverapprox(sys, target_tube, disturbance_set)
 %   sys             - LtiSystem object
 %   target_tube     - Tube object 
 %   disturbance_set - Polyhedron object (bounded disturbance set)
+%   options         - Struct of reach set options, see SReachSetOptions
 %
 % Outputs:
 % --------
@@ -59,11 +61,24 @@ function varargout = getSReachLagOverapprox(sys, target_tube, disturbance_set)
         throwAsCaller(exc);
     end
     
+    % Check if prob_str and method_str of options are consistent        
+    if ~strcmpi(options.prob_str, 'term')
+        throwAsCaller(...
+            SrtInvalidArgsError('Mismatch in prob_str in the options'));
+    end
+    if ~strcmpi(options.method_str, 'lag-over')
+        throwAsCaller(...
+            SrtInvalidArgsError('Mismatch in method_str in the options'));
+    end            
+    
     tube_length = length(target_tube);
     if sys.islti()
         inverted_state_matrix = inv(sys.state_mat);
         minus_bu = (-sys.input_mat) * sys.input_space;
         minus_scaled_dist_set = (-sys.dist_mat) * disturbance_set;
+    end
+    if options.verbose >= 1
+        fprintf('Time_horizon: %d\n', tube_length-1);
     end
 
     effective_target_tube = repmat(Polyhedron(), tube_length, 1);
@@ -71,6 +86,9 @@ function varargout = getSReachLagOverapprox(sys, target_tube, disturbance_set)
     if tube_length > 1
         for itt = tube_length-1:-1:1
             current_time = itt - 1;
+            if options.verbose >= 1
+                fprintf('Computation for time step: %d\n', current_time);
+            end
             if sys.isltv()
                 % Overwrite the following parameters with their
                 % time-varying counterparts
