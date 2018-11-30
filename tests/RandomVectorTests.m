@@ -22,11 +22,11 @@ classdef RandomVectorTests < matlab.unittest.TestCase
                 'SReachTools:invalidArgs');
             % Gaussian: Input parsing
             test_case.verifyError(@(x) RandomVector('Gaussian',zeros(2,1),...
-                ones(2,3)), 'MATLAB:expectedSquare');
+                ones(2,3)), 'MATLAB:RandomVector:RandomVector:expectedSquare');
             test_case.verifyError(@(x) RandomVector('Gaussian',zeros(2,1),...
-                ones(4,3)), 'MATLAB:expectedSquare');
+                ones(4,3)), 'MATLAB:RandomVector:RandomVector:expectedSquare');
             test_case.verifyError(@(x) RandomVector('Gaussian',zeros(1,3),...
-                eye(3)), 'MATLAB:expectedColumn');
+                eye(3)), 'MATLAB:RandomVector:RandomVector:expectedColumn');
             % Gaussian: Dimension mismatch
             test_case.verifyError(@(x) RandomVector('Gaussian',zeros(2,1),...
                 eye(3)), 'SReachTools:invalidArgs');
@@ -40,9 +40,11 @@ classdef RandomVectorTests < matlab.unittest.TestCase
                 [-1,0;0,0]), 'SReachTools:invalidArgs');
             % Invalid string
             test_case.verifyError(@(x) RandomVector('Exp',zeros(2,1)),...
-                'SReachTools:internal');
+                'MATLAB:unrecognizedStringChoice');
             % Simply define a well-defined Gaussian
             RandomVector('Gaussian',zeros(2,1), eye(2));
+            % Simply define a well-defined UserDefined RV: exp
+            RandomVector('UserDefined',@(N) exprnd(1,N));
         end
         function multiplicationTest(test_case)        
             % Define a well-defined Gaussian
@@ -66,6 +68,76 @@ classdef RandomVectorTests < matlab.unittest.TestCase
                 'all been zero']);
             test_case.verifyTrue(isequal(size(R.parameters.mean), [20,1]),...
                 'Dimension mismatch');
+        end
+        
+        function meanCovStaticMethodAndgetRealizationTest(test_case)        
+            % Test mean and covariance of static methods
+            
+            mean_vec = [3;4];
+            temp_mat = rand(2,2);
+            cov_matrix = [temp_mat + temp_mat']/2 + diag([1,100]);
+            r = RandomVector.gaussian(mean_vec, cov_matrix);
+            mean_gauss_mcarlo = mean(r.getRealizations(1e6), 2);
+            test_case.verifyTrue(isequal(mean_vec, r.mean()), ['Mismatch in',...
+                ' mean']);
+            % Relying on Monte-Carlo: Sample mean can be off
+            test_case.verifyTrue(max(abs(mean_vec - mean_gauss_mcarlo))<1e-2,...
+                'Mismatch in mean');
+            test_case.verifyTrue(isequal(cov_matrix, r.cov()), ['Mismatch ',...
+                'in cov']);
+            
+            % Define an exponential distribution
+            mean_vec = [3;1]; % 1/lambda
+            expected_mean = mean_vec;
+            expected_cov = diag(expected_mean.^2); % 1/lambda^2
+            r = RandomVector.exponential(mean_vec);
+            % Test r.mean() and r.cov() which in turn tests
+            % getRealization() 
+            % Relying on Monte-Carlo: Sample mean/cov can be off
+            test_case.verifyTrue(max(max(abs(expected_mean -r.mean())))<1e-2,...
+                'Mismatch in mean');
+            test_case.verifyTrue(max(max(abs(expected_cov - r.cov())))<1e-1,...
+                'Mismatch in cov');
+        end
+        
+        function getProbPolyhedronTest(test_case)        
+            % Test probability of set
+            
+            % Gaussian case            
+            mean_vec = [3;4];
+            temp_mat = rand(2,2);
+            cov_matrix = [temp_mat + temp_mat']/2 + diag([1,1]);
+            r = RandomVector.gaussian(mean_vec, cov_matrix);
+            
+            lb_polytope = mean_vec - 2*ones(2,1);
+            ub_polytope = mean_vec + 2*ones(2,1);
+            
+            test_polyhedron = Polyhedron('lb', lb_polytope,...
+                'ub', ub_polytope);
+            prob = r.getProbPolyhedron(test_polyhedron);
+            prob_mvncdf = mvncdf(lb_polytope', ub_polytope', mean_vec',...
+                cov_matrix);
+            test_case.verifyTrue(abs(prob - prob_mvncdf) < 1e-3,...
+                sprintf('Mismatch in probability MC: %1.3e expected: %1.3f',...
+                prob, prob_mvncdf));            
+            
+            
+            % Exponential case
+            % Define an exponential distribution
+            mean_vec = [1;3]; % 1/lambda
+            max_corner = 2;
+            r = RandomVector.exponential(mean_vec);
+            lb_polytope = zeros(2,1);
+            ub_polytope = max_corner *ones(2,1);
+            
+            test_polyhedron = Polyhedron('lb', lb_polytope,...
+                'ub', ub_polytope);
+            prob = r.getProbPolyhedron(test_polyhedron);            
+            prob_expcdf = prod(expcdf(max_corner, mean_vec));            
+            % Comparing monte carlo to true value
+            test_case.verifyTrue(abs(prob - prob_expcdf) < 1e-3,...
+                sprintf('Mismatch in probability MC: %1.3e expected: %1.3f',...
+                prob, prob_expcdf));
         end
     end
 end

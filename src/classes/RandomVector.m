@@ -28,7 +28,8 @@ classdef RandomVector
 % RandomVector Properties:
 % ------------------------
 %   type       - Random vector type (string)
-%   parameters - System parameters (struct)
+%   parameters - Random vector parameters (struct)
+%                   Stores mean and covariance for Gaussian random vector
 %   dim        - Random vector dimension (scalar)
 %   generator  - Random variable realization generator function (function 
 %                handle); should take single numeric input and return an 
@@ -38,7 +39,6 @@ classdef RandomVector
 % RandomVector Methods:
 % ---------------------
 %   RandomVector/RandomVector - Class constructor
-%   getRealizations           - Generate realizations of the random vector
 %   mean                      - Get the mean of random vector. If the mean is
 %                               not defined then an empirical mean is computed
 %                               using n_particle realizations [Default: 1e4]
@@ -49,10 +49,19 @@ classdef RandomVector
 %   pdf                       - Get the probability density function as an
 %                               anonymous function, defined only for Gaussian RV
 %   concat                    - Get the concatenated RV for a given time horizon
-%   exponential               - Get an exponential random vector for a
-%                               specified lambda vector
+%   getRealizations           - Generate realizations of the random vector
+%   getProbPolyhedron         - Get the probability of the random vector
+%                               lying in a user-specified polyhedron (MPT
+%                               object)
+%   Static
+%   ------
 %   gaussian                  - Get a Gaussian random vector for a
 %                               specified mean vector and covariance matrix
+%   exponential               - Get an exponential random vector for a
+%                               specified lambda vector
+%
+%   Apart from these methods, you can do disp(rv) as well as F*rv, where F
+%   is an appropriately dimensioned matrix.
 % 
 % Notes:
 % ------
@@ -151,15 +160,17 @@ classdef RandomVector
 
                     if length(varargin) ~= 2 
                         throwAsCaller(SrtInvalidArgsError(['Gaussian random',...
-                            ' vector needs the mean vector ', ...
+                            ' vector definition needs the mean vector ', ...
                             'and covariance matrix']));
                     end
 
                     % Check if mean is a nonempty numeric column vector
-                    validateattributes(varargin{1}, {'numeric'}, {'column'});
+                    validateattributes(varargin{1}, {'numeric'},...
+                        {'column'},'RandomVector/RandomVector','mean', 1);
                     % Check if covariance matrix is a nonempty square matrix
                     validateattributes(varargin{2}, {'numeric'}, ...
-                                       {'nonempty','square'});
+                       {'nonempty','square'},'RandomVector/RandomVector',...
+                       'covariance', 1);
                                    
                     % set parameters
                     obj.parameters.mean = varargin{1};
@@ -365,7 +376,7 @@ classdef RandomVector
             
             % Check if mean is a nonempty numeric column vector
             validateattributes(time_horizon, {'numeric'},...
-                {'integer','>',0});
+                {'integer','>',0}, 'RandomVector/concat', 'time_horizon', 1);
             
             switch obj.type
                 case 'Gaussian'
@@ -385,19 +396,20 @@ classdef RandomVector
             end
         end
 
-        function xs = getRealizations(obj, N)
-        % Generate N realizations of the random vector
+        function xs = getRealizations(obj, n_realizations)
+        % Generate n_realizations realizations of the random vector
         % ====================================================================
         % 
         % Inputs:
         % -------
-        %   obj  - RandomVector object (typically disturbance w_k)
-        %   N    - Number of realizations desired
+        %   obj            - RandomVector object (typically disturbance w_k)
+        %   n_realizations - Number of realizations desired
         %
         % Outputs:
         % --------
-        %   xs   - Realizations matrix of dimension obj.dim x N. Each
-        %          realization is given as a column vector.
+        %   xs             - Realizations matrix of dimension 
+        %                    obj.dim x n_realizations. Each realization is given 
+        %                    as a column vector.
         %
         % Notes:
         % ------
@@ -414,10 +426,12 @@ classdef RandomVector
         %
 
             % Check if N is a nonempty numeric scalar
-            validateattributes(N, {'numeric'}, {'integer','>',0});
+            validateattributes(n_realizations, {'numeric'},...
+                {'integer','>',0}, 'RandomVector/getRealizations',...            
+                'n_realizations');
             
             % Use the generator property to generate the realizations
-            xs = obj.generator(N);
+            xs = obj.generator(n_realizations);
         end
 
         function pdf = pdf(obj)
@@ -434,6 +448,7 @@ classdef RandomVector
         %
         % Notes:
         % ------
+        % * This code is not tested
         % * Only Random Vectors of type 'Gaussian' currently have a pdf.
         % * Other random vector types will throw an error
         % * The anonymous function used for the definition of obj.pdf transposes 
@@ -468,8 +483,8 @@ classdef RandomVector
         % Inputs:
         % -------
         %   obj         - RandomVector object
-        %   n_particles - Number of particles to use in sample covariance
-        %                 estimation [Default: 1e4]
+        %   n_particles - [Optional] Number of particles to use in sample 
+        %                 mean estimation [Default: 1e6]
         %
         %
         % Outputs:
@@ -493,12 +508,12 @@ classdef RandomVector
             if ~isempty(varargin) 
                 n_particles = varargin{1};
                 validateattributes(n_particles, {'numeric'},...
-                    {'integer','>',0});
+                    {'integer','>',0}, 'RandomVector/mean', 'n_particles');
                 if length(varargin) > 1
                     throwAsCaller(SrtInvalidArgsError('Too many inputs'));
                 end
             else
-                n_particles = 1e4;
+                n_particles = 1e6;
             end
 
             switch obj.type
@@ -520,12 +535,12 @@ classdef RandomVector
         % Inputs:
         % -------
         %   obj         - RandomVector object
-        %   n_particles - Number of particles to use in sample covariance
-        %                 estimation [Default: 1e4]
+        %   n_particles - [Optional] Number of particles to use in sample 
+        %                 covariance estimation [Default: 1e6]
         %
         % Outputs:
         % --------
-        %   covar - Covariance of random vector
+        %   covar       - Covariance of random vector
         %
         % Notes:
         % ------
@@ -545,12 +560,12 @@ classdef RandomVector
             if ~isempty(varargin) 
                 n_particles = varargin{1};
                 validateattributes(n_particles, {'numeric'},...
-                    {'integer','>',0});
+                    {'integer','>',0}, 'RandomVector/cov', 'n_particles');
                 if length(varargin) > 1
                     throwAsCaller(SrtInvalidArgsError('Too many inputs'));
                 end
             else
-                n_particles = 1e4;
+                n_particles = 1e6;
             end
 
             switch obj.type
@@ -564,10 +579,103 @@ classdef RandomVector
                          '%s-type random vectors'], obj.type)));
             end
         end
+        
+        function prob = getProbPolyhedron(obj, test_polyhedron, varargin)
+        % Compute the probability of a random vector lying in the given
+        % polyhedron
+        % ====================================================================
+        % 
+        % Inputs:
+        % -------
+        %   obj             - RandomVector object
+        %   test_polyhedron - Polyhedron object (polytope whose probability of
+        %                     occurrence is of interest)
+        %   n_particles     - [Optional] Number of particles to use in integration
+        %                     for UserDefined random vector [Default: 1e6]
+        %
+        % Outputs:
+        % --------
+        %   covar           - Probability of the random vector lying in the
+        %                     given polytope
+        %
+        % Notes:
+        % ------
+        % * For Random Vectors of type 'Gaussian', we use Genz's algorithm.
+        %   We enforce an accuracy of 1e-3 via iteratedQscvmnv or a maximum of
+        %   10 iterations.
+        % * For Random Vectors of type 'UserDefined', we use a Monte-Carlo
+        %   simulation using n_particles
+        % 
+        % ====================================================================
+        % 
+        % This function is part of the Stochastic Reachability Toolbox.
+        % License for the use of this function is given in
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        % 
+        %
+
+            if ~isempty(varargin) 
+                n_particles = varargin{1};
+                validateattributes(n_particles, {'numeric'},...
+                    {'integer','>',0});
+                if length(varargin) > 1
+                    throwAsCaller(SrtInvalidArgsError('Too many inputs'));
+                end
+            else
+                n_particles = 1e6;
+            end
+
+            % Check if we got a MPT's Polyhedron object of correct dimensions
+            validateattributes(test_polyhedron, {'Polyhedron'}, {'nonempty'},...
+                'RandomVector/getProbPolyhedron','test_polyhedron');
+            if test_polyhedron.Dim ~= obj.dim
+                throwAsCaller(SrtInvalidArgsError(['Mismatch in polytope ',...
+                    'dimensions and random vector dimensions']));
+            end
+
+            switch obj.type
+                case 'Gaussian'
+                    % Use Genz's algorithm's error estimate to enforce this
+                    % accuracy via iteratedQscmvnv
+                    desired_accuracy = 1e-3;
+                    
+                    % Construct the half-space representation for qscmvnv
+                    qscmvnv_lb = repmat(-Inf, [size(test_polyhedron.A, 1), 1]);
+                    qscmvnv_coeff_matrix = test_polyhedron.A;
+                    % We have the polytope given by Ax <= b, but qscmvnv expects 
+                    % a zero mean Gaussian. Hence, define x -> x + mean
+                    qscmvnv_ub = test_polyhedron.b-test_polyhedron.A*obj.mean();
+
+                    % Call Genz's algorithm in an iterative approach to compute
+                    % the probability. Uses the desired_accuracy and the
+                    % error_estimate from qscmvnv to navigate the number of
+                    % particles used in qscmvnv
+                    try
+                        prob = iteratedQscmvnv(obj.cov(), ...
+                                               qscmvnv_lb, ...
+                                               qscmvnv_coeff_matrix, ...
+                                               qscmvnv_ub, ...
+                                               desired_accuracy, ...
+                                               10);
+                    catch
+                        %TODO-Test: Not sure when qscmvnv will bug out!
+                        throw(SrtDevError(['Error in qscmvnv (Quadrature ', ...
+                            'of multivariate Gaussian)']));
+                    end
+                case 'UserDefined'
+                    mcarlo_sims = obj.getRealizations(n_particles);
+                    count_contains = test_polyhedron.contains(mcarlo_sims);
+                    prob = sum(count_contains)/n_particles;
+                otherwise 
+                    throwAsCaller(SrtInvalidArgsError(sprintf(...
+                        ['Probability computation not available for ',...
+                         '%s-type random vectors'], obj.type)));
+            end
+        end
     end
 
     methods (Static)
-        function rv = exponential(lambda)
+        function rv = exponential(mu)
         % Convenience method for creating exponential random vectors
         % ====================================================================
         % 
@@ -578,8 +686,7 @@ classdef RandomVector
         % 
         % Inputs:
         % -------
-        %   lambda - Exponential rate vector (Mean is given by 1/lambda)
-        %            Must be a column vector
+        %   mu  - Exponential mean | Must be a column vector
         %
         % Outputs:
         % --------
@@ -593,21 +700,21 @@ classdef RandomVector
         % 
         %
 
-            validateattributes(lambda, {'numeric'},...
-                    {'column','nonempty'});
-            dim = length(lambda);
+            validateattributes(mu, {'numeric'},...
+                    {'column','nonempty'}, 'RandomVector/exponential', 'mu');
+            dim = length(mu);
             
             rv = RandomVector('UserDefined', @(N) exprnd( ...
-                repmat(lambda, 1, N), dim, N));
+                repmat(mu, 1, N), dim, N));
         end
 
-        function rv = gaussian(m, covar)
+        function rv = gaussian(mu, covar)
         % Convenience method for creating Gaussian random vectors
         % ====================================================================
         % 
         % Inputs:
         % -------
-        %   m      - Gaussian mean vector (column vector)
+        %   mu     - Gaussian mean vector (column vector)
         %   covar  - Gaussian covariance matrix (square matrix)
         %
         % Outputs:
@@ -622,7 +729,12 @@ classdef RandomVector
         % 
         %
 
-            rv = RandomVector('Gaussian', m, covar);
+            validateattributes(mu, {'numeric'},...
+                    {'column','nonempty'}, 'RandomVector/gaussian', 'mu', 1);
+            validateattributes(covar, {'numeric'},...
+                    {'square','nonempty'}, 'RandomVector/gaussian', 'covar', 2);
+               
+            rv = RandomVector('Gaussian', mu, covar);
         end
     end
 end
