@@ -5,7 +5,7 @@ title: SReachFwd.m
 
 ```
   Perform forward stochastic reachability analysis of a Gaussian-perturbed
-  linear system
+  linear system with a Gaussian or a deterministic initial state
   ============================================================================
  
   Perform forward stochastic reachability analysis of a Gaussian-perturbed

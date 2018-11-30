@@ -29,6 +29,16 @@ this toolbox on [October, 2018](./jekyll/update/2018/10/22/release-of-v1.html).
 - Where do I ask questions or give feedback? 
     - Use our [Google groups](https://groups.google.com/d/forum/sreachtools) or
       the [Github issues](https://github.com/unm-hscl/SReachTools/issues) page.
+- What kind of systems can SReachTools handle? 
+    - We can perform verification (construction of safe initial states) and
+      controller synthesis (safety-preserving controllers) on  stochastic linear
+      (time-varying/time-invariant) systems. 
+    - For arbitrary random vectors (specified via a random vector generator), we
+      can utilize particle control (or its extensions) and Lagrangian methods.
+    - With an additional Gaussianity assumption, we can exploit
+      chance-constraints or Fourier transforms for tractable controller
+      synthesis, with ray-shooting algorithms/Lagrangian methods for
+      verification.
 
 The authors of this toolbox are [Abraham P.
 Vinod](http://www.unm.edu/~abyvinod/) and [Joseph D.
@@ -48,8 +58,8 @@ repository](https://github.com/unm-hscl/SReachTools/raw/master/SReachTools.pdf).
 ## What does SReachTools do?
 
 SReachTools focuses on the problem of stochastic reachability of a target
-tube[^1] --- Construct **controllers** and characterize the **set of initial
-states** such that 
+tube[^TAC2018_verification] --- Construct **controllers** and characterize the
+**set of initial states** such that 
 1. the controller satisfies the specified control bounds,
 1. the stochastic system stays within a time-varying target tube with a
    probability above a given threshold. 
@@ -78,13 +88,14 @@ Our approaches rely on **convex optimization**, **stochastic programming**,
 *grid-free*, and anytime algorithms for stochastic reachability analysis of
 linear systems.  Specifically, SReachTools tackles the **stochastic reachability
 of a target tube problem**
-[^TAC2018_verification]<sup>,</sup>[^HSCC2018_cvxcmpt] for Gaussian-perturbed
-linear (time-varying or time-invariant) systems.  SReachTools can construct
-polytopic (over- and under-) approximations and (open-loop and affine)
-controller synthesis for this problem.  Our solution techniques include:
+[^TAC2018_verification]<sup>,</sup>[^HSCC2018_cvxcmpt] for stochastic linear
+(time-varying or time-invariant) systems.  SReachTools can construct polytopic
+(over- and under-) approximations and (open-loop and affine) controller
+synthesis for this problem.  Our solution techniques include:
 1. chance-constrained approaches[^CDC2013_Lesser]<sup>,</sup>[^HSCC2019_chance],
 1. Fourier transforms[^CSSL2017_genzps], 
-1. particle filter control [^CDC2013_Lesser]<sup>,</sup>[^ACC2019_Voronoi], 
+1. particle control (and Voronoi partition-based undersampling)
+   [^CDC2013_Lesser]<sup>,</sup>[^ACC2019_Voronoi], 
 1. Lagrangian (set-operations)[^CDC2017_Lagrangian], and
 1. dynamic programming[^Automatica_Abate]<sup>,</sup>[^Automatica_Summers]. 
 <div class="desc-figure">
@@ -93,7 +104,8 @@ controller synthesis for this problem.  Our solution techniques include:
 </div>
 The above figure shows how `SReachSet` scales in the stochastic reach set
 computation for a chain of integrator dynamics, in comparison with the dynamic
-programming approach.
+programming approach. Among these techniques, Lagrangian and particle control
+(along with Voronoi-based extensions) can handle arbitrary disturbances.
 
 SReachTools also provides APIs to analyze the forward stochastic reachability
 problem[^HSCC2017_Fwd] using Genz's algorithm [^GenzAlgorithm]. 
@@ -108,6 +120,7 @@ table[^table_ack] summarizes the features of SReachTools.
 |               |  `genzps-open`  |                                  Approximate up to \\( \\epsilon\_\\mathrm{genz}\\), a user-specified quadrature error tolerance [^CSSL2017_genzps]                                 | Open-loop                                  |
 |               | `particle-open` |                        Approximate with quality proportional  to the number of particles used [^CDC2013_Lesser]                     | Open-loop                                  |
 |               |  `voronoi-open` |                          Probabilistically enforced upper  bound on overapproximation error  [^ACC2019_Voronoi]                          | Open-loop                                  |
+|               |  `voronoi-affine` |                          Probabilistically enforced upper  bound on overapproximation error  [^ACC2019_Voronoi]                          | Affine disturbance-feedback                                   |
 |               | `chance-affine` |                                            Guaranteed underapproximation  [^HSCC2019_chance]                                            | Affine   disturbance-feedback              |
 |  `SReachSet`  |                 |  **Polytopic approximation of the stochastic  reach sets for the stochastic reachabilty  of a target tube problem**[^TAC2018_verification]<sup>,</sup>[^HSCC2018_cvxcmpt] | **Synthesize open-loop controllers in some cases** |
 |               |  `chance-open`  |                                            Guaranteed underapproximation  [^TAC2018_verification]                                           | Optimal  open-loop controllers at vertices |
@@ -175,7 +188,7 @@ This will disable some of the features of SReachTools or hamper performance.
 [^HSCC2019_chance]: A. Vinod and M. Oishi, "[Affine controller synthesis for stochastic reachability via difference of convex programming](https://hscl.unm.edu/affinecontrollersynthesis/)", in Proceedings of Hybrid Systems: Computation and Control, 2019 (submitted).
 [^CSSL2017_genzps]: A. Vinod and M. Oishi, "[Scalable Underapproximation for Stochastic Reach-Avoid Problem for High-Dimensional LTI Systems using Fourier Transforms](https://ieeexplore.ieee.org/document/7950904/)", in IEEE Control Systems Letters (CSS-L), pp. 316--321, 2017. 
 [^CDC2013_Lesser]: K. Lesser, M. Oishi, and R. S. Erwin, "[Stochastic reachability for control of spacecraft relative motion](https://doi.org/10.1109/CDC.2013.6760626)," in Proceedings of the IEEE Conference on Decision and Control, pp. 4705-4712, 2013.
-[^ACC2019_Voronoi]: H. Sartipizadeh, A. Vinod,  B. Acikmese, and M. Oishi, "Voronoi Partition-based Scenario Reduction for Fast Sampling-based Stochastic Reachability Computation of LTI Systems", In Proceedings of American Control Conference, 2019 (submitted).
+[^ACC2019_Voronoi]: H. Sartipizadeh, A. Vinod,  B. Acikmese, and M. Oishi, "[Voronoi Partition-based Scenario Reduction for Fast Sampling-based Stochastic Reachability Computation of LTI Systems](https://arxiv.org/abs/1811.03643)", In Proceedings of American Control Conference, 2019 (submitted).
 [^CDC2017_Lagrangian]: J. Gleason, A. Vinod, and M. Oishi, "[Underapproximation of Reach-Avoid Sets for Discrete-Time Stochastic Systems via Lagrangian Methods](https://doi.org/10.1109/CDC.2017.8264291)," in Proceedings of the IEEE Conference on Decision and Control, pp. 4283-4290, 2017.
 [^Automatica_Summers]: S. Summers and J. Lygeros, "[Verification of discrete time stochastic hybrid systems: A stochastic reach-avoid decision problem](https://doi.org/10.1016/j.automatica.2010.08.006)," Automatica, 2010.  
 [^Automatica_Abate]: A. Abate, M. Prandini, J. Lygeros, and S. Sastry, "[Probabilistic reachability and safety for controlled discrete time stochastic hybrid systems](https://doi.org/10.1016/j.automatica.2008.03.027)," Automatica, 2008.

@@ -44,7 +44,7 @@ title: getChainOfIntegLtiSystem.m
   
   Outputs:
   --------
-    sys - LtiSystem object
+    sys         - LtiSystem object describing the chain of integrators
   
   =============================================================================
  

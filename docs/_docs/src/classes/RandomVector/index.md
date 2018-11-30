@@ -12,12 +12,19 @@ title: RandomVector.m
             <li class="doc-list"><a href="#RandomVector-prop-type">type</a></li>
             <li class="doc-list"><a href="#RandomVector-prop-parameters">parameters</a></li>
             <li class="doc-list"><a href="#RandomVector-prop-dim">dim</a></li>
-            <li class="doc-list"><a href="#RandomVector-prop-pdf">pdf</a></li>
+            <li class="doc-list"><a href="#RandomVector-prop-generator">generator</a></li>
         </ul>
         <li>Methods</li>
         <ul class="doc-list">
+            <li class="doc-list"><a href="#RandomVector-method-getProbPolyhedron">getProbPolyhedron</a></li>
+            <li class="doc-list"><a href="#RandomVector-method-cov">cov</a></li>
+            <li class="doc-list"><a href="#RandomVector-method-mean">mean</a></li>
+            <li class="doc-list"><a href="#RandomVector-method-pdf">pdf</a></li>
+            <li class="doc-list"><a href="#RandomVector-method-getRealizations">getRealizations</a></li>
             <li class="doc-list"><a href="#RandomVector-method-concat">concat</a></li>
             <li class="doc-list"><a href="#RandomVector-method-mtimes">mtimes</a></li>
+            <li class="doc-list"><a href="#RandomVector-method-gaussian">gaussian</a></li>
+            <li class="doc-list"><a href="#RandomVector-method-exponential">exponential</a></li>
         </ul>
     </ul>
 </ul>
@@ -28,49 +35,70 @@ title: RandomVector.m
   Create a random vector object
   ==========================================================================
  
-  Defines a random vector with a standard probability density function (pdf)
+  Defines a random vector. We currently support:
+  1. Gaussian    : Characterized by its mean vector and covariance matrix
+  2. UserDefined : Characterized by a random number generator
  
-  We support the following pdfs:
-      1. Gaussian
  
   Usage:
   ------
  
   % Define a Gaussian random variable of mean 0 and standard deviation 2:
-  GaussianRV = RandomVector('Gaussian', ...
-                            0, ...
-                            2^2);
+  GaussianRV = RandomVector('Gaussian', 0, 2^2);
  
   % Define a Gaussian random vector of mean [0;2] and covariance matrix 
   % eye(2):
-  GaussianRV = RandomVector('Gaussian', ...
-                            [0;2], ...
-                            eye(2));
+  GaussianRV = RandomVector('Gaussian', [0;2], eye(2));
+  OR
+  % GaussianRV = RandomVector.gaussian([0;2], eye(2));
+ 
+  % Define a beta-distributed 3-dimensional random vector with parameters
+  % A=B=10
+  BetaRV = RandomVector('UserDefined', @(N) betarnd(10,10,[3 N]));
     
   ==========================================================================
  
   RandomVector Properties:
   ------------------------
     type       - Random vector type (string)
-    parameters - System parameters (struct)
+    parameters - Random vector parameters (struct)
+                    Stores mean and covariance for Gaussian random vector
     dim        - Random vector dimension (scalar)
-    pdf        - Probability density function (function handle)
+    generator  - Random variable realization generator function (function 
+                 handle); should take single numeric input and return an 
+                 n x p matrix---where n is the dimension of the random vector
+                 and p is the number of realizations (input value)
  
   RandomVector Methods:
   ---------------------
     RandomVector/RandomVector - Class constructor
+    mean                      - Get the mean of random vector. If the mean is
+                                not defined then an empirical mean is computed
+                                using n_particle realizations [Default: 1e4]
+    cov                       - Get the covariance of random vector. If the 
+                                mean is not defined, then an empirical mean is 
+                                computed using n_particle realizations. 
+                                [Default: 1e4]
+    pdf                       - Get the probability density function as an
+                                anonymous function, defined only for Gaussian RV
+    concat                    - Get the concatenated RV for a given time horizon
+    getRealizations           - Generate realizations of the random vector
+    getProbPolyhedron         - Get the probability of the random vector
+                                lying in a user-specified polyhedron (MPT
+                                object)
+    Static
+    ------
+    gaussian                  - Get a Gaussian random vector for a
+                                specified mean vector and covariance matrix
+    exponential               - Get an exponential random vector for a
+                                specified lambda vector
+ 
+    Apart from these methods, you can do disp(rv) as well as F*rv, where F
+    is an appropriately dimensioned matrix.
   
   Notes:
   ------
   * MATLAB DEPENDENCY: Uses MATLAB's Statistics and Machine Learning Toolbox.
-                       Needs mvnpdf
-  * Currently only supports Gaussian random vectors
-  * Requires the mean and the covariance matrices to be non-empty column
-    vector and a symmetric matrix respectively
-  * The anonymous function used for the definition of obj.pdf transposes the
-    accepted column vector for using mvnpdf.
-  * RandomVector.pdf takes in arguments of the form N_points x
-    random_vector_dim
   
   =========================================================================
   
@@ -91,49 +119,70 @@ title: RandomVector.m
   Create a random vector object
   ==========================================================================
  
-  Defines a random vector with a standard probability density function (pdf)
+  Defines a random vector. We currently support:
+  1. Gaussian    : Characterized by its mean vector and covariance matrix
+  2. UserDefined : Characterized by a random number generator
  
-  We support the following pdfs:
-      1. Gaussian
  
   Usage:
   ------
  
   % Define a Gaussian random variable of mean 0 and standard deviation 2:
-  GaussianRV = RandomVector('Gaussian', ...
-                            0, ...
-                            2^2);
+  GaussianRV = RandomVector('Gaussian', 0, 2^2);
  
   % Define a Gaussian random vector of mean [0;2] and covariance matrix 
   % eye(2):
-  GaussianRV = RandomVector('Gaussian', ...
-                            [0;2], ...
-                            eye(2));
+  GaussianRV = RandomVector('Gaussian', [0;2], eye(2));
+  OR
+  % GaussianRV = RandomVector.gaussian([0;2], eye(2));
+ 
+  % Define a beta-distributed 3-dimensional random vector with parameters
+  % A=B=10
+  BetaRV = RandomVector('UserDefined', @(N) betarnd(10,10,[3 N]));
     
   ==========================================================================
  
   RandomVector Properties:
   ------------------------
     type       - Random vector type (string)
-    parameters - System parameters (struct)
+    parameters - Random vector parameters (struct)
+                    Stores mean and covariance for Gaussian random vector
     dim        - Random vector dimension (scalar)
-    pdf        - Probability density function (function handle)
+    generator  - Random variable realization generator function (function 
+                 handle); should take single numeric input and return an 
+                 n x p matrix---where n is the dimension of the random vector
+                 and p is the number of realizations (input value)
  
   RandomVector Methods:
   ---------------------
     RandomVector/RandomVector - Class constructor
+    mean                      - Get the mean of random vector. If the mean is
+                                not defined then an empirical mean is computed
+                                using n_particle realizations [Default: 1e4]
+    cov                       - Get the covariance of random vector. If the 
+                                mean is not defined, then an empirical mean is 
+                                computed using n_particle realizations. 
+                                [Default: 1e4]
+    pdf                       - Get the probability density function as an
+                                anonymous function, defined only for Gaussian RV
+    concat                    - Get the concatenated RV for a given time horizon
+    getRealizations           - Generate realizations of the random vector
+    getProbPolyhedron         - Get the probability of the random vector
+                                lying in a user-specified polyhedron (MPT
+                                object)
+    Static
+    ------
+    gaussian                  - Get a Gaussian random vector for a
+                                specified mean vector and covariance matrix
+    exponential               - Get an exponential random vector for a
+                                specified lambda vector
+ 
+    Apart from these methods, you can do disp(rv) as well as F*rv, where F
+    is an appropriately dimensioned matrix.
   
   Notes:
   ------
   * MATLAB DEPENDENCY: Uses MATLAB's Statistics and Machine Learning Toolbox.
-                       Needs mvnpdf
-  * Currently only supports Gaussian random vectors
-  * Requires the mean and the covariance matrices to be non-empty column
-    vector and a symmetric matrix respectively
-  * The anonymous function used for the definition of obj.pdf transposes the
-    accepted column vector for using mvnpdf.
-  * RandomVector.pdf takes in arguments of the form N_points x
-    random_vector_dim
   
   =========================================================================
   
@@ -187,14 +236,180 @@ title: RandomVector.m
   
 ```
 
-### Property: pdf
-{:#RandomVector-prop-pdf}
+### Property: generator
+{:#RandomVector-prop-generator}
 ```
-  RandomVector/pdf
+  RandomVector/generator
   ==================================================================
   
-  Probability density function of random vector
+  Function to generate instances of the random variable
   
+```
+
+### Method: getProbPolyhedron
+{:#RandomVector-method-getProbPolyhedron}
+```
+  Compute the probability of a random vector lying in the given
+  polyhedron
+  ====================================================================
+  
+  Inputs:
+  -------
+    obj             - RandomVector object
+    test_polyhedron - Polyhedron object (polytope whose probability of
+                      occurrence is of interest)
+    n_particles     - [Optional] Number of particles to use in integration
+                      for UserDefined random vector [Default: 1e6]
+ 
+  Outputs:
+  --------
+    covar           - Probability of the random vector lying in the
+                      given polytope
+ 
+  Notes:
+  ------
+  * For Random Vectors of type 'Gaussian', we use Genz's algorithm.
+    We enforce an accuracy of 1e-3 via iteratedQscvmnv or a maximum of
+    10 iterations.
+  * For Random Vectors of type 'UserDefined', we use a Monte-Carlo
+    simulation using n_particles
+  
+  ====================================================================
+  
+  This function is part of the Stochastic Reachability Toolbox.
+  License for the use of this function is given in
+       https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+  
+ 
+```
+
+### Method: cov
+{:#RandomVector-method-cov}
+```
+  Convenience method for accessing the covariance of a random vector
+  ====================================================================
+  
+  Inputs:
+  -------
+    obj         - RandomVector object
+    n_particles - [Optional] Number of particles to use in sample 
+                  covariance estimation [Default: 1e6]
+ 
+  Outputs:
+  --------
+    covar       - Covariance of random vector
+ 
+  Notes:
+  ------
+  * For Random Vectors of type 'Gaussian', we return the exact
+    covariance matrix
+  * For Random Vectors of type 'UserDefined', we return MATLAB's
+    estimated covariance matrix obtained from n_particles samples
+  
+  ====================================================================
+  
+  This function is part of the Stochastic Reachability Toolbox.
+  License for the use of this function is given in
+       https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+  
+ 
+```
+
+### Method: mean
+{:#RandomVector-method-mean}
+```
+  Convenience method for accessing the (sample) mean of a random vector
+  ====================================================================
+  
+  Inputs:
+  -------
+    obj         - RandomVector object
+    n_particles - [Optional] Number of particles to use in sample 
+                  mean estimation [Default: 1e6]
+ 
+ 
+  Outputs:
+  --------
+    m           - Mean of random vector
+ 
+  Notes:
+  ------
+  * For Random Vectors of type 'Gaussian', we return the exact mean
+  * For Random Vectors of type 'UserDefined', we return MATLAB's
+    estimated mean obtained from n_particles samples
+  
+  ====================================================================
+  
+  This function is part of the Stochastic Reachability Toolbox.
+  License for the use of this function is given in
+       https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+  
+ 
+```
+
+### Method: pdf
+{:#RandomVector-method-pdf}
+```
+  Get the pdf of a random vector
+  ====================================================================
+  
+  Inputs:
+  -------
+    obj - RandomVector object
+ 
+  Outputs:
+  --------
+    pdf - Probability density function (anonymous function handle)
+ 
+  Notes:
+  ------
+  * This code is not tested
+  * Only Random Vectors of type 'Gaussian' currently have a pdf.
+  * Other random vector types will throw an error
+  * The anonymous function used for the definition of obj.pdf transposes 
+    the accepted column vector for using mvnpdf.
+  * RandomVector.pdf takes in arguments of the form N_points x
+    random_vector_dim
+  
+  ====================================================================
+  
+  This function is part of the Stochastic Reachability Toolbox.
+  License for the use of this function is given in
+       https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+  
+ 
+```
+
+### Method: getRealizations
+{:#RandomVector-method-getRealizations}
+```
+  Generate n_realizations realizations of the random vector
+  ====================================================================
+  
+  Inputs:
+  -------
+    obj            - RandomVector object (typically disturbance w_k)
+    n_realizations - Number of realizations desired
+ 
+  Outputs:
+  --------
+    xs             - Realizations matrix of dimension 
+                     obj.dim x n_realizations. Each realization is given 
+                     as a column vector.
+ 
+  Notes:
+  ------
+  * In case of Gaussian random vectors, mvnrnd is used
+  * In case of UserDefined random vectors, the user-provided
+    generator is used
+ 
+  ====================================================================
+  
+  This function is part of the Stochastic Reachability Toolbox.
+  License for the use of this function is given in
+       https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+  
+ 
 ```
 
 ### Method: concat
@@ -215,7 +430,8 @@ title: RandomVector.m
  
   Notes:
   ------
-  * Requires Gaussian random vector assumption
+  * We make the independent and identical assumption to obtain the
+    concatenated random vector
  
   ====================================================================
   
@@ -243,7 +459,62 @@ title: RandomVector.m
  
   Notes:
   ------
-  * Requires Gaussian random vector assumption
+  * While this function updates the generator for a UserDefined random
+    vector, it is HIGHLY RECOMMENDED to redefine the random vector
+    separately with an updated generator function to avoid nested
+    generator functions
+  ====================================================================
+  
+  This function is part of the Stochastic Reachability Toolbox.
+  License for the use of this function is given in
+       https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+  
+ 
+```
+
+### Method: gaussian
+{:#RandomVector-method-gaussian}
+```
+  Convenience method for creating Gaussian random vectors
+  ====================================================================
+  
+  Inputs:
+  -------
+    mu     - Gaussian mean vector (column vector)
+    covar  - Gaussian covariance matrix (square matrix)
+ 
+  Outputs:
+  --------
+    rv     - RandomVector object
+ 
+  ====================================================================
+  
+  This function is part of the Stochastic Reachability Toolbox.
+  License for the use of this function is given in
+       https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+  
+ 
+```
+
+### Method: exponential
+{:#RandomVector-method-exponential}
+```
+  Convenience method for creating exponential random vectors
+  ====================================================================
+  
+  Static method used to conveniently create n-dimensional exponential
+  random vectors. Vectors are generated using MATLAB's exprnd function.
+  
+  ====================================================================
+  
+  Inputs:
+  -------
+    mu  - Exponential mean | Must be a column vector
+ 
+  Outputs:
+  --------
+    rv - RandomVector object
+ 
   ====================================================================
   
   This function is part of the Stochastic Reachability Toolbox.

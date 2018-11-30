@@ -18,7 +18,8 @@ title: getSReachLagOverapprox.m
     
   ============================================================================
  
-  overapprox_set = getSReachLagUnderapprox(sys, target_tube, disturbance_set)
+  [overapprox_set, overapprox_tube] = getSReachLagUnderapprox(sys,...
+        target_tube, disturbance_set)
  
   Inputs:
   -------
@@ -30,6 +31,8 @@ title: getSReachLagOverapprox.m
   --------
     overapprox_set - Polyhedron object for the overapproximation of the 
                      stochastic reach set
+    overapprox_tube- [Optional] Tube comprising of an overapproximation of the
+                     stochastic reach sets across the time horizon
  
   Notes:
   * From computational geometry, intersections and Minkowski differences are

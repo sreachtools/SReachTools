@@ -55,6 +55,10 @@ title: getCwhLtiSystem.m
             RandomVector('Gaussian', zeros(6,1), ...
                   diag([1e-4, 1e-4, 1e-4, 5e-8, 5e-8, 5e-8])));
  
+  See also CwhSystemParameters 
+ 
+  to change the default CWH parameter values
+ 
   =============================================================================
   
   sys = getCwhLtiSystem(dim);
@@ -78,7 +82,7 @@ title: getCwhLtiSystem.m
  
   Outputs:
   --------
-    sys - LtiSystem object describing the CWH dynamics
+    sys         - LtiSystem object describing the CWH dynamics
  
   Notes:
   ------
