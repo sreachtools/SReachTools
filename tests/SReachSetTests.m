@@ -35,36 +35,62 @@ classdef SReachSetTests < matlab.unittest.TestCase
             test_case.verifyEqual(length(extra_info),1,'Empty cheby');
         end
     
-        function testLagrangian(test_case)
+        function testLagrangianUnderapproxAndSReachSetLagBset(test_case)
             [sys, safety_tube] = test_case.getDI();
 
-            % underapproximation
-            opts = SReachSetOptions('term', 'lag-under', ...
-                'bound_set_method', 'box', 'err_thresh', 1e-3);
+            % Test underapproximation using polytope option
+            bound_vec = ones(sys.dist_dim,1);
+            luOpts_poly = SReachSetOptions('term', 'lag-under', ...
+                'bound_set_method', 'polytope', 'template_polytope',...
+                Polyhedron('lb',-bound_vec,'ub',bound_vec));
             luSet = SReachSet('term', 'lag-under', sys, 0.8, safety_tube, ...
-                opts);
-
+                luOpts_poly);
             test_case.verifyInstanceOf(luSet, 'Polyhedron');
 
-            disp('Skipped testing the ellipsoid. Takes 70 s.');
-%             n_dim = (sys.state_dim + sys.input_dim);
-%             opts = SReachSetOptions('term', 'lag-under', ...
-%                 'bound_set_method', 'ellipsoid', 'err_thresh', 1e-3,...
-%                 'system', sys, 'verbose', 0, ...
-%                 'n_underapprox_vertices',2^n_dim * 10 + 2*n_dim);
-%             luSet = SReachSet('term', 'lag-under', sys, 0.8, safety_tube, ...
-%                 opts);
+            % Test underapproximation using ellipsoid option
+            n_dim = (sys.state_dim + sys.input_dim);
+            luOpts_ellipsoid = SReachSetOptions('term', 'lag-under', ...
+                'bound_set_method', 'ellipsoid', ...
+                'system', sys, 'verbose', 0, ...
+                'n_underapprox_vertices',2^n_dim * 10 + 2*n_dim);
+            luSet = SReachSet('term', 'lag-under', sys, 0.8, safety_tube, ...
+                luOpts_ellipsoid);
 
             test_case.verifyInstanceOf(luSet, 'Polyhedron');
-            
-            
-            opts = SReachSetOptions('term', 'lag-over', ...
-                'bound_set_method', 'box', 'err_thresh', 1e-3);
+        end 
+        
+        function testLagrangianOverapprox(test_case)
+            [sys, safety_tube] = test_case.getDI();
+
+            % Test overapproximation using polytope option
+            bound_vec = ones(sys.dist_dim,1);
+            loOpts = SReachSetOptions('term', 'lag-over', ...
+                'bound_set_method', 'polytope', 'template_polytope',...
+                Polyhedron('lb',-bound_vec,'ub',bound_vec));
             loSet = SReachSet('term', 'lag-over', sys, 0.8, safety_tube, ...
-                opts);
+                loOpts);
 
             test_case.verifyInstanceOf(loSet, 'Polyhedron');
-        end
+
+        end 
+        
+        function getBsetWithProbTest(test_case)
+            [sys, safety_tube] = test_case.getDI();
+            dist = 100*sys.dist;
+            
+            bound_vec = ones(sys.dist_dim,1);
+            temp_polytope = Polyhedron('lb',-bound_vec,'ub',bound_vec);
+            onestep_prob_thresh = 0.8^(1/(length(safety_tube)-1));
+            
+            % Test getBsetWithProb explicitly
+            
+            bounded_set = getBsetWithProb(dist, temp_polytope,...
+                onestep_prob_thresh, 1e7);
+            prob_test = dist.getProbPolyhedron(bounded_set,1e7);
+            test_case.verifyTrue(abs(prob_test - onestep_prob_thresh) < 1e-2,...
+                sprintf('Mismatch in prob: MC: %1.3e expected: %1.3f',...
+                    prob_test, onestep_prob_thresh));          
+        end                        
     end
     methods (Static)
         function [sys, safety_tube] = getDI()

@@ -38,7 +38,7 @@ function bounded_set = SReachSetLagBset(sys, onestep_prob_thresh, options)
 %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 %
 
-    valid_bound_set_methods = {'load','random','box','ellipsoid'};
+    valid_bound_set_methods = {'load','polytope','ellipsoid'};
         % Input parsing
     valid_prob = {'term'};
     valid_method= {'chance-open','genzps-open','lag-under','lag-over'};
@@ -67,18 +67,26 @@ function bounded_set = SReachSetLagBset(sys, onestep_prob_thresh, options)
         % validate that the disturbance is a RandomVector object
         % then ensure that the disturbance is Gaussian
         validateattributes(disturbance, {'RandomVector'}, ...
-            {'nonempty'})
-        if ~strcmpi(disturbance.type, 'Gaussian')
-            exc = SrtInvalidArgsError('Disturbance must be of type Gaussian');
-            throwAsCaller(exc);
+            {'nonempty'}, 'SReachSetLagBset', 'disturbance')
+        switch disturbance.type
+            case 'Gaussian'
+                % check that the option.bound_set_method is valid
+                validatestring(options.bound_set_method,...
+                    {'polytope','ellipsoid'}, 'SReachSetLagBset',...
+                    'options.bound_set_method for Gaussian disturbance');
+            case 'UserDefined'
+                % check that the option.bound_set_method is valid
+                validatestring(options.bound_set_method,...
+                    {'polytope'}, 'SReachSetLagBset',...
+                    'options.bound_set_method for UserDefined disturbance');
+            otherwise
+                throwAsCaller(SrtInvalidArgsError('Got an invalid disturbance'))
         end
 
         % check that onestep_prob_thresh is a value in [0,1]
-        validateattributes(onestep_prob_thresh, {'double'}, {'>=', 0, '<=', 1})
-
-        % check that the option.bound_set_method is a character or string array
-        validateattributes(options.bound_set_method, {'char', 'string'}, ...
-            {'nonempty'})
+        validateattributes(onestep_prob_thresh, {'numeric'},...
+            {'nonempty', 'scalar','>=', 0, '<=', 1}, 'SReachSetLagBset',...
+            'onestep_prob_thresh');
     end
 
     % check the option.bound_set_method and call appropriate sub-function
@@ -93,29 +101,24 @@ function bounded_set = SReachSetLagBset(sys, onestep_prob_thresh, options)
             bounded_set = SReachEllipsoid(disturbance.parameters.mean,...
                 ellipse_shape_mat);
             
-        case 'random'
-            % when choosing random direction need to specify the number of 
-            % vectors to use
-            validateattributes(options.num_dirs_random, {'numeric'}, ...
-                {'scalar', 'integer'});
-            
-            % Create an outer approximation of the ellipse by randomly
-            % sampling the support function
-            bounded_set = boundedEllipseByRandomVectors(disturbance, ...
-                onestep_prob_thresh, options.num_dirs_random);
-    
-        case 'box'
-            validateattributes(options.err_thresh, {'numeric'}, ...
-                {'scalar', 'positive'});
+        case 'polytope'
+            % Use RandomVector/getProbPolyhedron to compute the bounded set as a
+            % scaled version of a polytope
+            validateattributes(options.template_polytope, {'Polyhedron'},...
+                {'nonempty'}, 'SReachSetLagBset', ...
+                'options.template_polytope for polytope option');
+            bounded_set = getBsetWithProb(disturbance,...
+                options.template_polytope, onestep_prob_thresh,...
+                options.n_particles);
 
-            bounded_set = boxBisection(disturbance, ...
-                onestep_prob_thresh, options.err_thresh);
         case 'load'
             % load a predefined bounded set, primarily used for comparison with
             % previous works
             
             % variable argument should be the file location
-            validateattributes(options.load_str, {'char'}, {'nonempty'})
+            validateattributes(options.load_str, {'char'}, {'nonempty'},...
+                'SReachSetLagBset', ...
+                'options.load_str for load option');
             
             if exist(options.load_str, 'file') ~= 2
                 throwAsCaller(SrtInvalidArgsError(['Mat file to load does ', ...
@@ -146,210 +149,7 @@ function bounded_set = SReachSetLagBset(sys, onestep_prob_thresh, options)
 %                     'polyhedron of the desired type']));
 %             end            
         otherwise
-            exc = SrtInvalidArgsError('Invalid option.bound_set_method');
-            throwAsCaller(exc);            
+            throwAsCaller(SrtInvalidArgsError(...
+                'Invalid option.bound_set_method'));
     end
-
-end
-
-function bounded_set = boxBisection(disturbance, onestep_prob_threshold, err)
-% Get bounded set that is a n-d box via bisection method
-% =============================================================================
-% 
-% Get box bounded disturbance set for Lagrangian approximation using bisection
-% method. Box will be centered at the mean of the disturbance and have
-% its shape altered by the covariance of the disturbance. For i.i.d. 
-% disturbances this will create an n-d rectangular object. The polytope will 
-% have 2 * n facets and 2^n vertices
-% 
-% Usage: Nested function of SReachSetLagBSet
-% 
-% =============================================================================
-% 
-% bounded_set = boxBisection(disturbance, onestep_prob_threshold, err)
-% 
-% Inputs:
-% -------
-%   disturbance            - RandomVector object
-%   onestep_prob_threshold - One-step probability threshold. For 
-%                            underapproximation:
-%                               level_set_threshold^(1 / time_horizon)
-%                            For overapproximation
-%                               (1 - level_set_threshold)^(1 / time_horizon)
-%   err - Error tolerance
-% 
-% Outputs:
-% --------
-%   bounded_set - Polyhedron object
-% 
-% ============================================================================
-%
-%   This function is part of the Stochastic Reachability Toolbox.
-%   License for the use of this function is given in
-%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
-%
-
-
-    MAX_ITERS = 10000;
-    % xi2_onestep_prob_thresh = onestep_prob_thresh^(1/time_horizon);
-    a = 0;
-    b = 1;
-    
-    mu = zeros(1, disturbance.dim);
-    sigma = eye(disturbance.dim);
-    
-    center = zeros(1, disturbance.dim);
-    dx_ones = ones(1, disturbance.dim);
-
-    bx = Polyhedron('A', [eye(disturbance.dim); -eye(disturbance.dim)], ...
-                    'b', b * ones(2 * disturbance.dim, 1));
-    bx = disturbance.parameters.covariance^(1/2) * bx + ...
-        disturbance.parameters.mean;
-    p = computeProb(disturbance, bx);
-    
-    while p < onestep_prob_threshold + err
-        b = 2 * b;
-        bx = Polyhedron('A', [eye(disturbance.dim); -eye(disturbance.dim)], ...
-                        'b', b * ones(2 * disturbance.dim, 1));
-        bx = disturbance.parameters.covariance^(1/2) * bx + ...
-            disturbance.parameters.mean;
-        p = computeProb(disturbance, bx);
-    end
-    
-    do_search = @(prob, i) ...
-        (prob - onestep_prob_threshold > err || ...
-         prob - onestep_prob_threshold < 0) && ...
-        i < MAX_ITERS;
-    iters = 0;
-    while (p - onestep_prob_threshold > err || ...
-           p - onestep_prob_threshold < 0 ) && ...
-           iters < MAX_ITERS
-
-        % bisect 
-        b_new = b - (b - a) / 2;
-        bx = Polyhedron('A', [eye(disturbance.dim); -eye(disturbance.dim)], ...
-                        'b', b_new * ones(2 * disturbance.dim, 1));
-        bx = disturbance.parameters.covariance^(1/2) * bx + ...
-            disturbance.parameters.mean;
-        p = computeProb(disturbance, bx);
-        
-        if p > onestep_prob_threshold + err
-            b = b_new;
-        else
-            a = a + (b - a) / 2;
-        end
-        
-        iters = iters + 1;
-    end
-    
-    bounded_set = bx;
-
-end
-
-function bounded_set = boundedEllipseByRandomVectors(disturbance, ...
-    onestep_prob_thresh, n_directions)
-% Get bounded disturbance ellipse with random direction choices
-% ============================================================================
-%
-% Get bounded disturbance set approximation as an Polyhedral overapproximation
-% of an ellipse by selecting random directions on the surface of the ellipse
-%
-% Usage: Nested function
-%
-% ============================================================================
-% 
-% bounded_set = boundedEllipseByRandomVectors(disturbance, ...
-%     time_horizon, onestep_prob_thresh, n_directions)
-% 
-% Inputs:
-% -------
-%   disturbance    - RandomVector object
-%   time_horizon - Length of the time horizon
-%   onestep_prob_thresh           - Probability threshold
-%   n_directions   - Number or directions for the approximation
-%
-% Outputs:
-% --------
-%   bounded_set    - Polyhedron object
-%
-% ============================================================================
-%
-%   This function is part of the Stochastic Reachability Toolbox.
-%   License for the use of this function is given in
-%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
-%
-
-    % should probably provide a warning about the use of random direction for
-    % 2-dimensional system
-    % if disturbance.dim <= 2)
-    %     warn me(['For disturbances with dimension less than 2 random ', ...
-    %         'there are more direct solutions for obtaining the ellipse. ', ...
-    %         'Using ''lowdim'' option will provide faster and likely ', ...
-    %         'better results.']);
-    % end
-
-    % compute the ellipsoid radii needed for obtaining desired probability
-    r2 = chi2inv(onestep_prob_thresh, 2);
-    ellipse_rads = disturbance.parameters.covariance * r2;
-
-    n = size(ellipse_rads,1);
-    Ahalf = zeros(n_directions/2+n, n);
-    bhalf = zeros(n_directions/2+n, 1);
-    Ahalf(1:n,:) = eye(n)';
-    bhalf(1:n) = diag(sqrt(ellipse_rads));
-    for i = n+1:n_directions/2+n
-        direction = 2 * randn(1,n) - 1;
-        direction = direction ./ sqrt(direction * direction');
-        Ahalf(i,:) = direction;
-        bhalf(i) = direction * sqrt(ellipse_rads) * direction';
-    end
-    A = [Ahalf;-Ahalf];
-    b = [bhalf;bhalf];
-
-    % Create bounded polyhedron from A, b inequalities, i.e. Ax <= b
-    bounded_set = Polyhedron(A,b);
-    minVRep(bounded_set);
-
-end 
-
-function prob = computeProb(dist, bset)
-% Compute probability that distrubance lies in polyhedral object
-% ============================================================================
-%
-% Compute probability that distrubance lies in polyhedral object
-%
-% Usage: Nested function
-%
-% ============================================================================
-% 
-% prob = computeProb(dist, bset)
-% 
-% Inputs:
-% -------
-%   dist - RandomVector object
-%   bset - Bounded set (Polyhedron object)
-%
-% Outputs:
-% --------
-%   prob - Probablity that dist lies in bset
-%
-% ============================================================================
-%
-%   This function is part of the Stochastic Reachability Toolbox.
-%   License for the use of this function is given in
-%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
-%
-
-    % Construct the half-space representation for qscmvnv
-    cov_mat = (dist.parameters.covariance + ...
-        dist.parameters.covariance')/2; 
-    qscmvnv_lb = repmat(-Inf, [size(bset.A, 1), 1]);
-    qscmvnv_coeff_matrix = bset.A;
-    qscmvnv_ub = bset.b - bset.A * dist.parameters.mean;
-    prob = iteratedQscmvnv(cov_mat, ...
-                           qscmvnv_lb, ...
-                           qscmvnv_coeff_matrix, ...
-                           qscmvnv_ub, ...
-                           1e-3, ...
-                           10);            
 end
