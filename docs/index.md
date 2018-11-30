@@ -110,8 +110,9 @@ programming approach. Among these techniques, Lagrangian and particle control
 SReachTools also provides APIs to analyze the forward stochastic reachability
 problem[^HSCC2017_Fwd] using Genz's algorithm [^GenzAlgorithm]. 
 
-The following
-table[^table_ack] summarizes the features of SReachTools.
+## Summary of features in SReachTools
+
+The following table[^table_ack] summarizes the features in SReachTools.
 
 |    Function   |   method-str  |                                                       Utility                                                       | Notes                                      |
 |:-------------:|:---------------:|:-------------------------------------------------------------------------------------------------------------------:|--------------------------------------------|

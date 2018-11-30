@@ -4,48 +4,97 @@ permalink: /examples/
 title: Examples
 ---
 
-In these set of examples, we apply SReachTools to perform forward (prediction of the stochasticity of the state in future) and backward (verification and controller synthesis) stochastic reachability in various stochastic LTI and LTV systems.
+We apply SReachTools to perform the following analysis on various stochastic LTI
+and LTV systems:
+1. [backward stochastic reachability](#backward-stochastic-reachability)
+   (verification and controller synthesis)
+1. [forward stochastic reachability](#forward-stochastic-reachability)
+   (prediction of the stochasticity of the state in future) 
 
-Please feel free to add requests for more examples at [https://github.com/unm-hscl/SReachTools/issues](https://github.com/unm-hscl/SReachTools/issues).
-They are available in the `examples` folder of the project. 
+Please feel free to add requests for more examples at
+[https://github.com/unm-hscl/SReachTools/issues](https://github.com/unm-hscl/SReachTools/issues).
+The code for `XYZ.html`. is available in `examples/XYZ.m`. These html pages were
+created using MATLAB's publish command (see `examples/publish_examples.m`).
 
-    {% comment %}
 {% include important-note.html content="HTML examples are not mobile friendly. We're working on it." %}
-1. **Stochastic reachability of a target tube using dynamic programming**:  Demonstrates the use of `SReachDynProg`.
-    1. **Stochastic double integrator**: For a stochastic double integrator, we compute a grid-based dynamic programming solution to the stochastic reachability of different target tubes listed below.  [[HTML](doubleIntegratorDynamicProgramming.html)]
-        - Stochastic viability problem
-        - Stochastic reach-avoid problem (terminal hitting time)
-        - Stochastic reachability of a target tube (a collection of time-varying safe sets)
-1. **Underapproximative verification**: Demonstrates the use of `SReachSet` and `SReachPoint` on a host of examples. 
-    - *Verification problem*: We can use `SReachSet` to compute the set of initial states and their associated admissible controllers such that the probability of the system evolving in a pre-specified target tube (a collection of time-varying sets) is above a user-specified threshold. 
-    - *Controller synthesis problem*: We can use `SReachPoint` to compute the optimal (open-loop or affine) controller that maximizes the safety probability, the likelihood of staying with the target tube.
-    - For both of these problems, we will validate the optimal controllers using \\(10^5\\) Monte-Carlo simulations.
-    - Examples: 
-    {% comment %}
-        1. **Spacecraft rendezvous and docking problem**: In a satellite rendezvous problem, we wish to steer a spacecraft (deputy) towards another spacecraft on the same elliptical orbit (chief), while staying within the line-of-sight cone and respecting actuation limits. The relative dynamics of the deputy with respect to the chief spacecraft is a LTI system ([Clohessy-Wiltshire-Hill dynamics](https://en.wikipedia.org/wiki/Clohessy-Wiltshire_equations)) with additive stochastic disturbance. 
-            - Application of `SReachPoint` from a given state. [[HTML](cwhSReachPointDemo.html)]
-            - Application of `SReachSet` for a probability threshold. [[HTML](cwhSReachPointDemo.html)]
-        1. **Dubin's vehicle with a known turn rate**: Given a [Dubin's car](https://en.wikipedia.org/wiki/Dubins_path) with a known turning rate and additive disturbance in position, we wish to ascertain the set of initial states and its associated controllers from which the car can be steered to lie within a target tube. 
-            - Application of `SReachPoint` from a given state. [[HTML](dubinsSReachPointDemo.html)]
-            - Application of `SReachSet` for a probability threshold. [[HTML](dubinsSReachSetDemo.html)]
-    {% endcomment %}
-        1. **Automated anesthesia delivery system**: Given the dynamics for the sedation levels of a patient, we wish to design an automated anesthesia delivery system that maintains the probability of the depth of hypnosis to stay within pre-specified bounds, above 0.99. 
-            - Application of `SReachSet` for a probability threshold. [[HTML](AutomatedAnesthesiaDelivery.html)]
-        1. **Stochastic double integrator**: For a stochastic double integrator, we compute the over- and under-approximations for the stochastic viability problem, and compare it with the dynamic programming.  [[HTML](lagrangianApproximations.html)]
-1. **Forward stochastic reachability**: Computes the probability of the state of the spacecraft lying in a set at future time of interest with/without safety requirements. We also demonstrate how SReachTools can handle a deterministic and a stochastic initial state. [[HTML](forwardStochasticReachCWH.html)] 
-    {% endcomment %}
+
+## Backward stochastic reachability
+
+### (Under)approximative verification and controller synthesis
+Using convex optimization, Fourier transforms, mixed-integer linear programming,
+and computation geometry, we can perform backward stochastic reachability. Here,
+we define safety by requiring the state to stay within a pre-specified target
+tube (a collection of time-varying safe sets).
+
+- *Verification problem*: We can use `SReachSet` to compute the set of
+  initial states and their associated admissible controllers such that the
+  probability of safety of the system is above a user-specified threshold. 
+- *Controller synthesis problem*: We can use `SReachPoint` to compute the
+  optimal (open-loop or affine) controller that maximizes the safety
+  probability, the likelihood of staying with the target tube.
+- See [the table on the home
+  page](../index.html#summary-of-features-in-sreachtools) for how SReachTools
+  can solve these problems and the available approximation guarantees.
+- In all of these examples, we will validate the optimal controllers using
+  Monte-Carlo simulations.
+
+We provide the following demonstration examples:
+1. **Spacecraft rendezvous problem**: In a satellite rendezvous problem, we wish
+   to steer a spacecraft (deputy) towards another spacecraft on the same
+   elliptical orbit (chief), while staying within the line-of-sight cone and
+   respecting actuation limits. The relative dynamics of the deputy with respect
+   to the chief spacecraft is a LTI system ([Clohessy-Wiltshire-Hill
+   dynamics](https://en.wikipedia.org/wiki/Clohessy-Wiltshire_equations)) with
+   additive Gaussian disturbance. 
+    - Application of `SReachPoint` from a given state
+      [[cwhSReachPoint.html](./publish/cwhSReachPoint.html)]
+    - Application of `SReachSet` for a probability threshold
+      [[cwhSReachSet.html](./publish/cwhSReachSet.html)]
+1. **Dubin's vehicle with a known turn rate**: Given a [Dubin's car](https://en.wikipedia.org/wiki/Dubins_path) with a known turning rate and additive disturbance in position, we wish to ascertain the set of initial states and its associated controllers from which the car can be steered to lie within a target tube. 
+    - Application of `SReachPoint` from a given state
+      [[dubinsSReachPoint.html](./publish/dubinsSReachPoint.html)]
+    - Application of `SReachSet` for a probability threshold
+      [[dubinsSReachSet.html](./publish/dubinsSReachSet.html)]
+1. **Automated anesthesia delivery system**: Given the dynamics for the sedation
+   levels of a patient, we wish to design an automated anesthesia delivery
+   system that maintains the probability of the depth of hypnosis to stay within
+   pre-specified bounds, above 0.99. This script serves as a repeatability
+   evaluation of SReachTools code in [Abate et. al, ARCH
+   2018](https://doi.org/10.29007/7ks7).
+    - Application of `SReachSet` for a probability threshold. [[automatedAnesthesiaDeliveryARCH2018.html](./publish/automatedAnesthesiaDeliveryARCH2018.html)]
+1. **Lagrangian approximations for the stochastic double integrator**: For a
+   stochastic double integrator, we compute the over- and under-approximations
+   for the stochastic viability problem, and compare it with the dynamic
+       programming. 
+    - Application of `SReachSet` for a probability threshold via Lagrangian options. [[dIntSReachSetLag.html](./publish/dIntSReachSetLag.html)]
+
+{% include important-note.html content="Examples 1,2, and 3 can not be
+implemented using dynamic programming! <\br> SReachTools provides verification of
+these systems for the first time." %}
+### Dynamic programming
+
+**Stochastic double integrator**: For a stochastic double integrator, we compute
+a grid-based dynamic programming solution to the stochastic reachability of
+different target tubes listed below.  
+
+- Stochastic viability problem
+- Stochastic reach-avoid problem (terminal hitting time)
+- Stochastic reachability of a target tube (a collection of time-varying safe sets)
+
+The application of `SReachDyn` is given in
+[[dIntSReachDyn.html](./publish/dIntSReachDyn.html)].
+
+## Forward stochastic reachability
+
+1. **Spacecraft rendezvous problem**: Computes the probability of the state of
+   the spacecraft lying in a set at future time of interest with/without safety
+   requirements. We also demonstrate how SReachTools can handle a deterministic
+   and a stochastic initial state. The dynamics of the spacecraft is assumed to
+   be  a LTI system ([Clohessy-Wiltshire-Hill
+   dynamics](https://en.wikipedia.org/wiki/Clohessy-Wiltshire_equations)) with
+   additive Gaussian disturbance, and the controller is given by a LQR
+   controller.
+    - Application of `SReachFwd`
+      [[cwhSReachFwd.html](./publish/cwhSReachFwd.html)].
 
 <!-- Add {:target="_blank"} if it is desired that the page opens in a new window.-->
-
-
-{% comment %}
-
-like:
-
-* the relative dynamics of a spacecraft in space to a docking station,
-* the stochastic double integrator, and
-* the automated anesthesia delivery system.
-
-We used MATLAB's LiveEditor to write the following examples. 
-
-{% endcomment %}
