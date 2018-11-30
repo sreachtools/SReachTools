@@ -345,8 +345,7 @@ classdef RandomVector
             end
             switch obj.type
                 case 'Gaussian'
-                    newobj=RandomVector('Gaussian', F*obj.parameters.mean,...
-                        F*obj.parameters.covariance*F');
+                    newobj=RandomVector('Gaussian',F*obj.mean(),F*obj.cov()*F');
                 case 'UserDefined'
                     newobj=RandomVector('UserDefined', @(N) F*obj.generator(N));
                 otherwise
@@ -363,7 +362,8 @@ classdef RandomVector
         % Inputs:
         % -------
         %   obj - RandomVector object
-        %   v   - Deterministic vector to be added to the random vector
+        %   v   - Deterministic vector to be added to the random vector OR
+        %         a RandomVector object
         %
         % Outputs:
         % --------
@@ -383,36 +383,76 @@ classdef RandomVector
         % 
         %
             
+            summands_type = [];
             switch [class(obj), class(v)]
                 case ['RandomVector','double']
-                    % All ok
+                    % Check dimensions
+                    if ~isequal(size(v), [obj.dim 1])
+                        throwAsCaller(SrtInvalidArgsError(['Mismatch in ',...
+                            'dimensions of the random vector and v']));
+                    end
+                    % Set the flag for the type of summation
+                    summands_type = 'determ_vec_plus_rv';
                 case ['double', 'RandomVector']
                     % Need to switch the arguments
                     vtemp = obj;
                     obj = v;
                     v = vtemp;
+                    % Check dimensions
+                    if ~isequal(size(v), [obj.dim 1])
+                        throwAsCaller(SrtInvalidArgsError(['Mismatch in ',...
+                            'dimensions of the random vector and v']));
+                    end
+                    % Set the flag for the type of summation
+                    summands_type = 'determ_vec_plus_rv';
+                case ['RandomVector', 'RandomVector']
+                    % Check dimensions
+                    if v.dim ~= obj.dim
+                        throwAsCaller(SrtInvalidArgsError(['Mismatch in ',...
+                            'dimensions of the random vector and v']));
+                    end
+                    % Set the flag for the type of summation
+                    summands_type = 'rv_plus_rv';
                 otherwise
                     throwAsCaller(SrtInvalidArgsError(sprintf(['Operation +',...
                        ' not defined between %s and %s'], class(obj),...
                        class(v))));
             end
-            validateattributes(v, {'numeric'}, ...
-                {'column', 'size', [obj.dim 1]}, 'RandomVector/plus', 'v');
-            if isequal(size(v),[1 1])
-                % F is a scalar
-                v = v * ones(obj.dim,1);
-            end
-            switch obj.type
-                case 'Gaussian'
-                    newobj=RandomVector('Gaussian', v + obj.parameters.mean,...
-                        obj.parameters.covariance);
-                case 'UserDefined'
-                    newobj=RandomVector('UserDefined',...
-                        @(N) repmat(v, 1, N) + obj.generator(N));
+            switch summands_type
+                case 'determ_vec_plus_rv'
+                    if isequal(size(v),[1 1])
+                        % F is a scalar
+                        v = v * ones(obj.dim,1);
+                    end
+                    switch obj.type
+                        case 'Gaussian'
+                            newobj=RandomVector.gaussian(v + obj.mean(),...
+                                obj.cov());
+                        case 'UserDefined'
+                            newobj=RandomVector('UserDefined',...
+                                @(N) repmat(v, 1, N) + obj.generator(N));
+                        otherwise
+                            throwAsCaller(SrtInvalidArgsError(sprintf(...
+                                ['Plus is not supported for %s-type ',...
+                                 'random vectors'], obj.type)));
+                    end
+                case 'rv_plus_rv'
+                    switch [obj.type, v.type]
+                        case ['Gaussian', 'Gaussian']
+                            newobj=RandomVector.gaussian(...
+                                v.mean() + obj.mean(), v.cov() + obj.cov());
+                        case {['Gaussian', 'UserDefined'], ...
+                                ['UserDefined','Gaussian'], ...
+                                ['UserDefined','UserDefined']}
+                            newobj=RandomVector('UserDefined',...
+                                @(N) obj.generator(N) + v.generator(N));
+                        otherwise
+                            throwAsCaller(SrtInvalidArgsError(sprintf(...
+                                ['Plus is not supported for %s-type and %s-',...
+                                 'type random vectors'], obj.type, v.type)));
+                    end
                 otherwise
-                    throwAsCaller(SrtInvalidArgsError(sprintf(...
-                        ['Plus is not supported for %s-type ',...
-                         'random vectors'], obj.type)));
+                    % Will never come here
             end
         end
         
@@ -449,12 +489,29 @@ classdef RandomVector
             
             switch obj.type
                 case 'Gaussian'
-                    muW = repmat(obj.parameters.mean, time_horizon, 1);
-                    covW = kron(eye(time_horizon), obj.parameters.covariance);
+                    muW = repmat(obj.mean(), time_horizon, 1);
+                    covW = kron(eye(time_horizon), obj.cov());
                     newobj = RandomVector('Gaussian', muW, covW);
                 case 'UserDefined'
                     % reshape and not repmat because we want independent
-                    % samples
+                    % samples | This reshape will take N*time_horizon and
+                    % construct a concatenated vector sample first and then move
+                    % to the next
+                    % >> disp(magic(4))
+                    %     16     2     3    13
+                    %      5    11    10     8
+                    %      9     7     6    12
+                    %      4    14    15     1
+                    % 
+                    % >> disp(reshape(magic(4),[],2))
+                    %     16     3
+                    %      5    10
+                    %      9     6
+                    %      4    15
+                    %      2    13
+                    %     11     8
+                    %      7    12
+                    %     14     1
                     newGenerator = @(N) reshape(...
                         obj.generator(N*time_horizon), [], N);
                     newobj = RandomVector('UserDefined', newGenerator);

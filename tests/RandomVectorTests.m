@@ -50,7 +50,7 @@ classdef RandomVectorTests < matlab.unittest.TestCase
             RandomVector('UserDefined',@(N) exprnd(1,N));
         end
         function multiplicationTest(test_case)        
-            % Define a well-defined Gaussian
+            %% Define a well-defined Gaussian
             r = RandomVector('Gaussian',zeros(2,1), eye(2));
             eye(2) * r;
             r * eye(2);
@@ -62,6 +62,16 @@ classdef RandomVectorTests < matlab.unittest.TestCase
             test_case.verifyError(@(x) r * eye(3), 'SReachTools:invalidArgs');            
             % Invalid input
             test_case.verifyError(@(x) r * 'ch', 'SReachTools:invalidArgs');            
+
+            % Repeat this for exponential case (generator)
+            r_exp = RandomVector.exponential(2);
+            newr_exp = 3 * r_exp;
+            test_case.verifyTrue(abs(3*r_exp.mean() - newr_exp.mean())<1e-2,...
+                'Mismatch in mean for exponential case');
+            % Invalid dimension
+            test_case.verifyError(@(x) r_exp*eye(3), 'SReachTools:invalidArgs');            
+            % Invalid input
+            test_case.verifyError(@(x) r_exp * 'ch', 'SReachTools:invalidArgs');            
         end
         
         function plusTest(test_case)
@@ -72,13 +82,49 @@ classdef RandomVectorTests < matlab.unittest.TestCase
                 'Mismatch in mean');
             test_case.verifyTrue(isequal(r.cov(), newr.cov()),...
                 'Mismatch in covariance');
-            test_case.verifyError(@(x) [1, 0;1, 0;1, 0] + r,...
-                'MATLAB:RandomVector:plus:expectedColumn');            
             % Invalid dimension
-            test_case.verifyError(@(x) r + ones(3,1),...
-                'MATLAB:RandomVector:plus:incorrectSize');            
+            test_case.verifyError(@(x) r + ones(3,1),'SReachTools:invalidArgs');            
             % Invalid input
             test_case.verifyError(@(x) r + 'ch', 'SReachTools:invalidArgs');            
+
+            %% Repeat this for exponential case (generator)
+            r_exp = RandomVector.exponential(2);
+            newr_exp = 3 + r_exp;
+            test_case.verifyTrue(abs(3+r_exp.mean() - newr_exp.mean())<1e-2,...
+                'Mismatch in mean for exponential case');
+            test_case.verifyError(@(x) [1, 0;1, 0;1, 0] + r_exp,...
+                'SReachTools:invalidArgs');            
+            % Invalid dimension
+            test_case.verifyError(@(x) r_exp + ones(3,1),...
+                'SReachTools:invalidArgs');            
+            % Invalid input
+            test_case.verifyError(@(x) r_exp + 'ch', 'SReachTools:invalidArgs');            
+            
+            %% Gaussian + F*Exp
+            gauss_plus_exp = ones(2,1) * r_exp + r;
+            test_case.verifyTrue(isequal(gauss_plus_exp.type,'UserDefined'),...
+                'Expected it to be UserDefined');
+            test_case.verifyTrue(...
+                max(abs(gauss_plus_exp.mean() -...
+                    ones(2,1) * r_exp.mean()-r.mean()))<1e-2,...
+                'Mismatch in mean');
+
+            %% Exp + Exp
+            exp_plus_exp = r_exp + r_exp;
+            test_case.verifyTrue(isequal(exp_plus_exp.type,'UserDefined'),...
+                'Expected it to be UserDefined');
+            test_case.verifyTrue(...
+                abs(exp_plus_exp.mean() - 2 * r_exp.mean())<1e-2,...
+                'Mismatch in mean');
+            
+            %% Gauss + Gauss
+            gauss_plus_gauss = r + r;
+            test_case.verifyTrue(isequal(gauss_plus_gauss.type,'Gaussian'),...
+                'Expected it to be UserDefined');
+            test_case.verifyTrue(...
+                max(abs(gauss_plus_gauss.mean() - 2 * r.mean()))<1e-8,...
+                'Mismatch in mean');
+            
         end
         function concatTest(test_case)        
             % Define a well-defined Gaussian
