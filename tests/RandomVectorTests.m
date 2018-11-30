@@ -63,6 +63,23 @@ classdef RandomVectorTests < matlab.unittest.TestCase
             % Invalid input
             test_case.verifyError(@(x) r * 'ch', 'SReachTools:invalidArgs');            
         end
+        
+        function plusTest(test_case)
+            % Define a well-defined Gaussian
+            r = RandomVector('Gaussian',zeros(2,1), eye(2));
+            newr = ones(2,1) + r;
+            test_case.verifyTrue(isequal(r.mean(), newr.mean() - ones(2,1)),...
+                'Mismatch in mean');
+            test_case.verifyTrue(isequal(r.cov(), newr.cov()),...
+                'Mismatch in covariance');
+            test_case.verifyError(@(x) [1, 0;1, 0;1, 0] + r,...
+                'MATLAB:RandomVector:plus:expectedColumn');            
+            % Invalid dimension
+            test_case.verifyError(@(x) r + ones(3,1),...
+                'MATLAB:RandomVector:plus:incorrectSize');            
+            % Invalid input
+            test_case.verifyError(@(x) r + 'ch', 'SReachTools:invalidArgs');            
+        end
         function concatTest(test_case)        
             % Define a well-defined Gaussian
             r = RandomVector('Gaussian',zeros(2,1), eye(2));
