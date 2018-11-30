@@ -6,12 +6,19 @@ function [concat_state_realization, ...
                                                initial_state, ...
                                                time_horizon, ...
                                                varargin)
-% Generate Monte-Carlo simulations for a Gaussian-perturbed LTI/LTV system
-% (controlled or uncontrolled)
-% ============================================================================
+% Generate Monte-Carlo simulations for (controlled/uncontrolled) LTI/LTV system 
+% =============================================================================
 % 
-% generateMonteCarloSims produces a required number of trajectories for a
-% Gaussian LTI system.
+% generateMonteCarloSims produces a required number of trajectories,
+% n_monte_carlo_sims, for a (affine-controlled/uncontrolled) LTI/LTV system sys
+% with a deterministic/RandomVector initial_state for a given time_horizon. 
+%
+% If the system is controlled, then a causal disturbance-feedback affine
+% controller may be specified (dist_feedback_gain, concat_input_vector). The
+% controller will be saturated to the sys.input_space using projection. 
+%
+% For an open-loop controller, only an concat_input_vector may be specified and
+% dist_feedback_gain is set to zero. 
 %
 % See also examples/forwardStochasticReachCWH.m, examples/cwhSReachPointDemo.m
 %
@@ -55,7 +62,7 @@ function [concat_state_realization, ...
 %
 % Notes:
 % ------
-% * Assumes IID Gaussian disturbance for the LTI/LTV system. 
+% * Assumes IID disturbance for the LTI/LTV system. 
 % * For controlled system, an open-loop controller NEEDS to be provided. The
 %   optimal_input_vector should be a ((sys.input_dim) * time_horizon)-dim.
 %   vector U = [u_0; u_1; ...; u_N] (column vector).
@@ -96,23 +103,19 @@ function [concat_state_realization, ...
     %% Input handling 
     % Ensure that n_monte_carlo_sims is a scalar and positive
     validateattributes(n_monte_carlo_sims, {'numeric'}, {'scalar',...
-        'integer', '>', 0});
+        'integer', '>', 0}, 'generateMonteCarloSims', 'n_monte_carlo_sims');
     % Ensure that sys is a LtiSystem/LtvSystem object
-    validateattributes(sys, {'LtiSystem','LtvSystem'}, {'nonempty'});
-    % Ensure sys has a Gaussian disturbance 
-    if ~strcmpi(sys.dist.type,'Gaussian')
-        throwAsCaller(SrtInvalidArgsError('Expected a Gaussian-perturbed', ...
-            ' LtiSystem/LtvSystem object'));
-    end
+    validateattributes(sys, {'LtiSystem','LtvSystem'}, {'nonempty'},...
+        'generateMonteCarloSims', 'sys');
     % Ensure initial state vector is valid or it is a random vector
     validateattributes(initial_state, {'RandomVector','numeric'},...
-        {'nonempty'});
+        {'nonempty'}, 'generateMonteCarloSims', 'initial_state');
     switch class(initial_state)
         case 'RandomVector'
-            if ~strcmpi(initial_state.type,'Gaussian') ||...
-                    initial_state.dim ~= sys.state_dim
+            initial_state_realization = initial_state.getRealizations(1)
+            if length(initial_state_realization) ~= sys.state_dim
                 throwAsCaller(SrtInvalidArgsError('Expected a sys.state_dim',...
-                    '-dimensional Gaussian random vector as initial_state'));
+                    '-dimensional random vector as initial_state'));
             end
         case 'numeric'
             if length(initial_state) ~= sys.state_dim
@@ -122,7 +125,7 @@ function [concat_state_realization, ...
     end
     % Ensure that time_horizon is a scalar and positive
     validateattributes(time_horizon, {'numeric'}, {'scalar',...
-        'integer', '>', 0});
+        'integer', '>', 0}, 'generateMonteCarloSims', 'time_horizon');
     
     % Input handling of optimal_input_vector and creation of
     % concat_optimal_input_vector
@@ -142,7 +145,8 @@ function [concat_state_realization, ...
             input_concat_vector = varargin{1};
             % Ensure optimal_input_vector is a valid open loop controller
             validateattributes(input_concat_vector, {'numeric'},...
-                {'nonempty','vector','size',[time_horizon*sys.input_dim 1]});
+                {'nonempty','vector','size',[time_horizon*sys.input_dim 1]},...
+                'generateMonteCarloSims', 'input_concat_vector');
             % Repeat the same open-loop policy across all the simulations
             concat_input_vector_repeated = ...
                       repmat(input_concat_vector,1, n_monte_carlo_sims);
@@ -152,11 +156,13 @@ function [concat_state_realization, ...
                 input_concat_dist_gain = varargin{2};
                 validateattributes(input_concat_dist_gain, {'numeric'},...
                     {'nonempty','size',[time_horizon * sys.input_dim,...
-                             time_horizon * sys.dist_dim]});                
+                             time_horizon * sys.dist_dim]},...
+                'generateMonteCarloSims', 'input_concat_dist_gain');                
                 if length(varargin) == 3
                     verbose = varargin{3};
                     validateattributes(verbose, {'numeric'},...
-                        {'nonempty','scalar','integer','>=',0,'<=',1});
+                        {'nonempty','scalar','integer','>=',0,'<=',1},...
+                        'generateMonteCarloSims', 'verbose');
                 end
             end
             
@@ -170,10 +176,8 @@ function [concat_state_realization, ...
     [Z, H, G] = getConcatMats(sys, time_horizon);
     
     if isa(initial_state,'RandomVector')
-        % Draw from the initial state PDF
-        concat_initial_state = mvnrnd(initial_state.parameters.mean', ...
-                                      initial_state.parameters.covariance, ...
-                                      n_monte_carlo_sims)';
+        % Draw realizations from the initial state random vector
+        concat_initial_state =initial_state.getRealizations(n_monte_carlo_sims);
     else
         % Concatenation of initial state vector
         concat_initial_state = repmat(initial_state,1, n_monte_carlo_sims);
@@ -181,9 +185,7 @@ function [concat_state_realization, ...
     W = sys.dist.concat(time_horizon);
     % Realization of the concatenated disturbance random vectors with each
     % realization stored columnwise
-    concat_disturb_realizations = mvnrnd(W.parameters.mean, ...
-                                         W.parameters.covariance, ...
-                                         n_monte_carlo_sims)';
+    concat_disturb_realizations = W.getRealizations(n_monte_carlo_sims);
     
     % Realization of the random vector X (columnwise)
     % See @LtiSystem/getConcatMats for more info on the notation used

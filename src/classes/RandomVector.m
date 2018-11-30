@@ -166,11 +166,11 @@ classdef RandomVector
 
                     % Check if mean is a nonempty numeric column vector
                     validateattributes(varargin{1}, {'numeric'},...
-                        {'column'},'RandomVector/RandomVector','mean', 1);
+                        {'column'},'RandomVector/RandomVector','mean');
                     % Check if covariance matrix is a nonempty square matrix
                     validateattributes(varargin{2}, {'numeric'}, ...
                        {'nonempty','square'},'RandomVector/RandomVector',...
-                       'covariance', 1);
+                       'covariance');
                                    
                     % set parameters
                     obj.parameters.mean = varargin{1};
@@ -376,11 +376,11 @@ classdef RandomVector
             
             % Check if mean is a nonempty numeric column vector
             validateattributes(time_horizon, {'numeric'},...
-                {'integer','>',0}, 'RandomVector/concat', 'time_horizon', 1);
+                {'integer','>',0}, 'RandomVector/concat', 'time_horizon');
             
             switch obj.type
                 case 'Gaussian'
-                    muW = repmat(obj.parameters.mean,time_horizon,1);
+                    muW = repmat(obj.parameters.mean, time_horizon, 1);
                     covW = kron(eye(time_horizon), obj.parameters.covariance);
                     newobj = RandomVector('Gaussian', muW, covW);
                 case 'UserDefined'
@@ -730,9 +730,9 @@ classdef RandomVector
         %
 
             validateattributes(mu, {'numeric'},...
-                    {'column','nonempty'}, 'RandomVector/gaussian', 'mu', 1);
+                    {'column','nonempty'}, 'RandomVector/gaussian', 'mu');
             validateattributes(covar, {'numeric'},...
-                    {'square','nonempty'}, 'RandomVector/gaussian', 'covar', 2);
+                    {'square','nonempty'}, 'RandomVector/gaussian', 'covar');
                
             rv = RandomVector('Gaussian', mu, covar);
         end
