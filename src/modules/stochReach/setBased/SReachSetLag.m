@@ -104,7 +104,7 @@ function otherInputHandling(method_str, sys, options)
     
     % Ensure stochastic system
     validateattributes(sys.dist, {'RandomVector'}, {'nonempty'},...
-        'SReachSetLag/otherInputHandling', 'sys.dist'});
+        'SReachSetLag/otherInputHandling', 'sys.dist');
     
     % Check if prob_str and method_str are consistent        
     if ~strcmpi(options.prob_str,'term')
@@ -118,6 +118,6 @@ function otherInputHandling(method_str, sys, options)
 
     % Based on the RandomVector, decide allowable methods TODO
     validatestring(sys.dist.type, {'Gaussian'}, {'nonempty'},...;
-        'SReachSetLag/otherInputHandling', 'sys.dist.type'});
+        'SReachSetLag/otherInputHandling', 'sys.dist.type');
 end
     

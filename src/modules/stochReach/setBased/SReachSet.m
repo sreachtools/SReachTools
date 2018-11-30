@@ -76,7 +76,7 @@ function [stoch_reach_set, varargout] = SReachSet(prob_str, method_str, sys, ...
 %    Paper              : a. J. Gleason, A. Vinod, and M. Oishi, "Lagrangian
 %                            Approximations for Stochastic Reachability of a
 %                            Target Tube," 2018.
-%                            https://arxiv.org/abs/1810.07118
+%                            https://arxiv.org/abs/1810.07118 TODO
 %                         b. J. Gleason, A. Vinod, and M. Oishi,
 %                            "Underapproximation of Reach-Avoid Sets for
 %                            Discrete-Time Stochastic Systems via Lagrangian

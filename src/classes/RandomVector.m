@@ -330,6 +330,10 @@ classdef RandomVector
                     throwAsCaller(SrtInvalidArgsError(sprintf(['Operation *',...
                        ' not defined between *%s, %s'], class(obj), class(F))));
             end
+            if isequal(size(F),[1 1])
+                % F is a scalar
+                F = F * eye(obj.dim);
+            end
             if size(F, 2) ~= obj.dim
                 throwAsCaller(SrtInvalidArgsError(['Mismatch ',...
                     'between dimensions']));

@@ -315,12 +315,10 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
             end
         end
 
-        iter_count = 0;
         % The threshold of 1e-4 was heuristically arrived at! CDDMEX had
         % trouble computing the facet form for vertices created with eps
         % smaller than 1e-4
         while abs(bisection_lb-bisection_ub) > 1e-4
-            iter_count = iter_count + 1;
             bisection_test = (bisection_lb + bisection_ub) / 2;
             if contains_check(bisection_test)
                 % Increase the lower bound since the given test point passed
