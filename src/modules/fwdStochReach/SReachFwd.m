@@ -1,7 +1,7 @@
 function varargout = SReachFwd(prob_str, sys, initial_state, target_time, ...
     varargin)
 % Perform forward stochastic reachability analysis of a Gaussian-perturbed
-% linear system
+% linear system with a Gaussian or a deterministic initial state
 % ============================================================================
 %
 % Perform forward stochastic reachability analysis of a Gaussian-perturbed
@@ -194,9 +194,8 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time, ...
                                    10);
         catch
             %TODO-Test: Not sure when qscmvnv will bug out!
-            err = SrtDevError(['Error in qscmvnv (Quadrature of ', ...
-                'multivariate Gaussian)']);
-            throw(err);
+            throw(SrtDevError(['Error in qscmvnv (Quadrature of ', ...
+                'multivariate Gaussian)']));
         end
         varargout{1} = prob;
     elseif strcmpi(prob_str_splits{2},'stoch')
@@ -208,46 +207,42 @@ end
 function otherInputHandling(sys, initial_state, prob_str_splits, ...
     optional_args, target_time)
     % Ensure that initial state is a column vector of appropriate dimension OR
-    % random vector of approriate dimension
-    if isa(initial_state,'RandomVector') && initial_state.dim~=sys.state_dim...
-            && strcmp(initial_state.type, 'Gaussian')
-        %TODO-Test: no support for non-Gaussian as of yet
-        err = SrtInvalidArgsError(['Expected a sys.state_dim-dimensional ', ...
-            'Gaussian random vector for initial state']);
-        throw(err);
+    % a Gaussian random vector of approriate dimension 
+    if isa(initial_state,'RandomVector') 
+        if strcmpi(initial_state.type, 'Gaussian') &&...
+            initial_state.dim==sys.state_dim
+        else
+            throwAsCaller(SrtInvalidArgsError(['Expected a sys.state_dim-',...
+                'dimensional Gaussian random vector for initial state']));
+        end
     elseif isa(initial_state,'numeric') &&...
             ~isequal(size(initial_state), [sys.state_dim 1])
-        err = SrtInvalidArgsError(['Expected a sys.state_dim-dimensional ', ...
-            'column-vector for initial state']);
-        throw(err);
+        throwAsCaller(SrtInvalidArgsError(['Expected a sys.state_dim-', ...
+            'dimensional column-vector for initial state']));
     end
 
     % Ensure that the given system has a Gaussian disturbance
     if isa(sys.dist, 'RandomVector') && ~strcmpi(sys.dist.type, 'Gaussian')
-        %TODO-Test: no support for non-Gaussian as of yet
-        err = SrtInvalidArgsError('Expected a Gaussian-perturbed LTI/LTV ', ...
-            'system');
-        throw(err);
+        throwAsCaller(SrtInvalidArgsError('Expected a Gaussian-perturbed ', ...
+            'LTI/LTV system'));
     elseif ~isa(sys.dist, 'RandomVector')
-        err = SrtInvalidArgsError('Expected a stochastic LTI/LTV system');
-        throw(err);
+        throwAsCaller(SrtInvalidArgsError('Expected a stochastic system'));
     end
 
     % Ensure that the given system is uncontrolled
     if sys.input_dim ~= 0
-        err = SrtInvalidArgsError('Expected an uncontrolled LTI/LTV systems');
-        throw(err);
+        throwAsCaller(SrtInvalidArgsError('Expected an uncontrolled system'));
     end
     
     % Ensure the optional arguments for prob computation are all ok
     if strcmpi(prob_str_splits{2},'prob')
         if length(optional_args)~=2
-            err = SrtInvalidArgsError(['Expected a target set or target ', ...
-                'tube and a desired accuracy']);
-            throw(err);
+            throwAsCaller(SrtInvalidArgsError(['Expected {target set/target',...
+                ' tube} and desired accuracy']));
         end   
         desired_accuracy = optional_args{2};
-        validateattributes(desired_accuracy, {'numeric'}, {'scalar', '>', 0})
+        validateattributes(desired_accuracy, {'numeric'}, {'scalar', '>', 0},...
+            'SReachFwd','desired_accuracy');
         % TODO-Test: Triggers costly computations in testing
         if sys.state_dim <=3 && desired_accuracy < 1e-8
             warning('SReachTools:desiredAccuracy', ...
@@ -265,9 +260,9 @@ function otherInputHandling(sys, initial_state, prob_str_splits, ...
                      ~target_set.isEmptySet() && ...
                      target_set.Dim == sys.state_dim)
 
-                    err = SrtInvalidArgsError(['Expected a non-empty ', ...
-                        'polyhedron of dimension sys.state_dim as target set']);
-                    throw(err);
+                    throwAsCaller(SrtInvalidArgsError(['Expected a non-', ...
+                        'empty polyhedron of dimension sys.state_dim as ',...
+                        'target set']));
                 end
             case 'concat'
                 target_tube = optional_args{1};
@@ -275,10 +270,9 @@ function otherInputHandling(sys, initial_state, prob_str_splits, ...
                      target_tube.tube(1).Dim == sys.state_dim && ...
                      length(target_tube) >= target_time + 1) 
 
-                    err = SrtInvalidArgsError(['Expected a target tube of ', ...
-                        'length not smaller than target_time+1 and ', ...
-                        'dimension sys.state_dim']);
-                    throw(err);
+                    throwAsCaller(SrtInvalidArgsError(['Expected a target ', ...
+                        'tube of length not smaller than target_time+1 and ',...
+                        'dimension sys.state_dim']));
                 end
         end
     end    

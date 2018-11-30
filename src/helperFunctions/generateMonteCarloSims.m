@@ -112,7 +112,7 @@ function [concat_state_realization, ...
         {'nonempty'}, 'generateMonteCarloSims', 'initial_state');
     switch class(initial_state)
         case 'RandomVector'
-            initial_state_realization = initial_state.getRealizations(1)
+            initial_state_realization = initial_state.getRealizations(1);
             if length(initial_state_realization) ~= sys.state_dim
                 throwAsCaller(SrtInvalidArgsError('Expected a sys.state_dim',...
                     '-dimensional random vector as initial_state'));
