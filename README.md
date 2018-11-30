@@ -1,31 +1,40 @@
 # Stochastic reachability toolbox (SReachTools)
 
 SReachTools is a MATLAB toolbox to tackle various problems in stochastic
-reachability.
+reachability. Currently, the toolbox can perform verification and (open-loop or
+affine disturbance-feedback) controller synthesis for linear
+(time-varying/time-invariant) systems with additive (Gaussian/non-Gaussian)
+disturbance. By verification, we are referring to the problem of [*stochastic
+reachability of a target tube*](https://arxiv.org/abs/1810.05217). 
 
 This is an area of **active research**, and this toolbox will attempt to cater
 certain classes of problems.  
 
 We aim to support the following problems:
- - **Stochastic reachability of a target tube** (guaranteeing safety for stochastic
-   systems to lying in a collection of time-varying safe sets while satisfying
-   input bounds):
-    - This problem subsumes existing work on terminal hitting stochastic reach-avoid
-      problems as well as stochastic viability problems. We implement a
-      dynamic programming solution limited to low-dimensional LTI systems using
-      `SReachDynProg`.
-    - **Open-loop controller synthesis** using `SReachPoint` (admissible controller satisfying hard
-      control bounds with maximum safety probability):
+ - **Stochastic reachability of a target tube** (guaranteeing safety for
+   stochastic systems to lying in a collection of time-varying safe sets while
+   satisfying input bounds):
+    - This problem subsumes existing work on terminal hitting stochastic
+      reach-avoid problems as well as stochastic viability problems. We
+      implement a dynamic programming solution, limited to 3-dimensional LTI
+      systems using `SReachDynProg`.
+    - **Open-loop controller synthesis** using `SReachPoint` (admissible
+      controller satisfying hard control bounds with maximum safety
+      probability):
         - `chance-open`: Chance constraint formulation solved via linear
           programming
         - `genzps-open`: Fourier transforms-based compuation (Genz's algorithm +
           patternsearch)
-        - `particle-open`: Particle filter approach (mixed-integer linear
+        - `particle-open`: Particle control approach (mixed-integer linear
           program approach)
-    - **Affine controller synthesis** using `SReachPoint` (admissible controller with chance constrained
-      input bounds with maximum safety probability):
+        - `voronoi-open`: Voronoi partition-based undersampled particle control
+          approach (mixed-integer linear program approach)
+    - **Affine controller synthesis** using `SReachPoint` (admissible controller
+      with chance constrained input bounds with maximum safety probability):
         - `chance-affine`: Chance constraint formulation solved via
           difference-of-convex programming
+        - `voronoi-affine`: Voronoi partition-based undersampled particle
+          control approach (mixed-integer linear program approach)
     - **Stochastic reach set computation** using `SReachSet` (set of initial
       states from which an admissible controller exists such that the
       probability of safety is above a given threshold):
@@ -53,17 +62,20 @@ This will disable some of the features of SReachTools or hamper performance.
 1. MATLAB (>2017a)
     1. Toolboxes
         1. MATLAB's Statistics and Machine Learning Toolbox
-        1. (**Optional**) MATLAB's Global Optimization Toolbox
+        1. (**Optional**) MATLAB's Global Optimization Toolbox --- required for
+           `genzps-open` option in `SReachPoint`
 1. MPT3 ([https://www.mpt3.org/](https://www.mpt3.org/))
     1. Copy the MATLAB script [install_mpt3.m](https://www.mpt3.org/Main/Installation?action=download&upname=install_mpt3.m)
        provided by MPT3 from the browser, and run it in MATLAB to automatically
        download MPT3 and its dependencies.
 1. CVX v2.1 ([http://cvxr.com/cvx/](http://cvxr.com/cvx/))
     1. Install the CVX (Standard bundle, including Gurobi and/or MOSEK)
-    1. Installation instructions are given in [http://cvxr.com/cvx/download/](http://cvxr.com/cvx/download/).
+    1. Installation instructions are given in
+       [http://cvxr.com/cvx/download/](http://cvxr.com/cvx/download/).
 1. (**Optional**) We recommend using Gurobi as the backend solver for the convex
-   programs formulated by SReachTools. In practice, we find both CVX and MPT3
-   perform much better with Gurobi.
+   programs formulated by SReachTools --- required for all particle-based
+   approaches in `SReachPoint`. We also find both CVX and MPT3 perform much
+   better with Gurobi.
     1. To use Gurobi, a license is required from Gurobi Inc. Note that Gurobi
        offers free academic license. For more details, see
        [http://www.gurobi.com/registration/download-reg](http://www.gurobi.com/registration/download-reg).
@@ -79,7 +91,8 @@ This will disable some of the features of SReachTools or hamper performance.
 1. Clone the SReachTools repository (or download the latest zip file from
    [Releases](https://github.com/unm-hscl/SReachTools/releases))
 1. Change the MATLAB current working directory to where SReachTools was
-   downloaded
+   downloaded. **WARNING**: Please do not add the folder to the MATLAB path
+   manually.
 1. Run `srtinit` in MATLAB to add the toolbox to the paths and ensure all
    must-have dependencies are properly installed.
    - You can add `cd <path_to_sreachtools_repo>;srtinit` to your MATLAB's

@@ -4,15 +4,25 @@ title: "Stochastic Reachability Toolbox"
 ---
 
 SReachTools is an open-source MATLAB Toolbox for performing stochastic
-verification and reachability analysis. We had our first stable release of
-this toolbox on [October, 2018](./jekyll/update/2018/10/22/release-of-v1.html).
+verification and controller synthesis. We had our first stable release of this
+toolbox on [October, 2018](./jekyll/update/2018/10/22/release-of-v1.html).
 
+- What can SReachTools do? 
+    - SReachTools provides *safety and performance guarantees* for linear
+      time-varying or time-invariant systems with additive
+      Gaussian or non-Gaussian stochastic disturbance.
+    - SReachTools can construct a set of safe initial states that
+      probabilistically satisfy some specification (*verification*) and design
+      controllers that achieve these specifications while satisfying soft/hard
+      control bounds (*controller synthesis*). 
+    - SReachTools obtains tractable solutions to these problems by exploiting
+      convex optimization, Fourier transforms, and computational geometry.
 - Can you show me some examples of SReachTools working? 
     - We have cataloged a number of
       [examples](https://unm-hscl.github.io/SReachTools/examples/) implemented
       using SReachTools. These examples are also available as part of the source
       code of SReachTools, see `examples/*.m`. 
-- How do I install this? What are the dependencies?
+- How do I install this toolbox? What are the dependencies?
     - Our [quick start guide](#quick-start-guide), described further
       down this page, walks through the installation process.
 - Where do I get the source code from?
@@ -21,27 +31,17 @@ this toolbox on [October, 2018](./jekyll/update/2018/10/22/release-of-v1.html).
       zip files. 
 - How can I use this toolbox? What are the terms and conditions to follow to use
   SReachTools?
-    - SReachTools is licensed under [GNU General Public License v3]
-      (https://www.gnu.org/licenses/), or (at your option) any later version.
+    - SReachTools is licensed under [GNU General Public License
+      v3](https://www.gnu.org/licenses/), or (at your option) any later version.
       See our [License](license/).
 - Can I contribute to this toolbox?
     - Of course, we welcome pull requests. See [Contributing guidelines](contributing/). 
 - Where do I ask questions or give feedback? 
     - Use our [Google groups](https://groups.google.com/d/forum/sreachtools) or
       the [Github issues](https://github.com/unm-hscl/SReachTools/issues) page.
-- What kind of systems can SReachTools handle? 
-    - We can perform verification (construction of safe initial states) and
-      controller synthesis (safety-preserving controllers) on  stochastic linear
-      (time-varying/time-invariant) systems. 
-    - For arbitrary random vectors (specified via a random vector generator), we
-      can utilize particle control (or its extensions) and Lagrangian methods.
-    - With an additional Gaussianity assumption, we can exploit
-      chance-constraints or Fourier transforms for tractable controller
-      synthesis, with ray-shooting algorithms/Lagrangian methods for
-      verification.
 
 The authors of this toolbox are [Abraham P.
-Vinod](http://www.unm.edu/~abyvinod/) and [Joseph D.
+Vinod](http://www.unm.edu/~abyvinod/) (primary maintainer) and [Joseph D.
 Gleason](http://www.unm.edu/~gleasonj/). Please cite their [relevant
 papers](https://scholar.google.com/citations?user=yb5Z7AwAAAAJ&hl=en) when using
 the toolbox. The authors are PhD advisees of [Prof. Meeko
@@ -144,17 +144,20 @@ This will disable some of the features of SReachTools or hamper performance.
 1. MATLAB (>2017a)
     1. Toolboxes
         1. MATLAB's Statistics and Machine Learning Toolbox
-        1. (**Optional**) MATLAB's Global Optimization Toolbox
+        1. (**Optional**) MATLAB's Global Optimization Toolbox --- required for
+           `genzps-open` option in `SReachPoint`
 1. MPT3 ([https://www.mpt3.org/](https://www.mpt3.org/))
     1. Copy the MATLAB script [install_mpt3.m](https://www.mpt3.org/Main/Installation?action=download&upname=install_mpt3.m)
        provided by MPT3 from the browser, and run it in MATLAB to automatically
        download MPT3 and its dependencies.
 1. CVX v2.1 ([http://cvxr.com/cvx/](http://cvxr.com/cvx/))
     1. Install the CVX (Standard bundle, including Gurobi and/or MOSEK)
-    1. Installation instructions are given in [http://cvxr.com/cvx/download/](http://cvxr.com/cvx/download/).
+    1. Installation instructions are given in
+       [http://cvxr.com/cvx/download/](http://cvxr.com/cvx/download/).
 1. (**Optional**) We recommend using Gurobi as the backend solver for the convex
-   programs formulated by SReachTools. In practice, we find both CVX and MPT3
-   perform much better with Gurobi.
+   programs formulated by SReachTools --- required for all particle-based
+   approaches in `SReachPoint`. We also find both CVX and MPT3 perform much
+   better with Gurobi.
     1. To use Gurobi, a license is required from Gurobi Inc. Note that Gurobi
        offers free academic license. For more details, see
        [http://www.gurobi.com/registration/download-reg](http://www.gurobi.com/registration/download-reg).
@@ -170,12 +173,12 @@ This will disable some of the features of SReachTools or hamper performance.
 1. Clone the SReachTools repository (or download the latest zip file from
    [Releases](https://github.com/unm-hscl/SReachTools/releases))
 1. Change the MATLAB current working directory to where SReachTools was
-   downloaded
+   downloaded. **WARNING**: Please do not add the folder to the path manually.
 1. Run `srtinit` in MATLAB to add the toolbox to the paths and ensure all
    must-have dependencies are properly installed.
    - You can add `cd <path_to_sreachtools_repo>;srtinit` to your MATLAB's
      `startup.m` to automatically have this done in future.
-   - Additional steps (optional):
+   - (**Optional**) Additional steps:
        - Run `srtinit -t` to run all the unit tests.
        - Run `srtinit -v` to visualize the steps the changes to the path and
          check for recommended dependencies.  
