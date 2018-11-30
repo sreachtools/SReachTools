@@ -148,6 +148,11 @@ function publish_examples(varargin)
     end
 
     delete('PUBLISH_WORKSPACE.mat');
+    % Copy the publish contents to doc for website
+    current_wd = pwd;
+    cd(srtinit('--rootpath'));
+    copyfile ./examples/publish/ ./docs/examples/publish;
+    cd(current_wd);
 end
 
 
