@@ -91,7 +91,7 @@ classdef SReachEllipsoid
             end
             % For some reason, -eps alone is not enough?
             min_eig_val = min(eig(obj.shape_matrix));
-            if  min_eig_val < -2*eps
+            if  min_eig_val <= -2*eps
                 throwAsCaller(SrtInvalidArgsError(['Covariance ',...
                     'matrix can not have negative eigenvalues']));
             elseif min_eig_val <= eps

@@ -192,7 +192,7 @@ classdef RandomVector
                         end
                         obj.parameters.covariance = symm_cov_matrix;
                     end
-                    
+
                     % Check if the mean and covariance are of correct dimensions
                     if size(obj.parameters.mean, 1) ~=...
                             size(obj.parameters.covariance, 1)
@@ -202,7 +202,7 @@ classdef RandomVector
                         
                     % For some reason, -eps alone is not enough?
                     min_eig_val = min(eig(obj.parameters.covariance));
-                    if  min_eig_val < -2*eps
+                    if min_eig_val <= -2*eps
                         throwAsCaller(SrtInvalidArgsError(['Covariance ',...
                             'matrix can not have negative eigenvalues']));
                     elseif min_eig_val <= eps
