@@ -78,8 +78,8 @@ function [opt_locations, separation] = spreadPointsOnUnitSphere(n_dim,...
         throw(SrtInvalidArgs('Expected n_points > 2*n_dim'));
     elseif mod(n_points - 2*n_dim,(2^n_dim)) > 0
         % Modify n_points such that it is 2^n_dim * k + 2*n_dim for some k> 0
-        warning('SReachTools:runTime', ['Expected n_points = 2^n_dim * k',...
-            ' + 2*n_dim for some k> 0']);
+        warning('SReachTools:runTime', sprintf(['Expected n_points = ',...
+            '2^n_dim * k + 2*n_dim for some k> 0 | Got %d'], n_points));
         n_points_first_quad = ceil(n_points_first_quad);
         n_points = (2^n_dim) * n_points_first_quad + 2*n_dim;
     end
@@ -90,139 +90,148 @@ function [opt_locations, separation] = spreadPointsOnUnitSphere(n_dim,...
             n_points_first_quad);
     end
     
-    %% Initialize
-    % Draw points from the multi-variate Gaussian and normalize it
-    x_iter_unnorm = abs(mvnrnd(zeros(n_points_first_quad, n_dim), eye(n_dim))');
-    norm_val = norms(x_iter_unnorm,2);
-    x_iter = x_iter_unnorm./norm_val;
-    % For difference of convex program, initialize the previous costs
-    separation_prev = 0;
-    sum_slack_prev = 0;
+    if n_points_first_quad > 0
+        %% Initialize
+        % Draw points from the multi-variate Gaussian and normalize it
+        x_iter_unnorm = abs(mvnrnd(zeros(n_points_first_quad, n_dim), eye(n_dim))');
+        norm_val = norms(x_iter_unnorm,2);
+        x_iter = x_iter_unnorm./norm_val;
+        % For difference of convex program, initialize the previous costs
+        separation_prev = 0;
+        sum_slack_prev = 0;
 
-    %% Count the number of slack constraints (each category): 
-    % Pairwise separation (2)
-    n_pairwise_const = nchoosek(n_points_first_quad,2);
-    % Pairwise separation from standard vectors (3)
-    n_pairwise_const_plus_standard = n_pairwise_const + n_dim;
-    % Norm reverse equality constraint (5)
-    slack_count = n_pairwise_const_plus_standard + n_points_first_quad;
+        %% Count the number of slack constraints (each category): 
+        % Pairwise separation (2)
+        n_pairwise_const = nchoosek(n_points_first_quad,2);
+        % Pairwise separation from standard vectors (3)
+        n_pairwise_const_plus_standard = n_pairwise_const + n_dim;
+        % Norm reverse equality constraint (5)
+        slack_count = n_pairwise_const_plus_standard + n_points_first_quad;
 
-    %% Till the difference-of-convex convergence condition is met
-    while continue_condition
-        if verbose
-            fprintf('%2d. Setting up the CVX problem...\n', iter_count);
-        end
-        cvx_begin quiet
-            variable x(n_dim, n_points_first_quad);
-            variable separation;
-            variable slack_var(slack_count,1);
-            minimize (-separation + tau_iter * sum(slack_var));
-            subject to
-                slack_var >= 0;
-                separation >= 0;
-                slack_indx = 1;                 % Counter for slack variable
-                for pt_indx_1 = 1:n_points_first_quad
-                    if verbose
-                        fprintf(' %2d |',pt_indx_1);
-                        if mod(pt_indx_1,10) < 1 &&... % == 0 check
-                                pt_indx_1 < n_points_first_quad
-                            fprintf('\n');
+        %% Till the difference-of-convex convergence condition is met
+        while continue_condition
+            if verbose
+                fprintf('%2d. Setting up the CVX problem...\n', iter_count);
+            end
+            cvx_begin quiet
+                variable x(n_dim, n_points_first_quad);
+                variable separation;
+                variable slack_var(slack_count,1);
+                minimize (-separation + tau_iter * sum(slack_var));
+                subject to
+                    slack_var >= 0;
+                    separation >= 0;
+                    slack_indx = 1;                 % Counter for slack variable
+                    for pt_indx_1 = 1:n_points_first_quad
+                        if verbose
+                            fprintf(' %2d |',pt_indx_1);
+                            if mod(pt_indx_1,10) < 1 &&... % == 0 check
+                                    pt_indx_1 < n_points_first_quad
+                                fprintf('\n');
+                            end
                         end
+                        % Constraint 2: Enforces the pairwise separation among each
+                        % other ||x_i - x_j||_2 >= r^2
+                        for pt_indx_2 = 1:pt_indx_1-1
+                            (x_iter(:, pt_indx_1) - x_iter(:, pt_indx_2))'*...
+                               (x_iter(:, pt_indx_1) - x_iter(:, pt_indx_2)) + ...
+                               2*[x_iter(:, pt_indx_1)-x_iter(:, pt_indx_2);
+                                -(x_iter(:, pt_indx_1)-x_iter(:, pt_indx_2))]'*...
+                               [x(:,pt_indx_1) - x_iter(:,pt_indx_1);
+                                x(:,pt_indx_2) - x_iter(:,pt_indx_2)] +...
+                               slack_var(slack_indx) >= separation^2;                        
+                            slack_indx = slack_indx + 1;                    
+                        end
+                        % Constraint 3: Enforces the pairwise separation from the
+                        % standard vectors ||x_i - e_j||_2 >= r^2
+                        for dim_indx = 1:n_dim
+                            e_i_vector = zeros(n_dim,1);
+                            e_i_vector(dim_indx) = 1;
+                            (x_iter(:, pt_indx_1) - e_i_vector)'*...
+                               (x_iter(:, pt_indx_1) - e_i_vector) + ...
+                               2*(x_iter(:, pt_indx_1) - e_i_vector)'*...
+                                 (x(:,pt_indx_1) - x_iter(:,pt_indx_1)) +...
+                               slack_var(n_pairwise_const + dim_indx)...
+                                >= separation^2;                        
+                        end
+                        % Constraint 4: Enforces the maximum norm constraint
+                        % ||x_i||_2 <= 1
+                        norm(x(:, pt_indx_1)) <= 1;
+                        % Constraint 5: Enforces the minimum norm constraint
+                        % ||x_i||_2 >= 0.8
+                        x_iter(:, pt_indx_1)' * x_iter(:, pt_indx_1) +...
+                            2 * x_iter(:,pt_indx_1)' *...
+                            (x(:,pt_indx_1) - x_iter(:,pt_indx_1)) +...
+                                slack_var(n_pairwise_const_plus_standard +...
+                                    pt_indx_1) >= 0.8^2;                    
+                        % Constraint 6: Enforces the separation constraint is
+                        % satisfied even among the reflections/rotations
+                        x >= separation/2;
                     end
-                    % Constraint 2: Enforces the pairwise separation among each
-                    % other ||x_i - x_j||_2 >= r^2
-                    for pt_indx_2 = 1:pt_indx_1-1
-                        (x_iter(:, pt_indx_1) - x_iter(:, pt_indx_2))'*...
-                           (x_iter(:, pt_indx_1) - x_iter(:, pt_indx_2)) + ...
-                           2*[x_iter(:, pt_indx_1)-x_iter(:, pt_indx_2);
-                            -(x_iter(:, pt_indx_1)-x_iter(:, pt_indx_2))]'*...
-                           [x(:,pt_indx_1) - x_iter(:,pt_indx_1);
-                            x(:,pt_indx_2) - x_iter(:,pt_indx_2)] +...
-                           slack_var(slack_indx) >= separation^2;                        
-                        slack_indx = slack_indx + 1;                    
-                    end
-                    % Constraint 3: Enforces the pairwise separation from the
-                    % standard vectors ||x_i - e_j||_2 >= r^2
-                    for dim_indx = 1:n_dim
-                        e_i_vector = zeros(n_dim,1);
-                        e_i_vector(dim_indx) = 1;
-                        (x_iter(:, pt_indx_1) - e_i_vector)'*...
-                           (x_iter(:, pt_indx_1) - e_i_vector) + ...
-                           2*(x_iter(:, pt_indx_1) - e_i_vector)'*...
-                             (x(:,pt_indx_1) - x_iter(:,pt_indx_1)) +...
-                           slack_var(n_pairwise_const + dim_indx)...
-                            >= separation^2;                        
-                    end
-                    % Constraint 4: Enforces the maximum norm constraint
-                    % ||x_i||_2 <= 1
-                    norm(x(:, pt_indx_1)) <= 1;
-                    % Constraint 5: Enforces the minimum norm constraint
-                    % ||x_i||_2 >= 0.8
-                    x_iter(:, pt_indx_1)' * x_iter(:, pt_indx_1) +...
-                        2 * x_iter(:,pt_indx_1)' *...
-                        (x(:,pt_indx_1) - x_iter(:,pt_indx_1)) +...
-                            slack_var(n_pairwise_const_plus_standard +...
-                                pt_indx_1) >= 0.8^2;                    
-                    % Constraint 6: Enforces the separation constraint is
-                    % satisfied even among the reflections/rotations
-                    x >= separation/2;
-                end
-        if verbose
-            fprintf('\nSolving the CVX problem...');
-            cvx_end
-            disp('done');
+            if verbose
+                fprintf('\nSolving the CVX problem...');
+                cvx_end
+                disp('done');
+            else
+                cvx_end
+            end
+            switch cvx_status
+                case {'Solved','Inaccurate/Solved'}
+                    cost_prev = -separation_prev + tau_iter * sum_slack_prev;            
+                    if verbose
+                        fprintf(['Status: %s\nSum of slack: %1.3e (< %1.3e)\n',...
+                            'Change in opt cost: %1.3e (< %1.3e)\n\n'],...
+                            cvx_status, sum(slack_var), slack_tol, ...
+                            abs(cvx_optval - cost_prev), cost_tol);
+                    end            
+                    x_iter = x;
+                    % STOP if (slack small enough or slack converged) OR max iterations
+                    % CONTINUE if not of above with ORs replaced with AND
+                    continue_condition = ((sum(slack_var) > slack_tol) ||...
+                        (abs(cvx_optval - cost_prev) > cost_tol)) && ...
+                        (iter_count < max_iter);         
+                otherwise
+                    % Impossible to reach here since we are using slack variables
+                    throw(SrtDevError(['Shouldn''t have reached here, since we ',...
+                        'are using slack variables']));
+            end
+            % Update the iteration values and other things for the next iteration
+            iter_count = iter_count + 1;            
+            tau_iter = min(tau_iter * scaling_tau, tau_max);    
+            separation_prev = separation;
+            sum_slack_prev = sum(slack_var);
+        end
+        if iter_count > max_iter || (sum(slack_var) > slack_tol) ||...
+                (abs(cvx_optval - cost_prev) > cost_tol)
+            % Reached the maximum iteration but slack still not within
+            % tolerance
+            opt_locations = nan(n_dim, n_points);
         else
-            cvx_end
+            % Normalize the optimal locations
+            norm_val = norms(x,2);
+            opt_locations_first_quad = x./norm_val;
+            % Reflect/rotate it to all the quadrants
+            % sign_vectors has rows of [1 -1 combinations]
+            sign_vectors = Polyhedron('lb',-ones(n_dim,1),'ub',ones(n_dim,1)).V;
+            opt_locations = zeros(n_dim, n_points);
+            opt_locations(:, 1:2*n_dim) = [eye(n_dim), -eye(n_dim)];
+            for sign_indx = 1:size(sign_vectors,1)
+                indx_locations = 2*n_dim + (sign_indx-1) *n_points_first_quad+1:...
+                    2*n_dim + sign_indx*n_points_first_quad;
+                opt_locations(:, indx_locations) = ...
+                    diag(sign_vectors(sign_indx,:)) * opt_locations_first_quad;
+            end     
+
         end
-        switch cvx_status
-            case {'Solved','Inaccurate/Solved'}
-                cost_prev = -separation_prev + tau_iter * sum_slack_prev;            
-                if verbose
-                    fprintf(['Status: %s\nSum of slack: %1.3e (< %1.3e)\n',...
-                        'Change in opt cost: %1.3e (< %1.3e)\n\n'],...
-                        cvx_status, sum(slack_var), slack_tol, ...
-                        abs(cvx_optval - cost_prev), cost_tol);
-                end            
-                x_iter = x;
-                % STOP if (slack small enough or slack converged) OR max iterations
-                % CONTINUE if not of above with ORs replaced with AND
-                continue_condition = ((sum(slack_var) > slack_tol) ||...
-                    (abs(cvx_optval - cost_prev) > cost_tol)) && ...
-                    (iter_count < max_iter);         
-            otherwise
-                % Impossible to reach here since we are using slack variables
-                throw(SrtDevError(['Shouldn''t have reached here, since we ',...
-                    'are using slack variables']));
+        if verbose
+            disp('Completed spreading the vectors!');
         end
-        % Update the iteration values and other things for the next iteration
-        iter_count = iter_count + 1;            
-        tau_iter = min(tau_iter * scaling_tau, tau_max);    
-        separation_prev = separation;
-        sum_slack_prev = sum(slack_var);
-    end
-    if iter_count > max_iter || (sum(slack_var) > slack_tol) ||...
-            (abs(cvx_optval - cost_prev) > cost_tol)
-        % Reached the maximum iteration but slack still not within
-        % tolerance
-        opt_locations = nan(n_dim, n_points);
     else
-        % Normalize the optimal locations
-        norm_val = norms(x,2);
-        opt_locations_first_quad = x./norm_val;
-        % Reflect/rotate it to all the quadrants
-        % sign_vectors has rows of [1 -1 combinations]
-        sign_vectors = Polyhedron('lb',-ones(n_dim,1),'ub',ones(n_dim,1)).V;
-        opt_locations = zeros(n_dim, n_points);
-        opt_locations(:, 1:2*n_dim) = [eye(n_dim), -eye(n_dim)];
-        for sign_indx = 1:size(sign_vectors,1)
-            indx_locations = 2*n_dim + (sign_indx-1) *n_points_first_quad+1:...
-                2*n_dim + sign_indx*n_points_first_quad;
-            opt_locations(:, indx_locations) = ...
-                diag(sign_vectors(sign_indx,:)) * opt_locations_first_quad;
-        end     
-        
-    end
-    if verbose
-        disp('Completed spreading the vectors!');
+        % Return the standard axis
+        opt_locations(:, 1:2*n_dim) = [eye(n_dim), -eye(n_dim)];            
+        separation = sqrt(2);
+        if verbose
+            disp('Skipped spacing vectors! Returned the standard axes!');
+        end
     end
 end
