@@ -93,14 +93,19 @@ function varargout = srtinit(varargin)
     % SReachTools has not been initialized
     if srtinit_prev_init &&...
             ~strcmpi(SRTINIT_PATH, fileparts(which('srtinit.m')))
+        % CD into src/helperFunctions, in case path is not clear
+        cd('src/helperFunctions');
+        setSrtWarning('all','on');
+        cd('../..');
         warning('SReachTools:setup', sprintf(['SReachTools ',...
             'was initialized from a different toolbox folder.\n',...
             'Initialized toolbox directory path : %s\n',...
             'Current directory path             : %s\n',...
             'srtinit will STOP HERE to avoid function overload.\nTo use ',...
             'this directory instead, please do\n',...
-            '>> cd %s;\n>> srtinit -x;\n>> cd %s;\n>> srtinit'],...
+            '>> cd %s;\n>> srtinit -x;\n>> cd %s;\n>> srtinit;'],...
             SRTINIT_PATH, pwd(),SRTINIT_PATH, pwd()));
+        cd(current_path);
         return
     end
     
@@ -170,6 +175,9 @@ function varargout = srtinit(varargin)
             end
         end
     end
+    
+    % Turn all the warnings on
+    setSrtWarning('all','on');          
     
     if run_tests
         srttest();
