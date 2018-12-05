@@ -144,10 +144,11 @@ close all;clearvars;srtinit;srtinit --version;
 % \mathcal{N}({[0\ 0]}^\top, 10^{-3}I_2)$.
 
 n_mcarlo_sims = 1e5;                        % Monte-Carlo simulation particles
+n_mcarlo_sims_affine = 1e5;                 % For affine controllers
 sampling_time = 0.1;                        % Sampling time
 init_heading = pi/10;                       % Initial heading 
 % Known turning rate sequence
-time_horizon = 50;
+time_horizon = 10;                          % TODO: Gaussian was 50
 omega = pi/time_horizon/sampling_time;
 turning_rate = omega*ones(time_horizon,1);
 % Input space definition
@@ -155,10 +156,10 @@ umax = 6;
 input_space = Polyhedron('lb',0,'ub',umax);
 % Disturbance matrix and random vector definition
 dist_matrix = eye(2);
-eta_dist = RandomVector('Gaussian',zeros(2,1), 0.001 * eye(2));
+eta_dist_gauss = RandomVector('Gaussian',zeros(2,1), 0.001 * eye(2));
 
-[sys, heading_vec] = getDubinsCarLtv('add-dist', turning_rate, init_heading, ...
-    sampling_time, input_space, dist_matrix, eta_dist);
+[sys_gauss, heading_vec] = getDubinsCarLtv('add-dist', turning_rate, init_heading, ...
+    sampling_time, input_space, dist_matrix, eta_dist_gauss);
 
 
 %% Target tube definition
@@ -171,7 +172,8 @@ eta_dist = RandomVector('Gaussian',zeros(2,1), 0.001 * eye(2));
 % The half-length of these boxes decay exponentially with a time constant which
 % is $N/2$.
 
-v_nominal = umax * 3/2;                 % Nominal trajectory's heading velocity
+v_nominal = umax * 1/2;                 % Nominal trajectory's heading velocity
+                                        % TODO: Gaussian was 3/2
 box_halflength_at_0 = 4;                % Box half-length at t=0
 time_const = 1/2*time_horizon;          % Time constant characterize the
                                         % exponentially decaying box half-length
@@ -202,26 +204,26 @@ grid on;
 target_tube = Tube(target_tube_cell{:});
 
 %% Specifying initial states and which options to run
-chance_open_run = 1;
-genzps_open_run = 1;
-particle_open_run = 1;
-voronoi_open_run = 1;
-chance_affine_run = 1;
+chance_open_run_gauss = 0;
+genzps_open_run_gauss = 0;
+particle_open_run_gauss = 0;
+voronoi_open_run_gauss = 0;
+chance_affine_run_gauss = 0;
 
 % Initial states for each of the method
-init_state_chance_open = [2;2] + [-1;1];
-init_state_genzps_open = [2;2] + [1;-1];
-init_state_particle_open = [2;2] + [0;1];
-init_state_voronoi_open = [2;2] + [1.5;1.5];
-init_state_chance_affine = [2;2] + [2;1];
+init_state_chance_open_gauss = [2;2] + [-1;1];
+init_state_genzps_open_gauss = [2;2] + [1;-1];
+init_state_particle_open_gauss = [2;2] + [0;1];
+init_state_voronoi_open_gauss = [2;2] + [1.5;1.5];
+init_state_chance_affine_gauss = [2;2] + [2;1];
 
 
 %% Quantities needed to compute the optimal mean trajectory 
 % We first compute the dynamics of the concatenated state vector $X = Z x_0
 % + H U + G W$, and compute the concatentated random vector $W$ and its mean.
-[Z,H,G] = sys.getConcatMats(time_horizon);
+[Z,H,G] = sys_gauss.getConcatMats(time_horizon);
 % Compute the mean trajectory of the concatenated disturbance vector
-muW = sys.dist.concat(time_horizon).mean();
+muW_gauss = sys_gauss.dist.concat(time_horizon).mean();
 
 %% |SReachPoint|: |chance-open|
 % This method is discussed in <http://hscl.unm.edu/affinecontrollersynthesis
@@ -239,33 +241,33 @@ muW = sys.dist.concat(time_horizon).mean();
 % inequality for risk allocation, it provides a conservative estimate of safety
 % using the open-loop controller.
 
-if chance_open_run
+if chance_open_run_gauss
     fprintf('\n\nSReachPoint with chance-open\n');
     % Set the maximum piecewise-affine overapproximation error to 1e-3
     opts = SReachPointOptions('term', 'chance-open','pwa_accuracy',1e-3);
     tic;
-    [prob_chance_open, opt_input_vec_chance_open] = SReachPoint('term', ...
-        'chance-open', sys, init_state_chance_open, target_tube, opts);
-    elapsed_time_chance_open = toc;
-    if prob_chance_open
+    [prob_chance_open_gauss, opt_input_vec_chance_open_gauss] = SReachPoint('term', ...
+        'chance-open', sys_gauss, init_state_chance_open_gauss, target_tube, opts);
+    elapsed_time_chance_open_gauss = toc;
+    if prob_chance_open_gauss
         % Optimal mean trajectory construction
         % mean_X = Z * x_0 + H * U + G * \mu_W
-        opt_mean_X_chance_open = Z * init_state_chance_open + ...
-            H * opt_input_vec_chance_open + G * muW;
-        opt_mean_traj_chance_open = reshape(opt_mean_X_chance_open, ...
-            sys.state_dim,[]);
+        opt_mean_X_chance_open_gauss = Z * init_state_chance_open_gauss + ...
+            H * opt_input_vec_chance_open_gauss + G * muW_gauss;
+        opt_mean_traj_chance_open_gauss = reshape(opt_mean_X_chance_open_gauss, ...
+            sys_gauss.state_dim,[]);
         % Check via Monte-Carlo simulation
         concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, ...
-            sys, init_state_chance_open, time_horizon,...
-            opt_input_vec_chance_open);
+            sys_gauss, init_state_chance_open_gauss, time_horizon,...
+            opt_input_vec_chance_open_gauss);
         mcarlo_result = target_tube.contains(concat_state_realization);
-        simulated_prob_chance_open = sum(mcarlo_result)/n_mcarlo_sims;
+        simulated_prob_chance_open_gauss = sum(mcarlo_result)/n_mcarlo_sims;
     else
-        simulated_prob_chance_open = NaN;
+        simulated_prob_chance_open_gauss = NaN;
     end
     fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
-        prob_chance_open, simulated_prob_chance_open);
-    fprintf('Computation time: %1.3f\n', elapsed_time_chance_open);
+        prob_chance_open_gauss, simulated_prob_chance_open_gauss);
+    fprintf('Computation time: %1.3f\n', elapsed_time_chance_open_gauss);
 end
 
 %% |SReachPoint|: |genzps-open|
@@ -281,33 +283,33 @@ end
 % nonlinear optimization. Internally, we use the
 % |chance-open| to initialize the nonlinear solver. Hence, this approach will
 % return an open-loop controller with safety at least as good as |chance-open|.
-if genzps_open_run
+if genzps_open_run_gauss
     fprintf('\n\nSReachPoint with genzps-open\n');
     opts = SReachPointOptions('term', 'genzps-open', ...
         'PSoptions',psoptimset('display','iter'));
     tic
-    [prob_genzps_open, opt_input_vec_genzps_open] = SReachPoint('term', ...
-        'genzps-open', sys, init_state_genzps_open, target_tube, opts);
-    elapsed_time_genzps = toc;
-    if prob_genzps_open > 0
+    [prob_genzps_open_gauss, opt_input_vec_genzps_open_gauss] = SReachPoint('term', ...
+        'genzps-open', sys_gauss, init_state_genzps_open_gauss, target_tube, opts);
+    elapsed_time_genzps_gauss = toc;
+    if prob_genzps_open_gauss > 0
         % Optimal mean trajectory construction
         % mean_X = Z * x_0 + H * U + G * \mu_W
-        opt_mean_X_genzps_open =  Z * init_state_genzps_open + ...
-            H * opt_input_vec_genzps_open + G * muW;
-        opt_mean_traj_genzps_open= reshape(opt_mean_X_genzps_open, ...
-            sys.state_dim,[]);
+        opt_mean_X_genzps_open_gauss =  Z * init_state_genzps_open_gauss + ...
+            H * opt_input_vec_genzps_open_gauss + G * muW_gauss;
+        opt_mean_traj_genzps_open_gauss = reshape(opt_mean_X_genzps_open_gauss, ...
+            sys_gauss.state_dim,[]);
         % Check via Monte-Carlo simulation
         concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, ...
-            sys, init_state_genzps_open, time_horizon,...
-            opt_input_vec_genzps_open);
+            sys_gauss, init_state_genzps_open_gauss, time_horizon,...
+            opt_input_vec_genzps_open_gauss);
         mcarlo_result = target_tube.contains(concat_state_realization);
-        simulated_prob_genzps_open = sum(mcarlo_result)/n_mcarlo_sims;
+        simulated_prob_genzps_open_gauss = sum(mcarlo_result)/n_mcarlo_sims;
     else
-        simulated_prob_genzps_open = NaN;
+        simulated_prob_genzps_open_gauss = NaN;
     end
     fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
-        prob_genzps_open, simulated_prob_genzps_open);
-    fprintf('Computation time: %1.3f\n', elapsed_time_genzps);    
+        prob_genzps_open_gauss, simulated_prob_genzps_open_gauss);
+    fprintf('Computation time: %1.3f\n', elapsed_time_genzps_gauss);    
 end
 
 %% |SReachPoint|: |particle-open|
@@ -321,33 +323,33 @@ end
 % program is solved underneath with the number of binary variables corresponding
 % to the number of particles, using too many particles can cause an exponential
 % increase in computational time.
-if particle_open_run
+if particle_open_run_gauss
     fprintf('\n\nSReachPoint with particle-open\n');
     opts = SReachPointOptions('term','particle-open','verbose',1,...
         'n_particles',50);
     tic
-    [prob_particle_open, opt_input_vec_particle_open] = SReachPoint('term', ...
-        'particle-open', sys, init_state_particle_open, target_tube, opts);
-    elapsed_time_particle = toc;
-    if prob_particle_open > 0
+    [prob_particle_open_gauss, opt_input_vec_particle_open_gauss] = SReachPoint('term', ...
+        'particle-open', sys_gauss, init_state_particle_open_gauss, target_tube, opts);
+    elapsed_time_particle_gauss = toc;
+    if prob_particle_open_gauss > 0
         % Optimal mean trajectory construction
         % mean_X = Z * x_0 + H * U + G * \mu_W
-        opt_mean_X_particle_open =  Z * init_state_particle_open + ...
-            H * opt_input_vec_particle_open + G * muW;
-        opt_mean_traj_particle_open =...
-            reshape(opt_mean_X_particle_open, sys.state_dim,[]);
+        opt_mean_X_particle_open_gauss =  Z * init_state_particle_open_gauss + ...
+            H * opt_input_vec_particle_open_gauss + G * muW_gauss;
+        opt_mean_traj_particle_open_gauss =...
+            reshape(opt_mean_X_particle_open_gauss, sys_gauss.state_dim,[]);
         % Check via Monte-Carlo simulation
         concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, ...
-            sys, init_state_particle_open,time_horizon,...
-            opt_input_vec_particle_open);
+            sys_gauss, init_state_particle_open_gauss, time_horizon,...
+            opt_input_vec_particle_open_gauss);
         mcarlo_result = target_tube.contains(concat_state_realization);
-        simulated_prob_particle_open = sum(mcarlo_result)/n_mcarlo_sims;
+        simulated_prob_particle_open_gauss = sum(mcarlo_result)/n_mcarlo_sims;
     else
-        simulated_prob_particle_open = NaN;
+        simulated_prob_particle_open_gauss = NaN;
     end
     fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
-        prob_particle_open, simulated_prob_particle_open);
-    fprintf('Computation time: %1.3f\n', elapsed_time_particle);
+        prob_particle_open_gauss, simulated_prob_particle_open_gauss);
+    fprintf('Computation time: %1.3f\n', elapsed_time_particle_gauss);
 end
 
 %% |SReachPoint|: |voronoi-open|
@@ -365,33 +367,33 @@ end
 % (typically large) number of particles. Thus, this has all the benefits of the
 % |particle-open| option, with additional benefits of being able to specify a
 % maximum overapproximation error as well being computationally tractable.
-if voronoi_open_run
+if voronoi_open_run_gauss
     fprintf('\n\nSReachPoint with voronoi-open\n');
     opts = SReachPointOptions('term','voronoi-open','verbose',1,...
         'max_overapprox_err', 1e-3, 'undersampling_fraction', 0.001);
     tic
-    [prob_voronoi_open, opt_input_vec_voronoi_open] = SReachPoint('term', ...
-        'voronoi-open', sys, init_state_voronoi_open, target_tube, opts);
-    elapsed_time_voronoi = toc;
-    if prob_voronoi_open > 0
+    [prob_voronoi_open_gauss, opt_input_vec_voronoi_open_gauss] = SReachPoint('term', ...
+        'voronoi-open', sys_gauss, init_state_voronoi_open_gauss, target_tube, opts);
+    elapsed_time_voronoi_gauss = toc;
+    if prob_voronoi_open_gauss > 0
         % Optimal mean trajectory construction
         % mean_X = Z * x_0 + H * U + G * \mu_W
-        opt_mean_X_voronoi_open =  Z * init_state_voronoi_open + ...
-            H * opt_input_vec_voronoi_open + G * muW;
-        opt_mean_traj_voronoi_open =...
-            reshape(opt_mean_X_voronoi_open, sys.state_dim,[]);
+        opt_mean_X_voronoi_open_gauss =  Z * init_state_voronoi_open_gauss + ...
+            H * opt_input_vec_voronoi_open_gauss + G * muW_gauss;
+        opt_mean_traj_voronoi_open_gauss =...
+            reshape(opt_mean_X_voronoi_open_gauss, sys_gauss.state_dim,[]);
         % Check via Monte-Carlo simulation
         concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, ...
-            sys, init_state_voronoi_open,time_horizon,...
-            opt_input_vec_voronoi_open);
+            sys_gauss, init_state_voronoi_open_gauss,time_horizon,...
+            opt_input_vec_voronoi_open_gauss);
         mcarlo_result = target_tube.contains(concat_state_realization);
-        simulated_prob_voronoi_open = sum(mcarlo_result)/n_mcarlo_sims;
+        simulated_prob_voronoi_open_gauss = sum(mcarlo_result)/n_mcarlo_sims;
     else
-        simulated_prob_voronoi_open = NaN;
+        simulated_prob_voronoi_open_gauss = NaN;
     end
     fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
-        prob_voronoi_open, simulated_prob_voronoi_open);
-    fprintf('Computation time: %1.3f\n', elapsed_time_voronoi);
+        prob_voronoi_open_gauss, simulated_prob_voronoi_open_gauss);
+    fprintf('Computation time: %1.3f\n', elapsed_time_voronoi_gauss);
 end
 
 %% |SReachPoint|: |chance-affine|
@@ -411,35 +413,35 @@ end
 % the hard control bounds. Due to its incorporation of state-feedback, this
 % approach typically permits the construction of the highest underapproximative
 % probability guarantee.  
-if chance_affine_run
+if chance_affine_run_gauss
     fprintf('\n\nSReachPoint with chance-affine\n');
     opts = SReachPointOptions('term', 'chance-affine',...
         'max_input_viol_prob', 1e-2, 'verbose',2);
     tic
-    [prob_chance_affine, opt_input_vec_chance_affine,...
-        opt_input_gain_chance_affine] = SReachPoint('term', 'chance-affine',...
-            sys, init_state_chance_affine, target_tube, opts);
-    elapsed_time_chance_affine = toc;
-    if prob_chance_affine > 0
+    [prob_chance_affine_gauss, opt_input_vec_chance_affine_gauss,...
+        opt_input_gain_chance_affine_gauss] = SReachPoint('term', 'chance-affine',...
+            sys_gauss, init_state_chance_affine_gauss, target_tube, opts);
+    elapsed_time_chance_affine_gauss = toc;
+    if prob_chance_affine_gauss > 0
         % mean_X = Z * x_0 + H * (M \mu_W + d) + G * \mu_W
-        opt_mean_X_chance_affine = Z * init_state_chance_affine +...
-            H * opt_input_vec_chance_affine + ...
-            (H * opt_input_gain_chance_affine + G) * muW;
+        opt_mean_X_chance_affine_gauss = Z * init_state_chance_affine_gauss +...
+            H * opt_input_vec_chance_affine_gauss + ...
+            (H * opt_input_gain_chance_affine_gauss + G) * muW_gauss;
         % Optimal mean trajectory construction
-        opt_mean_traj_chance_affine = reshape(opt_mean_X_chance_affine, ...
-            sys.state_dim,[]);
+        opt_mean_traj_chance_affine_gauss = reshape(opt_mean_X_chance_affine_gauss, ...
+            sys_gauss.state_dim,[]);
         % Check via Monte-Carlo simulation
         concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, ...
-            sys, init_state_chance_affine, time_horizon,...
-            opt_input_vec_chance_affine, opt_input_gain_chance_affine);
+            sys_gauss, init_state_chance_affine_gauss, time_horizon,...
+            opt_input_vec_chance_affine_gauss, opt_input_gain_chance_affine_gauss);
         mcarlo_result = target_tube.contains(concat_state_realization);
-        simulated_prob_chance_affine = sum(mcarlo_result)/n_mcarlo_sims;
+        simulated_prob_chance_affine_gauss = sum(mcarlo_result)/n_mcarlo_sims;
     else
-        simulated_prob_chance_affine = NaN;
+        simulated_prob_chance_affine_gauss = NaN;
     end
     fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
-        prob_chance_affine, simulated_prob_chance_affine);
-    fprintf('Computation time: %1.3f\n', elapsed_time_chance_affine);
+        prob_chance_affine_gauss, simulated_prob_chance_affine_gauss);
+    fprintf('Computation time: %1.3f\n', elapsed_time_chance_affine_gauss);
 end
 
 %% Summary of results
@@ -462,66 +464,293 @@ h_nominal_traj = scatter(center_box(1,:), center_box(2,:), 50,'ks','filled');
 h_vec = [h_target_tube, h_nominal_traj];
 legend_cell = {'Target tube', 'Nominal trajectory'};
 % Plot the optimal mean trajectory from the vertex under study
-if chance_open_run
-    h_opt_mean_ccc = scatter(...
-          [init_state_chance_open(1), opt_mean_traj_chance_open(1,:)], ...
-          [init_state_chance_open(2), opt_mean_traj_chance_open(2,:)], ...
+if chance_open_run_gauss
+    h_opt_mean_ccc_gauss = scatter(...
+          [init_state_chance_open_gauss(1), opt_mean_traj_chance_open_gauss(1,:)], ...
+          [init_state_chance_open_gauss(2), opt_mean_traj_chance_open_gauss(2,:)], ...
           30, 'bo', 'filled','DisplayName', 'Mean trajectory (chance-open)');
     legend_cell{end+1} = 'Mean trajectory (chance-open)';       
-    h_vec(end+1) = h_opt_mean_ccc;
+    h_vec(end+1) = h_opt_mean_ccc_gauss;
     disp('>>> SReachPoint with chance-open')
     fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
-        prob_chance_open, simulated_prob_chance_open);
-    fprintf('Computation time: %1.3f\n', elapsed_time_chance_open);    
+        prob_chance_open_gauss, simulated_prob_chance_open_gauss);
+    fprintf('Computation time: %1.3f\n', elapsed_time_chance_open_gauss);    
 end
-if genzps_open_run
-    h_opt_mean_genzps = scatter(...
-          [init_state_genzps_open(1), opt_mean_traj_genzps_open(1,:)], ...
-          [init_state_genzps_open(2), opt_mean_traj_genzps_open(2,:)], ...
+if genzps_open_run_gauss
+    h_opt_mean_genzps_gauss = scatter(...
+          [init_state_genzps_open_gauss(1), opt_mean_traj_genzps_open_gauss(1,:)], ...
+          [init_state_genzps_open_gauss(2), opt_mean_traj_genzps_open_gauss(2,:)], ...
           30, 'kd','DisplayName', 'Mean trajectory (genzps-open)');
     legend_cell{end+1} = 'Mean trajectory (genzps-open)';  
-    h_vec(end+1) = h_opt_mean_genzps;
+    h_vec(end+1) = h_opt_mean_genzps_gauss;
     disp('>>> SReachPoint with genzps-open')
     fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
-        prob_genzps_open, simulated_prob_genzps_open);
-    fprintf('Computation time: %1.3f\n', elapsed_time_genzps);    
+        prob_genzps_open_gauss, simulated_prob_genzps_open_gauss);
+    fprintf('Computation time: %1.3f\n', elapsed_time_genzps_gauss);    
 end
-if particle_open_run
-    h_opt_mean_particle = scatter(...
-          [init_state_particle_open(1), opt_mean_traj_particle_open(1,:)], ...
-          [init_state_particle_open(2), opt_mean_traj_particle_open(2,:)], ...
+if particle_open_run_gauss
+    h_opt_mean_particle_gauss = scatter(...
+          [init_state_particle_open_gauss(1), opt_mean_traj_particle_open_gauss(1,:)], ...
+          [init_state_particle_open_gauss(2), opt_mean_traj_particle_open_gauss(2,:)], ...
           30, 'r^', 'filled','DisplayName', 'Mean trajectory (particle-open)');  
     legend_cell{end+1} = 'Mean trajectory (particle-open)';    
-    h_vec(end+1) = h_opt_mean_particle;
+    h_vec(end+1) = h_opt_mean_particle_gauss;
     disp('>>> SReachPoint with particle-open')
     fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
-        prob_particle_open, simulated_prob_particle_open);
-    fprintf('Computation time: %1.3f\n', elapsed_time_particle);
+        prob_particle_open_gauss, simulated_prob_particle_open_gauss);
+    fprintf('Computation time: %1.3f\n', elapsed_time_particle_gauss);
 end
-if voronoi_open_run
-    h_opt_mean_voronoi = scatter(...
-          [init_state_voronoi_open(1), opt_mean_traj_voronoi_open(1,:)], ...
-          [init_state_voronoi_open(2), opt_mean_traj_voronoi_open(2,:)], ...
+if voronoi_open_run_gauss
+    h_opt_mean_voronoi_open_gauss = scatter(...
+          [init_state_voronoi_open_gauss(1), opt_mean_traj_voronoi_open_gauss(1,:)], ...
+          [init_state_voronoi_open_gauss(2), opt_mean_traj_voronoi_open_gauss(2,:)], ...
           30, 'cv', 'filled','DisplayName', 'Mean trajectory (voronoi-open)');  
     legend_cell{end+1} = 'Mean trajectory (voronoi-open)';    
-    h_vec(end+1) = h_opt_mean_voronoi;
+    h_vec(end+1) = h_opt_mean_voronoi_open_gauss;
     disp('>>> SReachPoint with voronoi-open')
     fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
-        prob_voronoi_open, simulated_prob_voronoi_open);
-    fprintf('Computation time: %1.3f\n', elapsed_time_voronoi);    
+        prob_voronoi_open_gauss, simulated_prob_voronoi_open_gauss);
+    fprintf('Computation time: %1.3f\n', elapsed_time_voronoi_gauss);    
 end
-if chance_affine_run
-    h_opt_mean_chance_affine = scatter(...
-          [init_state_chance_affine(1), opt_mean_traj_chance_affine(1,:)], ...
-          [init_state_chance_affine(2), opt_mean_traj_chance_affine(2,:)], ...
+if chance_affine_run_gauss
+    h_opt_mean_chance_affine_gauss = scatter(...
+          [init_state_chance_affine_gauss(1), opt_mean_traj_chance_affine_gauss(1,:)], ...
+          [init_state_chance_affine_gauss(2), opt_mean_traj_chance_affine_gauss(2,:)], ...
           30, 'ms', 'filled','DisplayName', 'Mean trajectory (chance-affine)');
     legend_cell{end+1} = 'Mean trajectory (chance-affine)';
-    h_vec(end+1) = h_opt_mean_chance_affine;
+    h_vec(end+1) = h_opt_mean_chance_affine_gauss;
     disp('>>> SReachPoint with chance-affine')
     fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
-        prob_chance_affine, simulated_prob_chance_affine);
-    fprintf('Computation time: %1.3f\n', elapsed_time_chance_affine);    
+        prob_chance_affine_gauss, simulated_prob_chance_affine_gauss);
+    fprintf('Computation time: %1.3f\n', elapsed_time_chance_affine_gauss);    
 end
+legend(h_vec, legend_cell, 'Location','EastOutside', 'interpreter','latex');
+xlabel('x');
+ylabel('y');
+axis equal
+box on;
+
+%% With beta distribution (non-Gaussian case)
+
+eta_dist_nongauss = RandomVector('UserDefined', @(N) ...
+    0.5*(betarnd(2, 2, 2, N) - 0.5));
+
+[sys_nongauss, heading_vec] = getDubinsCarLtv('add-dist', turning_rate, init_heading, ...
+    sampling_time, input_space, dist_matrix, eta_dist_nongauss);
+
+% Compute the mean trajectory of the concatenated disturbance vector
+muW_nongauss = sys_nongauss.dist.concat(time_horizon).mean();
+
+
+% Specifying initial states and which options to run
+particle_open_run_nongauss = 1;
+voronoi_open_run_nongauss = 1;
+voronoi_affine_run_nongauss = 1;
+
+% Initial states for each of the method
+init_state_particle_open_nongauss = [2;2] + [-2;0.5];
+init_state_voronoi_open_nongauss = init_state_particle_open_nongauss; %[2;2] + [-2;+0.5];
+init_state_voronoi_affine_nongauss = init_state_particle_open_nongauss; %[2;2] + [-1.5;1];
+
+%% |SReachPoint|: |particle-open| (non-Gaussian case)
+% This method is discussed in <http://doi.org/10.1109/CDC.2013.6760626
+% Lesser et. al., Conference on Decision and Control, 2013>.
+%
+% This approach implements the particle control approach to compute an open-loop
+% controller. It is a sampling-based technique and hence the resulting
+% probability estimate is random with its variance going to zero as the number
+% of samples considered goes to infinity. Note that since a mixed-integer linear
+% program is solved underneath with the number of binary variables corresponding
+% to the number of particles, using too many particles can cause an exponential
+% increase in computational time.
+if particle_open_run_nongauss
+    fprintf('\n\nSReachPoint with particle-open\n');
+    opts = SReachPointOptions('term','particle-open','verbose',1,...
+        'n_particles',50);
+    timerVal = tic;
+    [prob_particle_open_nongauss, opt_input_vec_particle_open_nongauss] =...
+        SReachPoint('term', 'particle-open', sys_nongauss,...
+            init_state_particle_open_nongauss, target_tube, opts);
+    elapsed_time_particle_nongauss = toc(timerVal);
+    if prob_particle_open_nongauss > 0
+        % Optimal mean trajectory construction
+        % mean_X = Z * x_0 + H * U + G * \mu_W
+        opt_mean_X_particle_open_nongauss =  Z * init_state_particle_open_nongauss + ...
+            H * opt_input_vec_particle_open_nongauss + G * muW_nongauss;
+        opt_mean_traj_particle_open_nongauss =...
+            reshape(opt_mean_X_particle_open_nongauss, sys_nongauss.state_dim,[]);
+        % Check via Monte-Carlo simulation
+        concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, ...
+            sys_nongauss, init_state_particle_open_nongauss, time_horizon,...
+            opt_input_vec_particle_open_nongauss);
+        mcarlo_result = target_tube.contains(concat_state_realization);
+        simulated_prob_particle_open_nongauss = sum(mcarlo_result)/n_mcarlo_sims;
+    else
+        simulated_prob_particle_open_nongauss = NaN;
+    end
+    fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
+        prob_particle_open_nongauss, simulated_prob_particle_open_nongauss);
+    fprintf('Computation time: %1.3f\n', elapsed_time_particle_nongauss);
+end
+
+
+%% |SReachPoint|: |voronoi-open| (non-Gaussian case)
+% This method is discussed in <arxiv_link_TODO Sartipizadeh et. al., 
+% American Control Conference, 2019 (submitted)>
+%
+% This approach implements the undersampled particle control approach to compute
+% an open-loop controller. It computes, using k-means, a representative sample
+% realization of the disturbance which is significantly smaller. This
+% drastically improves the computational efficiency of the particle control
+% approach. Further, because it uses Hoeffding's inequality, the user can
+% specify an upper-bound on the overapproximation error. The undersampled
+% probability estimate is used to create a lower bound of the solution
+% corresponding to the original particle control problem with appropriate
+% (typically large) number of particles. Thus, this has all the benefits of the
+% |particle-open| option, with additional benefits of being able to specify a
+% maximum overapproximation error as well being computationally tractable.
+if voronoi_open_run_nongauss
+    fprintf('\n\nSReachPoint with voronoi-open\n');
+    opts = SReachPointOptions('term','voronoi-open','verbose',1,...
+        'max_overapprox_err', 1e-3, 'undersampling_fraction', 0.001,...
+        'min_samples', 50);
+    timerVal = tic;
+    [prob_voronoi_open_nongauss, opt_input_vec_voronoi_open_nongauss] = ...
+        SReachPoint('term', 'voronoi-open', sys_nongauss,...
+        init_state_voronoi_open_nongauss, target_tube, opts);
+    elapsed_time_voronoi_nongauss = toc(timerVal);
+    if prob_voronoi_open_nongauss > 0
+        % Optimal mean trajectory construction
+        % mean_X = Z * x_0 + H * U + G * \mu_W
+        opt_mean_X_voronoi_open_nongauss =  Z * init_state_voronoi_open_nongauss + ...
+            H * opt_input_vec_voronoi_open_nongauss + G * muW_nongauss;
+        opt_mean_traj_voronoi_open_nongauss = ...
+            reshape(opt_mean_X_voronoi_open_nongauss, sys_nongauss.state_dim,[]);
+        % Check via Monte-Carlo simulation
+        concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, ...
+            sys_nongauss, init_state_voronoi_open_nongauss,time_horizon,...
+            opt_input_vec_voronoi_open_nongauss);
+        mcarlo_result = target_tube.contains(concat_state_realization);
+        simulated_prob_voronoi_open_nongauss = sum(mcarlo_result)/n_mcarlo_sims;
+    else
+        simulated_prob_voronoi_open_nongauss = NaN;
+    end
+    fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
+        prob_voronoi_open_nongauss, simulated_prob_voronoi_open_nongauss);
+    fprintf('Computation time: %1.3f\n', elapsed_time_voronoi_nongauss);
+end
+
+%% |SReachPoint|: |voronoi-affine|
+% This method extends our previous work in <https://arxiv.org/abs/1811.03643 
+% Sartipizadeh, et. al., American Control Conference, 2019 (submitted)> to
+% compute an affine controller. This work will be made available online
+% soon. TODO
+%
+if voronoi_affine_run_nongauss
+    fprintf('\n\nSReachPoint with voronoi-affine\n');
+    opts = SReachPointOptions('term', 'voronoi-affine',...
+        'max_input_viol_prob', 5e-2, 'verbose', 2, 'min_samples', 30,...
+        'max_overapprox_err', 1e-2);
+    timerVal = tic;
+    [prob_voronoi_affine_nongauss, opt_input_vec_voronoi_affine_nongauss,...
+        opt_input_gain_voronoi_affine_nongauss, kmeans_info_affine_nongauss] = SReachPoint( ...
+            'term', 'voronoi-affine', sys_nongauss, init_state_voronoi_affine_nongauss,...
+                target_tube, opts);
+    elapsed_time_voronoi_affine_nongauss = toc(timerVal);
+    fprintf('Computation time: %1.3f\n', elapsed_time_voronoi_affine_nongauss);
+    if prob_voronoi_affine_nongauss > 0
+        % mean_X = Z * x_0 + H * (M \mu_W + d) + G * \mu_W
+        opt_mean_X_voronoi_affine_nongauss = Z * init_state_voronoi_affine_nongauss +...
+            H * opt_input_vec_voronoi_affine_nongauss + ...
+            (H * opt_input_gain_voronoi_affine_nongauss + G) * muW_nongauss;
+        % Optimal mean trajectory construction
+        opt_mean_traj_voronoi_affine_nongauss = reshape(opt_mean_X_voronoi_affine_nongauss, ...
+            sys_nongauss.state_dim,[]);
+        % Check via Monte-Carlo simulation
+        concat_state_realization_voa = generateMonteCarloSims(...
+            n_mcarlo_sims_affine, sys_nongauss, init_state_voronoi_affine_nongauss,...
+             time_horizon, opt_input_vec_voronoi_affine_nongauss,...
+             opt_input_gain_voronoi_affine_nongauss, 1);
+        mcarlo_result = target_tube.contains(concat_state_realization_voa);
+        simulated_prob_voronoi_affine_nongauss = sum(mcarlo_result)/n_mcarlo_sims_affine;
+    else
+        simulated_prob_voronoi_affine_nongauss = NaN;
+    end
+    fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
+        prob_voronoi_affine_nongauss, simulated_prob_voronoi_affine_nongauss);
+end
+
+
+
+%% Summary of results
+% For ease of comparison, we list the probability estimates, the
+% Monte-Carlo simulation validations, and the computation times once again.
+% We also plot the mean trajectories.
+figure(101);
+clf;
+hold on;
+for itt = 0:time_horizon
+    if itt==0
+        % Remember the first the tube
+        h_target_tube = plot(target_tube_cell{1},'alpha',0.5,'color','y');
+    else
+        plot(target_tube_cell{itt+1},'alpha',0.08,'LineStyle',':','color','y');
+    end            
+end
+axis equal        
+h_nominal_traj = scatter(center_box(1,:), center_box(2,:), 50,'ks','filled');        
+h_vec = [h_target_tube, h_nominal_traj];
+legend_cell = {'Target tube', 'Nominal trajectory'};
+if particle_open_run_nongauss
+    if prob_particle_open_nongauss > 0
+        h_opt_mean_particle_nongauss = scatter(...
+              [init_state_particle_open_nongauss(1),...
+                opt_mean_traj_particle_open_nongauss(1,:)], ...
+              [init_state_particle_open_nongauss(2),...
+                opt_mean_traj_particle_open_nongauss(2,:)], ...
+              30, 'r^', 'filled','DisplayName', 'Mean trajectory (particle-open)');  
+        legend_cell{end+1} = 'Mean trajectory (particle-open)';    
+        h_vec(end+1) = h_opt_mean_particle_nongauss;        
+    end
+    disp('>>> SReachPoint with particle-open')
+    fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
+        prob_particle_open_nongauss, simulated_prob_particle_open_nongauss);
+    fprintf('Computation time: %1.3f\n', elapsed_time_particle_nongauss);
+end
+if voronoi_open_run_nongauss 
+    if prob_voronoi_open_nongauss > 0
+        h_opt_mean_voronoi_nongauss = scatter(...
+              [init_state_voronoi_open_nongauss(1), ...
+                opt_mean_traj_voronoi_open_nongauss(1,:)], ...
+              [init_state_voronoi_open_nongauss(2), ...
+                opt_mean_traj_voronoi_open_nongauss(2,:)], ...
+              30, 'cv', 'filled','DisplayName', 'Mean trajectory (voronoi-open)');  
+        legend_cell{end+1} = 'Mean trajectory (voronoi-open)';    
+        h_vec(end+1) = h_opt_mean_voronoi_nongauss;
+    end
+    disp('>>> SReachPoint with voronoi-open')
+    fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
+        prob_voronoi_open_nongauss, simulated_prob_voronoi_open_nongauss);
+    fprintf('Computation time: %1.3f\n', elapsed_time_voronoi_nongauss);    
+end
+if voronoi_affine_run_nongauss
+    if prob_voronoi_affine_nongauss > 0
+        h_opt_mean_voronoi_affine_nongauss = scatter(...
+              [init_state_voronoi_affine_nongauss(1), opt_mean_traj_voronoi_affine_nongauss(1,:)], ...
+              [init_state_voronoi_affine_nongauss(2), opt_mean_traj_voronoi_affine_nongauss(2,:)], ...
+              30, 'ks', 'filled','DisplayName', 'Mean trajectory (voronoi-affine)');
+        legend_cell{end+1} = 'Mean trajectory (voronoi-affine)';
+        h_vec(end+1) = h_opt_mean_voronoi_affine_nongauss;
+        ellipsoidsFromMonteCarloSims(...
+            concat_state_realization_voa(sys_nongauss.state_dim+1:end,:), sys_nongauss.state_dim,...
+            [1,2], {'k'});
+    end
+    disp('>>> SReachPoint with voronoi-affine')
+    fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
+        prob_voronoi_affine_nongauss, simulated_prob_voronoi_affine_nongauss);
+    fprintf('Computation time: %1.3f\n', elapsed_time_voronoi_affine_nongauss);    
+end
+
 legend(h_vec, legend_cell, 'Location','EastOutside', 'interpreter','latex');
 xlabel('x');
 ylabel('y');

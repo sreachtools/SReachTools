@@ -74,7 +74,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 %                                       1. [MUST HAVE] max_input_viol_prob:
 %                                               Probabilistic relaxation of the
 %                                               hard input constraints 
-%                                               [Default: 1e-2]
+%                                               [Default: 5e-2]
 %                                       2. failure_risk: Risk of the
 %                                               probabilistic overapproximation
 %                                               bound failing [Default: 1e-10]
@@ -82,7 +82,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 %                                               overapproximation error
 %                                               (probabilistically) tolerable up
 %                                               to the failure_risk
-%                                               [Default: 1e-4]
+%                                               [Default: 1e-2]
 %                                       4. undersampling_fraction: Fraction of
 %                                               the associated particles that
 %                                               will be actually optimized for
@@ -217,13 +217,13 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
                     '>=',0,'<=',2}));                        
         case 'voronoi-affine'
             % Probabilistic relaxation of the hard input constraints
-            inpar.addParameter('max_input_viol_prob',1e-2, @(x)...
+            inpar.addParameter('max_input_viol_prob',5e-2, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0,'<',1}));
             % Risk of the probabilistic overapproximation bound failing
             inpar.addParameter('failure_risk', 1e-10, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
             % Maximum overapproximation error (probabilistically) tolerable
-            inpar.addParameter('max_overapprox_err', 5e-3, @(x)...
+            inpar.addParameter('max_overapprox_err', 1e-2, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
             % Fraction of the associated particles that will be actually
             % optimized for (Number of kmeans cluster points/ Voronoi centers)
@@ -289,8 +289,8 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
                         'max_input_viol_prob (Du), the maximum allowed ',...
                         'likelihood of violating the input constraints,',...
                         ' and max_overapprox_err (d), the maximum ',...
-                        '(probabilistic) overapproximation error,\nDu',...
-                        '& d violate the requirement: 0 < 1 - Du + d < 1.']));
+                        '(probabilistic) overapproximation error, Du and',...
+                        ' d violate the requirement: 0 < 1 - Du + d < 1.']));
                 end
             end
     end

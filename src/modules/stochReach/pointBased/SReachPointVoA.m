@@ -252,7 +252,6 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain, kmeans_info] =...
                     % Displacement of actual realizations from the centroids
                     W_disp = W_realizations(:, idx==idx_indx) -...
                         W_centroids(:,idx_indx);
-                    n_particles_partition = size(W_disp, 2);
                     % Chance constraints for the state centroids: Definition
                     % concat_safety_tube_A * X_centroid +
                     %   concat_safety_tube_A * (HM + G) * W_disp <=

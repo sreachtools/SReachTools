@@ -209,8 +209,8 @@ voronoi_open_run = 1;
 chance_affine_run = 1;
 voronoi_affine_run = 1;
 % Initial state definition
-initial_state = [-0.75;         % Initial x relative position
-                 -0.75;         % Initial y relative position
+initial_state = [-1.15;         % Initial x relative position
+                 -1.15;         % Initial y relative position
                  0;             % Initial x relative velocity
                  0];            % Initial y relative velocity
 slice_at_vx_vy = initial_state(3:4); 
@@ -464,8 +464,8 @@ end
 if voronoi_affine_run
     fprintf('\n\nSReachPoint with voronoi-affine\n');
     opts = SReachPointOptions('term', 'voronoi-affine',...
-        'max_input_viol_prob', 1e-2, 'verbose', 1, 'min_samples', 30,...
-        'max_overapprox_err', 5e-3);
+        'max_input_viol_prob', 5e-2, 'verbose', 2, 'min_samples', 30,...
+        'max_overapprox_err', 1e-2);
     tic
     [prob_voronoi_affine, opt_input_vec_voronoi_affine,...
         opt_input_gain_voronoi_affine, kmeans_info_affine] = SReachPoint( ...
