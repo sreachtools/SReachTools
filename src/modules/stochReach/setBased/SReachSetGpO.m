@@ -115,8 +115,8 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
     % Compute the mean of G*W vector --- mean of concatenated state vector
     % under zero input and zero state conditions
     GW = G * sys.dist.concat(time_horizon);
-    mean_X_zizs = GW.parameters.mean;
-    cov_X_sans_input = GW.parameters.covariance;
+    mean_X_zizs = GW.mean();
+    cov_X_sans_input = GW.cov();
     
     % Construct the constrained initial safe set
     init_safe_set = Polyhedron('H', safety_tube(1).H, ...

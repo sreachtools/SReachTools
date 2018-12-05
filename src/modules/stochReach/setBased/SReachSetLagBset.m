@@ -96,10 +96,8 @@ function bounded_set = SReachSetLagBset(sys, onestep_prob_thresh, options)
             % shape matrix that is an appropriately scaled version of the
             % Gaussian covariance matrix
             r_squared = chi2inv(onestep_prob_thresh, 2);
-            ellipse_shape_mat = disturbance.parameters.covariance *...
-                r_squared;
-            bounded_set = SReachEllipsoid(disturbance.parameters.mean,...
-                ellipse_shape_mat);
+            ellipse_shape_mat = disturbance.cov() * r_squared;
+            bounded_set = SReachEllipsoid(disturbance.mean(),ellipse_shape_mat);
             
         case 'polytope'
             % Use RandomVector/getProbPolyhedron to compute the bounded set as a

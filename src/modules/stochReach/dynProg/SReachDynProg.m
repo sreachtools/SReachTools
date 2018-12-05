@@ -213,7 +213,7 @@ function transition_prob_with_delta = computeTransProbWithDelta(sys, grid_x, ...
     transition_prob_with_delta = cell(n_grid_x,1);
     
     % Covariance matrix for x_k+1 is dist_mat * Sigma_dist * dist_mat'
-    dist_cov = sys.dist_mat * sys.dist.parameters.covariance * sys.dist_mat';            
+    dist_cov = sys.dist_mat * sys.dist.cov() * sys.dist_mat';            
 
     if verbose == 1
         % For printing stuff --- Create fixed markers in the index space
@@ -235,7 +235,7 @@ function transition_prob_with_delta = computeTransProbWithDelta(sys, grid_x, ...
             % Compute the mean from the point of interest
             dist_mean = sys.state_mat * grid_x(ix,:)' + ...
                 sys.input_mat * grid_u(iu,:) + ...
-                sys.dist_mat * sys.dist.parameters.mean;
+                sys.dist_mat * sys.dist.mean();
             % Transition probability is the pdf times delta for integration
             transition_prob_with_delta{ix}(iu,:) = mvnpdf(grid_x, ...
                 dist_mean', dist_cov)' .* delta_x_grid';

@@ -228,7 +228,7 @@ init_state_voronoi_affine = initial_state;
 % + H U + G W$, and compute the concatentated random vector $W$ and its mean.
 [Z,H,G] = sys.getConcatMats(time_horizon);
 % Compute the mean trajectory of the concatenated disturbance vector
-muW = sys.dist.concat(time_horizon).parameters.mean;
+muW = sys.dist.concat(time_horizon).mean();
 % Number of Monte-Carloo simulations to use: We will use a lower simulation 
 % count for the affine controllers so that its saturation will not take a lot of 
 % time

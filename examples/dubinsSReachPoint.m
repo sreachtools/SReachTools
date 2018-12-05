@@ -221,7 +221,7 @@ init_state_chance_affine = [2;2] + [2;1];
 % + H U + G W$, and compute the concatentated random vector $W$ and its mean.
 [Z,H,G] = sys.getConcatMats(time_horizon);
 % Compute the mean trajectory of the concatenated disturbance vector
-muW = sys.dist.concat(time_horizon).parameters.mean;
+muW = sys.dist.concat(time_horizon).mean();
 
 %% |SReachPoint|: |chance-open|
 % This method is discussed in <http://hscl.unm.edu/affinecontrollersynthesis

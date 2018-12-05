@@ -134,7 +134,7 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
         sys.dist_mat,'Disturbance',sys.dist);
     [mean_X_zi, ~] = SReachFwd('concat-stoch', sysnoi, initial_state, ...
         time_horizon);
-    mean_W = kron(ones(time_horizon,1), sys.dist.parameters.mean);
+    mean_W = kron(ones(time_horizon,1), sys.dist.mean());
 
     
     %% Compute M --- the number of polytopic halfspaces to worry about
@@ -142,7 +142,7 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
     n_lin_input = size(concat_input_space_A,1);
     
     %% Covariance of W vector
-    cov_concat_disturb = kron(eye(time_horizon),sys.dist.parameters.covariance);
+    cov_concat_disturb = kron(eye(time_horizon),sys.dist.cov());
     % Compute a sparse square root of a matrix: chol produces a sqrt such that
     % sqrt' * sqrt = M. Hence, whenever, we left multiply (inside a norm), we
     % must transpose.

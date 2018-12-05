@@ -112,8 +112,8 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
     time_horizon = length(safety_tube)-1;
     [~, ~, G] = sys.getConcatMats(time_horizon);
     GW = G * sys.dist.concat(time_horizon);
-    mean_X_zizs = GW.parameters.mean;
-    cov_X_sans_input = GW.parameters.covariance;
+    mean_X_zizs = GW.mean();
+    cov_X_sans_input = GW.cov();
     
     % Compute \sqrt{h_i^\top * \Sigma_X_no_input * h_i}
     [concat_safety_tube_A, ~] = safety_tube.concat([1 time_horizon]+1);
