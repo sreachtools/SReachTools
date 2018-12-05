@@ -146,6 +146,8 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 % * To specify a desired set of samples V to use when undersampling in 
 %   voronoi-X, set the undersampling fraction to be very small (say 1e-4/1e-5) 
 %   and set min_samples to V.
+% * For voronoi-affine, we require 1 - max_input_viol_prob + max_overapprox_err
+%   lies inside (0, 1].
 % ============================================================================
 % 
 % This function is part of the Stochastic Reachability Toolbox.
@@ -221,7 +223,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
             inpar.addParameter('failure_risk', 1e-10, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
             % Maximum overapproximation error (probabilistically) tolerable
-            inpar.addParameter('max_overapprox_err', 1e-2, @(x)...
+            inpar.addParameter('max_overapprox_err', 5e-3, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
             % Fraction of the associated particles that will be actually
             % optimized for (Number of kmeans cluster points/ Voronoi centers)
@@ -277,6 +279,19 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
                  throwAsCaller(SrtInvalidArgsError(['Expected ', ...
                      'max_input_viol_prob, the maximum allowed likelihood ', ...
                      'of violating the input constraints.']));
+            end
+            if strcmpi(method_str, 'voronoi-affine')
+                % Ensure that 1 - \Delta_u + \delta \in (0, 1)
+                input_chance_const_tol = 1 - options.max_input_viol_prob ...
+                    + options.max_overapprox_err;
+                if input_chance_const_tol <= 0 || input_chance_const_tol>= 1
+                    throwAsCaller(SrtInvalidArgsError(['Given ', ...
+                        'max_input_viol_prob (Du), the maximum allowed ',...
+                        'likelihood of violating the input constraints,',...
+                        ' and max_overapprox_err (d), the maximum ',...
+                        '(probabilistic) overapproximation error,\nDu',...
+                        '& d violate the requirement: 0 < 1 - Du + d < 1.']));
+                end
             end
     end
 end

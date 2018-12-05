@@ -242,7 +242,8 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain, kmeans_info] =...
                 U_centroids == M * W_centroids + repmat(D, 1, n_kmeans);
                 % Chance constraints for the input: Constraint imposition
                 (bin_u * voronoi_count)/n_particles >= ...
-                    1 - options.max_input_viol_prob;
+                    1 - options.max_input_viol_prob +...
+                    options.max_overapprox_err;
                 % Chance constraints: Definition
                 for idx_indx = 1:n_kmeans
                     if options.verbose >= 1

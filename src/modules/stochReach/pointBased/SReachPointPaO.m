@@ -124,8 +124,10 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
         n_lin_state = size(concat_safety_tube_A,1);
 
         if options.verbose >= 1
+            fprintf('Required number of particles: %d\n', ... 
+                options.n_particles);
             fprintf('Creating random variable realizations....');
-        end    
+        end        
         % Compute the stochasticity of the concatenated disturbance random vec
         W = concat(sys.dist, time_horizon);        
         % Create realizations of W arranged columnwise
