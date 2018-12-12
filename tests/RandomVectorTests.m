@@ -64,10 +64,13 @@ classdef RandomVectorTests < matlab.unittest.TestCase
             test_case.verifyError(@(x) r * 'ch', 'SReachTools:invalidArgs');            
 
             % Repeat this for exponential case (generator)
-            r_exp = RandomVector.exponential(2);
+            exp_mean = 2;
+            r_exp = RandomVector.exponential(exp_mean);
             newr_exp = 3 * r_exp;
-            test_case.verifyTrue(abs(3*r_exp.mean() - newr_exp.mean())<1e-2,...
-                'Mismatch in mean for exponential case');
+            test_case.verifyTrue(abs(3*r_exp.mean() - newr_exp.mean()) <1e-1,...
+                sprintf(['Mismatch in mean for exponential case | MC: %1.3e',...
+                    ' expected: %1.3f'], newr_exp.mean(), 3 * exp_mean));
+                
             % Invalid dimension
             test_case.verifyError(@(x) r_exp*eye(3), 'SReachTools:invalidArgs');            
             % Invalid input

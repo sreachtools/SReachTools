@@ -281,16 +281,16 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
                      'of violating the input constraints.']));
             end
             if strcmpi(method_str, 'voronoi-affine')
-                % Ensure that 1 - \Delta_u + \delta \in (0, 1)
+                % Ensure that 1 - \Delta_u + \delta \in (0, 1]
                 input_chance_const_tol = 1 - options.max_input_viol_prob ...
                     + options.max_overapprox_err;
-                if input_chance_const_tol <= 0 || input_chance_const_tol>= 1
+                if input_chance_const_tol <= 0 || input_chance_const_tol> 1
                     throwAsCaller(SrtInvalidArgsError(['Given ', ...
                         'max_input_viol_prob (Du), the maximum allowed ',...
                         'likelihood of violating the input constraints,',...
                         ' and max_overapprox_err (d), the maximum ',...
                         '(probabilistic) overapproximation error, Du and',...
-                        ' d violate the requirement: 0 < 1 - Du + d < 1.']));
+                        ' d violate the requirement: 0 < 1 - Du + d <= 1.']));
                 end
             end
     end

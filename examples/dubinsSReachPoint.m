@@ -148,17 +148,19 @@ n_mcarlo_sims_affine = 1e5;                 % For affine controllers
 sampling_time = 0.1;                        % Sampling time
 init_heading = pi/10;                       % Initial heading 
 % Known turning rate sequence
-time_horizon = 10;                          % TODO: Gaussian was 50
+time_horizon = 20;
 omega = pi/time_horizon/sampling_time;
-turning_rate = omega*ones(time_horizon,1);
+half_time_horizon = round(time_horizon/2);
+turning_rate = [omega*ones(half_time_horizon,1);
+               -omega*ones(half_time_horizon,1)];
 % Input space definition
-umax = 6;
+umax = 10;
 input_space = Polyhedron('lb',0,'ub',umax);
 % Disturbance matrix and random vector definition
 dist_matrix = eye(2);
 eta_dist_gauss = RandomVector('Gaussian',zeros(2,1), 0.001 * eye(2));
 
-[sys_gauss, heading_vec] = getDubinsCarLtv('add-dist', turning_rate, init_heading, ...
+sys_gauss = getDubinsCarLtv('add-dist', turning_rate, init_heading, ...
     sampling_time, input_space, dist_matrix, eta_dist_gauss);
 
 
@@ -172,34 +174,44 @@ eta_dist_gauss = RandomVector('Gaussian',zeros(2,1), 0.001 * eye(2));
 % The half-length of these boxes decay exponentially with a time constant which
 % is $N/2$.
 
-v_nominal = umax * 1/2;                 % Nominal trajectory's heading velocity
+v_nominal = umax * 2/3;                 % Nominal trajectory's heading velocity
                                         % TODO: Gaussian was 3/2
+% Construct the nominal trajectory
+[~,H,~] = sys_gauss.getConcatMats(time_horizon);
+center_box_X = [zeros(2,1);H * (v_nominal * ones(time_horizon,1))];
+center_box = reshape(center_box_X,2,[]);
+% Box sizes
 box_halflength_at_0 = 4;                % Box half-length at t=0
 time_const = 1/2*time_horizon;          % Time constant characterize the
                                         % exponentially decaying box half-length
-angle_at_the_center=(heading_vec)-pi/2; % Box center angle wrt x-axis at origin
 
 % Target tube definition as well as plotting
 target_tube_cell = cell(time_horizon + 1,1); % Vector to store target sets
 figure(100);clf;hold on
-center_box = zeros(2, time_horizon + 1); % Vector to store box centers
 for itt = 0:time_horizon
-    % Define the target set's center at time itt
-    center_box(:, itt+1) = v_nominal *...
-        [cos(angle_at_the_center(itt+1))-cos(angle_at_the_center(1));
-         sin(angle_at_the_center(itt+1))-sin(angle_at_the_center(1))];
     % Define the target set at time itt
     target_tube_cell{itt+1} = Polyhedron(...
         'lb',center_box(:, itt+1) -box_halflength_at_0*exp(- itt/time_const),...
         'ub', center_box(:, itt+1) + box_halflength_at_0*exp(- itt/time_const));
-    plot(target_tube_cell{itt+1},'alpha',0.5,'color','y');
+    if itt==0
+        % Remember the first the tube
+        h_target_tube = plot(target_tube_cell{1},'alpha',0.5,'color','y');
+    else
+        plot(target_tube_cell{itt+1},'alpha',0.08,'LineStyle',':','color','y');
+    end            
 end
+axis equal        
+h_nominal_traj = scatter(center_box(1,:), center_box(2,:), 50,'ks','filled');        
+h_vec = [h_target_tube, h_nominal_traj];
+legend_cell = {'Target tube', 'Nominal trajectory'};
+legend(h_vec, legend_cell, 'Location','EastOutside', 'interpreter','latex');
 xlabel('x');
 ylabel('y');
 axis equal
-axis([-8    10   -5   21]);
 box on;
 grid on;
+drawnow;
+
 % Target tube definition
 target_tube = Tube(target_tube_cell{:});
 
@@ -208,10 +220,10 @@ chance_open_run_gauss = 0;
 genzps_open_run_gauss = 0;
 particle_open_run_gauss = 0;
 voronoi_open_run_gauss = 0;
-chance_affine_run_gauss = 0;
+chance_affine_run_gauss = 1;
 
 % Initial states for each of the method
-init_state_chance_open_gauss = [2;2] + [-1;1];
+init_state_chance_open_gauss = [2;2] + [-1;-1];
 init_state_genzps_open_gauss = [2;2] + [1;-1];
 init_state_particle_open_gauss = [2;2] + [0;1];
 init_state_voronoi_open_gauss = [2;2] + [1.5;1.5];
@@ -245,10 +257,10 @@ if chance_open_run_gauss
     fprintf('\n\nSReachPoint with chance-open\n');
     % Set the maximum piecewise-affine overapproximation error to 1e-3
     opts = SReachPointOptions('term', 'chance-open','pwa_accuracy',1e-3);
-    tic;
+    timerVal=tic;
     [prob_chance_open_gauss, opt_input_vec_chance_open_gauss] = SReachPoint('term', ...
         'chance-open', sys_gauss, init_state_chance_open_gauss, target_tube, opts);
-    elapsed_time_chance_open_gauss = toc;
+    elapsed_time_chance_open_gauss = toc(timerVal);
     if prob_chance_open_gauss
         % Optimal mean trajectory construction
         % mean_X = Z * x_0 + H * U + G * \mu_W
@@ -287,10 +299,10 @@ if genzps_open_run_gauss
     fprintf('\n\nSReachPoint with genzps-open\n');
     opts = SReachPointOptions('term', 'genzps-open', ...
         'PSoptions',psoptimset('display','iter'));
-    tic
+    timerVal = tic;
     [prob_genzps_open_gauss, opt_input_vec_genzps_open_gauss] = SReachPoint('term', ...
         'genzps-open', sys_gauss, init_state_genzps_open_gauss, target_tube, opts);
-    elapsed_time_genzps_gauss = toc;
+    elapsed_time_genzps_gauss = toc(timerVal);
     if prob_genzps_open_gauss > 0
         % Optimal mean trajectory construction
         % mean_X = Z * x_0 + H * U + G * \mu_W
@@ -327,10 +339,10 @@ if particle_open_run_gauss
     fprintf('\n\nSReachPoint with particle-open\n');
     opts = SReachPointOptions('term','particle-open','verbose',1,...
         'n_particles',50);
-    tic
+    timerVal = tic;
     [prob_particle_open_gauss, opt_input_vec_particle_open_gauss] = SReachPoint('term', ...
         'particle-open', sys_gauss, init_state_particle_open_gauss, target_tube, opts);
-    elapsed_time_particle_gauss = toc;
+    elapsed_time_particle_gauss = toc(timerVal);
     if prob_particle_open_gauss > 0
         % Optimal mean trajectory construction
         % mean_X = Z * x_0 + H * U + G * \mu_W
@@ -371,10 +383,10 @@ if voronoi_open_run_gauss
     fprintf('\n\nSReachPoint with voronoi-open\n');
     opts = SReachPointOptions('term','voronoi-open','verbose',1,...
         'max_overapprox_err', 1e-3, 'undersampling_fraction', 0.001);
-    tic
+    timerVal = tic;
     [prob_voronoi_open_gauss, opt_input_vec_voronoi_open_gauss] = SReachPoint('term', ...
         'voronoi-open', sys_gauss, init_state_voronoi_open_gauss, target_tube, opts);
-    elapsed_time_voronoi_gauss = toc;
+    elapsed_time_voronoi_gauss = toc(timerVal);
     if prob_voronoi_open_gauss > 0
         % Optimal mean trajectory construction
         % mean_X = Z * x_0 + H * U + G * \mu_W
@@ -417,11 +429,12 @@ if chance_affine_run_gauss
     fprintf('\n\nSReachPoint with chance-affine\n');
     opts = SReachPointOptions('term', 'chance-affine',...
         'max_input_viol_prob', 1e-2, 'verbose',2);
-    tic
+    timerVal = tic;
     [prob_chance_affine_gauss, opt_input_vec_chance_affine_gauss,...
         opt_input_gain_chance_affine_gauss] = SReachPoint('term', 'chance-affine',...
             sys_gauss, init_state_chance_affine_gauss, target_tube, opts);
-    elapsed_time_chance_affine_gauss = toc;
+    elapsed_time_chance_affine_gauss = toc(timerVal);
+    fprintf('Computation time: %1.3f\n', elapsed_time_chance_affine_gauss);
     if prob_chance_affine_gauss > 0
         % mean_X = Z * x_0 + H * (M \mu_W + d) + G * \mu_W
         opt_mean_X_chance_affine_gauss = Z * init_state_chance_affine_gauss +...
@@ -431,10 +444,11 @@ if chance_affine_run_gauss
         opt_mean_traj_chance_affine_gauss = reshape(opt_mean_X_chance_affine_gauss, ...
             sys_gauss.state_dim,[]);
         % Check via Monte-Carlo simulation
-        concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, ...
-            sys_gauss, init_state_chance_affine_gauss, time_horizon,...
-            opt_input_vec_chance_affine_gauss, opt_input_gain_chance_affine_gauss);
-        mcarlo_result = target_tube.contains(concat_state_realization);
+        concat_state_realization_cca_gauss = generateMonteCarloSims(...
+            n_mcarlo_sims, sys_gauss, init_state_chance_affine_gauss, ...
+            time_horizon, opt_input_vec_chance_affine_gauss,...
+            opt_input_gain_chance_affine_gauss, 1);
+        mcarlo_result = target_tube.contains(concat_state_realization_cca_gauss);
         simulated_prob_chance_affine_gauss = sum(mcarlo_result)/n_mcarlo_sims;
     else
         simulated_prob_chance_affine_gauss = NaN;
@@ -519,6 +533,9 @@ if chance_affine_run_gauss
           30, 'ms', 'filled','DisplayName', 'Mean trajectory (chance-affine)');
     legend_cell{end+1} = 'Mean trajectory (chance-affine)';
     h_vec(end+1) = h_opt_mean_chance_affine_gauss;
+    polytopesFromMonteCarloSims(...
+            concat_state_realization_cca_gauss(sys_gauss.state_dim+1:end,:), sys_gauss.state_dim,...
+            [1,2], {'color','m','edgecolor','m','linewidth',2,'alpha',0.15,'LineStyle',':'});
     disp('>>> SReachPoint with chance-affine')
     fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
         prob_chance_affine_gauss, simulated_prob_chance_affine_gauss);
@@ -529,8 +546,11 @@ xlabel('x');
 ylabel('y');
 axis equal
 box on;
+drawnow;
 
 %% With beta distribution (non-Gaussian case)
+n_mcarlo_sims = 1e5;                        % Monte-Carlo simulation particles
+n_mcarlo_sims_affine = 1e3;                 % For affine controllers
 
 eta_dist_nongauss = RandomVector('UserDefined', @(N) ...
     0.5*(betarnd(2, 2, 2, N) - 0.5));
@@ -548,7 +568,7 @@ voronoi_open_run_nongauss = 1;
 voronoi_affine_run_nongauss = 1;
 
 % Initial states for each of the method
-init_state_particle_open_nongauss = [2;2] + [-2;0.5];
+init_state_particle_open_nongauss = [2;1];
 init_state_voronoi_open_nongauss = init_state_particle_open_nongauss; %[2;2] + [-2;+0.5];
 init_state_voronoi_affine_nongauss = init_state_particle_open_nongauss; %[2;2] + [-1.5;1];
 
@@ -580,10 +600,10 @@ if particle_open_run_nongauss
         opt_mean_traj_particle_open_nongauss =...
             reshape(opt_mean_X_particle_open_nongauss, sys_nongauss.state_dim,[]);
         % Check via Monte-Carlo simulation
-        concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, ...
+        concat_state_realization_pao = generateMonteCarloSims(n_mcarlo_sims, ...
             sys_nongauss, init_state_particle_open_nongauss, time_horizon,...
             opt_input_vec_particle_open_nongauss);
-        mcarlo_result = target_tube.contains(concat_state_realization);
+        mcarlo_result = target_tube.contains(concat_state_realization_pao);
         simulated_prob_particle_open_nongauss = sum(mcarlo_result)/n_mcarlo_sims;
     else
         simulated_prob_particle_open_nongauss = NaN;
@@ -627,10 +647,10 @@ if voronoi_open_run_nongauss
         opt_mean_traj_voronoi_open_nongauss = ...
             reshape(opt_mean_X_voronoi_open_nongauss, sys_nongauss.state_dim,[]);
         % Check via Monte-Carlo simulation
-        concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, ...
+        concat_state_realization_voo = generateMonteCarloSims(n_mcarlo_sims, ...
             sys_nongauss, init_state_voronoi_open_nongauss,time_horizon,...
             opt_input_vec_voronoi_open_nongauss);
-        mcarlo_result = target_tube.contains(concat_state_realization);
+        mcarlo_result = target_tube.contains(concat_state_realization_voo);
         simulated_prob_voronoi_open_nongauss = sum(mcarlo_result)/n_mcarlo_sims;
     else
         simulated_prob_voronoi_open_nongauss = NaN;
@@ -649,8 +669,9 @@ end
 if voronoi_affine_run_nongauss
     fprintf('\n\nSReachPoint with voronoi-affine\n');
     opts = SReachPointOptions('term', 'voronoi-affine',...
-        'max_input_viol_prob', 5e-2, 'verbose', 2, 'min_samples', 30,...
-        'max_overapprox_err', 1e-2);
+        'max_input_viol_prob', 1e-2, 'verbose', 2, 'min_samples', 50,...
+        'max_overapprox_err', 1e-2, 'undersampling_fraction', 1e-5,...
+        'failure_risk', 1e-8);
     timerVal = tic;
     [prob_voronoi_affine_nongauss, opt_input_vec_voronoi_affine_nongauss,...
         opt_input_gain_voronoi_affine_nongauss, kmeans_info_affine_nongauss] = SReachPoint( ...
@@ -686,21 +707,21 @@ end
 % For ease of comparison, we list the probability estimates, the
 % Monte-Carlo simulation validations, and the computation times once again.
 % We also plot the mean trajectories.
-figure(101);
+figure(102);
 clf;
 hold on;
-for itt = 0:time_horizon
+for itt = time_horizon:-1:0
     if itt==0
         % Remember the first the tube
-        h_target_tube = plot(target_tube_cell{1},'alpha',0.5,'color','y');
+        h_target_tube = plot(target_tube_cell{1},'LineStyle','--','alpha',0.2,'color','y');
     else
-        plot(target_tube_cell{itt+1},'alpha',0.08,'LineStyle',':','color','y');
+        plot(target_tube_cell{itt+1},'alpha',0.2,'LineStyle','--','color','y');        
     end            
 end
 axis equal        
-h_nominal_traj = scatter(center_box(1,:), center_box(2,:), 50,'ks','filled');        
-h_vec = [h_target_tube, h_nominal_traj];
-legend_cell = {'Target tube', 'Nominal trajectory'};
+%h_nominal_traj = scatter(center_box(1,:), center_box(2,:), 50,'ks','filled');        
+h_vec = [h_target_tube];%, h_nominal_traj];
+legend_cell = {'Target tube'};%, 'Nominal trajectory'};
 if particle_open_run_nongauss
     if prob_particle_open_nongauss > 0
         h_opt_mean_particle_nongauss = scatter(...
@@ -708,9 +729,12 @@ if particle_open_run_nongauss
                 opt_mean_traj_particle_open_nongauss(1,:)], ...
               [init_state_particle_open_nongauss(2),...
                 opt_mean_traj_particle_open_nongauss(2,:)], ...
-              30, 'r^', 'filled','DisplayName', 'Mean trajectory (particle-open)');  
+              30, 'r^', 'filled','MarkerEdgeColor','k', 'DisplayName', 'Mean trajectory (particle-open)');  
         legend_cell{end+1} = 'Mean trajectory (particle-open)';    
         h_vec(end+1) = h_opt_mean_particle_nongauss;        
+        polytopesFromMonteCarloSims(...
+            concat_state_realization_pao(sys_nongauss.state_dim+1:end,:), sys_nongauss.state_dim,...
+            [1,2], {'color','r','edgecolor','r','linewidth',2,'alpha',0.15,'LineStyle',':'});
     end
     disp('>>> SReachPoint with particle-open')
     fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
@@ -724,9 +748,12 @@ if voronoi_open_run_nongauss
                 opt_mean_traj_voronoi_open_nongauss(1,:)], ...
               [init_state_voronoi_open_nongauss(2), ...
                 opt_mean_traj_voronoi_open_nongauss(2,:)], ...
-              30, 'cv', 'filled','DisplayName', 'Mean trajectory (voronoi-open)');  
+              30, 'cv', 'filled','MarkerEdgeColor','k', 'DisplayName', 'Mean trajectory (voronoi-open)');  
         legend_cell{end+1} = 'Mean trajectory (voronoi-open)';    
         h_vec(end+1) = h_opt_mean_voronoi_nongauss;
+        polytopesFromMonteCarloSims(...
+            concat_state_realization_voo(sys_nongauss.state_dim+1:end,:), sys_nongauss.state_dim,...
+            [1,2], {'color','c','edgecolor','c','linewidth',2,'alpha',0.15,'LineStyle',':'});
     end
     disp('>>> SReachPoint with voronoi-open')
     fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
@@ -738,12 +765,12 @@ if voronoi_affine_run_nongauss
         h_opt_mean_voronoi_affine_nongauss = scatter(...
               [init_state_voronoi_affine_nongauss(1), opt_mean_traj_voronoi_affine_nongauss(1,:)], ...
               [init_state_voronoi_affine_nongauss(2), opt_mean_traj_voronoi_affine_nongauss(2,:)], ...
-              30, 'ks', 'filled','DisplayName', 'Mean trajectory (voronoi-affine)');
+              30, 'bs', 'filled','DisplayName', 'Mean trajectory (voronoi-affine)');
         legend_cell{end+1} = 'Mean trajectory (voronoi-affine)';
         h_vec(end+1) = h_opt_mean_voronoi_affine_nongauss;
-        ellipsoidsFromMonteCarloSims(...
+        polytopesFromMonteCarloSims(...
             concat_state_realization_voa(sys_nongauss.state_dim+1:end,:), sys_nongauss.state_dim,...
-            [1,2], {'k'});
+            [1,2], {'color','b','edgecolor','b','linewidth',2,'alpha',0.15,'LineStyle',':'});
     end
     disp('>>> SReachPoint with voronoi-affine')
     fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
