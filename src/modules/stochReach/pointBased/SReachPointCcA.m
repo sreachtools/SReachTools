@@ -173,6 +173,10 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
     norminvgammai_iter = norminv(lb_risk * ones(n_lin_input,1));
     tau_iter = options.tau_initial;
 
+    % No. of non-zero blocks
+    n_blocks = (time_horizon - 1) * time_horizon/2;
+    blocks_indx_vec = cumsum(1:time_horizon-1);
+    
     continue_condition = 1;    
     % DC subproblems
     while continue_condition == 1
@@ -183,8 +187,9 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
         end
         % The iteration values are updated at the end of the problem
         cvx_begin quiet
-            variable M_matrix(sys.input_dim*time_horizon,sys.dist_dim*time_horizon);
-            variable d_vector(sys.input_dim * time_horizon, 1);
+            expression M(sys.input_dim*time_horizon,sys.dist_dim*time_horizon);
+            variable M_vars(sys.input_dim * sys.dist_dim, n_blocks);
+            variable d(sys.input_dim * time_horizon, 1);
             variable mean_X(sys.state_dim * time_horizon, 1);
             % State chance constraint
             variable deltai(n_lin_state, 1) nonnegative;
@@ -202,11 +207,20 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
                                         (sum(sum(slack_reverse_state)) + ...
                                             sum(sum(slack_reverse_input))));
             subject to
-                % Causality constraints on M_matrix
-                for time_indx = 1:time_horizon
-                    M_matrix((time_indx-1)*sys.input_dim + 1:...
+                % Causality constraints on M is automatically enforced by
+                % expression declaration (sets all other terms to zero)
+                for time_indx = 2:time_horizon
+                    if time_indx == 2
+                        blocks_start_indx = 1;
+                    else
+                        blocks_start_indx = blocks_indx_vec(time_indx - 2)+1;
+                    end
+                    blocks_end_indx = blocks_indx_vec(time_indx - 1);
+                    M((time_indx-1)*sys.input_dim + 1:...
                         time_indx*sys.input_dim, ...
-                        (time_indx-1)*sys.dist_dim+1:end) == 0; 
+                        1:(time_indx-1)*sys.dist_dim) =...
+                        reshape(M_vars(:,blocks_start_indx:blocks_end_indx),...
+                            sys.input_dim, []); 
                 end
                 % slack variables
                 slack_reverse_state >= 0;
@@ -216,7 +230,7 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
                 norminvdeltai >= 0;
                 norminvgammai >= 0;
                 % Mean trajectory constraint
-                mean_X == mean_X_zi + H * (M_matrix * mean_W + d_vector);
+                mean_X == mean_X_zi + H * (M * mean_W + d);
                 % Risk allocation bounds --- state
                 lb_risk <= deltai <= 0.5;
                 sum(deltai) <= 1 - options.max_input_viol_prob;
@@ -224,9 +238,9 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
                 lb_risk <= gammai  <= options.max_input_viol_prob;
                 sum(gammai) <= options.max_input_viol_prob;
                 % Norms in their epigraph form (search 'chol' for why transpose)
-                norms(concat_safety_tube_A* (H * M_matrix + G) * ...
+                norms(concat_safety_tube_A* (H * M + G) * ...
                     sqrt_cov_concat_disturb',2,2)<= norm_state_replace_slack;
-                norms(concat_input_space_A* M_matrix * ...
+                norms(concat_input_space_A* M * ...
                     sqrt_cov_concat_disturb',2,2)<= norm_input_replace_slack;
                 % Norminvcdf(1-x) in their epigraph form via
                 % piecewise-affine approximation
@@ -252,7 +266,7 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
                        slack_reverse_state;
                    
                 % Input CC
-                concat_input_space_A * d_vector + ...
+                concat_input_space_A * d + ...
                   pow_p(norm_input_replace_slack + norminvgammai,2)/2 ...
                   - concat_input_space_b...
                     <= norm_input_replace_slack_iter.^2/2 + ...
@@ -337,8 +351,8 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
     if max(sum_slack_rev_state, sum_slack_rev_input) <= options.dc_conv_tol
         % Both the DC slack variables are below tolerance
         lb_stoch_reach = 1 - sum(deltai)/(1-options.max_input_viol_prob);
-        opt_input_vec = d_vector;
-        opt_input_gain = M_matrix;
+        opt_input_vec = d;
+        opt_input_gain = M;
         risk_alloc_state = deltai;
         risk_alloc_input = gammai;
     else

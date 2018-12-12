@@ -213,6 +213,11 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain, kmeans_info] =...
         [concat_input_space_A, concat_input_space_b] =...
             normalizeForParticleControl(concat_input_space_A,...
                 concat_input_space_b);
+            
+        % No. of non-zero blocks
+        n_blocks = (time_horizon - 1) * time_horizon/2;
+        blocks_indx_vec = cumsum(1:time_horizon-1);
+        % CVX problem setup
         cvx_clear
         cvx_begin
             if options.verbose >= 2
@@ -221,7 +226,8 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain, kmeans_info] =...
                 cvx_quiet true
             end
             cvx_solver Gurobi
-            variable M(sys.input_dim * time_horizon, sys.dist_dim *time_horizon)
+            expression M(sys.input_dim*time_horizon, sys.dist_dim*time_horizon);
+            variable M_vars(sys.input_dim * sys.dist_dim, n_blocks);
             variable D(sys.input_dim * time_horizon,1);
             variable X_centroids(sys.state_dim * time_horizon, n_kmeans);
             variable U_centroids(sys.input_dim * time_horizon, n_kmeans);
@@ -229,11 +235,20 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain, kmeans_info] =...
             variable bin_u(1,n_kmeans) binary;
             maximize ((bin_x * voronoi_count)/n_particles)
             subject to
-                % Causality constraints on M_matrix
-                for time_indx = 1:time_horizon
+                % Causality constraints on M is automatically enforced by
+                % expression declaration (sets all other terms to zero)
+                for time_indx = 2:time_horizon
+                    if time_indx == 2
+                        blocks_start_indx = 1;
+                    else
+                        blocks_start_indx = blocks_indx_vec(time_indx - 2)+1;
+                    end
+                    blocks_end_indx = blocks_indx_vec(time_indx - 1);
                     M((time_indx-1)*sys.input_dim + 1:...
                         time_indx*sys.input_dim, ...
-                        (time_indx-1)*sys.dist_dim+1:end) == 0; 
+                        1:(time_indx-1)*sys.dist_dim) =...
+                        reshape(M_vars(:,blocks_start_indx:blocks_end_indx),...
+                            sys.input_dim, []); 
                 end
                 % X = Z x_0 + H D + (H M + G) W
                 X_centroids == repmat(Z*initial_state + H*D, 1, n_kmeans)+ ...
