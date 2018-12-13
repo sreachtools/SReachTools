@@ -32,7 +32,9 @@ function varargout = srtinit(varargin)
 % Notes:
 % ------
 % * Performing a deinit and testing '-x -t' will deinit the SReachTools toolbox 
-%   and then perform unit testing, causing all unit tests to fail.
+%   and ignore the unit testing command.
+% * All SReachTool warnings (except SReachTools:setup) will be turned on by
+%   srtinit.
 % 
 % =========================================================================
 % 
@@ -142,29 +144,10 @@ function varargout = srtinit(varargin)
         path_cell = split(p, ':');
     else
         disp('Platform not supported')
-    end 
-    if ~deinit
-        % add paths
-        for i = 1:length(new_paths) - 1
-            if ~ismember(new_paths{i}, path_cell)
-                if verbose
-                    fprintf('Adding to path: %s\n', new_paths{i});
-                end
-                addpath(new_paths{i});
-            end
-        end
-        
-        %% Dependency checks                
-        check_must_have_dependencies();
-        prev_warn_state = getSrtWarning('SReachTools:setup');
-        if verbose
-            setSrtWarning('SReachTools:setup','on');
-        else
-            setSrtWarning('SReachTools:setup','off');
-        end
-        check_recommended_dependencies();
-        setSrtWarning('SReachTools:setup', prev_warn_state);        
-    else
+    end
+    
+    %% Deiniting procedures
+    if deinit
         % remove paths
         for i = 1:length(new_paths) - 1
             if ismember(new_paths{i}, path_cell)
@@ -174,11 +157,39 @@ function varargout = srtinit(varargin)
                 rmpath(new_paths{i});
             end
         end
+        % Exit after deininting
+        return;
     end
     
-    % Turn all the warnings on
-    setSrtWarning('all','on');          
-    
+    % Reach here only if there is no -x flag
+    %% Initing procedures
+    % add paths
+    for i = 1:length(new_paths) - 1
+        if ~ismember(new_paths{i}, path_cell)
+            if verbose
+                fprintf('Adding to path: %s\n', new_paths{i});
+            end
+            addpath(new_paths{i});
+        end
+    end
+
+    %% Dependency checks    
+    % Respect end-user's wish to have warnings state
+    check_must_have_dependencies();
+    prev_warn_state = getSrtWarning('SReachTools:setup');
+    if verbose
+        setSrtWarning('SReachTools:setup','on');
+    else
+        setSrtWarning('SReachTools:setup','off');
+    end
+    check_recommended_dependencies();
+    setSrtWarning('SReachTools:setup', prev_warn_state);      
+
+    %% Forcefully turn other warnings on
+    setSrtWarning('SReachTools:runtime','on');
+    setSrtWarning('SReachTools:desiredAccuracy','on');          
+
+    %% Run tests
     if run_tests
         srttest();
     end
