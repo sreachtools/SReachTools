@@ -150,8 +150,8 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain, kmeans_info] =...
 
         % Step 1: Compute the number of particles needed to meet the
         % specified tolerance
-        n_particles = ceil(-log(options.failure_risk)/...
-            (2*options.max_overapprox_err));        
+        n_particles = ceil(...
+           git (log(2)-log(options.failure_risk))/(2*options.max_overapprox_err^2));        
         n_kmeans = max(ceil(n_particles * options.undersampling_fraction),...
             options.min_samples);
         if n_kmeans > 100
@@ -181,18 +181,29 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain, kmeans_info] =...
         % --- Use k-means clustering to undersample W | Count the particles
         % associated with each center | Transposed input since kmeans expects
         % each data point row-wise
-        if options.verbose >= 1
-            fprintf('Using k-means for undersampling....');
-        end 
         
-        [idx, W_centroids_output] = kmeans(W_realizations', n_kmeans,...
-            'MaxIter',1000);        
-        W_centroids = W_centroids_output';
-        voronoi_count = zeros(n_kmeans,1);
-        for idx_indx = 1:n_kmeans
-            relv_idx = (idx==idx_indx);
-            % Count the particles associated with the partition
-            voronoi_count(idx_indx) = nnz(relv_idx);
+        if n_kmeans < n_particles
+            % No. of centroids required is smaller than the actual number
+            % of seeds
+            if options.verbose >= 1
+                fprintf('Using k-means for undersampling....');
+            end 
+            [idx, W_centroids_output] = kmeans(W_realizations', n_kmeans,...
+                'MaxIter',1000);        
+            W_centroids = W_centroids_output';
+            voronoi_count = zeros(n_kmeans,1);
+            for idx_indx = 1:n_kmeans
+                relv_idx = (idx==idx_indx);
+                % Count the particles associated with the partition
+                voronoi_count(idx_indx) = nnz(relv_idx);
+            end
+        else
+            warning('SReachTools:runtime',['Skipping Voronoi',...
+                ' partitioning, since no. of centroids is equal to no. of ',...
+                'particles | However, the code used will be the same.']);
+            voronoi_count = ones(n_particles,1);
+            W_centroids = W_realizations;     
+            idx = 1:n_particles;
         end
         
         
@@ -311,11 +322,16 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain, kmeans_info] =...
                     concat_safety_tube_b + my_eps);
                 approx_stoch_reach_noc =sum(bin_x_orig)/n_particles;            
                 
-                % Step 5: Account for the saturation via HSCC 2019 (submitted)
-                % result TODO
+                % Step 5: Account for the saturation via HSCC 2019 result
                 approx_stoch_reach = (approx_stoch_reach_noc -...
                    options.max_input_viol_prob)/(1-options.max_input_viol_prob);
                 if options.verbose >= 1
+                    bin_u_orig = all(concat_input_space_A * ...
+                        opt_U_realizations <= concat_input_space_b + my_eps);
+                    approx_stoch_u =sum(bin_u_orig)/n_particles;            
+                    fprintf(['Input constraint satisfaction probability: ',...
+                        '%1.3f | Acceptable: >%1.3f \n'], approx_stoch_u,...
+                        1 - options.max_input_viol_prob);
                     fprintf(...
                         ['Undersampled probability (with %d particles): ',...
                         '%1.4f\nUnderapproximation to the original MILP (',...
