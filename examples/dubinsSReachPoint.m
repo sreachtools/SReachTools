@@ -148,7 +148,7 @@ n_mcarlo_sims_affine = 1e5;                 % For affine controllers
 sampling_time = 0.1;                        % Sampling time
 init_heading = pi/10;                       % Initial heading 
 % Known turning rate sequence
-time_horizon = 20;
+time_horizon = 12;
 omega = pi/time_horizon/sampling_time;
 half_time_horizon = round(time_horizon/2);
 turning_rate = [omega*ones(half_time_horizon,1);
@@ -382,7 +382,7 @@ end
 if voronoi_open_run_gauss
     fprintf('\n\nSReachPoint with voronoi-open\n');
     opts = SReachPointOptions('term','voronoi-open','verbose',1,...
-        'max_overapprox_err', 1e-2, 'undersampling_fraction', 0.001);
+        'max_overapprox_err', 1e-2);
     timerVal = tic;
     [prob_voronoi_open_gauss, opt_input_vec_voronoi_open_gauss] = SReachPoint('term', ...
         'voronoi-open', sys_gauss, init_state_voronoi_open_gauss, target_tube, opts);
@@ -563,8 +563,8 @@ muW_nongauss = sys_nongauss.dist.concat(time_horizon).mean();
 
 
 % Specifying initial states and which options to run
-particle_open_run_nongauss = 1;
-voronoi_open_run_nongauss = 1;
+particle_open_run_nongauss = 0;
+voronoi_open_run_nongauss = 0;
 voronoi_affine_run_nongauss = 1;
 
 % Initial states for each of the method
@@ -632,8 +632,7 @@ end
 if voronoi_open_run_nongauss
     fprintf('\n\nSReachPoint with voronoi-open\n');
     opts = SReachPointOptions('term','voronoi-open','verbose',1,...
-        'max_overapprox_err', 1e-2, 'undersampling_fraction', 0.001,...
-        'min_samples', 50);
+        'max_overapprox_err', 1e-2, 'n_kmeans', 50);
     timerVal = tic;
     [prob_voronoi_open_nongauss, opt_input_vec_voronoi_open_nongauss] = ...
         SReachPoint('term', 'voronoi-open', sys_nongauss,...
@@ -669,9 +668,8 @@ end
 if voronoi_affine_run_nongauss
     fprintf('\n\nSReachPoint with voronoi-affine\n');
     opts = SReachPointOptions('term', 'voronoi-affine',...
-        'max_input_viol_prob', 1e-1, 'verbose', 2, 'min_samples', 50,...
-        'max_overapprox_err', 1e-1, 'undersampling_fraction', 1e-5,...
-        'failure_risk', 1e-4,'bigM', 1e4);
+        'max_input_viol_prob', 2e-1, 'verbose', 2, 'n_kmeans', 30,...
+        'max_overapprox_err', 6e-2, 'failure_risk', 1e-4, 'bigM', 1e2);
     timerVal = tic;
     [prob_voronoi_affine_nongauss, opt_input_vec_voronoi_affine_nongauss,...
         opt_input_gain_voronoi_affine_nongauss, kmeans_info_affine_nongauss] = SReachPoint( ...

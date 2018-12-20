@@ -148,25 +148,64 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain, kmeans_info] =...
         n_lin_state = size(concat_safety_tube_A,1);
         n_lin_input = size(concat_input_space_A,1);
 
+        % No. of non-zero blocks in M
+        n_blocks = (time_horizon - 1) * time_horizon/2;
+        blocks_indx_vec = cumsum(1:time_horizon-1);
+        n_decision_vars = sys.input_dim * sys.dist_dim * n_blocks + ...
+            sys.input_dim * time_horizon + options.n_kmeans;
+        
         % Step 1: Compute the number of particles needed to meet the
         % specified tolerance
-        n_particles = ceil(...
-           (log(2)-log(options.failure_risk))/(2*options.max_overapprox_err^2));        
-        n_kmeans = max(ceil(n_particles * options.undersampling_fraction),...
-            options.min_samples);
-        if n_kmeans > 500
-            warning('SReachTools:runtime',sprintf(['Particle control with ',...
-                'more than 500 samples may cause computational problems.\n',...
-                'Going to analyze %d samples.'], n_kmeans));
-        elseif n_kmeans == options.min_samples && options.verbose >= 1
-            disp(['Undersampling fraction is too severe. Use the minimum',...
-                 ' number of particles prescribed.']);
+        % Step 1a: Bisect the binomial cdf bound to get one of the lower bounds
+        % A looser lower bound is given by
+        % 2/options.max_input_viol_prob*(-log(options.failure_risk)+
+        %                                   n_decision_vars)
+        n_particles_lb = n_decision_vars;
+        n_particles_ub = 1600;
+        if n_decision_vars > 1600
+            throwAsCaller(SrtInvalidArgsError(...
+                 sprintf(['Requested problem has > 1600 decision variables ',...
+                    '(%d).'], n_decision_vars)));
         end
-
+        n_particles_campi = n_particles_ub;
+        while n_particles_lb < n_particles_ub - 1
+            n_particles_campi = ceil((n_particles_lb + n_particles_ub)/2);
+            if binocdf(n_decision_vars, n_particles_campi,...
+                    options.max_input_viol_prob) < options.failure_risk
+                n_particles_ub = n_particles_campi;
+            else
+                n_particles_lb = n_particles_campi;
+            end
+        end        
+        % Step 1a: Bisect the binomial cdf bound to get one of the lower bounds
+        n_particles_hoeff = -log(options.failure_risk)/...
+            (2*options.max_overapprox_err^2);
+        n_particles = ceil(max(n_particles_hoeff,n_particles_campi)); 
+        if n_particles > 1600
+            throwAsCaller(SrtInvalidArgsError(...
+                 sprintf(['Requested problem parameters required > 1600 ',...
+                    'particles (%d).'], n_particles)));
+        end
+        
+        % Check if 0 < 1 - \Delta_U + \delta <= 1 - \delta (TODO: Not sure if
+        % still needed | Appears in SReachPoint, SReachPointOptions)
+        lb = (1-options.max_input_viol_prob+options.max_overapprox_err);
+        ub = (1-options.max_overapprox_err);
+        if lb > ub
+             throwAsCaller(SrtInvalidArgsError(...
+                 sprintf(['Given max_input_viol_prob (Du=%1.3e), the ',...
+                 'maximum allowed likelihood of violating the ',...  
+                 'input constraints and max_overapprox_err (d=%1.3e)',...
+                 ', the maximum (probabilistic) overapproximation ',...
+                 'error Du and d violate the requirement: 0 < 1 - Du',...
+                 ' + d <= 1 - d.'], options.max_input_viol_prob,...
+                 options.max_overapprox_err)));
+        end
+        
         % Step 2: Obtain the random vector realizations
         if options.verbose >= 1
             fprintf(['Required number of particles: %1.4e | Samples ',...
-                'used: %3d\n'], n_particles, n_kmeans);
+                'used: %3d\n'], n_particles, options.n_kmeans);
             fprintf('Creating random variable realizations....');
         end        
         % Compute the stochasticity of the concatenated disturbance random vec
@@ -181,18 +220,17 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain, kmeans_info] =...
         % --- Use k-means clustering to undersample W | Count the particles
         % associated with each center | Transposed input since kmeans expects
         % each data point row-wise
-        
-        if n_kmeans < n_particles
+        if options.n_kmeans < n_particles
             % No. of centroids required is smaller than the actual number
             % of seeds
             if options.verbose >= 1
                 fprintf('Using k-means for undersampling....');
             end 
-            [idx, W_centroids_output] = kmeans(W_realizations', n_kmeans,...
-                'MaxIter',1000);        
+            [idx, W_centroids_output] = kmeans(W_realizations',...
+                options.n_kmeans, 'MaxIter',1000);        
             W_centroids = W_centroids_output';
-            voronoi_count = zeros(n_kmeans,1);
-            for idx_indx = 1:n_kmeans
+            voronoi_count = zeros(options.n_kmeans,1);
+            for idx_indx = 1:options.n_kmeans
                 relv_idx = (idx==idx_indx);
                 % Count the particles associated with the partition
                 voronoi_count(idx_indx) = nnz(relv_idx);
@@ -225,11 +263,7 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain, kmeans_info] =...
             normalizeForParticleControl(concat_input_space_A,...
                 concat_input_space_b);
             
-        % No. of non-zero blocks
-        n_blocks = (time_horizon - 1) * time_horizon/2;
-        blocks_indx_vec = cumsum(1:time_horizon-1);
         % CVX problem setup
-        cvx_clear
         cvx_begin
             if options.verbose >= 2
                 cvx_quiet false
@@ -240,14 +274,11 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain, kmeans_info] =...
             expression M(sys.input_dim*time_horizon, sys.dist_dim*time_horizon);
             variable M_vars(sys.input_dim * sys.dist_dim, n_blocks);
             variable D(sys.input_dim * time_horizon,1);
-            variable X_centroids(sys.state_dim * time_horizon, n_kmeans);
-            variable U_centroids(sys.input_dim * time_horizon, n_kmeans);
-            variable bin_x(1,n_kmeans) binary;
-            variable bin_u(1,n_kmeans) binary;
+            variable bin_x(1,options.n_kmeans) binary;
             maximize ((bin_x * voronoi_count)/n_particles)
             subject to
-                % Causality constraints on M is automatically enforced by
-                % expression declaration (sets all other terms to zero)
+                %% Causality constraints on M is automatically enforced by
+                %% expression declaration (sets all other terms to zero)
                 for time_indx = 2:time_horizon
                     if time_indx == 2
                         blocks_start_indx = 1;
@@ -263,37 +294,23 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain, kmeans_info] =...
                         reshape(M_vars(:,blocks_start_indx:blocks_end_indx),...
                             sys.input_dim, n_nnz_blocks * sys.dist_dim); 
                 end
-                % X = Z x_0 + H D + (H M + G) W
-                X_centroids == repmat(Z*initial_state + H*D, 1, n_kmeans)+ ...
-                    (H * M + G) * W_centroids;
-                % U = D + M W
-                U_centroids == M * W_centroids + repmat(D, 1, n_kmeans);
-                % Chance constraints for the input: Constraint imposition
-                (bin_u * voronoi_count)/n_particles >= ...
-                    1 - options.max_input_viol_prob +...
-                    options.max_overapprox_err;
-                % Chance constraints: Definition
-                for idx_indx = 1:n_kmeans
+                %% All input realizations must be safe => Guarantees input 
+                %% constraint satisfaction 1 - delta_u
+                concat_input_space_A * ...
+                    (M * W_realizations + repmat(D,1,n_particles)) <=...
+                        repmat(concat_input_space_b,1,n_particles);
+                for idx_indx = 1:options.n_kmeans
                     if options.verbose >= 1
-                        fprintf('\b\b\b\b\b\b%1.3f\n', idx_indx/n_kmeans);
+                        fprintf('\b\b\b\b\b\b%1.3f\n', idx_indx/options.n_kmeans);
                     end
                     % Displacement of actual realizations from the centroids
                     W_disp = W_realizations(:, idx==idx_indx) -...
                         W_centroids(:,idx_indx);
-                    % Chance constraints for the state centroids: Definition
-                    % concat_safety_tube_A * X_centroid +
-                    %   concat_safety_tube_A * (HM + G) * W_disp <=
-                    %       concat_safety_tube_b + bigM ( 1-bin_x)
-                    concat_safety_tube_A * X_centroids(:, idx_indx) -...
-                        concat_safety_tube_b-options.bigM*(1-bin_x(idx_indx))+...
-                        max(concat_safety_tube_A *(H * M + G) * W_disp,[],2)<=0;
-                    % Chance constraints for the input centroids: Definition
-                    % concat_input_space_A * U_centroid +
-                    %   concat_input_space_A * M * W_disp <=
-                    %       concat_input_space_b + bigM ( 1-bin_u)
-                    concat_input_space_A * U_centroids(:, idx_indx) -...
-                        concat_input_space_b-options.bigM*(1-bin_u(idx_indx))+...
-                        max(concat_input_space_A * M * W_disp,[],2)<=0;
+                    %% Chance constraints for the state centroids: Definition
+                    concat_safety_tube_A * ...
+                        (Z*initial_state + H * D + (H * M + G) * W_centroids(:,idx_indx))...
+                        + max(concat_safety_tube_A *(H * M + G) * W_disp,[],2)...
+                        - concat_safety_tube_b-options.bigM*(1-bin_x(idx_indx))<=0;                    
                 end
             if options.verbose >= 1
                 disp('Setup of CVX problem complete');
@@ -311,10 +328,8 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain, kmeans_info] =...
                 opt_input_gain = M;
                 % Step 4b: Improve upon the estimate by a refined counting
                 % Solve the mixed-integer linear program
-                opt_U_realizations = M * W_realizations +...
-                    repmat(D, 1, n_particles);
-                opt_X_realizations = repmat(Z*initial_state,1,n_particles) + ...
-                    H * opt_U_realizations + G * W_realizations;
+                opt_X_realizations = repmat(Z*initial_state+ H*D,1,n_particles) + ...
+                    (H * M + G) * W_realizations;
                 
                 % All by default does columnwise (A particle succeeds only if
                 % it clears all hyperplanes --- has a column of ones) | Due to 
@@ -322,30 +337,46 @@ function [approx_stoch_reach, opt_input_vec, opt_input_gain, kmeans_info] =...
                 % b term, whenever determining containment --- Ax<=b
                 bin_x_orig = all(concat_safety_tube_A * opt_X_realizations <=...
                     concat_safety_tube_b + my_eps);
-                approx_stoch_reach_noc =sum(bin_x_orig)/n_particles;            
+                % Correcting the mean estimate based on Hoeffding's
+                % inequality
+                approx_stoch_reach_noc =sum(bin_x_orig)/n_particles -...
+                    options.max_overapprox_err;            
                 
                 % Step 5: Account for the saturation via HSCC 2019 result
                 approx_stoch_reach = (approx_stoch_reach_noc -...
-                   options.max_input_viol_prob)/(1-options.max_input_viol_prob);
+                    options.max_input_viol_prob)/(1-options.max_input_viol_prob);
+                
+                %% Validate the input policy
+                n_validate_particles = 1e4;
+                new_W_realizations = W.getRealizations(n_validate_particles);
+                new_U_realizations = M * new_W_realizations + D;
+                bin_u_orig = all(concat_input_space_A * ...
+                    new_U_realizations <= concat_input_space_b + my_eps);
+                approx_stoch_u =sum(bin_u_orig)/n_validate_particles;            
+               
+                if binocdf(...
+                        n_particles*(1 - options.max_input_viol_prob),...
+                        n_particles, approx_stoch_u) > options.failure_risk
+                    warning('SReachTools:runTime',['Optimal affine ',...
+                        'disturbance controller computed does not satisfy ',...
+                        'the specified chance constraint.\nThis could be',...
+                        ' due to the drawn realization.']);
+                end
                 if options.verbose >= 1
-                    bin_u_orig = all(concat_input_space_A * ...
-                        opt_U_realizations <= concat_input_space_b + my_eps);
-                    approx_stoch_u =sum(bin_u_orig)/n_particles;            
                     fprintf(['Input constraint satisfaction probability: ',...
-                        '%1.3f | Acceptable: >%1.3f \n'], approx_stoch_u,...
-                        1 - options.max_input_viol_prob);
+                        '%1.3f\n'], approx_stoch_u);
                     fprintf(...
                         ['Undersampled probability (with %d particles): ',...
                         '%1.4f\nUnderapproximation to the original MILP (',...
                         'with %d particles): %1.4f\nAfter correction for',...
                         ' saturation: %1.4f\n'],...
-                        n_kmeans, approx_voronoi_stoch_reach,...
+                        options.n_kmeans, approx_voronoi_stoch_reach,...
                         n_particles, approx_stoch_reach_noc,approx_stoch_reach);
                 end
             otherwise
         end
         kmeans_info.n_particles = n_particles;
-        kmeans_info.n_kmeans = n_kmeans;
+        kmeans_info.n_kmeans = options.n_kmeans;
         kmeans_info.W_centroids = W_centroids;
         kmeans_info.W_realizations = W_realizations;
     end
@@ -357,3 +388,51 @@ function otherInputHandling(options)
         throwAsCaller(SrtInvalidArgsError('Invalid options provided'));
     end
 end
+
+
+% %% X = Z x_0 + H D + (H M + G) W
+% X_centroids == repmat(Z*initial_state + H*D, 1, n_kmeans)+ ...
+%     (H * M + G) * W_centroids;
+% U_centroids == M*W_centroids + repmat(D, 1, n_kmeans);
+% %% Chance constraints for the input: Constraint imposition
+% voronoi_count*max(0,alpha_cvar*ones(1,n_kmeans)+ bin_u) <=...
+%     n_particles*(alpha_cvar * options.max_input_viol_prob -...
+%         options.max_overapprox_err);
+% % Chance constraints: Definition
+% for idx_indx = 1:n_kmeans
+%     if options.verbose >= 1
+%         fprintf('\b\b\b\b\b\b%1.3f\n', idx_indx/n_kmeans);
+%     end
+%     % Displacement of actual realizations from the centroids
+%     W_disp = W_realizations(:, idx==idx_indx) -...
+%         W_centroids(:,idx_indx);
+%     %% Chance constraints for the state centroids: Definition
+%     concat_safety_tube_A * X_centroids(:, idx_indx) -...
+%         concat_safety_tube_b-options.bigM*(1-bin_x(idx_indx))+...
+%         max(concat_safety_tube_A *(H * M + G) * W_disp,[],2)<=0;
+%     concat_input_space_A * U_centroids(:, idx_indx) -...
+%         concat_input_space_b-options.bigM*(1-bin_u(idx_indx))+...
+%         max(concat_input_space_A * M * W_disp,[],2)<=0;
+% end
+
+% %% Chance constraints for the input: Constraint imposition
+% sum(max(0, alpha_cvar * ones(1,n_particles) +...
+%        max(concat_input_space_A *...
+%             (M*W_realizations + repmat(D, 1, n_particles)) -...
+%        repmat(concat_input_space_b, 1, n_particles))))<=...
+%            n_particles * ( alpha_cvar * options.max_input_viol_prob -...
+%             options.max_overapprox_err);
+% % Chance constraints: Definition
+% for idx_indx = 1:n_kmeans
+%     if options.verbose >= 1
+%         fprintf('\b\b\b\b\b\b%1.3f\n', idx_indx/n_kmeans);
+%     end
+%     % Displacement of actual realizations from the centroids
+%     W_disp = W_realizations(:, idx==idx_indx) -...
+%         W_centroids(:,idx_indx);
+%     %% Chance constraints for the state centroids: Definition
+%     concat_safety_tube_A * ...
+%         ((Z*initial_state + H*D) + (H * M + G) * W_centroids(:, idx_indx)) -...
+%         concat_safety_tube_b-options.bigM*(1-bin_x(idx_indx))+...
+%         max(concat_safety_tube_A *(H * M + G) * W_disp,[],2)<=0;
+% end

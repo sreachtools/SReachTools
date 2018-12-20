@@ -32,7 +32,8 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 %                     'particle-open'-- Particle control approach that uses
 %                                       mixed-integer linear programming
 %                                       1. n_particles: Number of particles to
-%                                               use [Default: 100]
+%                                               use [Default: 100] | Must
+%                                               be less than max_particles.
 %                                       2. bigM: A large positive constant value
 %                                               that is used in the mixed
 %                                               integer formulation [Default:
@@ -41,27 +42,55 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 %                                               implementation (feedback for the
 %                                               user) | Takes values from 0 to 2
 %                                               [Default: 0]
+%                                       4. max_particles: Maximum particles
+%                                               permitted. This bound is
+%                                               used to throw a pre-emptive
+%                                               error for very demanding
+%                                               problem requirements
+%                                               [Default: 200]
 %                     'voronoi-open' -- Voronoi-based undersampling of particle
 %                                       control approach to compute open loop
 %                                       1. failure_risk: Risk of the
 %                                               probabilistic overapproximation
-%                                               bound failing [Default: 1e-10]
+%                                               bound failing [Default: 1e-4]
 %                                       2. max_overapprox_err: Maximum
 %                                               overapproximation error
 %                                               (probabilistically) tolerable up
 %                                               to the failure_risk
-%                                               [Default: 1e-4]
-%                                       3. undersampling_fraction: Fraction of
-%                                               the associated particles that
-%                                               will be actually optimized for
-%                                               (Number of kmeans cluster
-%                                               points/ Voronoi centers)
-%                                               [Default: 1e-3]
-%                                       4. min_samples: Minimum number of
-%                                               particles to be used for
-%                                               approximation | Used when
-%                                               undersampling_fraction is very
-%                                               strict [Default: 30]
+%                                               [Default: 1e-2]
+%                                       3. n_kmeans: Number of kmeans cluster
+%                                               points/ Voronoi centers
+%                                               [Default: 30]
+%                                       4. bigM: A large positive constant value
+%                                               used in the mixed integer 
+%                                               formulation [Default: 100]
+%                                       5. verbose: Verbosity of the 
+%                                               implementation (feedback for the
+%                                               user) | Takes values from 0 to 2
+%                                               [Default: 0]
+%                                       6. max_particles: Maximum particles
+%                                               permitted. This bound is
+%                                               used to throw a pre-emptive
+%                                               error for very demanding
+%                                               problem requirements
+%                                               [Default: 1e5]
+%                    'voronoi-affine'-- Voronoi-based undersampling of particle
+%                                       control approach to compute open loop
+%                                       1. [MUST HAVE] max_input_viol_prob:
+%                                               Probabilistic relaxation of the
+%                                               hard input constraints 
+%                                               [Default: 2e-1]
+%                                       2. failure_risk: Risk of the
+%                                               probabilistic overapproximation
+%                                               bound failing [Default: 1e-4]
+%                                       3. max_overapprox_err: Maximum
+%                                               overapproximation error
+%                                               (probabilistically) tolerable up
+%                                               to the failure_risk
+%                                               [Default: 1e-1]
+%                                       4. n_kmeans: Number of kmeans cluster
+%                                               points/ Voronoi centers
+%                                               [Default: 30]
 %                                       5. bigM: A large positive constant value
 %                                               used in the mixed integer 
 %                                               formulation [Default: 100]
@@ -69,38 +98,12 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 %                                               implementation (feedback for the
 %                                               user) | Takes values from 0 to 2
 %                                               [Default: 0]
-%                    'voronoi-affine'-- Voronoi-based undersampling of particle
-%                                       control approach to compute open loop
-%                                       1. [MUST HAVE] max_input_viol_prob:
-%                                               Probabilistic relaxation of the
-%                                               hard input constraints 
-%                                               [Default: 5e-2]
-%                                       2. failure_risk: Risk of the
-%                                               probabilistic overapproximation
-%                                               bound failing [Default: 1e-10]
-%                                       3. max_overapprox_err: Maximum
-%                                               overapproximation error
-%                                               (probabilistically) tolerable up
-%                                               to the failure_risk
-%                                               [Default: 1e-2]
-%                                       4. undersampling_fraction: Fraction of
-%                                               the associated particles that
-%                                               will be actually optimized for
-%                                               (Number of kmeans cluster
-%                                               points/ Voronoi centers)
-%                                               [Default: 1e-3]
-%                                       5. min_samples: Minimum number of
-%                                               particles to be used for
-%                                               approximation | Used when
-%                                               undersampling_fraction is very
-%                                               strict [Default: 30]
-%                                       5. bigM: A large positive constant value
-%                                               used in the mixed integer 
-%                                               formulation [Default: 100]
-%                                       7. verbose: Verbosity of the 
-%                                               implementation (feedback for the
-%                                               user) | Takes values from 0 to 2
-%                                               [Default: 0]
+%                                       7. max_particles: Maximum particles
+%                                               permitted. This bound is
+%                                               used to throw a pre-emptive
+%                                               error for very demanding
+%                                               problem requirements.
+%                                               [Default: 1600]
 %                     'chance-affine'-- Convex chance-constrained approach for
 %                                       an affine controller synthesis
 %                                       1. [MUST HAVE] max_input_viol_prob:
@@ -147,7 +150,11 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 %   voronoi-X, set the undersampling fraction to be very small (say 1e-4/1e-5) 
 %   and set min_samples to V.
 % * For voronoi-affine, we require 1 - max_input_viol_prob + max_overapprox_err
-%   lies inside (0, 1].
+%   lies inside (0, 1 - max_overapprox_err].
+% * For sampling-based approaches, we impose a heuristic maximum allowed
+%   particles. This bound is used to throw a pre-emptive error for very 
+%   demanding problem requirements. The user MAY MODIFY it to allow the
+%   computations beyond the limit.
 % ============================================================================
 % 
 % This function is part of the Stochastic Reachability Toolbox.
@@ -193,21 +200,23 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
             % Verbosity of the implementation
             inpar.addParameter('verbose', 0, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar', 'integer', ...
-                    '>=',0,'<=',2}));                        
+                    '>=',0,'<=',2}));   
+            % Maximum number of particles allowed for tractable computation
+            inpar.addParameter('max_particles', 200, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','integer','>',0}));
          case 'voronoi-open'
             % Risk of the probabilistic overapproximation bound failing
-            inpar.addParameter('failure_risk', 1e-10, @(x)...
+            inpar.addParameter('failure_risk', 1e-4, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
             % Maximum overapproximation error (probabilistically) tolerable
-            inpar.addParameter('max_overapprox_err', 1e-4, @(x)...
+            inpar.addParameter('max_overapprox_err', 1e-2, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
-            % Fraction of the associated particles that will be actually
-            % optimized for (Number of kmeans cluster points/ Voronoi centers)
-            inpar.addParameter('undersampling_fraction', 1/1000, @(x)...
-                validateattributes(x, {'numeric'}, {'scalar','>',0}));
-            % Minimum number of particles to be used for approximation
-            inpar.addParameter('min_samples', 30, @(x)...
-                validateattributes(x, {'numeric'}, {'integer','>',0}));
+            % Number of kmeans cluster points/ Voronoi centers
+            inpar.addParameter('n_kmeans', 30, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0, 'integer'}));
+            % Maximum number of particles allowed for tractable computation
+            inpar.addParameter('max_particles', 1e5, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','integer','>',0}));
             % BigM notation requires a large value
             inpar.addParameter('bigM', 100, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
@@ -217,21 +226,20 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
                     '>=',0,'<=',2}));                        
         case 'voronoi-affine'
             % Probabilistic relaxation of the hard input constraints
-            inpar.addParameter('max_input_viol_prob',5e-2, @(x)...
+            inpar.addParameter('max_input_viol_prob',2e-1, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0,'<',1}));
             % Risk of the probabilistic overapproximation bound failing
-            inpar.addParameter('failure_risk', 1e-10, @(x)...
+            inpar.addParameter('failure_risk', 1e-4, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
             % Maximum overapproximation error (probabilistically) tolerable
-            inpar.addParameter('max_overapprox_err', 1e-2, @(x)...
+            inpar.addParameter('max_overapprox_err', 1e-1, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
-            % Fraction of the associated particles that will be actually
-            % optimized for (Number of kmeans cluster points/ Voronoi centers)
-            inpar.addParameter('undersampling_fraction', 1/1000, @(x)...
-                validateattributes(x, {'numeric'}, {'scalar','>',0}));
-            % Minimum number of particles to be used for approximation
-            inpar.addParameter('min_samples', 30, @(x)...
-                validateattributes(x, {'numeric'}, {'integer','>',0}));
+            % Number of kmeans cluster points/ Voronoi centers
+            inpar.addParameter('n_kmeans', 30, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0, 'integer'}));
+            % Maximum number of particles allowed for tractable computation
+            inpar.addParameter('max_particles', 1600, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','integer','>',0}));
             % BigM notation requires a large value
             inpar.addParameter('bigM', 100, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
@@ -274,24 +282,40 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
  
     % Check for must-have parameters
     switch lower(method_str)
-        case {'chance-affine','voronoi-affine'}
+        case 'chance-affine'
             if any(strcmpi(inpar.UsingDefaults, 'max_input_viol_prob'))
                  throwAsCaller(SrtInvalidArgsError(['Expected ', ...
                      'max_input_viol_prob, the maximum allowed likelihood ', ...
                      'of violating the input constraints.']));
             end
+        case 'voronoi-affine'
+            if any(strcmpi(inpar.UsingDefaults, 'max_input_viol_prob'))
+             throwAsCaller(SrtInvalidArgsError(['Expected ', ...
+                 'max_input_viol_prob, the maximum allowed likelihood of ', ...
+                 'violating the input constraints.']));
+            end
             if strcmpi(method_str, 'voronoi-affine')
                 % Ensure that 1 - \Delta_u + \delta \in (0, 1]
                 input_chance_const_tol = 1 - options.max_input_viol_prob ...
                     + options.max_overapprox_err;
-                if input_chance_const_tol <= 0 || input_chance_const_tol> 1
-                    throwAsCaller(SrtInvalidArgsError(['Given ', ...
-                        'max_input_viol_prob (Du), the maximum allowed ',...
-                        'likelihood of violating the input constraints,',...
-                        ' and max_overapprox_err (d), the maximum ',...
-                        '(probabilistic) overapproximation error, Du and',...
-                        ' d violate the requirement: 0 < 1 - Du + d <= 1.']));
+                if input_chance_const_tol <= 0 || input_chance_const_tol >...
+                        1 - options.max_overapprox_err
+                    throwAsCaller(SrtInvalidArgsError(...
+                        sprintf(['Given max_input_viol_prob (Du=%1.3e), the',...
+                        'maximum allowed likelihood of violating the ',...  
+                        'input constraints and max_overapprox_err (d=%1.3e)',...
+                        ', the maximum (probabilistic) overapproximation ',...
+                        'error Du and d violate the requirement: 0 < 1 - Du',...
+                        ' + d <= 1 - d.'], options.max_input_viol_prob,...
+                        options.max_overapprox_err)));
                 end
+            end
+        case 'particle-open' 
+            if options.n_particles > options.max_particles
+                throwAsCaller(SrtInvalidArgsError(...
+                     sprintf(['Particles required (%d) > maximum allowed ',...
+                        'particles (%d).'], options.max_particles,...
+                        options.n_particles)));
             end
     end
 end

@@ -11,6 +11,13 @@ classdef SReachPointTests < matlab.unittest.TestCase
         function testPointParticleOpen(test_case)
             [sys, safety_tube, initial_state] = test_case.getDI();
             
+            test_case.verifyError(@() SReachPointOptions(...
+                    'term','particle-open','n_particles',300),...
+                    'SReachTools:invalidArgs');
+            % Should throw no error
+            options = SReachPointOptions('term','particle-open',...
+                    'verbose', 0, 'n_particles',300, 'max_particles', 400);
+            % Use default options
             lb_stoch_prob = SReachPoint('term','particle-open', sys,...
                 initial_state, safety_tube);
         end 
@@ -25,20 +32,49 @@ classdef SReachPointTests < matlab.unittest.TestCase
         function testPointVoronoiOpen(test_case)
             [sys, safety_tube, initial_state] = test_case.getDI();
             
-            options = SReachPointOptions('term','voronoi-open',...
-                'verbose', 0, 'undersampling_fraction', 1e-4);
+            options_bad = SReachPointOptions('term','voronoi-open',...
+                    'max_overapprox_err', 1e-3);
+            test_case.verifyError(@() SReachPoint('term','voronoi-open', sys,...
+                initial_state, safety_tube, options_bad),...
+                'SReachTools:invalidArgs');
+            
             lb_stoch_prob = SReachPoint('term','voronoi-open', sys,...
-                initial_state, safety_tube, options);
+                initial_state, safety_tube);
         end 
         
         function testPointChanceAffine(test_case)
             [sys, safety_tube, initial_state] = test_case.getDI();
             
+            % Forgotten max_input_viol_prob for chance-affine
+            test_case.verifyError(@() SReachPointOptions(...
+                'term','chance-affine'),'SReachTools:invalidArgs');
+            test_case.verifyError(@() SReachPoint('term','chance-affine', ...
+                sys, initial_state, safety_tube),'SReachTools:invalidArgs');
+            
+            % Working example
             options = SReachPointOptions('term','chance-affine', ...
-                'max_input_viol_prob', 1e-2, 'verbose', 1);
+                'max_input_viol_prob', 2e-1, 'verbose', 0);
             lb_stoch_prob = SReachPoint('term','chance-affine', sys,...
                 initial_state, safety_tube, options);
-        end                  
+        end  
+        
+        function testPointVoronoiAffine(test_case)
+            [sys, safety_tube, initial_state] = test_case.getDI();
+            
+            % Forgotten max_input_viol_prob for chance-affine
+            test_case.verifyError(@() SReachPointOptions(...
+                'term','voronoi-affine'),'SReachTools:invalidArgs');
+            test_case.verifyError(@() SReachPoint('term','voronoi-affine', ...
+                sys, initial_state, safety_tube),'SReachTools:invalidArgs');
+            
+            % Bad constraint: TODO 1 - Du + d<= 1 - d
+            
+            % Working example
+            options = SReachPointOptions('term','voronoi-affine',...
+                'verbose', 0, 'max_input_viol_prob',2e-1);
+            lb_stoch_prob = SReachPoint('term','voronoi-affine', sys,...
+                initial_state, safety_tube, options);
+        end 
     end
     
     methods (Static)

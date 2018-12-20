@@ -152,20 +152,25 @@ function [approx_stoch_reach, opt_input_vec, kmeans_info] = SReachPointVoO(...
         % specified tolerance
         n_particles = ceil(...
             -log(options.failure_risk)/(2*options.max_overapprox_err^2));        
-        n_kmeans = max(ceil(n_particles * options.undersampling_fraction),...
-            options.min_samples);
-        if n_kmeans > 100
+        if n_particles > 1e5
+            throwAsCaller(SrtInvalidArgsError(...
+                 sprintf(['Requested problem parameters required > 1e5 ',...
+                    'particles (%d).'], n_particles)));
+        end
+        if options.n_kmeans > 100
             warning('SReachTools:runtime',sprintf(['Particle control with ',...
                 'more than 100 samples may cause computational problems.\n',...
-                'Going to analyze %d samples.'], n_kmeans));
-        elseif n_kmeans == options.min_samples && options.verbose >= 1
-            disp(['Undersampling fraction is too severe. Using the minimum',...
-                 ' number of particles prescribed.']);
+                'Going to analyze %d samples.'], options.n_kmeans));
+        elseif options.n_kmeans > n_particles
+            warning('SReachTools:runtime', ['Fewer particles needed than ',...
+                'the number of kmean centroids specified. Using all ',...
+                'particles']);
+            options.n_kmeans = n_particles;
         end
         
         if options.verbose >= 1
             fprintf(['Required number of particles: %1.4e | Samples ',...
-                'used: %3d\n'], n_particles, n_kmeans);
+                'used: %3d\n'], n_particles, options.n_kmeans);
             fprintf('Creating random variable realizations....');
         end        
         % Compute the stochasticity of the concatenated disturbance random vec
@@ -184,17 +189,17 @@ function [approx_stoch_reach, opt_input_vec, kmeans_info] = SReachPointVoO(...
         if options.verbose >= 1
             fprintf('Using k-means for undersampling....');
         end        
-        [idx, GW_centroids_output] = kmeans(GW_realizations', n_kmeans,...
-            'MaxIter',1000);        
+        [idx, GW_centroids_output] = kmeans(GW_realizations',...
+            options.n_kmeans, 'MaxIter',1000);        
         GW_centroids = GW_centroids_output';
         if options.verbose >= 1
             fprintf('Done\n');
         end
         % Step 3: Compute the buffers associated with each of the Voronoi
         % centers
-        buffers = zeros(n_lin_state, n_kmeans);
-        voronoi_count = zeros(n_kmeans,1);
-        for idx_indx = 1:n_kmeans
+        buffers = zeros(n_lin_state, options.n_kmeans);
+        voronoi_count = zeros(options.n_kmeans,1);
+        for idx_indx = 1:options.n_kmeans
             relv_GW_realizations = (idx==idx_indx);
             voronoi_count(idx_indx) = nnz(relv_GW_realizations);
             GW_realizations_indx = GW_realizations(:, relv_GW_realizations);
@@ -219,15 +224,15 @@ function [approx_stoch_reach, opt_input_vec, kmeans_info] = SReachPointVoO(...
             end
             cvx_solver Gurobi
             variable U_vector(sys.input_dim * time_horizon,1);
-            variable X_realizations(sys.state_dim * time_horizon, n_kmeans);
-            variable z(1,n_kmeans) binary;
+            variable X_realizations(sys.state_dim * time_horizon, options.n_kmeans);
+            variable z(1,options.n_kmeans) binary;
             maximize ((z*voronoi_count)/n_particles)
             subject to
                 X_realizations == repmat(Z * initial_state + H * U_vector, ...
-                    1, n_kmeans) + GW_centroids;
+                    1, options.n_kmeans) + GW_centroids;
                 concat_input_space_A * U_vector <= concat_input_space_b;
                 concat_safety_tube_A * X_realizations + buffers <= repmat( ...
-                    concat_safety_tube_b, 1, n_kmeans) + ...
+                    concat_safety_tube_b, 1, options.n_kmeans) + ...
                     options.bigM * repmat(1-z,n_lin_state,1);
             if options.verbose >= 1
                 fprintf('Done\nParsing and solving the MILP....');
@@ -249,19 +254,20 @@ function [approx_stoch_reach, opt_input_vec, kmeans_info] = SReachPointVoO(...
                 % it clears all hyperplanes --- has a column of ones)
                 z_orig = all(concat_safety_tube_A * opt_X_realizations <=...
                     concat_safety_tube_b);
-                approx_stoch_reach = sum(z_orig)/n_particles;            
+                approx_stoch_reach = sum(z_orig)/n_particles -...
+                    options.max_overapprox_err;            
                 if options.verbose >= 1
                     fprintf(...
                         ['Undersampled probability (with %d particles): ',...
                         '%1.3f\nUnderapproximation to the original MILP ',...
                         '(with %d particles): %1.3f\n'],...
-                        n_kmeans, approx_voronoi_stoch_reach,...
+                        options.n_kmeans, approx_voronoi_stoch_reach,...
                         n_particles, approx_stoch_reach);
                 end
             otherwise
         end
         kmeans_info.n_particles = n_particles;
-        kmeans_info.n_kmeans = n_kmeans;
+        kmeans_info.n_kmeans = options.n_kmeans;
         kmeans_info.GW_centroids = GW_centroids;
         kmeans_info.GW_realizations = GW_realizations;
     end
