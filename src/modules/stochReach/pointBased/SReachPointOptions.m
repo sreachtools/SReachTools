@@ -155,6 +155,8 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 %   particles. This bound is used to throw a pre-emptive error for very 
 %   demanding problem requirements. The user MAY MODIFY it to allow the
 %   computations beyond the limit.
+% * max_input_viol_prob has been left as addParameter instead of
+%   addRequired, so that default values may be specified.
 % ============================================================================
 % 
 % This function is part of the Stochastic Reachability Toolbox.
@@ -172,6 +174,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
     inpar.addRequired('prob_str', @(x) any(validatestring(x,valid_prob)));
     inpar.addRequired('method_str', @(x) any(validatestring(x,valid_method)));
 
+    validatestring(method_str,valid_method);
     switch lower(method_str)
         case 'genzps-open'            
             % Ensure that patternsearch is installed
