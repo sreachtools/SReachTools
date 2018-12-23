@@ -71,6 +71,38 @@ function varargout = getSReachLagOverapprox(sys, target_tube,...
             SrtInvalidArgsError('Mismatch in method_str in the options'));
     end            
     
+    switch lower(options.compute_style)
+        case 'vhmethod'
+            %% Use vertex-facet enumeration requiring recursion
+            [effective_target_tube] = computeViaRecursion(sys, target_tube,...
+                disturbance_set, options);
+        case 'support'
+            %% Use recursion-free support function approach
+            [effective_target_tube] = computeViaSupportFn(sys, target_tube,...
+                disturbance_set, options);
+        otherwise
+            throw(SrtInvalidArgsError('Invalid computation style specified'));
+    end
+    
+    varargout{1} = effective_target_tube(1);
+    if nargout > 1
+        varargout{2} = effective_target_tube;
+    end
+end
+
+function [effective_target_tube] = computeViaRecursion(sys, target_tube,...
+    disturbance_set, options)   
+% This private function implements the recursion-based computation which
+% internally requires vertex-facet enumeration => performs really well for
+% low dimension systems but scales very poorly
+%
+% ============================================================================
+%
+%   This function is part of the Stochastic Reachability Toolbox.
+%   License for the use of this function is given in
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+%
+
     tube_length = length(target_tube);
     if sys.islti()
         inverted_state_matrix = inv(sys.state_mat);
@@ -116,8 +148,20 @@ function varargout = getSReachLagOverapprox(sys, target_tube,...
                 one_step_backward_reach_set, target_tube(itt));
         end
     end
-    varargout{1} = effective_target_tube(1);
-    if nargout > 1
-        varargout{2} = effective_target_tube;
-    end
+end
+
+function [effective_target_tube] = computeViaSupportFn(sys, target_tube,...
+    disturbance_set, options)   
+% This private function implements the recursion-based computation which
+% internally reduces the effect of the cumbersome vertex-facet enumeration => performs really well for
+% low dimension systems but scales very poorly
+%
+% ============================================================================
+%
+%   This function is part of the Stochastic Reachability Toolbox.
+%   License for the use of this function is given in
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+%
+        [effective_target_tube] = computeViaRecursion(sys, target_tube,...
+                disturbance_set, options);        
 end

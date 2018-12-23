@@ -104,12 +104,17 @@ axis equal;
 % through random direction choices.
 %%
 % bounded set for Lagrangian
-fprintf('Setting up options for lag-under with bound_set_method: ellipsoid\n');
 timerVal=tic;
 n_dim = sys.state_dim + sys.input_dim;
+fprintf('Setting up options for lag-under with bound_set_method: ellipsoid\n');
 luOpts = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
     'ellipsoid', 'system', sys, 'n_underapprox_vertices', 2^n_dim*10+2*n_dim,...
-    'verbose',1);
+    'verbose',1,'compute_style','support');
+% fprintf('Setting up options for lag-under with bound_set_method: polytope\n');
+% luOpts = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
+%     'polytope', 'verbose', 1, 'template_polytope',...
+%     Polyhedron('lb',-ones(sys.dist.dim,1),'ub',ones(sys.dist.dim,1)),...
+%     'compute_style','vhmethod');
 options_time = toc(timerVal);
 timerVal=tic;
 [luSet, extra_info] = SReachSet('term', 'lag-under', sys, 0.8, target_tube,...
@@ -120,7 +125,8 @@ lagrange_under_time = toc(timerVal);
 tic;
 loOpts = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'polytope',...
     'verbose', 1, 'template_polytope',...
-    Polyhedron('lb',-ones(sys.dist.dim,1),'ub',ones(sys.dist.dim,1)));
+    Polyhedron('lb',-ones(sys.dist.dim,1),'ub',ones(sys.dist.dim,1)),...
+    'compute_style','vhmethod');
 loSet = SReachSet('term', 'lag-over', sys, 0.8, target_tube, loOpts);
 lagrange_over_time = toc();
 %% 

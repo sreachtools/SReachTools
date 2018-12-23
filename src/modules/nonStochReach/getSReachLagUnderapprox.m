@@ -105,17 +105,10 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,...
         inverted_state_matrix = inv(sys.state_mat);
         minus_bu = (-sys.input_mat) * sys.input_space;
         dist_mat = sys.dist_mat;
-        % minkSumInner TODO                    
-        % Ainv_minus_bu = inverted_state_matrix * minus_bu;
     end
     
     if tube_length > 1
-        if sys.state_dim > 2 && n_disturbances > 1
-            % TODO [[url once note has been added to the google group]].'])
-            warning('SReachTools:runtime', ['The convex hull operation may', ...
-                'produce inconsistent or inaccurate results for systems ', ...
-                'with dimensions greater than 2.'])
-        end
+        % TODO: Warn appropriately
         if options.verbose >= 1
             fprintf('Time_horizon: %d\n', tube_length-1);
         end
@@ -136,8 +129,6 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,...
                 inverted_state_matrix = inv(sys.state_mat(current_time));
                 minus_bu = (-sys.input_mat(current_time)) * sys.input_space;
                 dist_mat = sys.dist_mat(current_time);
-                % minkSumInner TODO                    
-                % Ainv_minus_bu = inverted_state_matrix * minus_bu;
             end
                 
             vertices = [];
@@ -150,49 +141,57 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,...
                     effective_dist = dist_mat * disturbance_set;
                 end
                 
+                % support function of the effective_dist - vectorized to
+                % handle Implementation of Kolmanovsky's 1998-based
+                % minkowski difference
+                new_target_A = effective_target.A;            
                 if isa(effective_dist, 'SReachEllipsoid')
-                    % support function of the effective_dist - vectorized to
-                    % handle Implementation of Kolmanovsky's 1998-based
-                    % minkowski difference
-                    new_target_A = effective_target.A;            
                     new_target_b = effective_target.b - ...
                         effective_dist.support_fun(new_target_A);
-                    new_target= Polyhedron('H',[new_target_A new_target_b]);
-                    % minkSumInner TODO                    
-                    % one_step_backward_reach_set = minkSumInner(...
-                    %     inverted_state_matrix * new_target, Ainv_minus_bu);
-                    % Use ray-shooting algorithm to underapproximate one-step
-                    % backward reach set
-                    if options.verbose >= 2
-                        timerVal = tic;
-                    end
-                    effective_target = safeOneStepBackReachSet(sys,...
-                        new_target, target_tube(itt), options.equi_dir_vecs,...
-                        options.verbose);
-                    if options.verbose >= 2
-                        fprintf('Time for oneStepBack: %1.3f s\n',toc(timerVal));
-                    end
-                    if options.verbose == 3
-                        title(sprintf(['Safe one-step back reach set at',... 
-                            ' t=%d'],current_time));
-                        drawnow;
-                    end
-                else                                   % MPT's Polyhedron object
-                    if effective_dist.isEmptySet
-                        % No requirement of robustness
-                        new_target = effective_target;
+                elseif isa(effective_dist, 'Polyhedron')
+                    if effective_dist.isEmptySet()
+                        new_target_b = effective_target.b;
                     else
-                        % Compute a new target set for this iteration that
-                        % is robust to the disturbance
-                        new_target = effective_target - effective_dist;
+                        new_target_b = effective_target.b - ...
+                            effective_dist.support(new_target_A');
                     end
-                    % One-step backward reach set via MPT
-                    one_step_backward_reach_set = inverted_state_matrix *...
-                        (new_target + minus_bu);                    
+                else
+                    throw(SrtInvalidArgsError(sprintf(['Invalid disturbance',...
+                        ' object (%s). Expected SReachEllipsoid/Polyhedron.',...
+                        ], class(effective_dist))));
+                end
+                new_target= Polyhedron('H',[new_target_A new_target_b]);
 
-                    % Guarantee staying within target_tube by intersection
-                    effective_target = intersect(one_step_backward_reach_set,...
-                        target_tube(itt));
+                switch lower(options.compute_style)
+                    case 'support'
+                        % Use ray-shooting algorithm to underapproximate 
+                        % one-step backward reach set
+                        if options.verbose >= 2
+                            timerVal = tic;
+                        end
+                        effective_target = safeOneStepBackReachSet(sys,...
+                            new_target, target_tube(itt),...
+                            options.equi_dir_vecs, options.verbose);
+                        if options.verbose >= 2
+                            fprintf('Time for oneStepBack: %1.3f s\n',...
+                                toc(timerVal));
+                        end
+                        if options.verbose == 3
+                            title(sprintf(['Safe one-step back reach set at',... 
+                                ' t=%d'],current_time));
+                            drawnow;
+                        end
+                    case 'vhmethod'                % MPT's Polyhedron object
+                        % One-step backward reach set via MPT
+                        one_step_backward_reach_set = inverted_state_matrix *...
+                            (new_target + minus_bu);                    
+
+                        % Guarantee staying within target_tube by intersection
+                        effective_target = intersect(...
+                            one_step_backward_reach_set, target_tube(itt));
+                    otherwise
+                        throw(SrtInvalidArgsError(['Invalid computation ',...
+                            'style specified']));
                 end
 
                 % Collect the vertices of the effective_target for each 
@@ -223,9 +222,14 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
     % {(x,u) \in X x U: F*(Ax + Bu)<=g}, and then projecting this set to X.
     % Here, X is the state space and U is the input space
 
+    if isempty(equi_dir_vecs)
+        throwAsCaller(SrtInvalidArgsError(['Expected non-empty ',...
+            'equi_dir_vecs. Faulty options structure provided!']));
+    end
+    
     % Get size of equi_dir_vecs
     [dir_vecs_dim, n_vertices] = size(equi_dir_vecs);
-
+    
     if verbose >= 2
         timerVal = tic;
     end
@@ -253,11 +257,11 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
     %% Find a point within the 'deep enough'
     if ~isEmptySet(x_u_reaches_target_set)
         % OPTION 1: Compute the chebyshev-center of x_u_reaches_target_set
-        %   Abandoned because the point is not a center and no transformation
-        %   of the equi-spaced vectors is available
+        % >>> Abandoned because the point is not a center and no transformation
+        %     of the equi-spaced vectors is available
         % OPTION 2: Compute the analytic-center of x_u_reaches_target_set
-        %   Abandoned because no transformation of the equi-spaced vectors is 
-        %   available
+        % >>> Abandoned because no transformation of the equi-spaced vectors is 
+        %     available
         % OPTION 3: Compute the maximum volume inscribed ellipsoid
         % Given the polytope {a_i^T x <= b_i, i = 1,...,m }, compute an
         % ellipsoid { Bu + d | || u || <= 1 } that sits within the polytope as
@@ -267,8 +271,8 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
         end
         cvx_begin quiet
             cvx_solver SDPT3;
-            variable mve_shape(dir_vecs_dim,dir_vecs_dim) symmetric
-            variable mve_center(dir_vecs_dim)
+            variable mve_shape(dir_vecs_dim,dir_vecs_dim) symmetric;
+            variable mve_center(dir_vecs_dim);
             maximize( det_rootn( mve_shape ) )
             subject to
                norms(mve_shape*x_u_reaches_target_set_A', 2)' +...
@@ -297,8 +301,9 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
     for dir_indx = 1:n_vertices
         dir_vec = equi_dir_vecs(:, dir_indx);
         
-    
-        % OPTION 1: Bisection
+        % OPTION 1: Formulate a LP in CVX and solve it
+        % >>> Abandoned because of the compute overhead
+        % OPTION 2: Bisection
         boundary_point = @(theta) center_point + theta * dir_vec;
         contains_check = @(theta) all(x_u_reaches_target_set_A *...
              boundary_point(theta) <= x_u_reaches_target_set_b);
