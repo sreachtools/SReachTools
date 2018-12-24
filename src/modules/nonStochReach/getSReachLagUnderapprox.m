@@ -147,7 +147,7 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,...
                 new_target_A = effective_target.A;            
                 if isa(effective_dist, 'SReachEllipsoid')
                     new_target_b = effective_target.b - ...
-                        effective_dist.support_fun(new_target_A);
+                        effective_dist.support(new_target_A');
                 elseif isa(effective_dist, 'Polyhedron')
                     if effective_dist.isEmptySet()
                         new_target_b = effective_target.b;
@@ -229,6 +229,12 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
     
     % Get size of equi_dir_vecs
     [dir_vecs_dim, n_vertices] = size(equi_dir_vecs);
+    
+    if dir_vecs_dim ~= (sys.state_dim + sys.input_dim) || n_vertices < 3
+        throwAsCaller(SrtInvalidArgsError(['Expected (sys.state_dim + ',...
+            'sys.input_dim)-dimensional collection of column vectors. ',...
+            'Faulty options structure provided!']));        
+    end
     
     if verbose >= 2
         timerVal = tic;

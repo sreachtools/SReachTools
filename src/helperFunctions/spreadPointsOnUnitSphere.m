@@ -206,6 +206,8 @@ function [opt_locations, separation] = spreadPointsOnUnitSphere(n_dim,...
             % Reached the maximum iteration but slack still not within
             % tolerance
             opt_locations = nan(n_dim, n_points);
+            warning('SReachTools:runTime',['Difference-of-convex program ',...
+                'did not converge. Returning NaNs!']);
         else
             % Normalize the optimal locations
             norm_val = norms(x,2);

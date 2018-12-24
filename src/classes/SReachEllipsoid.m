@@ -1,6 +1,27 @@
 classdef SReachEllipsoid
 % Creates an ellipsoid (x - c)^T Q^{-1} (x-c) <= 1
 %
+% SReachEllipsoid Properties:
+% ---------------------------
+%   center                          - Center of the ellipsoid (c)
+%   shape_matrix                    - Shape matrix of the ellipsoid Q
+%   dim                             - Dimension of the ellipsoid
+% 
+% SReachEllipsoid Methods:
+% ------------------------
+%   SReachEllipsoid/SReachEllipsoid - Constructor
+%   disp                            - Displays critical info about the ellipsoid
+%   mtimes                          - Multiplication of ellipsoid by a matrix
+%   support                         - Support function of the ellipsoid
+% 
+% Notes:
+% ------
+% * The ellipsoid can be full-dimensional (Q non-singular) or be a 
+%   lower-dimensional ellipsoid embedded in a high dimensional space (Q 
+%   singular)
+% * F * SReachEllipsoid, SReachEllipsoid * F is supported for an n x dim -
+%   dimensional matrix
+%
 % ===========================================================================
 %
 % This function is part of the Stochastic Reachability Toolbox.
@@ -119,18 +140,18 @@ classdef SReachEllipsoid
             fprintf('%d-dimensional ellipsoid\n', obj.dim);
         end
         
-        function support_fun_val = support_fun(obj, l)
+        function val = support(obj, l)
         % Support function of the ellipsoid object
         % ====================================================================
         %
         % Inputs:
         % -------
-        %   l  - A query column vector or a collection of query vectors stacked 
-        %        as rows
+        %   l   - A query column vector or a collection of query vectors stacked 
+        %         as rows
         %
         % Outputs:
         % --------
-        %   support_fun_val - max_{y \in ellipsoid} l'*y
+        %   val - max_{y \in ellipsoid} l'*y
         %
         % =====================================================================
         % 
@@ -140,7 +161,7 @@ classdef SReachEllipsoid
         % 
         % 
         
-            if size(l,2) ~= obj.dim
+            if size(l,1) ~= obj.dim
                 throwAsCaller(SrtInvalidArgsError('l has incorrect dimensions.'));
             end
             % cholesky > obj.shape_matrix = sqrt_shape_matrix'*sqrt_shape_matrix
@@ -151,7 +172,7 @@ classdef SReachEllipsoid
                 sqrt_shape_matrix = sqrt(obj.shape_matrix);
             end
             % Hence, we need the transpose
-            support_fun_val = l* obj.center + norms(l*sqrt_shape_matrix', 2,2);
+            val = l'* obj.center + norms(l'*sqrt_shape_matrix', 2,2);
         end
         
         function newobj=mtimes(obj, F)
