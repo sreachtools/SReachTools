@@ -1,6 +1,6 @@
 function varargout = getSReachLagOverapprox(sys, target_tube,...
     disturbance_set, options)
-% Get the overapproximation of the stoch reach set
+% Get the overapproximation of the stochastic reach set
 % ============================================================================
 %
 % This function will compute the overapproximation of the stochastic reach
@@ -21,22 +21,27 @@ function varargout = getSReachLagOverapprox(sys, target_tube,...
 % -------
 %   sys             - LtiSystem object
 %   target_tube     - Tube object 
-%   disturbance_set - Polyhedron object (bounded disturbance set)
+%   disturbance_set - Polyhedron or SReachEllipsoid object (bounded disturbance set)
 %   options         - Struct of reach set options, see SReachSetOptions
 %
 % Outputs:
 % --------
 %   overapprox_set - Polyhedron object for the overapproximation of the 
 %                    stochastic reach set
-%   overapprox_tube- [Optional] Tube comprising of an overapproximation of the
-%                    stochastic reach sets across the time horizon
+%   overapprox_tube- [Available for 'VHmethod' only] Tube comprising of an
+%                    overapproximation of the stochastic reach sets across the
+%                    time horizon
 %
 % Notes:
-% * From computational geometry, intersections and Minkowski differences are
-%   best performed in facet representation and Minkowski sums are best
-%   performed in vertex representation. However, since in this computation,
-%   all three operations are required, scalability of the algorithm is severly
-%   hampered, despite theoretical elgance.
+% * From polyhedral computation theory (implemented here when
+%   options.compute_style is VHmethod), intersections and Minkowski differences
+%   are best performed in facet representation and Minkowski sums are best
+%   performed in vertex representation. However, since in this computation, all
+%   three operations are required, scalability of the algorithm is severly
+%   hampered, despite theoretical elegance.
+% * Using support functions, an arbitrarily tight polytopic overapproximation of
+%   the set may be computed via convex optimization (linear or second order-cone
+%   programs).
 %
 % ============================================================================
 %
@@ -76,17 +81,15 @@ function varargout = getSReachLagOverapprox(sys, target_tube,...
             %% Use vertex-facet enumeration requiring recursion
             [effective_target_tube] = computeViaRecursion(sys, target_tube,...
                 disturbance_set, options);
+            varargout{1} = effective_target_tube(1);
+            varargout{2} = effective_target_tube;
         case 'support'
             %% Use recursion-free support function approach
-            [effective_target_tube] = computeViaSupportFn(sys, target_tube,...
+            [effective_target_set] = computeViaSupportFn(sys, target_tube,...
                 disturbance_set, options);
+            varargout{1} = effective_target_set;            
         otherwise
             throw(SrtInvalidArgsError('Invalid computation style specified'));
-    end
-    
-    varargout{1} = effective_target_tube(1);
-    if nargout > 1
-        varargout{2} = effective_target_tube;
     end
 end
 
@@ -176,18 +179,19 @@ function [effective_target_set] = computeViaSupportFn(sys, target_tube,...
             'sys.input_dim)-dimensional collection of column vectors. ',...
             'Faulty options structure provided!']));        
     end
-    
+
     effective_target_set_A = zeros(n_vertices, dir_vecs_dim);
     effective_target_set_b = zeros(n_vertices, 1);
     if options.verbose == 1
-        fprintf('Computation of ell: 00000/%5d',n_vertices);
+        fprintf('Evaluating support function: 00000/%5d',n_vertices);
     end
         
     for dir_indx = 1:n_vertices
         if options.verbose == 1
             fprintf('\b\b\b\b\b\b\b\b\b\b\b%5d/%5d',dir_indx, n_vertices);
         elseif options.verbose == 2
-            fprintf('\n\nComputation of ell: %5d/%5d\n\n',dir_indx, n_vertices);
+            fprintf('\n\nEvaluating support function: %5d/%5d\n\n',...
+                dir_indx, n_vertices);
         end
         ell = options.equi_dir_vecs(:, dir_indx);
         effective_target_set_A(dir_indx, :)= ell';
@@ -196,7 +200,7 @@ function [effective_target_set] = computeViaSupportFn(sys, target_tube,...
         if options.verbose >= 2 && size(ell,1) <=3
             figure(200);
             hold on;
-            title(sprintf('ell: %d/%d',dir_indx, n_vertices));
+            title(sprintf('support %d/%d',dir_indx, n_vertices));
             p_temp = Polyhedron('H',[ell' effective_target_set_b(dir_indx)]);
             plot(p_temp.intersect(target_tube(1)),'alpha',0);
             %scatter(ell(1),ell(2),300,'rx');
@@ -206,7 +210,7 @@ function [effective_target_set] = computeViaSupportFn(sys, target_tube,...
         end
     end
     effective_target_set = Polyhedron('H', [effective_target_set_A, ...
-        effective_target_set_b]);
+        effective_target_set_b; target_tube(1).A, target_tube(1).b]);
     if options.verbose >= 1
         fprintf('\n');
     end
@@ -226,16 +230,15 @@ function [val] = support(ell, sys, target_tube, dist_set, options)
         variable slack_var_target(time_horizon + 1, 1);
         variable slack_var_inputdist(time_horizon, 1);
         variable dummy_var(sys.state_dim, time_horizon)
-        variable dual_var_target(size(concat_target_tube_A,1), 1);
-        variable dual_var_input(n_lin_input, time_horizon);        
+        variable dual_var_target(size(concat_target_tube_A,1), 1) nonnegative;
+        variable dual_var_input(n_lin_input, time_horizon) nonnegative;        
+        if isa(dist_set, 'Polyhedron')
+            variable dual_var_dist(size(dist_set.A,1),time_horizon) nonnegative;        
+        end
         
         minimize (sum(slack_var_target) + sum(slack_var_inputdist))
         
-        subject to
-            % Dual variables are nonnegative
-            dual_var_target >= 0;
-            dual_var_input >= 0;
-            
+        subject to            
             dual_var_start_indx = 1;
             dual_var_end_indx = size(target_tube(1).A,1);
                 
@@ -282,20 +285,37 @@ function [val] = support(ell, sys, target_tube, dist_set, options)
                 
                 %% Support function of (-BU) + (-FE) for k from 0 to N-1
                 if tube_indx <= time_horizon
-                    % Compute F_k E for k from 0 to N-1
-                    minus_fe_now = - sys.dist_mat(current_time) * dist_set;
-
                     % A_u' * z_u_k == -B_k^T A^{-T}_k psi_k
                     (sys.input_space.A)'*dual_var_input(:, tube_indx) ==...
                         - sys.input_mat(current_time)' * inv_sys_now' *...
                             dummy_var(:, tube_indx);
                     
-                    % b_u' * z_u_k + minus_fe_now.support(A^{-T}_k psi_k)
-                    %                                           <= s_inputdist_k
-                    (sys.input_space.b)'*dual_var_input(:, tube_indx) +...
-                        minus_fe_now.support(...
-                            inv_sys_now'*dummy_var(:, tube_indx))...
-                            <= slack_var_inputdist(tube_indx);
+                    switch class(dist_set)
+                        case 'SReachEllipsoid'
+                            % Compute F_k E for k from 0 to N-1
+                            minus_fe_now = - sys.dist_mat(current_time) *...
+                                dist_set;
+                    
+                            % b_u' *z_u_k + minus_fe_now.support(A^{-T}_k psi_k)
+                            %                                  <= s_inputdist_k
+                            (sys.input_space.b)'*dual_var_input(:, tube_indx)...
+                                 + minus_fe_now.support(...
+                                    inv_sys_now'*dummy_var(:, tube_indx))...
+                                    <= slack_var_inputdist(tube_indx);
+                        case 'Polyhedron'
+                            % b_u' * z_u_k + b_E' * z_w_k <= s_inputdist_k
+                            (sys.input_space.b)'*dual_var_input(:, tube_indx)...
+                                 + (dist_set.b)'*dual_var_dist(:,tube_indx)...
+                                    <= slack_var_inputdist(tube_indx);
+                            % A_E' * z_w_k == -F_k^T A^{-T}_k psi_k
+                            (dist_set.A)'*dual_var_dist(:,tube_indx)==...
+                                - sys.dist_mat(current_time)' * ...
+                                    inv_sys_now' * dummy_var(:, tube_indx);
+                        otherwise
+                            throw(SrtInvalidArgsError(sprintf(['Disturbance',...
+                                ' (%s) is not configured as of yet'],...
+                                class(scaled_dist_set))));
+                    end
                 end
             end
     cvx_end
@@ -308,37 +328,7 @@ function [val] = support(ell, sys, target_tube, dist_set, options)
 end
 
 % Things left to do:
-% 1. Switch to polyhedral disturbance set based on the dist_set
-% 2. Switch to time-based polytope
-% 3. Do the affine transformation via ellipse
-%
-% % slack_var_inputdist constraint depends on type of dist_set
-%                     if isa(scaled_dist_set,'SReachEllipsoid')
-%                         % b_u'*z_u_k + sup_ell(A^{-T}_k psi_k) <= s_InputDist_k
-%                         (scaled_input_set.b)'*dual_var_input(:, tube_indx) +...
-%                             scaled_dist_set.support(inv_sys_now'*...
-%                                 dummy_var(:, tube_indx)) <=...
-%                                     slack_var_inputdist(tube_indx);
-%                     elseif isa(scaled_dist_set,'Polyhedron')
-%                     else
-%                         throw(SrtInvalidArgsError(sprintf(['Disturbance ',...
-%                             '(%s) is not configured as of yet'],...
-%                             class(scaled_dist_set))));
-%                     end
-%%%%%%%%%%%%%%%%%                    
-%         if isa(dist_set,'Polyhedron')
-%             minus_fe_now = (sys.dist_mat(0) * dist_set);
-%             n_lin_dist = size(minus_fe_now.A,1);
-%             
-%             variable dual_var_dist(n_lin_dist, time_horizon);
-%         end
-%             dual_var_dist >= 0;            
-%             norms(dummy_var, 2) <= 1;
-%%%%%%%%%%%%%%%%%                    
-%                     % b_u'*z_u_k + b_E' * z_E_k <= s_InputDist_k
-%                     (minus_bu_now.b)'*dual_var_input(:, tube_indx) +...
-%                         (minus_fe_now.b)'*dual_var_dist(:,tube_indx)... 
-%                             <= slack_var_inputdist(tube_indx);
-%                     % A_E' * z_E_k == A^{-T}_k psi_k
-%                     (minus_fe_now.A)'*dual_var_dist(:, tube_indx) ==...
-%                         inv_sys_now'*dummy_var(:, tube_indx);
+% 1. Switch to time-based polytope to create a tube
+% 2. Do the affine transformation via ellipse to do useful sampling. However,
+%    this is going to be tough, since the problem setup itself will require
+%    support function evaluation which is costly.

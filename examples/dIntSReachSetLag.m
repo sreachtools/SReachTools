@@ -121,50 +121,49 @@ lagrange_under_time = toc(timerVal);
 
 %%
 n_dim_over = sys.state_dim;
+% % Option type 1: Bound_set_method - Ellipsoid | Compute_style - VHmethod
 timerVal=tic;
-% loOpts = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'ellipsoid',...
-%     'verbose', 1, 'compute_style','vhmethod');
-% fprintf('Load options for lag-under with bound_set_method: polytope\n');
-% load('loOpts_save')
-% fprintf('Setting up options for lag-under with bound_set_method: polytope\n');
-% loOpts = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'polytope',...
-%     'verbose', 1, 'template_polytope',...
-%     Polyhedron('lb',-ones(sys.dist.dim,1),'ub',ones(sys.dist.dim,1)),...
-%     'compute_style','vhmethod');
-% loOpts = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'polytope',...
-%     'verbose', 1, 'template_polytope',...
-%     Polyhedron('lb',-ones(sys.dist.dim,1),'ub',ones(sys.dist.dim,1)),...
-%     'compute_style','support', 'system', sys,...
-%     'n_underapprox_vertices', 2^n_dim_over* 6 +2*n_dim_over);
-fprintf('Setting up options for lag-under with bound_set_method: ellipsoid\n');
-loOpts = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'ellipsoid',...
+loOpts1 = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'ellipsoid',...
+    'verbose', 1, 'compute_style','vhmethod');
+loOpts_time(1) = toc(timerVal);
+timerVal=tic;
+loSet(1) = SReachSet('term', 'lag-over', sys, beta, target_tube, loOpts1);
+lagrange_over_time(1) = toc(timerVal);
+% % Option type 2: Bound_set_method - Ellipsoid | Compute_style - Support
+timerVal=tic;
+loOpts2 = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'ellipsoid',...
     'verbose', 1, 'compute_style','support', 'system', sys,...
     'n_underapprox_vertices', 2^n_dim_over * 7+2*n_dim_over);
-% % fprintf('Load options for lag-under with bound_set_method: ellipsoid\n');
-% % load('loOpts_save_ell.mat')
+loOpts_time(2) = toc(timerVal);
+timerVal=tic;
+loSet(2) = SReachSet('term', 'lag-over', sys, beta, target_tube, loOpts2);
+lagrange_over_time(2) = toc(timerVal);
+% % Option type 3: Bound_set_method - Polytope | Compute_style - VHmethod
+timerVal=tic;
+loOpts3 = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'polytope',...
+    'verbose', 1, 'template_polytope',...
+    Polyhedron('lb',-ones(sys.dist.dim,1),'ub',ones(sys.dist.dim,1)),...
+    'compute_style','vhmethod');
+loOpts_time(3) = toc(timerVal);
+timerVal=tic;
+loSet(3) = SReachSet('term', 'lag-over', sys, beta, target_tube, loOpts3);
+lagrange_over_time(3) = toc(timerVal);
+% % Option type 4: Bound_set_method - Polytope | Compute_style - Support
+loOpts4 = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'polytope',...
+    'verbose', 1, 'template_polytope',...
+    Polyhedron('lb',-ones(sys.dist.dim,1),'ub',ones(sys.dist.dim,1)),...
+    'compute_style','support', 'system', sys,...
+    'n_underapprox_vertices', 2^n_dim_over* 7 +2*n_dim_over);
+loOpts_time(4) = toc(timerVal);
+timerVal=tic;
+loSet(4) = SReachSet('term', 'lag-over', sys, beta, target_tube, loOpts4);
+lagrange_over_time(4) = toc(timerVal);
 % theta_vec = linspace(0, 2*pi, 101);
 % theta_vec = theta_vec(1:end-1);
 % loOpts.equi_dir_vecs = [cos(theta_vec);
 %                         sin(theta_vec)];
 % loOpts.n_underapprox_vertices = 100;                    
-loOpts_time = toc(timerVal);
-timerVal=tic;
-loSet = SReachSet('term', 'lag-over', sys, beta, target_tube, loOpts);
-lagrange_over_time = toc(timerVal);
-% Plotting these sets
 
-figure();
-plot(safe_set, 'color', 'k', 'alpha',1);
-hold on;
-plot(loSet, 'color', 'y');
-plot(luSet, 'color', 'g');
-hold off;
-xlabel('$x_1$', 'Interpreter', 'latex')
-ylabel('$x_2$', 'Interpreter', 'latex')
-box on;
-leg = legend('Safe set','Overapproximation','Underapproximation');
-set(leg,'Location','EastOutside');
-axis equal;
 %% 
 % Because of the choice or random directions for the ellipse |robust_eff_target| 
 % and |robust_target_2| are not exactly equivalent (same for the augmented sets). 
@@ -191,8 +190,17 @@ dyn_soln_lvl_set=getDynProgLevelSets2D(cell_of_xvec, prob_x, beta, target_tube);
 %%
 fprintf('Simulation times [seconds]:\n');
 fprintf(' Lagrangian:\n');
-fprintf('   Overapproximation  : %.3f (online: %1.3f | offline: %1.3f)\n',...
-    lagrange_over_time + loOpts_time, lagrange_over_time, loOpts_time);
+% fprintf('   Overapproximation  : %.3f (online: %1.3f | offline: %1.3f)\n',...
+%     lagrange_over_time + loOpts_time, lagrange_over_time, loOpts_time);
+fprintf('   Overapproximation   online  |  offline | Total\n');
+fprintf('(Ellipsoid,VHmethod)  %1.2e | %1.2e | %1.2f\n',...
+    lagrange_over_time(1),loOpts_time(1),lagrange_over_time(1)+loOpts_time(1));
+fprintf('(Ellipsoid, support)  %1.2e | %1.2e | %1.2f\n',...
+    lagrange_over_time(2),loOpts_time(2),lagrange_over_time(2)+loOpts_time(2));
+fprintf('(Polytope ,VHmethod)  %1.2e | %1.2e | %1.2f\n',...
+    lagrange_over_time(3),loOpts_time(3),lagrange_over_time(3)+loOpts_time(3));
+fprintf('(Polytope , support)  %1.2e | %1.2e | %1.2f\n',...
+    lagrange_over_time(4),loOpts_time(4),lagrange_over_time(4)+loOpts_time(4));
 fprintf('   Underapproximation : %.3f (online: %1.3f | offline: %1.3f)\n',...
     lagrange_under_time + luOpts_time, lagrange_under_time, luOpts_time);
 fprintf('   Dynamic programming: %.3f\n', dynprog_time);
@@ -202,15 +210,42 @@ fprintf('   Dynamic programming: %.3f\n', dynprog_time);
 % "outside".
 %%
 figure();
-plot(safe_set, 'color', 'k', 'alpha',1);
+plot(safe_set, 'color', 'k');
 hold on;
-plot(loSet, 'color', 'y');
+plot(loSet(2), 'color', 'y','alpha',1);
+plot(loSet(1), 'color', 'r','alpha',0.5);
 plot(dyn_soln_lvl_set,'color', 'b')
 plot(luSet, 'color', 'g');
 hold off;
 xlabel('$x_1$', 'Interpreter', 'latex')
 ylabel('$x_2$', 'Interpreter', 'latex')
-leg = legend('Safe set','Overapproximation', 'Dyn. prog. soln.',...
+% leg = legend('Safe set','Overapproximation', 'Dyn. prog. soln.',...
+%     'Underapproximation');
+leg = legend('Safe set',...
+    'Overapproximation (Ell, support)',...
+    'Overapproximation (Ell, VH)',...
+     'Dyn. prog. soln.',...
+    'Underapproximation');
+set(leg,'Location','EastOutside');
+box on;
+axis equal;
+
+figure();
+plot(safe_set, 'color', 'k');
+hold on;
+plot(loSet(4), 'color', 'y','alpha',1);
+plot(loSet(3), 'color', 'r','alpha',0.5);
+plot(dyn_soln_lvl_set,'color', 'b')
+plot(luSet, 'color', 'g');
+hold off;
+xlabel('$x_1$', 'Interpreter', 'latex')
+ylabel('$x_2$', 'Interpreter', 'latex')
+% leg = legend('Safe set','Overapproximation', 'Dyn. prog. soln.',...
+%     'Underapproximation');
+leg = legend('Safe set',...
+    'Overapproximation (Poly, support)',...
+    'Overapproximation (Poly, VH)',...
+     'Dyn. prog. soln.',...
     'Underapproximation');
 set(leg,'Location','EastOutside');
 box on;

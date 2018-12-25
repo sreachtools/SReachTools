@@ -93,7 +93,8 @@ function [opt_locations, separation] = spreadPointsOnUnitSphere(n_dim,...
     if n_points_first_quad > 0
         %% Initialize
         % Draw points from the multi-variate Gaussian and normalize it
-        x_iter_unnorm = abs(mvnrnd(zeros(n_points_first_quad, n_dim), eye(n_dim))');
+        x_iter_unnorm = abs(mvnrnd(zeros(n_points_first_quad, n_dim),...
+            10 * eye(n_dim))');
         norm_val = norms(x_iter_unnorm,2);
         x_iter = x_iter_unnorm./norm_val;
         % For difference of convex program, initialize the previous costs

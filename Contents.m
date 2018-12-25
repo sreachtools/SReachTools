@@ -1,5 +1,5 @@
 % Stochastic Reachability Toolbox (SReachTools)
-% Version 1.2.30 (R2017b) 18-December-2018
+% Version 1.2.31 (R2017b) 25-December-2018
 % 
 % The Stochastic Reachability Toolbox (SReachTools) is an open-source MATLAB 
 % toolbox for performing stochastic verification and reachability analysis.
@@ -14,6 +14,8 @@
 % time-varying) systems with additive Gaussian.
 %     - Stochastic reach set (approximations) via 
 %           1. Lagrangian methods
+%               1. Overapproximation via support function & polyhedral approach
+%               2. Underapproximation via support function & polyhedral approach
 %           2. Convex chance constrained optimization
 %           3. Fourier transform (Genz's algorithm and MATLAB's patternsearch)
 %     - Optimal controller synthesis

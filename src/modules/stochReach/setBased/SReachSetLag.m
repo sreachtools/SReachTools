@@ -31,6 +31,11 @@ function varargout = SReachSetLag(method_str, sys, prob_thresh, safety_tube,...
 %                stochastic reach set
 %   approx_tube- [Optional] Tube comprising of an over-/under-approximation of
 %                the stochastic reach sets across the time horizon
+%
+% Notes:
+% ------
+% * compute_style of `support` and method of `lag-over` will return only the 
+%   approx_set.
 % ============================================================================
 % 
 %   This function is part of the Stochastic Reachability Toolbox.
@@ -65,7 +70,11 @@ function varargout = SReachSetLag(method_str, sys, prob_thresh, safety_tube,...
     % Obtain time horizon
     time_horizon = length(safety_tube) - 1;
     
-    if time_horizon > 0 && prob_thresh > 0   
+    if time_horizon == 0 || prob_thresh == 0
+        % return set in target tube if length is 1
+        varargout{1} = safety_tube(1);
+        varargout{2} = safety_tube;
+    elseif time_horizon > 0 && prob_thresh > 0   
         if options.verbose
             under_or_over=strsplit(method_str,'-');
             fprintf('Computing Lagragian %s approximation\n', under_or_over{2});
@@ -78,24 +87,34 @@ function varargout = SReachSetLag(method_str, sys, prob_thresh, safety_tube,...
                 
                 [approx_set, approx_tube] = getSReachLagUnderapprox(...
                     sys, safety_tube, bounded_set, options);
+                varargout{1} = approx_set;
+                varargout{2} = approx_tube;
             case 'lag-over'
                 % get bounded disturbance set
                 bounded_set = SReachSetLagBset(sys, ...
                     (1-prob_thresh)^(1/time_horizon), options);
                 % get overapproximated set (augmented effective target)
-                [approx_set, approx_tube] = getSReachLagOverapprox(...
-                    sys, safety_tube, bounded_set, options);
+                switch lower(options.compute_style)
+                    case 'vhmethod'
+                        [approx_set, approx_tube] = getSReachLagOverapprox(...
+                            sys, safety_tube, bounded_set, options);
+                        varargout{1} = approx_set;
+                        varargout{2} = approx_tube;
+                    case 'support'
+                        if nargout >= 2
+                            throw(SrtInvalidArgsError(['Too many output ',...
+                                'arguments. compute_style = support can not',...
+                                ' compute overapproximation reach tube.']));
+                        end
+                        approx_set = getSReachLagOverapprox(sys, safety_tube,...
+                            bounded_set, options);
+                        varargout{1} = approx_set;
+                end                
             otherwise
                 throw(SrtInvalidArgsError('Unhandled method_str: %s', ...
                     method_str));
         end
-        varargout{1} = approx_set;
-        varargout{2} = approx_tube;
-    elseif time_horizon == 0 || prob_thresh == 0
-        % return set in target tube if length is 1
-        varargout{1} = safety_tube(1);
-        varargout{2} = safety_tube;
-    else        
+    else
         throw(SrtDevError('Unknown problem configuration'));
     end
 end
