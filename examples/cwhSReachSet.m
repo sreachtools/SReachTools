@@ -69,6 +69,8 @@ sys = getCwhLtiSystem(4, Polyhedron('lb', -umax*ones(2,1), ...
 ft_run = 0;
 cc_open_run = 0;
 lagunder_run = 1;
+lagover_run = 1;
+
 %% Target tube construction --- reach-avoid specification
 time_horizon = 5;          % Stay within a line of sight cone for 4 time steps and 
                          % reach the target at t=5% Safe Set --- LoS cone
@@ -150,6 +152,18 @@ if lagunder_run
     elapsed_time_lagunder = toc(timer_lagunder);
 end
 
+if lagover_run
+    n_dim = sys.state_dim;
+    lag_options = SReachSetOptions('term', 'lag-over', 'bound_set_method', ...
+         'ellipsoid', 'compute_style','support', 'system', sys, 'verbose', 1,...
+         'n_underapprox_vertices', 2^n_dim * 6 + 2*n_dim);
+    
+    timer_lagover = tic;
+    polytope_lagover = SReachSet('term', 'lag-over', sys,  prob_thresh, ...
+        target_tube, lag_options);
+    elapsed_time_lagover = toc(timer_lagover);
+end
+
 
 %% Preparation for Monte-Carlo simulations of the optimal controllers
 % Monte-Carlo simulation parameters
@@ -185,6 +199,13 @@ else
     polytope_lagunder = Polyhedron();
     elapsed_time_lagunder = NaN;
 end
+if lagover_run && ~isEmptySet(polytope_lagover)
+    plot(Polyhedron('V',polytope_lagover.V(:,1:2)), 'color','m','alpha',0.5);    
+    legend_cell{end+1} = 'Overapprox. polytope (lag-over)';
+else
+    polytope_lagover = Polyhedron();
+    elapsed_time_lagover = NaN;
+end
 direction_index_to_plot = 30;
 if ~isEmptySet(polytope_cc_open)
     init_state = extra_info(2).vertices_underapprox_polytope(:,direction_index_to_plot);
@@ -216,8 +237,9 @@ if any(isnan([elapsed_time_ft, elapsed_time_cc_open, elapsed_time_lagunder]))
     disp('Skipped items would show up as NaN');
 end
 fprintf(['Elapsed time: (genzps-open) %1.3f | (chance-open) %1.3f',...
-    ' | (lag-under) %1.3f seconds\n'], ...
-    elapsed_time_ft, elapsed_time_cc_open, elapsed_time_lagunder);
+    ' | (lag-under) %1.3f | (lag-over) %1.3f seconds\n'], ...
+    elapsed_time_ft, elapsed_time_cc_open, elapsed_time_lagunder,...
+    elapsed_time_lagover);
 
 %% Helper functions
 % Plotting function
