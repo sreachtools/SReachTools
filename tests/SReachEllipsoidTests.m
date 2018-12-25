@@ -99,5 +99,31 @@ classdef SReachEllipsoidTests < matlab.unittest.TestCase
                 'Incorrect center of the ellipse constructed by scaling');
             
         end
+
+        function sumTest(test_case)
+            % Support function of a unit circle must be one
+            my_ellipse = SReachEllipsoid(ones(2,1), [1,0;
+                 0,3]);
+            shifted_ellipse = my_ellipse + ones(2,1);
+
+            % Check if center was shifted correctly and shape matrix was left
+            % unchanged
+            test_case.verifyTrue(isequal(shifted_ellipse.center,2*ones(2,1)),...
+                'Incorrect center shift');
+            test_case.verifyTrue(isequal(shifted_ellipse.shape_matrix,...
+                [1,0;0,3]), 'Incorrect shape matrix after shifting');
+
+            shifted_ellipse = my_ellipse + 2;
+            % Check if center was shifted correctly and shape matrix was left
+            % unchanged
+            test_case.verifyTrue(isequal(shifted_ellipse.center,3*ones(2,1)),...
+                'Incorrect center shift');
+            test_case.verifyTrue(isequal(shifted_ellipse.shape_matrix,...
+                [1,0;0,3]), 'Incorrect shape matrix after shifting');
+            
+            % Square-root of eigenvalues is the semi-axis length
+            poly = Polyhedron('lb',-ones(2,1),'ub',ones(2,1)); 
+            my_ellipse + poly; 
+        end
     end
 end

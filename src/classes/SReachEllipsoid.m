@@ -10,17 +10,21 @@ classdef SReachEllipsoid
 % SReachEllipsoid Methods:
 % ------------------------
 %   SReachEllipsoid/SReachEllipsoid - Constructor
-%   disp                            - Displays critical info about the ellipsoid
-%   mtimes                          - Multiplication of ellipsoid by a matrix
 %   support                         - Support function of the ellipsoid
+%
+% Apart from these methods, the following commands work
+%   disp                            - Displays critical info about the ellipsoid
+%   F * ell | ell * F               - Multiplication of ellipsoid by a n x dim -
+%                                     dimensional matrix or a scalar F
+%   F + ell | ell + F | ell + poly  - Add a deterministic vector/scalar to an
+%                                     ellipsoid | Overapproximate the Minkowski
+%                                     sum of a polyhedron with ellipsoid
 % 
 % Notes:
 % ------
 % * The ellipsoid can be full-dimensional (Q non-singular) or be a 
 %   lower-dimensional ellipsoid embedded in a high dimensional space (Q 
 %   singular)
-% * F * SReachEllipsoid, SReachEllipsoid * F is supported for an n x dim -
-%   dimensional matrix
 %
 % ===========================================================================
 %
@@ -209,6 +213,98 @@ classdef SReachEllipsoid
                        ' not defined between *%s, %s'], class(obj), class(F))));
             end
             newobj=SReachEllipsoid(F * obj.center, F * obj.shape_matrix * F');            
+        end
+        
+        function newobj = plus(obj, v)
+        % Override of MATLAB plus command
+        % ====================================================================
+        % 
+        % Inputs:
+        % -------
+        %   obj - Ellipsoid object
+        %   v   - Deterministic vector to be added to the random vector OR
+        %         a Polytope object
+        %
+        % Outputs:
+        % --------
+        %   newobj - Ellipsoid obj (obj + v) for deterministic vector/scalar v
+        %            Polyhedron obj (obj \oplus v) for polytopic v (overapprox)
+        %
+        % Notes:
+        % ------
+        % * For a polytopic v, newobj is an (Polyhed overapproximation of the
+        %   minkowski sum, computed via sampling the support function.
+        %
+        % ====================================================================
+        % 
+        % This function is part of the Stochastic Reachability Toolbox.
+        % License for the use of this function is given in
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        % 
+        %
+            
+            summands_type = [];
+            switch [class(obj), class(v)]
+                case ['SReachEllipsoid','double']
+                    % Check dimensions
+                    if ~isequal(size(v), [obj.dim 1]) && ~isequal(size(v),[1 1])
+                        throwAsCaller(SrtInvalidArgsError(['Mismatch in ',...
+                            'dimensions of the SReachEllipsoid and v']));
+                    end
+                    % Set the flag for the type of summation
+                    summands_type = 'determ_vec_plus_ell';
+                case ['double', 'SReachEllipsoid']
+                    % Need to switch the arguments
+                    vtemp = obj;
+                    obj = v;
+                    v = vtemp;
+                    % Check dimensions
+                    if ~isequal(size(v), [obj.dim 1]) && ~isequal(size(v),[1 1]) 
+                        throwAsCaller(SrtInvalidArgsError(['Mismatch in ',...
+                            'dimensions of the random vector and v']));
+                    end
+                    % Set the flag for the type of summation
+                    summands_type = 'determ_vec_plus_ell';
+                case ['SReachEllipsoid','Polyhedron']                
+                    % Check dimensions
+                    if v.Dim ~= obj.dim
+                        throwAsCaller(SrtInvalidArgsError(['Mismatch in ',...
+                            'dimensions of the SReachEllipsoid and ',...
+                            'Polyhedron v']));
+                    end
+                    % Set the flag for the type of summation
+                    summands_type = 'ell_plus_poly';
+                case ['Polyhedron','SReachEllipsoid']                
+                    % Need to switch the arguments
+                    vtemp = obj;
+                    obj = v;
+                    v = vtemp;
+                    % Check dimensions
+                    if v.Dim ~= obj.dim
+                        throwAsCaller(SrtInvalidArgsError(['Mismatch in ',...
+                            'dimensions of the SReachEllipsoid and ',...
+                            'Polyhedron v']));
+                    end
+                    % Set the flag for the type of summation
+                    summands_type = 'ell_plus_poly';
+                otherwise
+                    throwAsCaller(SrtInvalidArgsError(sprintf(['Operation +',...
+                       ' not defined between %s and %s'], class(obj),...
+                       class(v))));
+            end
+            switch summands_type
+                case 'determ_vec_plus_ell'
+                    if isequal(size(v),[1 1])
+                        % F is a scalar
+                        v = v * ones(obj.dim,1);
+                    end
+                    newobj = SReachEllipsoid(obj.center + v, obj.shape_matrix);
+                case 'ell_plus_poly'
+                    new_b = v.support(v.A') + obj.support(v.A');
+                    newobj = Polyhedron('H',[v.A new_b]);
+                otherwise
+                    % Will never come here
+            end
         end
     end
 end
