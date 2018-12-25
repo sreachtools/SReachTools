@@ -8,8 +8,9 @@
 % intersection, Minkowski addition/differences, etc. This computation using set 
 % operations can be used to approximate (either over or under) the stochastic 
 % reachability of a target tube problem. We will demonstrate that this approach 
-% while being be approximative can outperform the current state-of-the-art <https://doi.org/10.1016/j.automatica.2010.08.006 
-% dynamic programming> solution in terms of computation time.
+% while being be approximative can outperform the current state-of-the-art
+% <https://doi.org/10.1016/j.automatica.2010.08.006 dynamic programming>
+% solution in terms of computation time.
 % 
 % Advantages:
 % 
@@ -24,16 +25,14 @@
 % 
 % The theory for this approach can be found in
 % 
-% * J. D. Gleason, A. P. Vinod, M. M. K. Oishi, "Underapproximation of Reach-Avoid 
-%   Sets for Discrete-Time Stochastic Systems via Lagrangian Methods," in Proceedings 
-%   of the IEEE Conference on Decision and Control, 2017. 
-% * J. D. Gleason, A. P. Vinod, M. M. K. Oishi, "Underapproximation of 
-%   Reach-Avoid Sets for Discrete-Time Stochastic Systems via Lagrangian 
-%   Methods," in Proceedings of the IEEE Conference on Decision and Control, 
-%   2017
+% * J. D. Gleason, A. P. Vinod, M. M. K. Oishi, "Underapproximation of
+%   Reach-Avoid Sets for Discrete-Time Stochastic Systems via Lagrangian
+%   Methods," in Proceedings of the IEEE Conference on Decision and Control,
+%   2017. 
 % 
 % This example is part of the SReachTools toolbox. License for the use 
-% of this function is given in <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE 
+% of this function is given in
+% <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
 % 
 
@@ -44,7 +43,7 @@ close all;clearvars;srtinit;srtinit --version;
 % In this example we will look at the viability problem for a double integrator. 
 % The system dynamics are:
 % 
-% $$  x_{k+1} = \left[ \begin{array}{cc}    1 & T \\    0 & 1  \end{array}\right] 
+% $$  x_{k+1} = \left[ \begin{array}{cc}    1 & T \\   0 & 1  \end{array}\right] 
 % x_{k} + \left[\begin{array}{c}    \frac{T^{2}}{2} \\    T  \end{array}\right] 
 % u_{k} + w_{k}$$
 % 
@@ -81,7 +80,8 @@ beta = 0.8;
 figure()
 hold on    
 for time_indx = 0:time_horizon
-    target_tube_at_time_indx = Polyhedron('H',[target_tube(time_indx+1).A,zeros(size(target_tube(time_indx+1).A,1),1), target_tube(time_indx+1).b], 'He',[0 0 1 time_indx]);
+    target_tube_at_time_indx = Polyhedron('H',...
+        [target_tube(time_indx+1).A, zeros(size(target_tube(time_indx+1).A,1),1), target_tube(time_indx+1).b], 'He',[0 0 1 time_indx]);
     plot(target_tube_at_time_indx, 'alpha',0.25);
 end
 axis([-1 1 -1 1 0 time_horizon]);    
@@ -97,7 +97,7 @@ axis equal;
 % sets---for the under and overapproximations, respectively. For this computation 
 % we need to convert the Gaussian disturbance into a bounded distrubance set which 
 % will satisfy the required conditions detailed in the aforementioned papers. 
-% We do this here for a an 0.8 probability with the given target tube.
+% We do this here for a beta probability with the given target tube.
 % 
 % There are several ways to create bounded disturbance sets. Here, we formulate 
 % a bounded disturbance by creating a polyhedral approximation of an ellipsoid 
@@ -106,36 +106,51 @@ axis equal;
 % bounded set for Lagrangian
 timerVal=tic;
 n_dim = sys.state_dim + sys.input_dim;
-fprintf('Setting up options for lag-under with bound_set_method: ellipsoid\n');
-luOpts = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
-    'ellipsoid', 'system', sys, 'n_underapprox_vertices', 2^n_dim*10+2*n_dim,...
-    'verbose',1,'compute_style','support');
-% fprintf('Setting up options for lag-under with bound_set_method: polytope\n');
+% fprintf('Setting up options for lag-under with bound_set_method: ellipsoid\n');
 % luOpts = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
-%     'polytope', 'verbose', 1, 'template_polytope',...
-%     Polyhedron('lb',-ones(sys.dist.dim,1),'ub',ones(sys.dist.dim,1)),...
-%     'compute_style','vhmethod');
-options_time = toc(timerVal);
+%     'ellipsoid', 'system', sys, 'n_underapprox_vertices', 2^n_dim*10+2*n_dim,...
+%     'verbose',1,'compute_style','support');
+fprintf('Setting up options for lag-under with bound_set_method: polytope\n');
+luOpts = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
+    'ellipsoid', 'verbose', 1, 'compute_style','vhmethod');
+luOpts_time = toc(timerVal);
 timerVal=tic;
-[luSet, extra_info] = SReachSet('term', 'lag-under', sys, 0.8, target_tube,...
+[luSet, extra_info] = SReachSet('term', 'lag-under', sys, beta, target_tube,...
     luOpts);
 lagrange_under_time = toc(timerVal);
 
 %%
-tic;
-loOpts = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'polytope',...
-    'verbose', 1, 'template_polytope',...
-    Polyhedron('lb',-ones(sys.dist.dim,1),'ub',ones(sys.dist.dim,1)),...
-    'compute_style','vhmethod');
-loSet = SReachSet('term', 'lag-over', sys, 0.8, target_tube, loOpts);
-lagrange_over_time = toc();
-%% 
-% Now we can compute the Lagrangian under and overapproximations which we 
-% call the robust and augmented effective target sets
-
-% robust_eff_target = getRobustEffTarget(sys, target_tube, lag_bounded_set);
-% aug_eff_target    = getAugEffTarget(sys, target_tube, lag_bounded_set);
-%% 
+n_dim_over = sys.state_dim;
+timerVal=tic;
+% loOpts = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'ellipsoid',...
+%     'verbose', 1, 'compute_style','vhmethod');
+% fprintf('Load options for lag-under with bound_set_method: polytope\n');
+% load('loOpts_save')
+% fprintf('Setting up options for lag-under with bound_set_method: polytope\n');
+% loOpts = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'polytope',...
+%     'verbose', 1, 'template_polytope',...
+%     Polyhedron('lb',-ones(sys.dist.dim,1),'ub',ones(sys.dist.dim,1)),...
+%     'compute_style','vhmethod');
+% loOpts = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'polytope',...
+%     'verbose', 1, 'template_polytope',...
+%     Polyhedron('lb',-ones(sys.dist.dim,1),'ub',ones(sys.dist.dim,1)),...
+%     'compute_style','support', 'system', sys,...
+%     'n_underapprox_vertices', 2^n_dim_over* 6 +2*n_dim_over);
+fprintf('Setting up options for lag-under with bound_set_method: ellipsoid\n');
+loOpts = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'ellipsoid',...
+    'verbose', 1, 'compute_style','support', 'system', sys,...
+    'n_underapprox_vertices', 2^n_dim_over * 7+2*n_dim_over);
+% % fprintf('Load options for lag-under with bound_set_method: ellipsoid\n');
+% % load('loOpts_save_ell.mat')
+% theta_vec = linspace(0, 2*pi, 101);
+% theta_vec = theta_vec(1:end-1);
+% loOpts.equi_dir_vecs = [cos(theta_vec);
+%                         sin(theta_vec)];
+% loOpts.n_underapprox_vertices = 100;                    
+loOpts_time = toc(timerVal);
+timerVal=tic;
+loSet = SReachSet('term', 'lag-over', sys, beta, target_tube, loOpts);
+lagrange_over_time = toc(timerVal);
 % Plotting these sets
 
 figure();
@@ -166,9 +181,9 @@ tic;
     dyn_prog_uinc, target_tube);
 dynprog_time = toc();
 %%
-% Compute the 0.8- stochastic level set
+% Compute the beta-stochastic level set
 %
-dyn_soln_lvl_set = getDynProgLevelSets2D(cell_of_xvec, prob_x, 0.8, target_tube);
+dyn_soln_lvl_set=getDynProgLevelSets2D(cell_of_xvec, prob_x, beta, target_tube);
 %% Simulation times --- Lagrangian approximation is much faster than dynamic programming
 % The simulation times for Lagrangian computation is much faster than dynamic 
 % programming, even when the former computes both an underapproximation and an 
@@ -176,9 +191,10 @@ dyn_soln_lvl_set = getDynProgLevelSets2D(cell_of_xvec, prob_x, 0.8, target_tube)
 %%
 fprintf('Simulation times [seconds]:\n');
 fprintf(' Lagrangian:\n');
-fprintf('   Overapproximation  : %.3f\n', lagrange_over_time);
+fprintf('   Overapproximation  : %.3f (online: %1.3f | offline: %1.3f)\n',...
+    lagrange_over_time + loOpts_time, lagrange_over_time, loOpts_time);
 fprintf('   Underapproximation : %.3f (online: %1.3f | offline: %1.3f)\n',...
-    lagrange_under_time + options_time, lagrange_under_time, options_time);
+    lagrange_under_time + luOpts_time, lagrange_under_time, luOpts_time);
 fprintf('   Dynamic programming: %.3f\n', dynprog_time);
 %% Plotting all the sets together
 % As expected, the over-approximation and the under-approximation obtained via 

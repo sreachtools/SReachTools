@@ -123,16 +123,16 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %                                         computations
 %                            - system   : [MUST HAVE] LtvSystem/LtiSystem object
 %                                         that is being analyzed
+%                            - n_underapprox_vertices
+%                                       : Number of vertices to use 
+%                                            [For lag-under] underapproximating
+%                                                   one-step backward reach set
+%                                            [For lag-under] overapproximating
+%                                                   the stochastic reach set
+%                                                   overapproximation 
 %                            - equi_dir_vecs
 %                                       : [Auto-generated] Directions that
-%                                         are used for vertex representation 
-%                                         creation
-%                            - n_underapprox_vertices 
-%                                       : [Required only for lag-under] Number
-%                                         of vertices to use when
-%                                         underapproximating one-step backward
-%                                         reach set computation for lag-under
-%                                         approach for scalability
+%                                         are used for overapproximation
 %
 % Outputs:
 % --------
@@ -185,7 +185,12 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %                 to obtain the vertex form of an underapproximate polytope,
 %                 which after projection, is converted back into its half-space
 %                 form.
-% 
+% * While specifying n_underapprox_vertices, use the formula 
+%   2^{n_dim} points_per_quad + 2 * n_dim 
+%   to obtain a spread of points where each quadrant has `points_per_quad`
+%   and the standard axis are also included.
+%       - For lag-under, n_dim is sys.state_dim + sys.input_dim
+%       - For lag-over, n_dim is sys.state_dim
 % ============================================================================
 % 
 % This function is part of the Stochastic Reachability Toolbox.
@@ -294,9 +299,16 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
             if options.verbose >= 2
                 timerVal = tic;
             end
-            options.equi_dir_vecs = spreadPointsOnUnitSphere(...,
-                options.system.state_dim + options.system.input_dim,...
-                options.n_underapprox_vertices, options.verbose);                
+            switch lower(method_str)
+                case 'lag-under'
+                    options.equi_dir_vecs = spreadPointsOnUnitSphere(...,
+                        options.system.state_dim + options.system.input_dim,...
+                        options.n_underapprox_vertices, options.verbose);                
+                case 'lag-over'
+                    options.equi_dir_vecs = spreadPointsOnUnitSphere(...,
+                        options.system.state_dim,...
+                        options.n_underapprox_vertices, options.verbose);                
+            end
             if options.verbose >= 2
                 fprintf('Time to spread the vectors: %1.3f s\n\n',...
                     toc(timerVal));
