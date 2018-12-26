@@ -211,6 +211,7 @@ function [effective_target_set] = computeViaSupportFn(sys, target_tube,...
     end
     effective_target_set = Polyhedron('H', [effective_target_set_A, ...
         effective_target_set_b; target_tube(1).A, target_tube(1).b]);
+    effective_target_set.minHRep();
     if options.verbose >= 1
         fprintf('\n');
     end

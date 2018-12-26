@@ -1,5 +1,4 @@
-function varargout = getSReachLagUnderapprox(sys, target_tube,...
-    disturbance_set, options)
+function varargout = getSReachLagUnderapprox(sys, target_tube,dist_set, options)
 % Get underapproximation of stochastic reach set
 % =========================================================================
 %
@@ -21,7 +20,7 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,...
 % -------
 %   sys              - LtiSystem object
 %   target_tube      - Tube object
-%   disturbance_set  - Polyhedron/SReachEllipsoid object (bounded set) OR a
+%   dist_set         - Polyhedron/SReachEllipsoid object (bounded set) OR a
 %                       collection of these objects which individually satisfy 
 %                       the probability bound(a convex hull of the individual 
 %                       results taken posteriori)
@@ -65,11 +64,11 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,...
         {'LtiSystem', 'LtvSystem'}, {'nonempty'}));
     inpar.addRequired('target_tube', @(x) validateattributes(x, ...
         {'Tube'}, {'nonempty'}));
-    inpar.addRequired('disturbance', @(x) validateattributes(x, ...
+    inpar.addRequired('dist_set', @(x) validateattributes(x, ...
         {'Polyhedron','SReachEllipsoid'}, {'nonempty'}));
     
     try
-        inpar.parse(sys, target_tube, disturbance_set);
+        inpar.parse(sys, target_tube, dist_set);
     catch cause_exc
         exc = SrtInvalidArgsError.withFunctionName();
         exc = addCause(exc, cause_exc);
@@ -94,7 +93,7 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,...
     end
     
     tube_length = length(target_tube);
-    n_disturbances = length(disturbance_set);
+    n_disturbances = length(dist_set);
 
 
     % initialize polyhedron array
@@ -136,9 +135,9 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,...
             for idist = 1:n_disturbances
                 % Account for disturbance matrix
                 if n_disturbances > 1
-                    effective_dist = dist_mat * disturbance_set{idist};
+                    effective_dist = dist_mat * dist_set{idist};
                 else
-                    effective_dist = dist_mat * disturbance_set;
+                    effective_dist = dist_mat * dist_set;
                 end
                 
                 % support function of the effective_dist - vectorized to
@@ -182,13 +181,16 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,...
                             drawnow;
                         end
                     case 'vhmethod'                % MPT's Polyhedron object
-                        % One-step backward reach set via MPT
+                        %% One-step backward reach set via MPT
                         one_step_backward_reach_set = inverted_state_matrix *...
                             (new_target + minus_bu);                    
-
                         % Guarantee staying within target_tube by intersection
                         effective_target = intersect(...
                             one_step_backward_reach_set, target_tube(itt));
+
+%                        %% One-step backward reach set via LRS
+%                        effective_target = lrsOneStepBackReachSet(...
+%                            sys, new_target, target_tube(itt), options.verbose);
                     otherwise
                         throw(SrtInvalidArgsError(['Invalid computation ',...
                             'style specified']));
@@ -289,7 +291,7 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
         equi_dir_vecs_transf = mve_shape * equi_dir_vecs;
         equi_dir_vecs = (equi_dir_vecs_transf)./norms(equi_dir_vecs_transf,2);
         if verbose >= 2
-            fprintf('Time for MVE computation: %1.3f s\n',toc(timerVal));
+            fprintf('Time for MVE computation      : %1.3f s\n',toc(timerVal));
         end
     else
         throw(SrtInvalidArgsError(['Recursion led to an empty target set!',...
@@ -357,37 +359,43 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
     end
     % Compute projection onto the x space --- ignore the u dimensions and
     % define the polytope using the resulting vertices (their convex hull)
-    one_step_back_reach_polytope_underapprox = ...
-        Polyhedron('V',boundary_point_mat(1:sys.state_dim,:)');
-    % Remove the redundant vertices
-    one_step_back_reach_polytope_underapprox.minVRep();
+    if verbose >= 2
+        timerVal = tic;
+    end
+%    %% LRS approach
+%    one_step_back_reach_polytope_underapprox_V =...
+%        vertexReduction(boundary_point_mat(1:sys.state_dim,:)');
+     %% CDDMEX approach
+     one_step_back_reach_polytope_underapprox = ...
+         Polyhedron('V',boundary_point_mat(1:sys.state_dim,:)');
+     % Remove the redundant vertices
+     one_step_back_reach_polytope_underapprox.minVRep();   
+     one_step_back_reach_polytope_underapprox_V =...
+         one_step_back_reach_polytope_underapprox.V;
+    if verbose >= 2
+        fprintf('Time to get minimal v-rep     : %1.3f s\n',toc(timerVal));
+    end
     % Compute the half-space representation using MPT3
     if verbose >= 2
         timerVal = tic;
     end
     try
-        one_step_back_reach_polytope_underapprox.computeHRep();
-        p_v = Polyhedron('V',boundary_point_mat(1:sys.state_dim,:)');
-        p_h = Polyhedron('H',one_step_back_reach_polytope_underapprox.H);
-        flag1 = p_v.contains(p_h);
-        flag2 = p_h.contains(p_v);
-        if flag1 && flag2 % p_v.eq(p_h)            
-            % all ok
-        elseif flag1 || flag2 
-            warning('SReachTools:runTime',sprintf(['Strict equality not ',...  
-                'observed between the halfspace and vertex representation ',...
-                'of the polytope at the projection step for lag-under.',...
-                '\nHowever, we continue since one of the representations ',...
-                'contain the other.\n',...
-                'V-rep contains H-rep: %d\n',...
-                'H-rep contains V-rep: %d\n',...
-                'Ideally, this should not have happened! Please treat the ',...
-                'results with suspicions! This phenomena is most likely ',...
-                'due to numerical issues in convhulln/CDDMEX in MPT.'],...
-                flag1, flag2));
-        else
-            throw(MException('SReachTools:badConv','no-contain'));
-        end
+%        %% LRS approach
+%        [one_step_back_reach_polytope_underapprox_A_red,...
+%            one_step_back_reach_polytope_underapprox_b_red]=facetEnumeration(...
+%                one_step_back_reach_polytope_underapprox_V, ones(size(...
+%                one_step_back_reach_polytope_underapprox_V,1),1));
+%        [one_step_back_reach_polytope_underapprox_A,...
+%            one_step_back_reach_polytope_underapprox_b] =...
+%                inequalityReduction(...
+%                    one_step_back_reach_polytope_underapprox_A_red,...
+%                    one_step_back_reach_polytope_underapprox_b_red);
+        %% CDDMEX approach
+        one_step_back_reach_polytope_underapprox.minHRep();
+        one_step_back_reach_polytope_underapprox_A =...
+            one_step_back_reach_polytope_underapprox.A;
+        one_step_back_reach_polytope_underapprox_b =...
+            one_step_back_reach_polytope_underapprox.b;
     catch ME
         if strcmpi(ME.identifier, 'SReachTools:badConv')
             throw(SrtDevError(['Conversion from vertex to facet worked, ',...
@@ -400,8 +408,15 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
         end        
     end
     if verbose >= 2
-        fprintf('Time to get H-rep underapprox.: %1.3f s\n',toc(timerVal));
+        fprintf('Time to get inner min. H-rep  : %1.3f s\n',toc(timerVal));
     end
+
+    % Store the facet version
+    one_step_back_reach_polytope_underapprox = Polyhedron('H',...
+        [one_step_back_reach_polytope_underapprox_A,...
+         one_step_back_reach_polytope_underapprox_b], 'V',...
+         one_step_back_reach_polytope_underapprox_V);
+
     if verbose == 3
         figure();
         if x_u_reaches_target_set.Dim <= 3
@@ -421,3 +436,125 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
         end
     end    
 end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+%% LRS-based one-step back reach set computation via Nyugen's steps
+%function one_step_back_reach_polytope = lrsOneStepBackReachSet( ...
+%    sys, target_set, current_safe_set, verbose)
+%
+%    if current_safe_set.isEmptySet()
+%        throwAsCaller(SrtInvalidArgsError('Empty next step polytope.'));
+%    end
+%    if ~target_set.isFullDim()
+%        throwAsCaller(SrtInvalidArgsError('Cannot handle low-dim target set.'));
+%    end
+%
+%    %% Compute the polytope in X*U 
+%    % Compute the polytope in X*U such that there is some x and u in the current
+%    % time which on application of dynamics will lie in target_set. We also add
+%    % the constraints defined by the current safe set as well as the input
+%    % space. This ensures that when we project 1) we will lie in a subset of
+%    % current_safe_set (effect of intersection after projection), and 2) the
+%    % input "selected" during the projection remains feasible.
+%    x_u_reaches_target_set_A = [target_set.A * [sys.state_mat sys.input_mat];
+%        [zeros(size(sys.input_space.A,1), sys.state_dim), sys.input_space.A];
+%        [current_safe_set.A zeros(size(current_safe_set.A,1), sys.input_dim)]];
+%    x_u_reaches_target_set_b = [target_set.b;
+%                                sys.input_space.b;
+%                                current_safe_set.b];
+%    %% Compute projection
+%    if verbose >= 2
+%        timerVal = tic;
+%    end
+% %    % Use GeoCalcLib's projection directly
+% %    [one_step_back_reach_polytope_A_red,one_step_back_reach_polytope_b_red] =...
+% %        projectPolyhedron(x_u_reaches_target_set_A, x_u_reaches_target_set_b,...
+% %            uint32(sys.input_dim));
+%    one_step_back_reach_polytope_V_red = vertexEnumeration(...
+%        x_u_reaches_target_set_A, x_u_reaches_target_set_b);
+%    % Project and reduce vertices
+%    one_step_back_reach_polytope_V = vertexReduction(...
+%        one_step_back_reach_polytope_V_red(:,1:sys.state_dim),...
+%        ones(size(one_step_back_reach_polytope_V_red,1),1));
+%    if verbose >= 2
+%        fprintf('Time to get v-rep             : %1.3f s\n',toc(timerVal));
+%        fprintf('Number of vertices            : %d vertices\n', ...
+%            length(one_step_back_reach_polytope_V_red));
+%    end    
+%    if verbose >= 2
+%        timerVal = tic;
+%    end
+%    [one_step_back_reach_polytope_A_red,one_step_back_reach_polytope_b_red] =...
+%        facetEnumeration(one_step_back_reach_polytope_V,...
+%        ones(size(one_step_back_reach_polytope_V,1),1));
+%%     [one_step_back_reach_polytope_A_red,one_step_back_reach_polytope_b_red] =...
+%%         projectPolyhedron(x_u_reaches_target_set_A, x_u_reaches_target_set_b,...
+%%             uint32(sys.input_dim));
+%    if verbose >= 2
+%        fprintf('Time to get H-rep             : %1.3f s\n',toc(timerVal));
+%        fprintf('Number of halfspaces          : %d inequalities\n', ...
+%            length(one_step_back_reach_polytope_b_red));
+%    end
+%    %% Compute min HRep()
+%    if verbose >= 2
+%        timerVal = tic;
+%    end
+%    % LRS based inequality reduction
+%    [one_step_back_reach_polytope_A,one_step_back_reach_polytope_b] = ...
+%        inequalityReduction(one_step_back_reach_polytope_A_red,...
+%            one_step_back_reach_polytope_b_red);
+%    one_step_back_reach_polytope = Polyhedron('H',...
+%        [one_step_back_reach_polytope_A, one_step_back_reach_polytope_b]);
+%    % CDDMEX based inequality reduction
+%    one_step_back_reach_polytope.minHRep();
+%    if verbose >= 2
+%        fprintf('Time to get minimal H-rep     : %1.3f s\n',toc(timerVal));
+%    end
+%    fprintf('Number of minimal halfspaces  : %d inequalities\n', ...
+%            length(one_step_back_reach_polytope_b));
+%end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+%     %% Sanity check to make sure that vrep and hrep are consistent
+%     p_v = Polyhedron('V',one_step_back_reach_polytope_underapprox_V);
+%     p_h = Polyhedron('H',[one_step_back_reach_polytope_underapprox_A,...
+%         one_step_back_reach_polytope_underapprox_b]);
+%     p_h = Polyhedron('H',one_step_back_reach_polytope_underapprox.H);        
+%     p_h.minHRep();
+%     if verbose >= 2
+%         timerVal = tic;
+%     end
+%     % Vertex representation contains half-space representation
+%     flag1 = p_v.contains(p_h);   % Converts things to half-space btw
+%     % Half-space representation contains vertex representation
+%     flag2 = all(p_h.contains(p_v.V'));
+%     if flag1 && flag2 
+%         % all ok since p_v.eq(p_h) = 1
+%         if verbose >= 2
+%             disp('Both representations are consistent');
+%         end
+%     elseif flag1 || flag2 
+%         warning('SReachTools:runTime',sprintf(['Strict equality not ',...  
+%             'observed between the halfspace and vertex representation ',...
+%             'of the polytope at the projection step for lag-under.',...
+%             '\nHowever, we continue since one of the representations ',...
+%             'contain the other.\n',...
+%             'V-rep contains H-rep: %d\n',...
+%             'H-rep contains V-rep: %d\n',...
+%             'Ideally, this should not have happened! Please treat the ',...
+%             'results with suspicions! This phenomena is most likely ',...
+%             'due to numerical issues in convhulln/CDDMEX in MPT.'],...
+%             flag1, flag2));
+%     else
+%         throw(MException('SReachTools:badConv','no-contain'));
+%     end
+%     if verbose >= 2
+%         fprintf('Time for sanity check         : %1.3f s\n',toc(timerVal));
+%     end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% 1. Search for LRS to uncomment the LRS code.

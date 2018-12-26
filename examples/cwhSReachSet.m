@@ -69,7 +69,7 @@ sys = getCwhLtiSystem(4, Polyhedron('lb', -umax*ones(2,1), ...
 ft_run = 0;
 cc_open_run = 0;
 lagunder_run = 1;
-lagover_run = 1;
+lagover_run = 0;
 
 %% Target tube construction --- reach-avoid specification
 time_horizon = 5;          % Stay within a line of sight cone for 4 time steps and 
@@ -142,6 +142,8 @@ end
 %% Lagrangian approach
 if lagunder_run
     n_dim = sys.state_dim + sys.input_dim;
+%     lag_options = SReachSetOptions('term', 'lag-under', 'bound_set_method',...
+%          'ellipsoid', 'compute_style','vhmethod', 'verbose', 2);
     lag_options = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
          'ellipsoid', 'compute_style','support', 'system', sys, 'verbose', 2,...
          'n_underapprox_vertices', 2^n_dim * 6 + 2*n_dim);
