@@ -11,6 +11,9 @@ classdef SReachEllipsoid
 % ------------------------
 %   SReachEllipsoid/SReachEllipsoid - Constructor
 %   support                         - Support function of the ellipsoid
+%   contains                        - Checks if a point (column vector) or a
+%                                     collection of points (matrix of column
+%                                     vectors) is within the ellipsoid
 %
 % Apart from these methods, the following commands work
 %   disp                            - Displays critical info about the ellipsoid
@@ -176,7 +179,7 @@ classdef SReachEllipsoid
                 sqrt_shape_matrix = sqrt(obj.shape_matrix);
             end
             % Hence, we need the transpose
-            val = l'* obj.center + norms(l'*sqrt_shape_matrix', 2,2);
+            val = l'* obj.center + norms(l'*sqrt_shape_matrix', 2, 2);
         end
         
         function newobj=mtimes(obj, F)
@@ -305,6 +308,45 @@ classdef SReachEllipsoid
                 otherwise
                     % Will never come here
             end
+        end
+        
+        function flag = contains(obj, test_points)
+        % Checks if a point (column vector) or a collection of points (matrix of
+        % column vectors) is within the ellipsoid
+        % ====================================================================
+        % 
+        % Inputs:
+        % -------
+        %   obj         - Ellipsoid object
+        %   test_points - Point (column vector) or a N collection of points
+        %                 (matrix of column vectors) is within the ellipsoid
+        %
+        % Outputs:
+        % --------
+        %   newobj      - Boolean vector Nx1 that describe the containment
+        %
+        % Notes:
+        % ------
+        % * Requires CVX for vectorized norm.
+        %
+        % ====================================================================
+        % 
+        % This function is part of the Stochastic Reachability Toolbox.
+        % License for the use of this function is given in
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        % 
+        %
+            if size(test_points, 1) ~= obj.dim
+                throwAsCaller(SrtInvalidArgsError(['test_points must be a ',...
+                    'matrix with obj.dim-dimensional column vectors']));
+            end
+            centered_test_points = test_points - repmat(obj.center, 1,...
+                size(test_points, 2));
+            % Non-positive definite matrix can not use Cholesky's decompose
+            % Use sqrt to obtain a symmetric non-sparse square-root matrix
+            inv_shape_matrix_sqrt = sqrt(inv(obj.shape_matrix));
+            % Hence, we need the transpose
+            flag = norms(centered_test_points' * inv_shape_matrix_sqrt',2,2)<=1;
         end
     end
 end

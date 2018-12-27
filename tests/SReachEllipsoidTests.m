@@ -125,5 +125,17 @@ classdef SReachEllipsoidTests < matlab.unittest.TestCase
             poly = Polyhedron('lb',-ones(2,1),'ub',ones(2,1)); 
             my_ellipse + poly; 
         end
+        function containsTest(test_case)
+            % Support function of a unit circle must be one
+            unit_cir = SReachEllipsoid(ones(2,1), eye(2));
+            
+            n_points = 10;
+            test_points = (rand(2,n_points)+0.5);
+            test_points(:,end+1) = [2;2];                           
+            
+            flag = unit_cir.contains(test_points);                        
+            test_case.verifyTrue(isequal(flag,[ones(n_points,1);0]),...
+                'Incorrect containment declaration!');            
+        end
     end
 end

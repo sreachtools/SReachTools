@@ -40,6 +40,8 @@ function varargout = ellipsoidsFromMonteCarloSims(...
 % Notes:
 % ------
 % * Requires CVX for solving the convex optimization problem using SDPT3
+% * Note that the initial state is NOT a part of the 
+%   concatenated_state_realization
 % * Uses code obtained from
 %   http://web.cvxr.com/cvx/examples/cvxbook/Ch08_geometric_probs/min_vol_elp_finite_set.m
 % 
@@ -90,9 +92,10 @@ function varargout = ellipsoidsFromMonteCarloSims(...
                 norms(A*x_points+b*ones(1,relv_n_mcarlo_sims), 2 ) <= 1;
         cvx_end
         if ~strcmpi(cvx_status, 'Solved')
-            warning('SReachTools:runtime', ['CVX failed to obtain the ',...
-                'ellipsoid, potentially due to numerical issues.']); 
-            set_of_ellipsoids(tindx) = {{mean(x_points),Inf(size(b))}};
+            warning('SReachTools:runtime', sprintf(['CVX failed to obtain ',...
+                'the ellipsoid at %d, potentially due to numerical issues.'],...
+                tindx)); 
+            set_of_ellipsoids(tindx) = {{mean(x_points,2),Inf(2,2)}};
         else
             % Construct the ellipsoid by matching coeff (x-q)^T Q^{-1} (x-q) =
             % (Ax + b)^2 = (x+A\b)'A'A(x+A\b)

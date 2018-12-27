@@ -471,5 +471,29 @@ classdef Tube
           
             v = length(obj);
         end
+        
     end    
+    
+    methods (Static)
+        function newobj = polyArray2Tube(polyArray)
+        % Convert the array of polyhedra to a Tube object
+        % 
+        % Inputs:
+        % -------
+        %   polyArray - Array of polyhedrons
+        % Outputs:
+        % --------
+        %   newobj    - Tube object
+        %
+        % ======================================================================
+        % 
+        % This function is part of the Stochastic Optimal Control Toolbox.
+        % License for the use of this function is given in
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %
+        %
+            cellPolyArray = num2cell(polyArray);
+            newobj = Tube(cellPolyArray{:});
+        end
+    end
 end

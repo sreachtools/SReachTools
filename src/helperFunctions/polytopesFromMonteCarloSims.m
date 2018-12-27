@@ -18,9 +18,9 @@ function varargout = polytopesFromMonteCarloSims(...
 % Inputs:
 % -------
 %   concat_state_realization  
-%                     - Matrix of concatenate state (row) vectors stacked
-%                       columnwise. Each row comprises of the state trajectory
-%                       as [x_1; x_2; ...; x_N]
+%                     - Matrix of concatenated state (column) vectors stacked 
+%                       columnwise. Each column has the state trajectory 
+%                       [x_1; x_2; ...; x_N]
 %   state_dim         - State dimension
 %   relv_states       - A two-element vector with indices of relevant states
 %                       among the states indexed from 1 to state_dim
@@ -36,7 +36,8 @@ function varargout = polytopesFromMonteCarloSims(...
 % Notes:
 % ------
 % * Requires MPT3 to compute the convex hull
-% 
+% * Note that the initial state is NOT a part of the 
+%   concatenated_state_realization
 % ============================================================================
 % 
 % This function is part of the Stochastic Reachability Toolbox.
@@ -70,12 +71,10 @@ function varargout = polytopesFromMonteCarloSims(...
         
         % Prepare the output
         poly_at_tindx = Polyhedron('V', x_points');
-%         poly_at_tindx.minVRep();
         set_of_polytopes(tindx) = poly_at_tindx;
 
         if ~isempty(plot_options)
             h=plot(poly_at_tindx, plot_options{:});
-%             h.Annotation.LegendInformation.IconDisplayStyle = 'off';
         end
     end    
     varargout{1} = set_of_polytopes;
