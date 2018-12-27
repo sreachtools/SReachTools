@@ -131,8 +131,8 @@ function [opt_locations, separation] = spreadPointsOnUnitSphere(n_dim,...
                                 fprintf('\n');
                             end
                         end
-                        % Constraint 2: Enforces the pairwise separation among each
-                        % other ||x_i - x_j||_2 >= r^2
+                        % Constraint 2: Enforces the pairwise separation among 
+                        % each other ||x_i - x_j||_2 >= r^2
                         for pt_indx_2 = 1:pt_indx_1-1
                             (x_iter(:, pt_indx_1) - x_iter(:, pt_indx_2))'*...
                                (x_iter(:, pt_indx_1) - x_iter(:, pt_indx_2)) + ...
@@ -143,8 +143,8 @@ function [opt_locations, separation] = spreadPointsOnUnitSphere(n_dim,...
                                slack_var(slack_indx) >= separation^2;                        
                             slack_indx = slack_indx + 1;                    
                         end
-                        % Constraint 3: Enforces the pairwise separation from the
-                        % standard vectors ||x_i - e_j||_2 >= r^2
+                        % Constraint 3: Enforces the pairwise separation from 
+                        % the standard vectors ||x_i - e_j||_2 >= r^2
                         for dim_indx = 1:n_dim
                             e_i_vector = zeros(n_dim,1);
                             e_i_vector(dim_indx) = 1;
@@ -180,23 +180,27 @@ function [opt_locations, separation] = spreadPointsOnUnitSphere(n_dim,...
                 case {'Solved','Inaccurate/Solved'}
                     cost_prev = -separation_prev + tau_iter * sum_slack_prev;            
                     if verbose
-                        fprintf(['Status: %s\nSum of slack: %1.3e (< %1.3e)\n',...
-                            'Change in opt cost: %1.3e (< %1.3e)\n\n'],...
+                        fprintf(['Status: %s\nSum of slack: %1.3e ', ...
+                            '(< %1.3e)\nChange in opt cost: %1.3e ', ...
+                            '(< %1.3e)\n\n'],...
                             cvx_status, sum(slack_var), slack_tol, ...
                             abs(cvx_optval - cost_prev), cost_tol);
                     end            
                     x_iter = x;
-                    % STOP if (slack small enough or slack converged) OR max iterations
+                    % STOP if (slack small enough or slack converged) OR max 
+                    % iterations
                     % CONTINUE if not of above with ORs replaced with AND
                     continue_condition = ((sum(slack_var) > slack_tol) ||...
                         (abs(cvx_optval - cost_prev) > cost_tol)) && ...
                         (iter_count < max_iter);         
                 otherwise
-                    % Impossible to reach here since we are using slack variables
-                    throw(SrtDevError(['Shouldn''t have reached here, since we ',...
-                        'are using slack variables']));
+                    % Impossible to reach here since we are using slack 
+                    % variables
+                    throw(SrtDevError(['Shouldn''t have reached here, ', ...
+                        'since we are using slack variables']));
             end
-            % Update the iteration values and other things for the next iteration
+            % Update the iteration values and other things for the next 
+            % iteration
             iter_count = iter_count + 1;            
             tau_iter = min(tau_iter * scaling_tau, tau_max);    
             separation_prev = separation;
@@ -219,8 +223,9 @@ function [opt_locations, separation] = spreadPointsOnUnitSphere(n_dim,...
             opt_locations = zeros(n_dim, n_points);
             opt_locations(:, 1:2*n_dim) = [eye(n_dim), -eye(n_dim)];
             for sign_indx = 1:size(sign_vectors,1)
-                indx_locations = 2*n_dim + (sign_indx-1) *n_points_first_quad+1:...
-                    2*n_dim + sign_indx*n_points_first_quad;
+                indx_locations = 2*n_dim + (sign_indx-1) * ...
+                    n_points_first_quad+1:2*n_dim + ...
+                        sign_indx*n_points_first_quad;
                 opt_locations(:, indx_locations) = ...
                     diag(sign_vectors(sign_indx,:)) * opt_locations_first_quad;
             end     

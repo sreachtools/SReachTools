@@ -1,51 +1,31 @@
 function publish_examples(varargin)
-    %  Publish all examples in the folder to update their HTML and/or PDF
-    %  versions
-    % ======================================================================
-    %
-    %   publish_examples works like a unix command. It accepts options that
-    %   modify its behaviour. By default, the command publishes all the
-    %   examples in their HTML and PDF format.
-    %
-    %   Usage:
-    %   ------
-    %   publish_examples
-    %   publish_examples --no-pdf
-    %   publish_examples --no-html
-    %   publish_examples --no-html
-    %   srtinit('--options');
-    %
-    % ======================================================================
-    % 
-    % srtinit options
-    % srtinit('options');
-    %
-    % Inputs:
-    % -------
-    %   Available options:
-    %       -v, --verbose    Have initalization function explicitly print to
-    %                        console which folders are being added to the path
-    %       -x, --deinit     Remove SReachTools toolbox folders from the path
-    %       -t, --test       Perform unit testing after initialization or deinit
-    %       -T               Perform unit testing without initialization or deinit,
-    %                        will cancel out any other parameters, e.g. '-x', '-v'
-    %
-    % Outputs:
-    % --------
-    %   None
-    %
-    % Notes:
-    % ------
-    % * Performing a deinit and testing '-x -t' will deinit the SReachTools toolbox 
-    %   and then perform unit testing, causing all unit tests to fail.
-    % 
-    % =========================================================================
-    % 
-    %   This function is part of the Stochastic Reachability Toolbox.
-    %   License for the use of this function is given in
-    %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
-    % 
-    % 
+%  Publish all examples in the folder to update their HTML and/or PDF
+%  versions
+% ======================================================================
+%
+%   publish_examples works like a unix command. It accepts options that
+%   modify its behaviour. By default, the command publishes all the
+%   examples in their HTML and PDF format.
+%
+%   Usage:
+%   ------
+%   publish_examples
+%   publish_examples --no-pdf
+%   publish_examples --no-html
+%   publish_examples --no-html
+%   srtinit('--options');
+%
+% ======================================================================
+%
+%   TODO: Update 
+% 
+% =========================================================================
+% 
+%   This function is part of the Stochastic Reachability Toolbox.
+%   License for the use of this function is given in
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+% 
+% 
 
 
     publish_pdf = 1;

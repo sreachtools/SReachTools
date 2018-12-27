@@ -1,5 +1,20 @@
 classdef SReachEllipsoid
 % Creates an ellipsoid (x - c)^T Q^{-1} (x-c) <= 1
+% =============================================================================
+% 
+% Create an ellipsoid object defined by the equation
+% 
+%   E = { x \in R^{n} : (x - c)^{T} Q^{-1} (x - c) <= 1 }
+% 
+% These ellipsoid objects are often used when creating bounded disturbances
+% for the SReachSet Lagrangian methods when using Gaussian disturbances
+% 
+% Usage:
+% ------
+% % Create unit ellipsoid
+% sre = SReachEllipsoid([0;0], eye(2));
+% 
+% =============================================================================
 %
 % SReachEllipsoid Properties:
 % ---------------------------
@@ -66,7 +81,7 @@ classdef SReachEllipsoid
         %
         % Inputs:
         % -------
-        %   center       - Center of the ellipsoid
+        %   center       - Center of the ellipsoid; must be a column vector
         %   shape_matrix - Shape matrix of the ellipsoid
         %
         % Outputs:

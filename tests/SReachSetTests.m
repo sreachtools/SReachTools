@@ -107,7 +107,8 @@ classdef SReachSetTests < matlab.unittest.TestCase
                 'InputMatrix', [T^2/2; T], ...
                 'InputSpace', U, ...
                 'DisturbanceMatrix', eye(2), ...
-                'Disturbance', RandomVector('Gaussian', zeros(2,1), 1e-3*eye(2)));
+                'Disturbance', RandomVector('Gaussian', zeros(2,1), ...
+                    1e-3*eye(2)));
 
             % target_tube = {K, K, K, K, K, K};
             safety_tube = Tube('viability', safe_set, time_horizon);
@@ -118,7 +119,8 @@ classdef SReachSetTests < matlab.unittest.TestCase
                         Polyhedron('lb',-0.01*[1;1],'ub', 0.01*[1;1]), ...
                         RandomVector('Gaussian', zeros(4,1), ...
                             diag([1e-4, 1e-4, 5e-8, 5e-8])));
-            %% Safe set definition --- LoS cone |x|<=y and y\in[0,ymax] and |vx|<=vxmax and 
+            %% Safe set definition --- LoS cone |x|<=y and y\in[0,ymax] and 
+            % |vx|<=vxmax and 
             %% |vy|<=vymax
             time_horizon = 5;
             ymax = 2;

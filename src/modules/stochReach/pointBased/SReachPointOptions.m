@@ -216,7 +216,8 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
             % Number of kmeans cluster points/ Voronoi centers
             inpar.addParameter('n_kmeans', 30, @(x)...
-                validateattributes(x, {'numeric'}, {'scalar','>',0, 'integer'}));
+                validateattributes(x, {'numeric'}, ...
+                    {'scalar','>',0, 'integer'}));
             % Maximum number of particles allowed for tractable computation
             inpar.addParameter('max_particles', 1e5, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','integer','>',0}));
@@ -239,7 +240,8 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
             % Number of kmeans cluster points/ Voronoi centers
             inpar.addParameter('n_kmeans', 30, @(x)...
-                validateattributes(x, {'numeric'}, {'scalar','>',0, 'integer'}));
+                validateattributes(x, {'numeric'}, ...
+                    {'scalar','>',0, 'integer'}));
             % Maximum number of particles allowed for tractable computation
             inpar.addParameter('max_particles', 1600, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','integer','>',0}));

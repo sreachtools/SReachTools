@@ -21,7 +21,8 @@ function varargout = getSReachLagOverapprox(sys, target_tube,...
 % -------
 %   sys             - LtiSystem object
 %   target_tube     - Tube object 
-%   disturbance_set - Polyhedron or SReachEllipsoid object (bounded disturbance set)
+%   disturbance_set - Polyhedron or SReachEllipsoid object (bounded disturbance 
+%                     set)
 %   options         - Struct of reach set options, see SReachSetOptions
 %
 % Outputs:

@@ -52,8 +52,8 @@ if run_dp
         fprintf('    Dimension: %d\n', lv);
 
         % System definition
-        sys = getChainOfIntegLtiSystem(lv, T, Polyhedron('lb', -0.1, 'ub', 0.1), ...
-            RandomVector('Gaussian', zeros(lv,1), 0.001*eye(lv)));
+        sys = getChainOfIntegLtiSystem(lv, T, Polyhedron('lb', -0.1, ...
+            'ub', 0.1), RandomVector('Gaussian', zeros(lv,1), 0.001*eye(lv)));
 
         % safe set definition
         safe_set = Polyhedron('lb', -1 * ones(1, lv), 'ub', ones(1, lv));
@@ -61,8 +61,8 @@ if run_dp
         target_tube = Tube('viability', safe_set, time_horizon);
 
         timerVal = tic;
-        [prob_x2, cell_of_xvec_x2] =  SReachDynProg('term', sys, dyn_prog_xinc, ...
-            dyn_prog_uinc, target_tube);
+        [prob_x2, cell_of_xvec_x2] =  SReachDynProg('term', sys, ...
+            dyn_prog_xinc, dyn_prog_uinc, target_tube);
         dp_comp_times(lv - 1) = toc(timerVal);
 
         fprintf('    Computation Time: %.5f\n', dp_comp_times(lv-1));

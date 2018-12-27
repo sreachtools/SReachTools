@@ -53,8 +53,9 @@ classdef SrtInvalidArgsError < SrtBaseException
             try
                 stk = stk(1);
             catch err
-                warning('SReachTools:runtime',['Dbstack empty, perhaps you ', ...
-                    'are calling SrtInvalidArgsError from command window?']);
+                warning('SReachTools:runtime',['Dbstack empty, perhaps ', ...
+                    'you are calling SrtInvalidArgsError from command ', ...
+                    'window?']);
                 stk = struct('name', '<< empty stack >>');
             end
 

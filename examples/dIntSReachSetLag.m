@@ -81,7 +81,9 @@ figure()
 hold on    
 for time_indx = 0:time_horizon
     target_tube_at_time_indx = Polyhedron('H',...
-        [target_tube(time_indx+1).A, zeros(size(target_tube(time_indx+1).A,1),1), target_tube(time_indx+1).b], 'He',[0 0 1 time_indx]);
+        [target_tube(time_indx+1).A, ...
+        zeros(size(target_tube(time_indx+1).A,1),1), ...
+        target_tube(time_indx+1).b], 'He',[0 0 1 time_indx]);
     plot(target_tube_at_time_indx, 'alpha',0.25);
 end
 axis([-1 1 -1 1 0 time_horizon]);    
@@ -123,16 +125,16 @@ lagrange_under_time = toc(timerVal);
 n_dim_over = sys.state_dim;
 % % Option type 1: Bound_set_method - Ellipsoid | Compute_style - VHmethod
 timerVal=tic;
-loOpts1 = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'ellipsoid',...
-    'verbose', 1, 'compute_style','vhmethod');
+loOpts1 = SReachSetOptions('term', 'lag-over', 'bound_set_method', ...
+    'ellipsoid', 'verbose', 1, 'compute_style','vhmethod');
 loOpts_time(1) = toc(timerVal);
 timerVal=tic;
 loSet(1) = SReachSet('term', 'lag-over', sys, beta, target_tube, loOpts1);
 lagrange_over_time(1) = toc(timerVal);
 % % Option type 2: Bound_set_method - Ellipsoid | Compute_style - Support
 timerVal=tic;
-loOpts2 = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'ellipsoid',...
-    'verbose', 1, 'compute_style','support', 'system', sys,...
+loOpts2 = SReachSetOptions('term', 'lag-over', 'bound_set_method', ...
+    'ellipsoid', 'verbose', 1, 'compute_style','support', 'system', sys,...
     'n_underapprox_vertices', 2^n_dim_over * 7+2*n_dim_over);
 loOpts_time(2) = toc(timerVal);
 timerVal=tic;
@@ -140,8 +142,8 @@ loSet(2) = SReachSet('term', 'lag-over', sys, beta, target_tube, loOpts2);
 lagrange_over_time(2) = toc(timerVal);
 % % Option type 3: Bound_set_method - Polytope | Compute_style - VHmethod
 timerVal=tic;
-loOpts3 = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'polytope',...
-    'verbose', 1, 'template_polytope',...
+loOpts3 = SReachSetOptions('term', 'lag-over', 'bound_set_method', ...
+    'polytope', 'verbose', 1, 'template_polytope',...
     Polyhedron('lb',-ones(sys.dist.dim,1),'ub',ones(sys.dist.dim,1)),...
     'compute_style','vhmethod');
 loOpts_time(3) = toc(timerVal);
@@ -149,8 +151,8 @@ timerVal=tic;
 loSet(3) = SReachSet('term', 'lag-over', sys, beta, target_tube, loOpts3);
 lagrange_over_time(3) = toc(timerVal);
 % % Option type 4: Bound_set_method - Polytope | Compute_style - Support
-loOpts4 = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'polytope',...
-    'verbose', 1, 'template_polytope',...
+loOpts4 = SReachSetOptions('term', 'lag-over', 'bound_set_method', ...
+    'polytope', 'verbose', 1, 'template_polytope',...
     Polyhedron('lb',-ones(sys.dist.dim,1),'ub',ones(sys.dist.dim,1)),...
     'compute_style','support', 'system', sys,...
     'n_underapprox_vertices', 2^n_dim_over* 7 +2*n_dim_over);
@@ -183,10 +185,10 @@ dynprog_time = toc();
 % Compute the beta-stochastic level set
 %
 dyn_soln_lvl_set=getDynProgLevelSets2D(cell_of_xvec, prob_x, beta, target_tube);
-%% Simulation times --- Lagrangian approximation is much faster than dynamic programming
-% The simulation times for Lagrangian computation is much faster than dynamic 
-% programming, even when the former computes both an underapproximation and an 
-% overapproximation.
+%% Simulation times --- Lagrangian approximation is much faster than dynamic 
+% programming The simulation times for Lagrangian computation is much faster 
+% than dynamic programming, even when the former computes both an 
+% underapproximation and an overapproximation.
 %%
 fprintf('Simulation times [seconds]:\n');
 fprintf(' Lagrangian:\n');

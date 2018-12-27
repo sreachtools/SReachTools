@@ -196,6 +196,7 @@ b_safe_set = [0;
               vymax;
               vymax];
 safe_set = Polyhedron(A_safe_set, b_safe_set);
+
 % Target set --- Box [-0.1,0.1]x[-0.1,0]x[-0.01,0.01]x[-0.01,0.01]
 target_set = Polyhedron('lb', [-0.1; -0.1; -0.01; -0.01], ...
                         'ub', [0.1; 0; 0.01; 0.01]);
@@ -381,7 +382,7 @@ if voronoi_open_run
     opts = SReachPointOptions('term','voronoi-open','verbose',1,...
         'max_overapprox_err', 1e-2);
     tic
-    [prob_voronoi_open, opt_input_vec_voronoi_open, kmeans_info_open] =...
+    [prob_voronoi_open, opt_input_vec_voronoi_open, kmeans_info_open] = ...
         SReachPoint('term', 'voronoi-open', sys, init_state_voronoi_open,...
             target_tube, opts);
     elapsed_time_voronoi = toc;

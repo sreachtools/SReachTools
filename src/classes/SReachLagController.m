@@ -108,7 +108,8 @@ classdef SReachLagController
             % Compute the effective input set
             %       (R_{t+1} \ominus F_t*E_t) \oplus {-Ax_t}
             if ~isempty(obj.dist_set)
-                scaled_dist_set = obj.system.dist_mat(current_time) * obj.dist_set;
+                scaled_dist_set = obj.system.dist_mat(current_time) * ...
+                    obj.dist_set;
 
                 effective_input_set = Polyhedron('H', ...
                     [target_set.A * obj.system.input_mat(current_time),...
@@ -119,9 +120,9 @@ classdef SReachLagController
                      obj.system.input_space.A, obj.system.input_space.b]);
             else
                 effective_input_set = Polyhedron('H', ...
-                    [target_set.A, target_set.b -...
-                        target_set.A*obj.system.state_mat(current_time)*current_state;
-                     obj.system.input_space.A, obj.system.input_space.b]);
+                    [target_set.A, target_set.b - target_set.A * ...
+                        obj.system.state_mat(current_time)*current_state;
+                    obj.system.input_space.A, obj.system.input_space.b]);
             end
             
             % Compute a feasible action via MPT's interior point (Chebyshev

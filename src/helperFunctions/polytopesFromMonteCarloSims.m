@@ -61,8 +61,10 @@ function varargout = polytopesFromMonteCarloSims(...
     
     % Relevant states out of the trajectory
     relv_indx = reshape([relv_states(1):state_dim:state_dim * time_horizon;
-                         relv_states(2):state_dim:state_dim * time_horizon],[],1);
-    relv_concat_state_realization = concat_state_realization(relv_indx,relv_mc_indx);
+                         relv_states(2):state_dim:state_dim * time_horizon], ...
+                         [],1);
+    relv_concat_state_realization = concat_state_realization(relv_indx, ...
+        relv_mc_indx);
     
     % Angles for the ellipsoid            
     for tindx = 1:time_horizon

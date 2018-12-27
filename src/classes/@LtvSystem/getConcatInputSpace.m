@@ -51,12 +51,14 @@ function [concat_input_space_A, concat_input_space_b] = ...
     %% Input handling
     % Ensure that the system has a non-empty input space
     if sys.input_space.isEmptySet
-      throwAsCaller(SrtInvalidArgsError('Expected a non-empty polyhedral input space'));
+        throwAsCaller(SrtInvalidArgsError(['Expected a non-empty ', ...
+            'polyhedral input space']));
     end
 
     % Ensure that time horizon is a scalar and positive
     if ~isscalar(time_horizon) || time_horizon <= 0
-      throwAsCaller(SrtInvalidArgsError('Expected a scalar positive time_horizon'));
+        throwAsCaller(SrtInvalidArgsError(['Expected a scalar ', ...
+            'positive time_horizon']));
     end
 
     %% Construction of the concatenated input space (input_space^{time_horizon})

@@ -16,8 +16,8 @@ classdef RandomVector
 % % Define a Gaussian random vector of mean [0;2] and covariance matrix 
 % % eye(2):
 % GaussianRV = RandomVector('Gaussian', [0;2], eye(2));
-% OR
-% % GaussianRV = RandomVector.gaussian([0;2], eye(2));
+% % OR
+% GaussianRV = RandomVector.gaussian([0;2], eye(2));
 %
 % % Define a beta-distributed 3-dimensional random vector with parameters
 % % A=B=10

@@ -298,8 +298,8 @@ function otherInputHandling(sys, safety_tube, prob_str, optional_args)
             % Ensure target_set is a non-empty Polyhedron
             if ~(isa(target_set, 'Polyhedron') && ~target_set.isEmptySet()... 
                 && target_set.Dim == sys.state_dim)
-                err = SrtInvalidArgsError(['Expected a non-empty polyhedron ', ...
-                    'of dimension sys.state_dim as target set']);
+                err = SrtInvalidArgsError(['Expected a non-empty ', ...
+                    'polyhedron of dimension sys.state_dim as target set']);
                 throw(err);
             end
         end

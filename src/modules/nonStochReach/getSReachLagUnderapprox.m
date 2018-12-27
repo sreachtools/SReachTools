@@ -259,7 +259,8 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
         'b', x_u_reaches_target_set_b, 'Ae', x_u_reaches_target_set_Ae,...
         'be', x_u_reaches_target_set_be);
     if verbose >= 2
-        fprintf('Time to setup x_u_reaches_target_set: %1.3f s\n',toc(timerVal));
+        fprintf('Time to setup x_u_reaches_target_set: %1.3f s\n', ...
+            toc(timerVal));
     end
     
     %% Find a point within the 'deep enough'

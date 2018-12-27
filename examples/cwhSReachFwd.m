@@ -34,8 +34,9 @@ close all;clearvars;srtinit;srtinit --version;
 %%
 % <<cwh_sketch.png>>
 %% Dynamics model for the deputy relative to the chief spacecraft
-% The relative planar dynamics of the deputy with respect to the chief are described 
-% by the <https://doi.org/10.1109/CDC.2013.6760626 Clohessy-Wiltshire-Hill (CWH) 
+% The relative planar dynamics of the deputy with respect to the chief are 
+% described by the 
+% <https://doi.org/10.1109/CDC.2013.6760626 Clohessy-Wiltshire-Hill (CWH)
 % equations,> 
 % 
 % $$\ddot{x} - 3 \omega x - 2 \omega \dot{y} = \frac{F_{x}}{m_{d}}$$
@@ -187,12 +188,13 @@ fprintf('Monte-Carlo simulation using %1.0e particles: %1.3f\n', ...
         n_mcarlo_sims, ...
         sum(mcarlo_result)/n_mcarlo_sims);
 %% P2. Probability that the deputy (safely) rendezvous with the chief?
-% Since the chief is located at the origin in this coordinate frame (|sys| describes 
-% the relative dynamics of the deputy), we define the target set to be a small 
-% box centered at the origin (|target_set| is a box axis-aligned with side $0.2$). 
-% We are interested in the probability that the deputy will meet the chief at 
-% |target_time| time steps in future. *Additionally*, we desire that the deputy 
-% satellite stays within a line-of-sight cone for accurate sensing.
+% Since the chief is located at the origin in this coordinate frame (|sys| 
+% describes the relative dynamics of the deputy), we define the target set to be 
+% a small box centered at the origin (|target_set| is a box axis-aligned with 
+% side $0.2$). We are interested in the probability that the deputy will meet 
+% the chief at |target_time| time steps in future. *Additionally*, we desire 
+% that the deputy satellite stays within a line-of-sight cone for accurate 
+% sensing.
 % 
 % 
 %%
@@ -227,10 +229,11 @@ safety_tube = Tube('reach-avoid', safe_set, target_set, target_time);
 
 % Problem 2a: Fixed initial state
 % -------------------------------
+% % Initial state definition
 initial_state = [0;
                  -1;
                  0;
-                 0];                                    % Initial state definition
+                 0];                                    
 
 % 1. Compute the mean and the covariance of the forward stochastic reach 
 % probability density of the state at time |target_time starting from this fixed 
@@ -245,8 +248,10 @@ disp(mean_X_trajectory);
 % time *while staying within a safe set*
 
 % Integrate the FSRPD at time target_time over the target_set
-prob = SReachFwd('concat-prob', sys, initial_state, target_time, safety_tube, desired_accuracy);
-fprintf('Probability of x_{target_time} lying in target_set while staying inside line-of-sight cone: %1.4f\n',prob);
+prob = SReachFwd('concat-prob', sys, initial_state, target_time, ...
+    safety_tube, desired_accuracy);
+fprintf(['Probability of x_{target_time} lying in target_set while ', ...
+    'staying inside line-of-sight cone: %1.4f\n'],prob);
 %% 
 
 % 3. Validate this reach probability via Monte-Carlo simulations
@@ -285,8 +290,10 @@ disp(mean_X_trajectory);
 % 2. Compute the probability of reaching a target set at a specified target 
 % time *while staying within a safe set*
 
-prob = SReachFwd('concat-prob', sys, initial_state_rv, target_time, safety_tube, desired_accuracy);
-fprintf('Probability of x_{target_time} lying in target_set while staying inside line-of-sight cone: %1.4f\n',prob);
+prob = SReachFwd('concat-prob', sys, initial_state_rv, target_time, ...
+    safety_tube, desired_accuracy);
+fprintf(['Probability of x_{target_time} lying in target_set while ', ...
+    'staying inside line-of-sight cone: %1.4f\n'], prob);
 %% 
 
 % However, the probability decreases drastically since the initial state 
