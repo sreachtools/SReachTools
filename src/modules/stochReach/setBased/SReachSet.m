@@ -145,8 +145,8 @@ function [stoch_reach_set, varargout] = SReachSet(prob_str, method_str, sys, ...
 %   extra_info  - A MATLAB struct containing additional info, like optimal
 %                 open-loop input vector from the vertices and the initial state
 %                 with maximum reach probability in case of
-%                 'chance-open'/'genzps-open', and the effective_target_tube in
-%                 case of 'lag-over/lag-under'.
+%                 'chance-open'/'genzps-open', and the effective_target_tube and
+%                 the bounded disturbance set in case of 'lag-over/lag-under'.
 %
 % Notes:
 % * 'set_of_dirs' and 'init_safe_set_affine' needs to be provided to the options
@@ -227,9 +227,11 @@ function [stoch_reach_set, varargout] = SReachSet(prob_str, method_str, sys, ...
                 end
             case {'lag-under','lag-over'}
                 if nargout > 1
-                    [stoch_reach_set, stoch_reach_tube] = SReachSetLag(...
-                        method_str, sys, prob_thresh, safety_tube, options);
+                    [stoch_reach_set, stoch_reach_tube, bounded_dist_set] =...
+                        SReachSetLag(method_str, sys, prob_thresh,...
+                        safety_tube, options);
                     extra_info.stoch_reach_tube = stoch_reach_tube;
+                    extra_info.bounded_dist_set = bounded_dist_set;
                     varargout{1} = extra_info;
                 else
                     stoch_reach_set = SReachSetLag(method_str, sys,...

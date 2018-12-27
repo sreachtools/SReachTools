@@ -95,7 +95,7 @@ function bounded_set = SReachSetLagBset(sys, onestep_prob_thresh, options)
             % Create the ellipsoid centered at the Gaussian mean and has a
             % shape matrix that is an appropriately scaled version of the
             % Gaussian covariance matrix
-            r_squared = chi2inv(onestep_prob_thresh, 2);
+            r_squared = chi2inv(onestep_prob_thresh, disturbance.dim);
             ellipse_shape_mat = disturbance.cov() * r_squared;
             bounded_set = SReachEllipsoid(disturbance.mean(),ellipse_shape_mat);
             

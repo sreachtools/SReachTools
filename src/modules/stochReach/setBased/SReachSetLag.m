@@ -31,6 +31,9 @@ function varargout = SReachSetLag(method_str, sys, prob_thresh, safety_tube,...
 %                stochastic reach set
 %   approx_tube- [Optional] Tube comprising of an over-/under-approximation of
 %                the stochastic reach sets across the time horizon
+%   bounded_set- [Optional] Bounded disturbance set which was used to
+%                robustify the computation (lag-under) or 
+%                augment the input set (lag-over)
 %
 % Notes:
 % ------
@@ -74,6 +77,7 @@ function varargout = SReachSetLag(method_str, sys, prob_thresh, safety_tube,...
         % return set in target tube if length is 1
         varargout{1} = safety_tube(1);
         varargout{2} = safety_tube;
+        varargout{3} = [];
     elseif time_horizon > 0 && prob_thresh > 0   
         if options.verbose
             under_or_over=strsplit(method_str,'-');
@@ -89,6 +93,7 @@ function varargout = SReachSetLag(method_str, sys, prob_thresh, safety_tube,...
                     sys, safety_tube, bounded_set, options);
                 varargout{1} = approx_set;
                 varargout{2} = approx_tube;
+                varargout{3} = bounded_set;
             case 'lag-over'
                 % get bounded disturbance set
                 bounded_set = SReachSetLagBset(sys, ...
@@ -100,6 +105,7 @@ function varargout = SReachSetLag(method_str, sys, prob_thresh, safety_tube,...
                             sys, safety_tube, bounded_set, options);
                         varargout{1} = approx_set;
                         varargout{2} = approx_tube;
+                        varargout{3} = bounded_set;
                     case 'support'
                         if nargout >= 2
                             throw(SrtInvalidArgsError(['Too many output ',...
@@ -109,6 +115,8 @@ function varargout = SReachSetLag(method_str, sys, prob_thresh, safety_tube,...
                         approx_set = getSReachLagOverapprox(sys, safety_tube,...
                             bounded_set, options);
                         varargout{1} = approx_set;
+                        varargout{2} = [];
+                        varargout{3} = bounded_set;
                 end                
             otherwise
                 throw(SrtInvalidArgsError('Unhandled method_str: %s', ...
