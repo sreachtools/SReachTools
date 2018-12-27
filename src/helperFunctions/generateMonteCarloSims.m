@@ -43,16 +43,21 @@ function varargout= generateMonteCarloSims(n_monte_carlo_sims, sys, ...
 %
 % Outputs:
 % --------
-%   concat_state_realization  - Matrix of concatenate state (row) vectors
-%                               stacked columnwise. Each row comprises of the
-%                               state trajectory as [x_0; x_1; x_2; ...; x_N]
-%   concat_disturb_realization- Matrix of concatenate disturbance (row) vectors
-%                               stacked columnwise. Each row comprises of
-%                               the state trajectory as [w_0; w_1; ...; w_{N-1}]
-%   saturation_indx           - Binary vector that indicates which realizations
+%   concat_state_realization  - Matrix of concatenated state (column) vectors
+%                               stacked columnwise. Each column has the state 
+%                               trajectory [x_0; x_1; x_2; ...; x_N]
+%   concat_disturb_realization- Matrix of concatenated disturbance (column) 
+%                               vectors stacked columnwise. Each column has the 
+%                               disturbance realization [w_0; w_1; ...; w_{N-1}]
+%   saturation_indx           - [Available only for affine feedback] 
+%                               Binary vector that indicates which realizations
 %                               had their associated affine disturbance feedback
 %                               controller saturated. Potentially non-zero only
 %                               if the input_gain is non-empty
+%   concat_input_realization  - [Available only for SReachLagController object] 
+%                               Matrix of concatenated input (column) vectors
+%                               stacked columnwise. Each column has the state 
+%                               trajectory [x_0; x_1; x_2; ...; x_N]
 %
 % Notes:
 % ------
@@ -135,11 +140,12 @@ function varargout= generateMonteCarloSims(n_monte_carlo_sims, sys, ...
 
     verbose = 0;
     gain_present = 0;
+    lag_control = 0;
     
     if sys.input_dim > 0 && ~isEmptySet(sys.input_space)
         if length(varargin) > 3
             throwAsCaller(SrtInvalidArgsError('Too many input arguments'));
-        elseif ~isempty(varargin)
+        elseif ~isempty(varargin) && isa(varargin{1}, 'numeric')
             input_concat_vector = varargin{1};
             % Ensure optimal_input_vector is a valid open loop controller
             validateattributes(input_concat_vector, {'numeric'},...
@@ -163,105 +169,157 @@ function varargout= generateMonteCarloSims(n_monte_carlo_sims, sys, ...
                         'generateMonteCarloSims', 'verbose');
                 end
             end
-            
+        elseif ~isempty(varargin) && isa(varargin{1}, 'SReachLagController')            
+            lag_control = 1;
+            srlcontrol = varargin{1};
         else
             %warning('SReachTools:runTime','Setting input vectors to zero');
         end
     end
 
-    
-    % Compute the concatenated matrices for X
-    [Z, H, G] = getConcatMats(sys, time_horizon);
-    
-    if isa(initial_state,'RandomVector')
-        % Draw realizations from the initial state random vector
-        concat_initial_state =initial_state.getRealizations(n_monte_carlo_sims);
-    else
-        % Concatenation of initial state vector
-        concat_initial_state = repmat(initial_state,1, n_monte_carlo_sims);
-    end
     W = sys.dist.concat(time_horizon);
     % Realization of the concatenated disturbance random vectors with each
     % realization stored columnwise
     concat_disturb_realizations = W.getRealizations(n_monte_carlo_sims);
-    
-    % Realization of the random vector X (columnwise)
-    % See @LtiSystem/getConcatMats for more info on the notation used
-    if verbose
-        fprintf(['Computing the reach probability associated with the given',...
-            ' controller via %1.2e Monte-Carlo simulation\n'],...
-            n_monte_carlo_sims);
-        disp(['Affine disturbance feedback controller will be saturated to',...
-            ' the input space via projection']);
-    end
 
-    if gain_present
-        concat_input_realizations = input_concat_dist_gain *...
-            concat_disturb_realizations + concat_input_vector_repeated;
-        % Check how many input realizations require saturation
-        [concat_input_space_A, concat_input_space_b] = getConcatInputSpace(...
-            sys, time_horizon);
-        concat_input_space = Polyhedron('A', concat_input_space_A,...
-            'b', concat_input_space_b);
-        if verbose
-            fprintf(['Using Polyhedron/contains to identify realizations',...
-                ' that require saturation...']);
-        end
-        saturation_indx =...
-            concat_input_space.contains(concat_input_realizations);        
-        proj_req = find(saturation_indx == 0);
-        if verbose
-            disp('Done');
-            fprintf('Input constraint violation probability: %1.4f\n',...
-                length(proj_req)/n_monte_carlo_sims);
-            fprintf(['We need to saturate %d realizations. We will '...
-                'provide progress in %d quantiles.\n'], length(proj_req),...
-                disp_x);
-        end
         
-        % Saturate these realizations
-        realization_counter = 0;            
-        realization_frac_disp = round(length(proj_req)/disp_x); %disp every x
-        for realization_indx = proj_req
-            % Affine disturbance feedback controller associated with
-            % concat_disturb_realization (U = MW + D)
-            realization_counter = realization_counter + 1;            
-            if verbose && (mod(realization_counter, realization_frac_disp)==0)
-                fprintf('Completed saturating %5d/%5d input realizations\n',...
-                   realization_counter, length(proj_req));
-            end
-            % Saturate the resulting inputs
-            cvx_begin quiet
-                variable concat_saturated_input(sys.input_dim * time_horizon, 1)
-                
-                minimize (norm(concat_saturated_input -...
-                    concat_input_realizations(:, realization_indx)))
-                subject to
-                    concat_input_space_A * concat_saturated_input <=...
-                        concat_input_space_b;                    
-            cvx_end
-            switch cvx_status
-                case {'Solved','Inaccurate/Solved'}
-                    % Input realization saturated via projection
-                    concat_input_realizations(:, realization_indx) =...
-                        concat_saturated_input;
-                    if cvx_optval > 1e-8
-                        saturation_indx(:, realization_indx) = 1;
-                    end
-                otherwise
-                    throw(SrtDevError(['Saturation via projection failed. ',...
-                        'This might be due to numerical issues.']));
+    if lag_control == 1
+        disturb_contains = zeros(time_horizon, n_monte_carlo_sims);
+        for t=1:time_horizon
+            w_reals = concat_disturb_realizations((t-1)*sys.dist_dim + 1:...
+                t*sys.dist_dim, :);
+            disturb_contains(t,:) = srlcontrol.dist_set.contains(w_reals);
+        end
+        trajectory_indx = find(all(disturb_contains)==1);
+        n_traj = length(trajectory_indx);
+        concat_state_realizations = nan(sys.state_dim * (time_horizon + 1),...
+            n_traj);
+        concat_input_realizations = zeros(sys.input_dim * time_horizon, n_traj);
+        concat_state_realizations(1:sys.state_dim, :) = repmat(initial_state,...
+            1, n_traj);            
+
+        fprintf('Analyze W_realization: %6d/%6d', 0, n_traj);
+        for t_indx = 1:n_traj
+            W_realization = concat_disturb_realizations(:, t_indx);
+            fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b%6d/%6d', t_indx, n_traj);
+            for current_time = 1:time_horizon
+                prev_time = current_time - 1;
+                % Set the previous state
+                prev_state = concat_state_realizations(...
+                    prev_time*sys.state_dim+1:...
+                    (prev_time+1)*sys.state_dim, t_indx);
+                % Get the previous input based on the previous state and
+                % the controller computable via the robust reach tube
+                prev_action = srlcontrol.getInput(prev_state, prev_time);
+                concat_input_realizations((prev_time)*sys.input_dim+1:...
+                        (prev_time+1)*sys.input_dim) = prev_action;
+                % Get the previous disturbance realization                
+                prev_dist = W_realization(prev_time*sys.dist_dim+1:...
+                        (prev_time+1)*sys.dist_dim);
+                % Compute the current state
+                concat_state_realizations((current_time)*sys.state_dim+1:...
+                        (current_time+1)*sys.state_dim, t_indx) =...
+                    sys.state_mat(prev_time) * prev_state +...
+                        sys.input_mat(prev_time) * prev_action +...
+                        sys.dist_mat(prev_time) * prev_dist;
             end
         end
+        fprintf('\n');
+        % Skip the initial state
+        varargout{1} = concat_state_realizations(sys.state_dim+1:end,:);
+        varargout{2} = concat_disturb_realizations;
+        varargout{3} = concat_input_realizations;
     else
-        concat_input_realizations = concat_input_vector_repeated;
-    end
-    concat_state_realization = [concat_initial_state;
-        Z * concat_initial_state + H * concat_input_realizations + ...
-          G * concat_disturb_realizations];
-    varargout{1} = concat_state_realization;
-    varargout{2} = concat_disturb_realizations;
-    if nargout > 2
-        varargout{3} = saturation_indx;
+        % Compute the concatenated matrices for X
+        [Z, H, G] = getConcatMats(sys, time_horizon);
+
+        if isa(initial_state,'RandomVector')
+            % Draw realizations from the initial state random vector
+            concat_initial_state =initial_state.getRealizations(n_monte_carlo_sims);
+        else
+            % Concatenation of initial state vector
+            concat_initial_state = repmat(initial_state,1, n_monte_carlo_sims);
+        end
+
+        % Realization of the random vector X (columnwise)
+        % See @LtiSystem/getConcatMats for more info on the notation used
+        if verbose
+            fprintf(['Computing the reach probability associated with the given',...
+                ' controller via %1.2e Monte-Carlo simulation\n'],...
+                n_monte_carlo_sims);
+            disp(['Affine disturbance feedback controller will be saturated to',...
+                ' the input space via projection']);
+        end
+
+        if gain_present
+            concat_input_realizations = input_concat_dist_gain *...
+                concat_disturb_realizations + concat_input_vector_repeated;
+            % Check how many input realizations require saturation
+            [concat_input_space_A, concat_input_space_b] = getConcatInputSpace(...
+                sys, time_horizon);
+            concat_input_space = Polyhedron('A', concat_input_space_A,...
+                'b', concat_input_space_b);
+            if verbose
+                fprintf(['Using Polyhedron/contains to identify realizations',...
+                    ' that require saturation...']);
+            end
+            saturation_indx =...
+                concat_input_space.contains(concat_input_realizations);        
+            proj_req = find(saturation_indx == 0);
+            if verbose
+                disp('Done');
+                fprintf('Input constraint violation probability: %1.4f\n',...
+                    length(proj_req)/n_monte_carlo_sims);
+                fprintf(['We need to saturate %d realizations. We will '...
+                    'provide progress in %d quantiles.\n'], length(proj_req),...
+                    disp_x);
+            end
+
+            % Saturate these realizations
+            realization_counter = 0;            
+            realization_frac_disp = round(length(proj_req)/disp_x); %disp every x
+            for realization_indx = proj_req
+                % Affine disturbance feedback controller associated with
+                % concat_disturb_realization (U = MW + D)
+                realization_counter = realization_counter + 1;            
+                if verbose && (mod(realization_counter, realization_frac_disp)==0)
+                    fprintf('Completed saturating %5d/%5d input realizations\n',...
+                       realization_counter, length(proj_req));
+                end
+                % Saturate the resulting inputs
+                cvx_begin quiet
+                    variable concat_saturated_input(sys.input_dim * time_horizon, 1)
+
+                    minimize (norm(concat_saturated_input -...
+                        concat_input_realizations(:, realization_indx)))
+                    subject to
+                        concat_input_space_A * concat_saturated_input <=...
+                            concat_input_space_b;                    
+                cvx_end
+                switch cvx_status
+                    case {'Solved','Inaccurate/Solved'}
+                        % Input realization saturated via projection
+                        concat_input_realizations(:, realization_indx) =...
+                            concat_saturated_input;
+                        if cvx_optval > 1e-8
+                            saturation_indx(:, realization_indx) = 1;
+                        end
+                    otherwise
+                        throw(SrtDevError(['Saturation via projection failed. ',...
+                            'This might be due to numerical issues.']));
+                end
+            end
+        else
+            concat_input_realizations = concat_input_vector_repeated;
+        end
+        concat_state_realization = [concat_initial_state;
+            Z * concat_initial_state + H * concat_input_realizations + ...
+              G * concat_disturb_realizations];
+        varargout{1} = concat_state_realization;
+        varargout{2} = concat_disturb_realizations;
+        varargout{3} = concat_input_realizations;
+        if nargout > 3
+            varargout{4} = saturation_indx;
+        end
     end
 end
