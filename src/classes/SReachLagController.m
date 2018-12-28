@@ -1,12 +1,66 @@
 classdef SReachLagController
-% A feasible controller that maximizes stochastic reachability via 
-% Lagrangian-based computations    
+% Controller that maximizes stochastic reachability via Lagrangian-based
+% computations and respects hard control bounds
+% ==========================================================================
+%
+% SReachLagController class
+%
+% Usage:
+% ------
+% % Given a system sys, probability threshold prob_thresh, and a target_tube, we
+% % can compute the Lagrangian-based underapproximation via these two commands.
+% lagunder_options = SReachSetOptions('term', 'lag-under', ...
+%      'bound_set_method', 'ellipsoid', 'compute_style','vhmethod');
+% [polytope_lagunder, extra_info_under] = SReachSet('term', 'lag-under', ...
+%         sys, prob_thresh, target_tube, lagunder_options);
+% % We compute the associated controller using the following command
+% srlcontrol = SReachLagController(sys, bounded_dist_set, robust_reach_tube);
+% 
+% See also, example/cwhSReachSet.
+%
+% ==========================================================================
+%
+% SReachLagController Properties:
+% -------------------------------
+%   system          - System under study [LtvSystem/LtiSystem object]
+%   dist_set        - Bounded disturbance set for which robustness computation
+%                     has been completed [Polyhedron/SReachEllipsoid object]
+%   tube            - Time-stamped robust sets in the state space from which
+%                     there is a control that works irrespective of the
+%                     disturbance in dist_set [Tube object]. See notes.
+%   time_horizon    - Computed from the obj.tube (Scalar)
+%
+% SReachLagController Methods:
+% ----------------------------
+%   SReachLagController/SReachLagController 
+%                   - Constructor for SReachLagController
+%   SReachLagController/getInput 
+%                   - Get the input at time t given the state at time t, that
+%                     lies in the effective target tube
+% 
+% Notes:
+% ------
+% * MATLAB DEPENDENCY: MPT 3.0
+% * Robust target tube can also be provided as an array of polyhedron.
+%   The construct converts it into a tube object using
+%   Tube.polyArray2Tube().
+% 
+% =========================================================================
+% 
+% This function is part of the Stochastic Reachability Toolbox.
+% License for the use of this function is given in
+%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+% 
+% 
     properties
         % SReachLagController/tube
         % ==================================================================
         % 
-        % Polyhedron array of sets for the tube (half-space representation
-        % preferred)
+        % Time-stamped robust sets in the state space from which there is a
+        % control that works irrespective of the disturbance in dist_set [Tube
+        % object]. When Polyhedron array of sets for the tube is given, the
+        % constructor will use Tube.polyArray2Tube() to convert it into a tube.
+        % Half-space representation preferred.
         %
         tube = Polyhedron();
         % SReachLagController/system
@@ -32,6 +86,34 @@ classdef SReachLagController
 
     methods
         function obj = SReachLagController(sys, dist_set, tube)
+        % Constructor for SReachLagController 
+        % ======================================================================
+        % Inputs:
+        % -------
+        %   sys      - System under study [LtvSystem/LtiSystem object]
+        %   dist_set - Bounded disturbance set for which robustness computation
+        %              has been completed [Polyhedron/SReachEllipsoid object]
+        %   tube     - Time-stamped robust sets in the state space from which
+        %              there is a control that works irrespective of the
+        %              disturbance in dist_set [Tube object]. See notes.
+        %
+        % Outputs:
+        % --------
+        %   obj      - SReachLagController object
+        %
+        % Notes:
+        % ------
+        % * Robust target tube can also be provided as an array of polyhedron.
+        %   The construct converts it into a tube object using
+        %   Tube.polyArray2Tube().
+        %
+        % ======================================================================
+        % 
+        % This function is part of the Stochastic Optimal Control Toolbox.
+        % License for the use of this function is given in
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %
+        %
             % Add the system after input handling
             validateattributes(sys, {'LtiSystem','LtvSystem'}, {'nonempty'});
             if sys.input_dim < 1
@@ -74,7 +156,15 @@ classdef SReachLagController
                     'dimension of the collection of time-stamped stochastic',...
                     ' reach set underapproximations and the state.']));
             end
+            % Ensure that (t+1)-effective target set R_{t+1} has a half-space
+            % representation
+            for tube_indx = 1:length(tube)
+                if ~tube(tube_indx).hasHRep
+                    tube(tube_indx).minHRep();
+                end
+            end
             obj.tube = tube;
+            
             % Time horizon
             obj.time_horizon = length(tube) - 1;
             if obj.time_horizon < 1
@@ -83,34 +173,55 @@ classdef SReachLagController
         end
         
         function action = getInput(obj, current_state, current_time)
-            validateattributes(current_time, {'numeric'}, {'scalar', ...
-                'integer', '>=', 0, '<=', obj.time_horizon - 1});
+        % Get the input at time t given the state at time t, that lies in the
+        % effective target tube
+        % ======================================================================
+        % Inputs:
+        % -------
+        %   obj             - SReachLagController object
+        %   current_state   - Current state (a obj.system.state_dim x 1 vector)
+        %   current_time    - Current time (a scalar integer) 
+        %
+        % Outputs:
+        % --------
+        %   action          - Action to apply at time t
+        %
+        % Notes:
+        % ------
+        % * If infeasible initial state is provided or the feasible input space
+        %   turns out to be empty, an Invalid Arguments error is thrown.
+        %   Therefore, while using this function to generate trajectories, make
+        %   sure that the disturbances lie in obj.dist_set.
+        %
+        % ======================================================================
+        % 
+        % This function is part of the Stochastic Optimal Control Toolbox.
+        % License for the use of this function is given in
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %
+        %
             validateattributes(current_state, {'numeric'}, {'column', ...
                 'size', [obj.system.state_dim 1]});
+            validateattributes(current_time, {'numeric'}, {'scalar', ...
+                'integer', '>=', 0, '<=', obj.time_horizon - 1});
             % time goes from 0 to N, and tube_indx goes from 1 to N+1
             tube_indx = current_time + 1;
             
-            % Return NaN if invalid current state
-            if ~(obj.tube(tube_indx).contains(current_state)) ||...
-                    any(isnan(current_state))
+            if any(isnan(current_state)) ||...
+                ~(obj.tube(tube_indx).contains(current_state))
                 throwAsCaller(SrtInvalidArgsError('Invalid current state'));
-%                 action = nan(obj.system.input_dim, 1);
-%                 return
             end
             
-            % Ensure that next effective target set has a half-space
-            % representation
-            target_set = obj.tube(tube_indx+1);
-            if ~target_set.hasHRep
-                target_set.computeHRep();
-            end
-            
-            % Compute the effective input set
-            %       (R_{t+1} \ominus F_t*E_t) \oplus {-Ax_t}
+            % Feasible input set is (R_{t+1} \ominus F_t*E_t) \oplus {-A_t x_t}
+            % where R_{t+1} is the (t+1)-effective target set, F_t is the
+            % disturbance matrix, E_t is the disturbance set, A_t is the state
+            % matrix, and x_t is the current state
             if ~isempty(obj.dist_set)
-                scaled_dist_set = obj.system.dist_mat(current_time) * ...
+                % Compute F_t*E_t
+                scaled_dist_set = obj.system.dist_mat(current_time) *...
                     obj.dist_set;
 
+                % Compute the feasible set in the half space
                 effective_input_set = Polyhedron('H', ...
                     [target_set.A * obj.system.input_mat(current_time),...
                         (target_set.b -...
@@ -119,6 +230,7 @@ classdef SReachLagController
                             obj.system.state_mat(current_time) * current_state);
                      obj.system.input_space.A, obj.system.input_space.b]);
             else
+                % Feasible input set is R_{t+1} \oplus {-A_t x_t}
                 effective_input_set = Polyhedron('H', ...
                     [target_set.A, target_set.b - target_set.A * ...
                         obj.system.state_mat(current_time)*current_state;
@@ -128,7 +240,7 @@ classdef SReachLagController
             % Compute a feasible action via MPT's interior point (Chebyshev
             % centering)
             if effective_input_set.isEmptySet()
-                action = nan(obj.system.input_dim, 1);
+                throwAsCaller(SrtInvalidArgsError(['Empty feasible input set'));
             else
                 sol = effective_input_set.interiorPoint();
                 action = sol.x;

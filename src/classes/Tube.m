@@ -33,8 +33,18 @@ classdef Tube
 %
 % Tube Methods:
 % ---------------------
-%   Tube/Tube - Class constructor
+%   Tube/Tube       - Class constructor
+%   concat          - Get concatenated tube (Cartesian product of the polytopes)
+%   contains        - Check if a given concatenates state trajectory lies in the
+%                     tube
+%   polyArray2Tube  - Convert the array of polyhedra to a Tube object
 % 
+% Apart from these, the following MATLAB functions have been overloaded
+%   disp            - Display the tube
+%   length          - Provide the length of the tube 
+%   end             - Indexing the end of the tube
+%   subsref         - Permits use of indexing of tube
+%
 % Notes:
 % ------
 % * MATLAB DEPENDENCY: MPT 3.0
@@ -240,7 +250,7 @@ classdef Tube
         end
 
         function n_tubes = length(obj)
-        % Overloading of length
+        % Overloading of MATLAB internal length function
         % ====================================================================
         %
         % Function to get length of tube, returns length of tube
@@ -477,10 +487,11 @@ classdef Tube
     methods (Static)
         function newobj = polyArray2Tube(polyArray)
         % Convert the array of polyhedra to a Tube object
-        % 
+        % ======================================================================
         % Inputs:
         % -------
         %   polyArray - Array of polyhedrons
+        %
         % Outputs:
         % --------
         %   newobj    - Tube object
