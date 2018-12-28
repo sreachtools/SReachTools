@@ -16,7 +16,7 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %                 to different maximal reach probabilities
 %                     1. 'term' : Stay within the safety_tube
 %   method_str  - Solution technique to be used; available techniques:
-%                     'chance-opn', 'genzps-open', 'lag-under', 'lag-over'
+%                     'chance-open', 'genzps-open', 'lag-under', 'lag-over'
 %   varargin    - Additional required options for each technique, specified as
 %                 Name-Value pairs. The additional required options are 
 %                 specified below.

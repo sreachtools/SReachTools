@@ -308,14 +308,3 @@ function otherInputHandling(sys, safety_tube, prob_str, optional_args)
         throwAsCaller(SrtInvalidArgsError('Too many input arguments'));
     end
 end
-
-%% Things for the first hitting time problem
-%
-% prob_x = SReachDynProg('first',sys,x_inc,u_inc,safety_tube,target_set)
-%
-%                     1. 'first' : Stay within the safety_tube and reach the
-%                                  target set early if possible
-%                     2. 'term' : Stay within the safety_tube
-%
-%   target_set  - [Required for 'first'] Target set that needs to be reached at
-%                 some point within the horizon

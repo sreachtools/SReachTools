@@ -98,29 +98,3 @@ function [overapprox_m, overapprox_c, lb_phiinv, norminv_knots] =...
         j = j+1;       
     end
 end
-
-%% Using MATLAB's symbolic toolbox to obtain the hessian of phiinv(1-x)
-% % For phiinv(x) definition, see algorithms section in
-% % https://www.mathworks.com/help/stats/norminv.html
-% syms x
-% phiinvOneMinusX_matlab = @(z) -sqrt(2)* erfcinv(2*(1 - z));
-% phiinvOneMinusX_sym = phiinvOneMinusX_matlab(x)
-% Hessian_phiinvOneMinusX_sym =diff(diff(phiinvOneMinusX_sym))
-
-%% Sanity checks
-% tic;
-% [cdf_approx_m, cdf_approx_c, lb_phiinv] =...
-%     computeNormCdfInvOverApprox(0.5, 1e-3, 1000);
-% toc
-% x = lb_phiinv:1e-4:0.5;
-% y_pwa = max(cdf_approx_m * x + cdf_approx_c);
-% clf
-% subplot(2,1,1);
-% plot(x,y_pwa,'ro')
-% hold on
-% plot(x,norminv(1-x),'b')
-% legend('Piecewise approximation','True norminv');
-% subplot(2,1,2);
-% pwa_err= y_pwa-norminv(1-x);
-% semilogy(x,pwa_err,'ro')
-% disp(min(pwa_err));
