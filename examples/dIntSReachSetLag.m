@@ -114,7 +114,7 @@ n_dim = sys.state_dim + sys.input_dim;
 %     'verbose',1,'compute_style','support');
 fprintf('Setting up options for lag-under with bound_set_method: polytope\n');
 luOpts = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
-    'ellipsoid', 'verbose', 1, 'compute_style','vhmethod');
+    'ellipsoid', 'verbose', 1, 'compute_style','vfmethod');
 luOpts_time = toc(timerVal);
 timerVal=tic;
 [luSet, extra_info] = SReachSet('term', 'lag-under', sys, beta, target_tube,...
@@ -126,7 +126,7 @@ n_dim_over = sys.state_dim;
 % % Option type 1: Bound_set_method - Ellipsoid | Compute_style - VHmethod
 timerVal=tic;
 loOpts1 = SReachSetOptions('term', 'lag-over', 'bound_set_method', ...
-    'ellipsoid', 'verbose', 1, 'compute_style','vhmethod');
+    'ellipsoid', 'verbose', 1, 'compute_style','vfmethod');
 loOpts_time(1) = toc(timerVal);
 timerVal=tic;
 loSet(1) = SReachSet('term', 'lag-over', sys, beta, target_tube, loOpts1);
@@ -145,7 +145,7 @@ timerVal=tic;
 loOpts3 = SReachSetOptions('term', 'lag-over', 'bound_set_method', ...
     'polytope', 'verbose', 1, 'template_polytope',...
     Polyhedron('lb',-ones(sys.dist.dim,1),'ub',ones(sys.dist.dim,1)),...
-    'compute_style','vhmethod');
+    'compute_style','vfmethod');
 loOpts_time(3) = toc(timerVal);
 timerVal=tic;
 loSet(3) = SReachSet('term', 'lag-over', sys, beta, target_tube, loOpts3);

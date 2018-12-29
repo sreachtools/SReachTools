@@ -100,7 +100,7 @@ function varargout = SReachSetLag(method_str, sys, prob_thresh, safety_tube,...
                     (1-prob_thresh)^(1/time_horizon), options);
                 % get overapproximated set (augmented effective target)
                 switch lower(options.compute_style)
-                    case 'vhmethod'
+                    case 'vfmethod'
                         [approx_set, approx_tube] = getSReachLagOverapprox(...
                             sys, safety_tube, bounded_set, options);
                         varargout{1} = approx_set;

@@ -78,7 +78,7 @@ function varargout = getSReachLagOverapprox(sys, target_tube,...
     end            
     
     switch lower(options.compute_style)
-        case 'vhmethod'
+        case 'vfmethod'
             %% Use vertex-facet enumeration requiring recursion
             [effective_target_tube] = computeViaRecursion(sys, target_tube,...
                 disturbance_set, options);
@@ -198,7 +198,7 @@ function [effective_target_set] = computeViaSupportFn(sys, target_tube,...
         effective_target_set_A(dir_indx, :)= ell';
         effective_target_set_b(dir_indx) =...
             support(ell, sys, target_tube, disturbance_set, options);
-        if options.verbose >= 2 && size(ell,1) <=3
+        if options.verbose >= 3 && size(ell,1) <=3
             figure(200);
             hold on;
             title(sprintf('support %d/%d',dir_indx, n_vertices));
@@ -210,9 +210,22 @@ function [effective_target_set] = computeViaSupportFn(sys, target_tube,...
             drawnow;
         end
     end
-    effective_target_set = Polyhedron('H', [effective_target_set_A, ...
-        effective_target_set_b; target_tube(1).A, target_tube(1).b]);
-    effective_target_set.minHRep();
+    switch options.vf_enum_method
+        case 'cdd'                                      % MPT/CDD approach
+            effective_target_set = Polyhedron('H', [effective_target_set_A, ...
+                effective_target_set_b; target_tube(1).A, target_tube(1).b]);
+            effective_target_set.minHRep();
+        case 'lrs'                                      % LRS approach
+            effective_target_set_A_red = [effective_target_set_A; 
+                target_tube(1).A];
+            effective_target_set_b_red = [effective_target_set_b; 
+                target_tube(1).b];
+            [effective_target_set_A_irred, effective_target_set_b_irred] = ...
+                inequalityReduction(effective_target_set_A_red, ...
+                    effective_target_set_b_red);
+            effective_target_set = Polyhedron('H', ...
+                [effective_target_set_A_irred, effective_target_set_b_irred]);
+    end
     if options.verbose >= 1
         fprintf('\n');
     end

@@ -112,7 +112,7 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %                                             recursions
 %            3. compute_style           - Computation style for the
 %                                         set-operation methods
-%               a. 'VHmethod'           - [DEFAULT] Use MPT3's Polyhedron 
+%               a. 'vfmethod'          - [DEFAULT] Use MPT3's Polyhedron 
 %                                         manipulations to implement the 
 %                                         set operations-based recursion. This
 %                                         approach will fast in low dimensions,
@@ -133,6 +133,14 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %                            - equi_dir_vecs
 %                                       : [Auto-generated] Directions that
 %                                         are used for overapproximation
+%            4. vf_enum_method          - Enumeration style to use for
+%                                         vertex-facet enumeration. See notes
+%               a. 'cdd'                - [DEFAULT] Use MPT3's native polyhedral
+%                                         operations, which in turn use CDDMEX
+%                                         for vertex-facet enumeration.
+%               b. 'lrs'                - Use GeoCalcLib (a MATLAB bridge to
+%                                         McGill's LRS C code base) for
+%                                         vertex-facet enumeration
 %
 % Outputs:
 % --------
@@ -150,7 +158,7 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %       - The template polytope must contain the origin
 % * compute_style governs the computation style used to implement the Lagrangian
 %   technique for over and under approximation. 
-%       - By default, the compute_style is 'vhmethod'. This approach will fast
+%       - By default, the compute_style is 'vfmethod'. This approach will fast
 %         in low dimensions, it does not scale well with dimension due to the
 %         vertex-facet enumeration. It implements the recursion using the native
 %         operations available via MPT3.
@@ -174,9 +182,9 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %                 scenario-based robust convex programming.
 %               - Returns a tight overapproximation of the overapproximation
 %                 polytope by sampling this support function.
-%           * For lag-under, this computation style is `vhmethod guided by
+%           * For lag-under, this computation style is `vfmethod guided by
 %             support functions` to reduce some of the computational overhead
-%             associated with `vhmethod`.
+%             associated with `vfmethod`.
 %               - The polytopes are always expressed in the half-space form with
 %                 the Minowksi sum computed by projecting the higher dimensional
 %                 polytope constructed in state_space x input_space into the
@@ -191,6 +199,21 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %   and the standard axis are also included.
 %       - For lag-under, n_dim is sys.state_dim + sys.input_dim
 %       - For lag-over, n_dim is sys.state_dim
+% * Vertex-facet enumeration is a computationally hard problem. SReachTools
+%   currently support two popular techniques for addressing the same:
+%   1. CDDMEX - MPT's preferred approach for vertex-facet enumeration
+%               * Requires no additional installation steps
+%               * Known to provide incorrect results or fail completely in some
+%                 cases
+%               * See following websites for more information: 
+%                   https://www.inf.ethz.ch/personal/fukudak/cdd_home/index.html
+%                   http://www.swmath.org/software/5097
+%   2. LRS    - Avis's LRS with MATLAB interface provided Rainer's GeoCalcLib
+%               * Requires few additional installation steps
+%               * Worked more reliably than CDDMEX
+%               * See following websites for more information: 
+%                   http://cgm.cs.mcgill.ca/~avis/C/lrs.html
+%                   http://worc4021.github.io/GeoCalcLib/
 % ============================================================================
 % 
 % This function is part of the Stochastic Reachability Toolbox.
@@ -202,7 +225,8 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
     valid_prob = {'term'};
     valid_method= {'chance-open','genzps-open','lag-under','lag-over'};
     valid_bound_method = {'load','polytope','ellipsoid'};
-    valid_compute_style = {'VHmethod','support'};
+    valid_compute_style = {'vfmethod','support'};
+    valid_vf_enum_method = {'cdd','lrs'};
     % Input parsing
     inpar = inputParser();
     inpar.addRequired('prob_str', @(x) any(validatestring(x,valid_prob)));
@@ -237,8 +261,10 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
         inpar.addParameter('n_particles',1e6, @(x) validateattributes(x, ...
             {'numeric'}, {'scalar','integer','nonempty'}));
         % compute_style
-        inpar.addParameter('compute_style', 'vhmethod',...
+        inpar.addParameter('compute_style', 'vfmethod',...
             @(x) any(validatestring(x,valid_compute_style)));
+        inpar.addParameter('vf_enum_method', 'cdd',...
+            @(x) any(validatestring(x,valid_vf_enum_method)));
     elseif nargin >= 2
         % Hyperplane intersecting the stochastic reach set underapprox.
         inpar.addParameter('init_safe_set_affine', Polyhedron(), ...
@@ -287,6 +313,19 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
         if any(contains(inpar.UsingDefaults,'bound_set_method'))
             throw(SrtInvalidArgsError(['bound_set_method is a required ', ...
                 'input for SReachSet when using ''lag-over''/''lag-under''.']));
+        end
+        if strcmpi(options.vf_enum_method, 'lrs')
+            % Ensure that LRS is correctly installed by checking the associated
+            % mex files are available on the path
+            if ~((exist('facetEnumeration','file') == 3) && ...
+                (exist('inequalityReduction','file') == 3) && ...
+                (exist('vertexEnumeration','file') == 3) && ...
+                (exist('vertexreduction','file') == 3))
+                % Throw an error stating LRS is not in path, which prevents use
+                % of this options
+                throw(SrtInvalidArgsError(['GeoCalcLib (MATLAB interface',...
+                    ' to Avis''s LRS library) is not installed correctly.']));
+            end
         end
         if strcmpi(options.compute_style,'support') 
             if any(contains(inpar.UsingDefaults,'system'))

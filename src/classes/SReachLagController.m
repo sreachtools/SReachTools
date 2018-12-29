@@ -10,7 +10,7 @@ classdef SReachLagController
 % % Given a system sys, probability threshold prob_thresh, and a target_tube, we
 % % can compute the Lagrangian-based underapproximation via these two commands.
 % lagunder_options = SReachSetOptions('term', 'lag-under', ...
-%      'bound_set_method', 'ellipsoid', 'compute_style','vhmethod');
+%      'bound_set_method', 'ellipsoid', 'compute_style','vfmethod');
 % [polytope_lagunder, extra_info_under] = SReachSet('term', 'lag-under', ...
 %         sys, prob_thresh, target_tube, lagunder_options);
 % % We compute the associated controller using the following command

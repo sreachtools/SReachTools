@@ -223,9 +223,8 @@ function [approx_stoch_reach, opt_input_vec, kmeans_info] = SReachPointVoO(...
                 cvx_quiet true
             end
             cvx_solver Gurobi
+            variable X_realizations(sys.state_dim * time_horizon, options.n_kmeans);
             variable U_vector(sys.input_dim * time_horizon,1);
-            variable X_realizations(sys.state_dim * time_horizon, ...
-                options.n_kmeans);
             variable z(1,options.n_kmeans) binary;
             maximize ((z*voronoi_count)/n_particles)
             subject to
