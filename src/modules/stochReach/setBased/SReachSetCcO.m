@@ -265,15 +265,16 @@ function [polytope, extra_info] = computePolytopeFromXmax(xmax_soln, sys, ...
     
     %% Iterate over all direction vectors + xmax
     if options.verbose >= 1
+        % Vector to store the unsolved directions which is reported in the end
         unsolved_directions = [];
+        fprintf('Analyzing direction :%4d/%4d', 0, n_dir_vecs);
     end
     for direction_index = 1: n_dir_vecs
         % Get direction_index-th direction in the hyperplane
         direction = options.set_of_dir_vecs(:,direction_index);
         
         if options.verbose >= 1
-            fprintf('Analyzing direction :%2d/%2d\n', direction_index, ...
-                n_dir_vecs);
+            fprintf('\b\b\b\b\b\b\b\b\b%4d/%4d', direction_index, n_dir_vecs);
         end
     
         %% Solve the optimization problem to compute the boundary
@@ -325,40 +326,55 @@ function [polytope, extra_info] = computePolytopeFromXmax(xmax_soln, sys, ...
                 % (6) W_0(x,U) >= alpha
                 1-sum(deltai) >= prob_thresh
         cvx_end
-        if strcmpi(cvx_status,'Solved')
-            opt_theta_i(direction_index) = theta;
-            opt_input_vec_at_vertices(:,direction_index) = U_vector;
-            opt_reach_prob_i(direction_index) = 1 - sum(deltai);
-            vertices_underapprox_polytope(:, direction_index)= boundary_point;
-        else
-            warning('SReachTools:runtime', sprintf(['CVX could not solve ',...
-                'the line search problem %d/%d. CVX status: %s'],...
-                direction_index, n_dir_vecs, cvx_status));
-            if options.verbose == 1
-                unsolved_directions(end+1) = direction_index; 
+        switch cvx_status
+            case 'Solved'
+                opt_theta_i(direction_index) = theta;
+                opt_input_vec_at_vertices(:,direction_index) = U_vector;
+                opt_reach_prob_i(direction_index) = 1 - sum(deltai);
+                vertices_underapprox_polytope(:, direction_index) =...
+                    boundary_point;
+            otherwise
+                % Compute the inequality slack
                 inside_slack = max(init_safe_set.A * boundary_point -...
                     init_safe_set.b);
+                % Compute the equality slack
                 inplane_slack = max(init_safe_set.Ae * boundary_point -...
                     init_safe_set.be);
                 if inside_slack <= eps && abs(inplane_slack) < eps
                     % All constraints satisfied
+                    opt_theta_i(direction_index) = theta;
+                    opt_input_vec_at_vertices(:,direction_index) = U_vector;
+                    opt_reach_prob_i(direction_index) = 1 - sum(deltai);
+                    vertices_underapprox_polytope(:, direction_index) =...
+                        boundary_point;
                 else
-                    fprintf(['CVX violated constraint requirements: ', ...
-                        'Inequality: %1.2e | Equality: %1.2e\n'], ...
-                        inside_slack, inplane_slack);
+                    warning('SReachTools:runtime', sprintf(['CVX could not ',...
+                        'solve the line search problem %d/%d. CVX status',...
+                        ': %s'], direction_index, n_dir_vecs, cvx_status));
+                    if options.verbose == 1
+                        fprintf(['CVX violated constraint requirements: ', ...
+                            'Inequality: %1.2e | Equality: %1.2e\n'], ...
+                            inside_slack, inplane_slack);
+                        % Storing the unsolved direction for reporting
+                        unsolved_directions(end+1) = direction_index;                     
+                    end
+                    % Default values --- theta is zero, vertex is xmax, and
+                    % inputs and reach probability as NaN
+                    opt_theta_i(direction_index) = 0;
+                    vertices_underapprox_polytope(:, direction_index) =...
+                        xmax_soln.xmax;
+                    opt_input_vec_at_vertices(:,direction_index) = NaN;
+                    opt_reach_prob_i(direction_index) = NaN;            
                 end
-            end
-            % Default values --- theta is zero, vertex is xmax, and inputs and
-            % reach probability as NaN
-            opt_theta_i(direction_index) = 0;
-            vertices_underapprox_polytope(:, direction_index)= xmax_soln.xmax;
-            opt_input_vec_at_vertices(:,direction_index) = NaN;
-            opt_reach_prob_i(direction_index) = NaN;            
         end        
     end
-    if options.verbose >= 1 && length(unsolved_directions) > 0
-        fprintf('Errored in %d direction vectors:',length(unsolved_directions));
-        disp(unsolved_directions);
+    if options.verbose >= 1 
+        fprintf('\n');
+        if ~isempty(unsolved_directions)
+            fprintf('Errored in %d direction vectors: ', ...
+                length(unsolved_directions));
+            disp(unsolved_directions);
+        end
     end
     polytope = Polyhedron('V', vertices_underapprox_polytope');
     if nargout > 1
@@ -505,13 +521,15 @@ function cheby_soln = computeChebyshev(sys, options, init_safe_set, ...
             % Input constraints
             concat_input_space_A * Umax <= concat_input_space_b;
     cvx_end
-    if ~strcmpi(cvx_status, 'Solved')
-        warning('SReachTools:runtime', ['CVX failed to obtain the Chebyshev',...
-            ' centered trajectory, potentially due to numerical issues.']); 
+    switch cvx_status
+        case {'Solved','Inaccurate/Solved'}
+            cheby_soln.reach_prob = 1-sum(deltai);
+            cheby_soln.xmax = xmax;
+            cheby_soln.Umax = Umax; 
+            cheby_soln.R = R;
+            cheby_soln.cvx_status = cvx_status;
+        otherwise
+            throw(SrtInvalidArgsError('CVX failed to obtain the ',...
+                'Chebyshev center, potentially due to numerical issues.'));
     end
-    cheby_soln.reach_prob = 1-sum(deltai);
-    cheby_soln.xmax = xmax;
-    cheby_soln.Umax = Umax; 
-    cheby_soln.R = R;
-    cheby_soln.cvx_status = cvx_status;
 end

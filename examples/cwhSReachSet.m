@@ -67,9 +67,9 @@ sys = getCwhLtiSystem(4, Polyhedron('lb', -umax*ones(2,1), ...
 
 %% Methods to run   
 ft_run = 0;
-cc_open_run = 0;
+cc_open_run = 1;
 lagunder_run = 1;
-lagover_run = 0;
+lagover_run = 1;
 
 %% Target tube construction --- reach-avoid specification
 time_horizon = 5;          % Stay within a line of sight cone for 4 time steps and 
@@ -121,7 +121,7 @@ if cc_open_run
     cc_options = SReachSetOptions('term', 'chance-open', ...
         'set_of_dir_vecs', set_of_dir_vecs_cc_open, ...
         'init_safe_set_affine', init_safe_set_affine, ...
-        'verbose', 0);
+        'verbose', 1);
     timer_cc_open = tic;
     [polytope_cc_open, extra_info] = SReachSet('term','chance-open', sys, ...
         prob_thresh, target_tube, cc_options);  
