@@ -62,6 +62,17 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state, ..
 %   MATLAB's Statistics and Machine Learning Toolbox's mvncdf to compute the
 %   integral of the Gaussian over a polytope.
 % * See @LtiSystem/getConcatMats for more information about the notation used.
+% * This code is also used internally by SReachSetGpO (stochastic reach set
+%   underapproximation via genzps-open method). There are a few adjustments done 
+%   for computational purposes:
+%   1. Using options.thresh, an inner min operation is used that is
+%      convexity-preserving. This is an attempt to ensure that the quasi
+%      Monte-Carlo simulation-driven optimization:
+%      - does report a safety probability that is above prob_thresh, and
+%      - does not spend too much time looking for global optimality, when a 
+%        certificate of exceeding a lower bound suffices. 
+%   2. After the optimization, the optimal value is reevaluated using a fresh
+%      set of particles for generality.
 % 
 % ============================================================================
 % 
@@ -98,6 +109,9 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state, ..
     % Ensure options is good
     otherInputHandling(options);
     
+    % Time_horizon definition
+    time_horizon = length(safety_tube) - 1;
+    
     if guess_lb_stoch_reach < 0
         % Chance constrained approach failed to find an optimal open-loop
         % controller => Try just getting the mean to be as safe as possible
@@ -115,19 +129,22 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state, ..
         %
         % OVERWRITE the guess_opt_input_vec solution from SReachPointCcO
         cvx_begin quiet
-            variable U(sys.input_dim * time_horizon,1)
-            variable mean_X(sys.state_dim * time_horizon,1)
-            variable slack_vars(length(concat_safety_tube_b))
-            minimize norm(slack_vars)
+            variable U(sys.input_dim * time_horizon,1);
+            variable mean_X(sys.state_dim * time_horizon,1);
+            variable slack_vars(length(concat_safety_tube_b)) nonnegative;
+            minimize sum(slack_vars)
             subject to
                 mean_X == mean_X_sans_input + H * U;
                 concat_safety_tube_A * mean_X <= concat_safety_tube_b...
                                                     + slack_vars;
                 concat_input_space_A * U <= concat_input_space_b;
         cvx_end
-        if strcmpi(cvx_status,'Solved') && norm(slack_variable) < 1e-2
+        if strcmpi(cvx_status,'Solved')
             % We have an initial solution to work with
             guess_lb_stoch_reach = 0;
+        else
+            % This should never be happening for a non-empty since it is a slack
+            % variable relaxed problem
         end
     end
 
@@ -137,13 +154,23 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state, ..
         opt_input_vec = nan(sys.input_dim * time_horizon, 1);
     else
         %% Got an initial solution to work with
-        % Construct the reach cost function: 
-        % 
-        % -log(ReachProb(U)) = -log(\int_{safety_tube} \psi_{\bX}(Z; x_0, U) dZ
-        negLogReachProbGivenInputVec= @(input_vec)-log(computeReachProb(...
-            input_vec, mean_X_sans_input, cov_X_sans_input, H, ...
-            concat_safety_tube_A, concat_safety_tube_b, ...
-            options.desired_accuracy));
+        % Construct the reach cost function
+        if 1 - options.thresh > options.desired_accuracy
+            % -log(ReachProb(U)) = -log(\int_{safety_tube} \psi_{\bX}(Z;x_0,U)dZ
+            % reach cost function is min(-log(ReachProb(U)), options.thresh)
+            negLogReachProbGivenInputVec= @(input_vec) -log( min(...
+                    computeReachProb(...
+                        input_vec, mean_X_sans_input, cov_X_sans_input, H, ...
+                        concat_safety_tube_A, concat_safety_tube_b, ...
+                        options.desired_accuracy),...
+                    options.thresh));
+        else
+            % -log(ReachProb(U)) = -log(\int_{safety_tube} \psi_{\bX}(Z;x_0,U)dZ            
+            negLogReachProbGivenInputVec= @(input_vec) -log(computeReachProb(...
+                input_vec, mean_X_sans_input, cov_X_sans_input, H, ...
+                concat_safety_tube_A, concat_safety_tube_b, ...
+                options.desired_accuracy));
+        end
 
         % Compute the optimal admissible input_vec that minimizes
         % negLogReachProbGivenInputVec(input_vec) given x_0 | We use
@@ -153,13 +180,12 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state, ..
         % minimize -log(ReachProb(U))
         % subject to
         %        concat_input_space_A * U <= concat_input_space_b
-        [opt_input_vec, opt_neg_log_reach_prob]= ...
-            patternsearch(negLogReachProbGivenInputVec, guess_opt_input_vec, ...
-                concat_input_space_A, concat_input_space_b, [],[],[],[],[], ...
-                options.PSoptions);
+        opt_input_vec = patternsearch(negLogReachProbGivenInputVec, ...
+                guess_opt_input_vec, concat_input_space_A, ...
+                concat_input_space_b, [],[],[],[],[], options.PSoptions);
         
         % Compute the lower bound and the optimal open_loop_control_policy
-        lb_stoch_reach = exp(-opt_neg_log_reach_prob);
+        lb_stoch_reach = exp(-negLogReachProbGivenInputVec(opt_input_vec));
     end
 end
 

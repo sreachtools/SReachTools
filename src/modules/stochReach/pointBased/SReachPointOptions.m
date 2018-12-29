@@ -26,9 +26,14 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 %                     'genzps-open'  -- Genz's algorithm + Patternsearch
 %                                       1. desired_accuracy: Accuracy of
 %                                               Gaussian integral => Accuracy of
-%                                               the result [Default: 1e-3]
+%                                               the result [Default: 1e-2]
 %                                       2. PSoptions: MATLAB struct generated
 %                                               using psoptimset()
+%                                       3. thresh: An upper bound on useful
+%                                               reach probability. This can be 
+%                                               used to specify reach_prob >= 
+%                                               thresh \in (0,1] See notes 
+%                                               [Default: 1]
 %                     'particle-open'-- Particle control approach that uses
 %                                       mixed-integer linear programming
 %                                       1. n_particles: Number of particles to
@@ -157,6 +162,10 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 %   computations beyond the limit.
 % * max_input_viol_prob has been left as addParameter instead of
 %   addRequired, so that default values may be specified.
+% * For 'genzps-open', options.thresh permits early termination if instead
+%   of maximal reach probability is of interest. While this function is for 
+%   maximal reach probability, this optional feature permits the reuse of
+%   code in SReachSet.
 % ============================================================================
 % 
 % This function is part of the Stochastic Reachability Toolbox.
@@ -186,9 +195,11 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
                     'option needs MATLAB''s Global Optimization Toolbox.']);
                 throw(exc);
             end
-            inpar.addParameter('desired_accuracy',1e-3, @(x)...
+            inpar.addParameter('desired_accuracy',1e-2, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
             inpar.addParameter('PSoptions',psoptimset('display','off'));
+            inpar.addParameter('thresh', 1, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0, '<=', 1}));
         case 'chance-open'
             % Accuracy of piecewise-affine approximation of norminvcdf
             inpar.addParameter('pwa_accuracy',1e-3, @(x)...
