@@ -1,32 +1,105 @@
 classdef LtiSystemTest < matlab.unittest.TestCase
+% LtiSystemTest
+% ============================================================================
+% 
+% Unit tests for LtiSystem class
+% 
+% ============================================================================
+% 
+% Tests:
+% ------
+%   testIncorrectEmptyFunctionCall
+%   testIncorrectNonSquareStateMatrix
+%   testIncorrectNoStateMatrixInput
+%   testIncorrectInputMatrixStringOnly
+%   testIncorrectInputMatrixBadString
+%   testIncorrectInputMatrixWrongRows
+%   testIncorrectInputMatrixWrongColumns
+%   testIncorrectEmptyInputPolyhedronOneDimInputMatrix
+%   testIncorrectInputPolyhedronOnly
+%   testIncorrectNoStateMatrixDisturbance
+%   testIncorrectDisturbanceMatrixStringOnly
+%   testIncorrectDisturbanceMatrixBadString
+%   testIncorrectDisturbanceMatrixWrongRows
+%   testIncorrectDisturbanceMatrixWrongColumns
+%   testIncorrectEmptyDisturbancePolyhedronOneDimDisturbanceMatrix
+%   testIncorrectRandomVectorBadDim
+%   testIncorrectDisturbancePolyhedronOnly
+%   testCorrectInputPolyhedronOnly
+%   testCorrectDisturbancePolyhedronOnly
+%   testCorrectArbitrarySystem
+%   testCorrectDoubleIntegrator
+%   testCorrectDoubleIntegratorGaussian
+%   testCorrectDoubleIntegratorGaussianNoInput
+%   testgetConcatMats
+%   testgetConcatInputSpace
+%   
+% ============================================================================
+% 
+% This function is part of the Stochastic Reachability Toolbox.
+% License for the use of this function is given in
+%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+% 
+% 
 
     methods (Test)
         
         function testIncorrectEmptyFunctionCall(testCase)
+        % Test for failure when calling LtiSystem without inputs
+        % 
+        % Expected Error: SReachTools:invalidArgs
+        % 
+
             testCase.verifyError(@() LtiSystem(), 'SReachTools:invalidArgs');
         end
         
         function testIncorrectNonSquareStateMatrix(testCase)
+        % Test for failure when calling LtiSystem with non-square state matrix
+        % 
+        % Expected Error: SReachTools:invalidArgs
+        % 
+
             testCase.verifyError(@() LtiSystem('StateMatrix',[1,1]), ...
                 'SReachTools:invalidArgs');
         end
         
         function testIncorrectNoStateMatrixInput(testCase)
+        % Test for failure when calling LtiSystem with no state matrix
+        % 
+        % Expected Error: SReachTools:invalidArgs
+        % 
+
             testCase.verifyError(@() LtiSystem('InputMatrix', eye(2)), ....
                 'SReachTools:invalidArgs');
         end
         
         function testIncorrectInputMatrixStringOnly(testCase)
+        % Test for failure when calling LtiSystem with only 'InputMatrix' string
+        % 
+        % Expected Error: SReachTools:invalidArgs
+        % 
+        
             testCase.verifyError(@() LtiSystem('InputMatrix'), ...
                 'SReachTools:invalidArgs');
         end
         
         function testIncorrectInputMatrixBadString(testCase)
+        % Test for failure when calling LtiSystem with invalid property string
+        % 
+        % Expected Error: SReachTools:invalidArgs
+        % 
+        
             testCase.verifyError(@() LtiSystem('InputMatrixGoneBad', ...
                 eye(2)), 'SReachTools:invalidArgs');
         end
         
         function testIncorrectInputMatrixWrongRows(testCase)
+        % Test for failure when calling LtiSystem with mismatched State and 
+        % input matrix dimension
+        % 
+        % Expected Error: SReachTools:invalidArgs
+        % 
+        
             T = 0.5;
             testCase.verifyError(@() LtiSystem('StateMatrix', [1, T; 0, 1], ...
                 'InputMatrix', [T^2], ...
@@ -35,6 +108,12 @@ classdef LtiSystemTest < matlab.unittest.TestCase
         end
         
         function testIncorrectInputMatrixWrongColumns(testCase)
+        % Test for failure when calling LtiSystem with mistmatch in input matrix
+        % dimension and input space dimension
+        % 
+        % Expected Error: SReachTools:invalidArgs
+        % 
+        
             T = 0.5;
             testCase.verifyError(@() LtiSystem('StateMatrix', [1, T; 0, 1], ...
                 'InputMatrix', [T^2;T], ...
@@ -43,12 +122,27 @@ classdef LtiSystemTest < matlab.unittest.TestCase
         end
         
         function testIncorrectEmptyInputPolyhedronOneDimInputMatrix(testCase)
+        % Test for failure when calling LtiSystem with non-zero input matrix
+        % and no defined input space
+        % 
+        % Expected Error: SReachTools:invalidArgs
+        % 
+        
             T = 0.5;
             testCase.verifyError(@() LtiSystem('StateMatrix', [1, T; 0, 1], ...
                 'InputMatrix', [T^2;T]), 'SReachTools:invalidArgs');
         end
         
         function testIncorrectInputPolyhedronOnly(testCase)
+        % Test for failure when calling LtiSystem with invalid input space 
+        % string
+        % 
+        % Expected Error: SReachTools:invalidArgs
+        % 
+        % TODO: This test is basically the same as 
+        %       testIncorrectInputMatrixBadString because they both have invalid
+        %       input strings; should combine
+        
             T = 0.5;
             testCase.verifyError(@() LtiSystem('StateMatrix', [1, T; 0, 1], ...
                 'Input', Polyhedron('lb', -1, 'ub', 1)), ...
@@ -56,21 +150,51 @@ classdef LtiSystemTest < matlab.unittest.TestCase
         end
         
         function testIncorrectNoStateMatrixDisturbance(testCase)
+        % Test for failure when calling LtiSystem with disturbance matrix but
+        % no state matrix
+        % 
+        % Expected Error: SReachTools:invalidArgs
+        % 
+        % TODO: This is also the same as the test in which we specify empty /
+        %       input matrix but no state matrix; combine
+        % 
+
             testCase.verifyError(@() LtiSystem('DisturbanceMatrix', ...
                 eye(2)), 'SReachTools:invalidArgs');
         end
         
         function testIncorrectDisturbanceMatrixStringOnly(testCase)
+        % Test for failure when calling LtiSystem with disturbance matrix string
+        % but no matrix
+        % 
+        % Expected Error: SReachTools:invalidArgs
+        % 
+
             testCase.verifyError(@() LtiSystem('DisturbanceMatrix'), ...
                 'SReachTools:invalidArgs');
         end
         
         function testIncorrectDisturbanceMatrixBadString(testCase)
+        % Test for failure when calling LtiSystem with bas disturbance matrix 
+        % string
+        % 
+        % Expected Error: SReachTools:invalidArgs
+        % 
+        % TODO: Again, repeated test for the bad input matrix string since it's
+        %       just calling a undefined property string
+        % 
+
             testCase.verifyError(@() LtiSystem('DisturbanceMatrixGoneBad', ...
                 eye(2)), 'SReachTools:invalidArgs');
         end
         
         function testIncorrectDisturbanceMatrixWrongRows(testCase)
+        % Test for failure when calling LtiSystem with mismatch between 
+        % disturbance dimension and state dimension
+        % 
+        % Expected Error: SReachTools:invalidArgs
+        % 
+
             T = 0.5;
             testCase.verifyError(@() LtiSystem('StateMatrix', [1, T; 0, 1], ...
                 'DisturbanceMatrix', [T^2], ...
@@ -79,6 +203,14 @@ classdef LtiSystemTest < matlab.unittest.TestCase
         end
         
         function testIncorrectDisturbanceMatrixWrongColumns(testCase)
+        % Test for failure when calling LtiSystem with mismatch between 
+        % disturbance matrix dimension and disturbance space dimension
+        % 
+        % Expected Error: SReachTools:invalidArgs
+        % 
+        % TODO: DisturbanceSpace???
+        % 
+
             T = 0.5;
             testCase.verifyError(@() LtiSystem('StateMatrix', [1, T; 0, 1], ...
                 'DisturbanceMatrix', [T^2;T], ...
@@ -87,12 +219,26 @@ classdef LtiSystemTest < matlab.unittest.TestCase
         end
         
         function testIncorrectEmptyDisturbancePolyhedronOneDimDisturbanceMatrix(testCase)
+        % Test for failure when calling LtiSystem with disturbance matrix
+        % specified but no disturbance
+        % 
+        % Expected Error: SReachTools:invalidArgs
+        % 
+
             T = 0.5;
             testCase.verifyError(@() LtiSystem('StateMatrix', [1, T; 0, 1], ...
                 'DisturbanceMatrix', [T^2;T]), 'SReachTools:invalidArgs');
         end
         
         function testIncorrectRandomVectorBadDim(testCase)
+        % Test for failure when calling LtiSystem with mismatch between 
+        % disturbance matrix and disturbance
+        % 
+        % Expected Error: SReachTools:invalidArgs
+        % 
+        % TODO: Basically the same as the bad column one
+        % 
+
             T = 0.5;
             mean_disturbance = zeros(5,1);
             covariance_disturbance = eye(5);
@@ -105,6 +251,12 @@ classdef LtiSystemTest < matlab.unittest.TestCase
         end
         
         function testIncorrectDisturbancePolyhedronOnly(testCase)
+        % Test for failure when calling LtiSystem with mistmatch between state
+        % dimension and disturbance dimension
+        % 
+        % Expected Error: SReachTools:invalidArgs
+        % 
+
             T = 0.5;
             testCase.verifyError(@() LtiSystem('StateMatrix', [1, T; 0, 1], ...
                 'Disturbance', Polyhedron('lb', -1, 'ub', 1)), ...
@@ -112,6 +264,12 @@ classdef LtiSystemTest < matlab.unittest.TestCase
         end
         
         function testCorrectInputPolyhedronOnly(testCase)
+        % Test for success of calling LtiSystem with State matrix, input matrix
+        % and input space
+        % 
+        % Expected return: LtiSystem object
+        % 
+
             T = 0.5;
             testCase.verifyClass(LtiSystem('StateMatrix', [1, T; 0, 1], ...
                 'InputMatrix', [T^2;T], ...
@@ -120,6 +278,11 @@ classdef LtiSystemTest < matlab.unittest.TestCase
         end
         
         function testCorrectDisturbancePolyhedronOnly(testCase)
+        % Test for success of calling LtiSystem with State matrix, 
+        % disurbance matrix and disturbance
+        % 
+        % Expected return: LtiSystem object
+        % 
             T = 0.5;
             testCase.verifyClass(LtiSystem('StateMatrix', [1, T; 0, 1], ...
                 'DisturbanceMatrix', [T^2;T], ...
@@ -127,6 +290,12 @@ classdef LtiSystemTest < matlab.unittest.TestCase
         end
 
         function testCorrectArbitrarySystem(testCase)
+        % Test for success of calling LtiSystem with State matrix, input matrix,
+        % input space, disturbance matrix and disturbance
+        % 
+        % Expected return: LtiSystem object
+        % 
+
             T = 0.5;
             testCase.verifyClass(LtiSystem('StateMatrix', zeros(2,2), ...
                 'InputMatrix', ones(2,4), ...
@@ -137,6 +306,13 @@ classdef LtiSystemTest < matlab.unittest.TestCase
         end
 
         function testCorrectDoubleIntegrator(testCase)
+        % Test for success of calling LtiSystem with double integrator dynamics
+        % 
+        % Expected return: LtiSystem object
+        % 
+        % TODO: Should be changed into the getChainOfInteg testing
+        % 
+
             T = 0.5;
             testCase.verifyClass(LtiSystem('StateMatrix', [1, T; 0, 1], ...
                 'InputMatrix', [T^2/2;T], ...
@@ -146,6 +322,13 @@ classdef LtiSystemTest < matlab.unittest.TestCase
         end
         
         function testCorrectDoubleIntegratorGaussian(testCase)
+        % Test for success of calling LtiSystem with double integrator dynamics
+        % 
+        % Expected return: LtiSystem object
+        % 
+        % TODO: Should be changed into the getChainOfInteg testing
+        % 
+
             T = 0.5;
             mean_disturbance = 0;
             covariance_disturbance = 1;
@@ -160,6 +343,13 @@ classdef LtiSystemTest < matlab.unittest.TestCase
         end
 
         function testCorrectDoubleIntegratorGaussianNoInput(testCase)
+        % Test for success of calling LtiSystem with double integrator dynamics
+        % 
+        % Expected return: LtiSystem object
+        % 
+        % TODO: Should be changed into the getChainOfInteg testing
+        % 
+
             T = 0.5;
             mean_disturbance = 0;
             covariance_disturbance = 1;
@@ -221,6 +411,9 @@ classdef LtiSystemTest < matlab.unittest.TestCase
 %        end
         
         function testgetConcatMats(testCase)
+        % Test method getConcatMats method of LtiSystem
+        % 
+
             % Input handling tests in LtvSystemTest
             time_horizon = 10;
             T = 0.25;
@@ -275,6 +468,9 @@ classdef LtiSystemTest < matlab.unittest.TestCase
         end       
         
         function testgetConcatInputSpace(testCase)
+        % Test method getConcatInputSpace method of LtiSystem
+        %
+
             % Input handling tests in LtvSystemTest
             time_horizon = 10;
             umax = 1;
