@@ -169,7 +169,7 @@ classdef SReachEllipsoid
         % Inputs:
         % -------
         %   l   - A query column vector or a collection of query vectors stacked 
-        %         as rows
+        %         as columns
         %
         % Outputs:
         % --------
@@ -250,7 +250,7 @@ classdef SReachEllipsoid
         %
         % Notes:
         % ------
-        % * For a polytopic v, newobj is an (Polyhed overapproximation of the
+        % * For a polytopic v, newobj is an (Polyhedron overapproximation of the
         %   minkowski sum, computed via sampling the support function.
         %
         % ====================================================================

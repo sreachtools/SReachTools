@@ -232,9 +232,25 @@ function [effective_target_set] = computeViaSupportFn(sys, target_tube,...
 end
 
 function [val] = support(ell, sys, target_tube, dist_set, options)
+% This private function implements the support function-based
+% recursion-free implementation of Lagrangian overapproximation of the
+% stochastic reach set. Specifically, it is called by computeViaSupportFn for
+% each sample of the support function.
+%
+% ============================================================================
+%
+%   This function is part of the Stochastic Reachability Toolbox.
+%   License for the use of this function is given in
+%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+%
+
+    % Time horizon
     time_horizon = length(target_tube) - 1;
+    % No. of facets in the input space
     n_lin_input = size(sys.input_space.A,1);
-    concat_target_tube_A = target_tube.concat();
+    % Half-space representation for the concatenated target tube
+    [concat_target_tube_A, concat_target_tube_b] = target_tube.concat();
+
     cvx_begin
         if options.verbose >= 2
             cvx_quiet false
@@ -242,16 +258,34 @@ function [val] = support(ell, sys, target_tube, dist_set, options)
             cvx_quiet true
         end
             
-        variable slack_var_target(time_horizon + 1, 1);
-        variable slack_var_inputdist(time_horizon, 1);
-        variable dummy_var(sys.state_dim, time_horizon)
+        % Dummy variable (no. of time steps-long)
+        variable nu(sys.state_dim, time_horizon);
+        % Dual variable for the target set
         variable dual_var_target(size(concat_target_tube_A,1), 1) nonnegative;
+        % Dual variable for the input space
         variable dual_var_input(n_lin_input, time_horizon) nonnegative;        
-        if isa(dist_set, 'Polyhedron')
-            variable dual_var_dist(size(dist_set.A,1),time_horizon) nonnegative;        
+        
+
+        switch class(dist_set)
+            case 'Polyhedron'
+                % Dual variable for the disturbance set
+                variable dual_var_dist(size(dist_set.A,1),time_horizon) nonnegative;  
+                % Since the input set and disturbance set are time-invariant,
+                % we can compute b' * [z_0 ... z_{N-1}] and then sum it up!
+                minimize ((concat_target_tube_b'*dual_var_target) + sum(sys.input_space.b' * dual_var_input) + sum(dist_set.b'* dual_var_dist));
+            case 'SReachEllipsoid'
+                % Slack variable to account for Minkowski sum of input space and
+                % disturbance set
+                variable slack_var_inputdist(time_horizon,1);
+                % Here, we have a closed form expression for the support
+                % function of the disturbance set => Use slack variables to
+                % enforce the constraint in an epigraph form
+                minimize ((concat_target_tube_b'*dual_var_target) + sum(slack_var_inputdist))
+            otherwise
+                throw(SrtInvalidArgsError(sprintf(['Disturbance (%s) is not',...
+                    ' configured as of yet'], class(scaled_dist_set))));
         end
         
-        minimize (sum(slack_var_target) + sum(slack_var_inputdist))
         
         subject to            
             dual_var_start_indx = 1;
@@ -260,37 +294,33 @@ function [val] = support(ell, sys, target_tube, dist_set, options)
             for tube_indx = 1:time_horizon + 1
                 % current_time, denoted by k, is t_indx-1 and goes from 0 to N
                 current_time = tube_indx - 1;
+                % Computation of A_k^{-1}
                 inv_sys_now = inv(sys.state_mat(current_time));
                 if current_time >= 1
+                    % Computation of A_{k-1}^{-1}
                     inv_sys_prev = inv(sys.state_mat(current_time - 1));                
                 end
-                %[tube_indx dual_var_start_indx dual_var_end_indx]
+
                 %% Target set at t \in N_{[0, N]}
-                % Here, psi_k refers to the dummy variable
                 if tube_indx == 1
-                    % A_Target_0'*z_Target_0 == l - psi_0
-                    (target_tube(1).A)'*dual_var_target(...
-                        dual_var_start_indx:dual_var_end_indx) ==...
-                        (ell - dummy_var(:,1));                    
+                    % (z_Target_0)' * A_Target_0 == (l - nu_0)'
+                    (dual_var_target(dual_var_start_indx:dual_var_end_indx))'... 
+                        * (target_tube(1).A) == (ell - nu(:,1))';                    
                 elseif tube_indx < time_horizon + 1
-                    % A_Target_k'*z_Target_k==(A_sys_(k-1)^{-T}*psi_{t-1}-psi_k)
-                    (target_tube(tube_indx).A)'*dual_var_target(...
-                        dual_var_start_indx:dual_var_end_indx) ==...
-                            (inv_sys_prev' * dummy_var(:,tube_indx - 1) -...
-                                dummy_var(:, tube_indx));
+                    % (z_Target_k)' * A_Target_k ==
+                    %                       (nu_{k-1}'*A_sys_(k-1)^{-1} - nu_k')
+                    (dual_var_target(dual_var_start_indx:dual_var_end_indx))'...
+                        * (target_tube(tube_indx).A) == ...
+                            (nu(:,tube_indx - 1)' * inv_sys_prev - ...
+                                nu(:, tube_indx)');
                 elseif tube_indx == time_horizon + 1
-                    % A_Target_{N}'*z_Target_{N} == A_sys_(N-1)^{-T}*psi_{N-1}
+                    % A_Target_{N}'*z_Target_{N} == A_sys_(N-1)^{-T}*nu_{N-1}
                     % N + 1 is the corresponding tube_indx for k=N
-                    (target_tube(time_horizon + 1).A)' *...
-                        dual_var_target(...
-                            dual_var_start_indx:dual_var_end_indx) ==...
-                            (inv_sys_prev' * dummy_var(:,time_horizon));
+                    (dual_var_target(dual_var_start_indx:dual_var_end_indx))'...
+                        * (target_tube(time_horizon + 1).A) == ...
+                            nu(:,time_horizon)' * inv_sys_prev;
                 end
                 
-                % b_Target_k'*z_Target_k <= s_Target_k
-                (target_tube(tube_indx).b)' * dual_var_target(...
-                            dual_var_start_indx:dual_var_end_indx) <=...
-                                        slack_var_target(tube_indx);
                 % Increment the start counter
                 if tube_indx <= time_horizon
                     dual_var_start_indx = dual_var_end_indx + 1;
@@ -300,10 +330,10 @@ function [val] = support(ell, sys, target_tube, dist_set, options)
                 
                 %% Support function of (-BU) + (-FE) for k from 0 to N-1
                 if tube_indx <= time_horizon
-                    % A_u' * z_u_k == -B_k^T A^{-T}_k psi_k
-                    (sys.input_space.A)'*dual_var_input(:, tube_indx) ==...
-                        - sys.input_mat(current_time)' * inv_sys_now' *...
-                            dummy_var(:, tube_indx);
+                    % z_u_k' * A_u == - nu_k' * A_k^{-1} * B_k
+                    dual_var_input(:, tube_indx)' * sys.input_space.A ==...
+                        - nu(:, tube_indx)' * inv_sys_now *...
+                            sys.input_mat(current_time);
                     
                     switch class(dist_set)
                         case 'SReachEllipsoid'
@@ -311,21 +341,17 @@ function [val] = support(ell, sys, target_tube, dist_set, options)
                             minus_fe_now = - sys.dist_mat(current_time) *...
                                 dist_set;
                     
-                            % b_u' *z_u_k + minus_fe_now.support(A^{-T}_k psi_k)
+                            % z_u_k' * b_u + minus_fe_now.support(A^{-T}_k nu_k)
                             %                                  <= s_inputdist_k
-                            (sys.input_space.b)'*dual_var_input(:, tube_indx)...
+                            dual_var_input(:, tube_indx)' * sys.input_space.b...
                                  + minus_fe_now.support(...
-                                    inv_sys_now'*dummy_var(:, tube_indx))...
+                                    inv_sys_now'*nu(:, tube_indx))...
                                     <= slack_var_inputdist(tube_indx);
                         case 'Polyhedron'
-                            % b_u' * z_u_k + b_E' * z_w_k <= s_inputdist_k
-                            (sys.input_space.b)'*dual_var_input(:, tube_indx)...
-                                 + (dist_set.b)'*dual_var_dist(:,tube_indx)...
-                                    <= slack_var_inputdist(tube_indx);
-                            % A_E' * z_w_k == -F_k^T A^{-T}_k psi_k
-                            (dist_set.A)'*dual_var_dist(:,tube_indx)==...
-                                - sys.dist_mat(current_time)' * ...
-                                    inv_sys_now' * dummy_var(:, tube_indx);
+                            % A_E' * z_w_k == - nu_k' * A_k^{-1} * F_k
+                            dual_var_dist(:,tube_indx)' * dist_set.A ==...
+                                - nu(:, tube_indx)' * inv_sys_now * ...
+                                    sys.dist_mat(current_time);
                         otherwise
                             throw(SrtInvalidArgsError(sprintf(['Disturbance',...
                                 ' (%s) is not configured as of yet'],...
@@ -341,9 +367,3 @@ function [val] = support(ell, sys, target_tube, dist_set, options)
             throw(SrtInvalidArgsError('Support function computation failed.'));
     end
 end
-
-% Things left to do:
-% 1. Switch to time-based polytope to create a tube
-% 2. Do the affine transformation via ellipse to do useful sampling. However,
-%    this is going to be tough, since the problem setup itself will require
-%    support function evaluation which is costly.
