@@ -38,6 +38,11 @@ function varargout= generateMonteCarloSims(n_monte_carlo_sims, sys, ...
 %                         disturbance feedback, and the gain matrix must be
 %                         lower block triangular (with zeros in its block
 %                         diagonal elements) for causality | See Notes
+%   srlcontrol          - [Optional but no concat_input_vector and empty
+%                         dist_feedback_gain] SReachLagController object
+%                         describing an admissible state feedback controller
+%                         corresponding to the Lagrangian-based
+%                         underapproximation to the stochastic reach set
 %   verbose             - [Optional] Verbosity of this function when saturating
 %                         affine disturbance feedback controllers
 %
@@ -86,6 +91,18 @@ function varargout= generateMonteCarloSims(n_monte_carlo_sims, sys, ...
 %   where U is the decision variable, \mathcal{U} is the input space, T is the
 %   time horizon, M is the affine disturbance feedback gain, and D is the affine
 %   disturbance feedback bias.
+% * When using SReachLagController, verbosity may be specified in the following
+%   way:
+%       % Create a controller based on the underapproximation
+%       srlcontrol = SReachLagController(sys, ... 
+%           extra_info_under.bounded_dist_set, ...
+%           extra_info_under.stoch_reach_tube);
+%       % Generate Monte-Carlo simulations using the srlcontrol and
+%       % generateMonteCarloSims
+%       timer_mcarlo = tic;
+%       [X,U,W] = generateMonteCarloSims(n_mcarlo_sims, sys, ...
+%           initial_state, time_horizon, srlcontrol, [], ...
+%           lagunder_options.verbose);
 %
 % ============================================================================
 % 
@@ -171,7 +188,14 @@ function varargout= generateMonteCarloSims(n_monte_carlo_sims, sys, ...
             end
         elseif ~isempty(varargin) && isa(varargin{1}, 'SReachLagController')            
             lag_control = 1;
+            % Input validation done at the elseif
             srlcontrol = varargin{1};
+            if length(varargin) == 3 && isempty(varargin{2})
+                verbose = varargin{3};
+                validateattributes(verbose, {'numeric'},...
+                    {'nonempty', 'scalar', 'integer', '>=', 0, '<=', 2}, ...
+                    'generateMonteCarloSims', 'verbose');
+            end
         else
             %warning('SReachTools:runTime','Setting input vectors to zero');
         end
@@ -180,12 +204,26 @@ function varargout= generateMonteCarloSims(n_monte_carlo_sims, sys, ...
     W = sys.dist.concat(time_horizon);
     % Realization of the concatenated disturbance random vectors with each
     % realization stored columnwise
+    if verbose >= 1
+        fprintf('Getting %d realizations...', n_monte_carlo_sims);
+    end
     concat_disturb_realizations = W.getRealizations(n_monte_carlo_sims);
-
+    if verbose >= 1
+        fprintf('Done\n');
+    end    
         
     if lag_control == 1
+        if verbose >= 1
+            disp('Rearranging W realizations');
+            fprintf(['Pruning infeasible disturbance trajectories,\nwhen it', ... 
+                ' violates at a particular time instant... %6d/%6d'], 0, ...
+                n_monte_carlo_sims);
+        end    
         disturb_contains = zeros(time_horizon, n_monte_carlo_sims);
         for t=1:time_horizon
+            if verbose >= 1
+                fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b%6d/%6d', t, time_horizon);
+            end
             w_reals = concat_disturb_realizations((t-1)*sys.dist_dim + 1:...
                 t*sys.dist_dim, :);
             disturb_contains(t,:) = srlcontrol.dist_set.contains(w_reals);
@@ -197,11 +235,17 @@ function varargout= generateMonteCarloSims(n_monte_carlo_sims, sys, ...
         concat_input_realizations = zeros(sys.input_dim * time_horizon, n_traj);
         concat_state_realizations(1:sys.state_dim, :) = repmat(initial_state,...
             1, n_traj);            
-
-        fprintf('Analyze W_realization: %6d/%6d', 0, n_traj);
+        if verbose >= 1
+            fprintf(['\b\b\b\b\b\b\b\b\b\b\b\b\bDone.\nFound %d feasible ', ...
+                'disturbance trajectories (~ %1.4f success probability)\n'], ...
+                n_traj, n_traj/n_monte_carlo_sims);    
+            fprintf('Analyze W_realization: %6d/%6d', 0, n_traj);
+        end
         for t_indx = 1:n_traj
             W_realization = concat_disturb_realizations(:, t_indx);
-            fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b%6d/%6d', t_indx, n_traj);
+            if verbose >= 1
+                fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b%6d/%6d', t_indx, n_traj);
+            end
             for current_time = 1:time_horizon
                 prev_time = current_time - 1;
                 % Set the previous state

@@ -167,6 +167,9 @@ function [stoch_reach_set, varargout] = SReachSet(prob_str, method_str, sys, ...
 %       facet-based underapproximation of the Minkowski sum step (via
 %       vertex-based underapproximation, followed by projection, followed by
 %       convex hull operation)
+%     - While 'Gaussian' disturbance can have options.bound_set_method be
+%       'polytope' or 'ellipsoid', 'UserDefined' disturbance requires
+%       options.bound_set_method to be 'polytope'.
 %
 % =============================================================================
 % 

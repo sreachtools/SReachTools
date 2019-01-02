@@ -39,6 +39,9 @@ function varargout = SReachSetLag(method_str, sys, prob_thresh, safety_tube,...
 % ------
 % * compute_style of `support` and method of `lag-over` will return only the 
 %   approx_set.
+% * While 'Gaussian' disturbance can have options.bound_set_method be 'polytope'
+%   or 'ellipsoid', 'UserDefined' disturbance requires options.bound_set_method
+%   to be 'polytope'.
 % ============================================================================
 % 
 %   This function is part of the Stochastic Reachability Toolbox.
@@ -143,8 +146,8 @@ function otherInputHandling(method_str, sys, options)
             SrtInvalidArgsError('Mismatch in method_str in the options'));
     end        
 
-    % Based on the RandomVector, decide allowable methods TODO
-    validatestring(sys.dist.type, {'Gaussian'}, {'nonempty'},...;
+    % Based on the RandomVector, decide allowable methods
+    validatestring(sys.dist.type, {'Gaussian','UserDefined'}, {'nonempty'},...
         'SReachSetLag/otherInputHandling', 'sys.dist.type');
 end
     

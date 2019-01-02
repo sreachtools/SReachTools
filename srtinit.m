@@ -20,6 +20,8 @@ function varargout = srtinit(varargin)
 %   Available options:
 %       -v, --verbose    Have initalization function explicitly print to
 %                        console which folders are being added to the path
+%       --version        Report the version number of SReachTools
+%       -r, --rootpath   Report the current directory for SReachTools
 %       -x, --deinit     Remove SReachTools toolbox folders from the path
 %       -t, --test       Perform unit testing after initialization or deinit
 %       -T               Perform unit testing without initialization or deinit,
@@ -83,7 +85,7 @@ function varargout = srtinit(varargin)
             dets = ver(SRTINIT_PATH);
             fprintf('SReachTools version %s\n', dets.Version);
             return;
-        elseif strcmp(varargin{lv}, '--rootpath')
+        elseif strcmp(varargin{lv}, '-r') || strcmp(varargin{lv}, '--rootpath')
             varargout{1} = SRTINIT_PATH;
             return;
         else

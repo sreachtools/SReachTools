@@ -168,8 +168,8 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,dist_set, options)
                         if options.verbose >= 2
                             timerVal = tic;
                         end
-                        effective_target = safeOneStepBackReachSet(sys,...
-                            new_target, target_tube(itt), options);
+                        effective_target = safeOneStepBackReachSet(itt-1, ...
+                            sys, new_target, target_tube(itt), options);
                         if options.verbose >= 2
                             fprintf('Time for oneStepBack: %1.3f s\n',...
                                 toc(timerVal));
@@ -194,7 +194,7 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,dist_set, options)
                             case 'lrs'
                                 %% One-step backward reach set via LRS
                                 effective_target = lrsOneStepBackReachSet(...
-                                    sys, new_target, target_tube(itt), ...
+                                    itt - 1, sys, new_target, target_tube(itt), ...
                                     options.verbose);
                         end
                     otherwise
@@ -225,7 +225,7 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,dist_set, options)
 end
 
 function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
-    sys, target_set, current_safe_set, options)
+    current_time, sys, target_set, current_safe_set, options)
     % Compute the one-step back reach of target_set = {z\in X: Fz<=g} by 
     % {(x,u) \in X x U: F*(Ax + Bu)<=g}, and then projecting this set to X.
     % Here, X is the state space and U is the input space
@@ -253,17 +253,33 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
     % space. This ensures that when we project 1) we will lie in a subset of
     % current_safe_set (effect of intersection after projection), and 2) the
     % input "selected" during the projection remains feasible.
-    x_u_reaches_target_set_A = [target_set.A * [sys.state_mat sys.input_mat];
-        [zeros(size(sys.input_space.A,1), sys.state_dim), sys.input_space.A];
-        [current_safe_set.A zeros(size(current_safe_set.A,1), sys.input_dim)]];
-    x_u_reaches_target_set_Ae = target_set.Ae * [sys.state_mat sys.input_mat];
-    x_u_reaches_target_set_b = [target_set.b;
-                                sys.input_space.b;
-                                current_safe_set.b];
-    x_u_reaches_target_set_be = target_set.be;
-    x_u_reaches_target_set = Polyhedron('A', x_u_reaches_target_set_A,...
-        'b', x_u_reaches_target_set_b, 'Ae', x_u_reaches_target_set_Ae,...
-        'be', x_u_reaches_target_set_be);
+    if sys.islti
+        x_u_reaches_target_set_A = [target_set.A * [sys.state_mat sys.input_mat];
+            [zeros(size(sys.input_space.A,1), sys.state_dim), sys.input_space.A];
+            [current_safe_set.A zeros(size(current_safe_set.A,1), sys.input_dim)]];
+        x_u_reaches_target_set_Ae = target_set.Ae * [sys.state_mat sys.input_mat];
+        x_u_reaches_target_set_b = [target_set.b;
+                                    sys.input_space.b;
+                                    current_safe_set.b];
+        x_u_reaches_target_set_be = target_set.be;
+        x_u_reaches_target_set = Polyhedron('A', x_u_reaches_target_set_A,...
+            'b', x_u_reaches_target_set_b, 'Ae', x_u_reaches_target_set_Ae,...
+            'be', x_u_reaches_target_set_be);
+    else
+        x_u_reaches_target_set_A = [target_set.A * ... 
+                [sys.state_mat(current_time) sys.input_mat(current_time)];
+            [zeros(size(sys.input_space.A,1), sys.state_dim), sys.input_space.A];
+            [current_safe_set.A zeros(size(current_safe_set.A,1), sys.input_dim)]];
+        x_u_reaches_target_set_Ae = target_set.Ae * ... 
+                [sys.state_mat(current_time) sys.input_mat(current_time)];
+        x_u_reaches_target_set_b = [target_set.b;
+                                    sys.input_space.b;
+                                    current_safe_set.b];
+        x_u_reaches_target_set_be = target_set.be;
+        x_u_reaches_target_set = Polyhedron('A', x_u_reaches_target_set_A,...
+            'b', x_u_reaches_target_set_b, 'Ae', x_u_reaches_target_set_Ae,...
+            'be', x_u_reaches_target_set_be);
+    end
     if options.verbose >= 2
         fprintf('Time to setup x_u_reaches_target_set: %1.3f s\n', ...
             toc(timerVal));
@@ -461,12 +477,13 @@ end
 
 %% LRS-based one-step back reach set computation via Blachini/Nyugen's steps
 function one_step_back_reach_polytope = lrsOneStepBackReachSet( ...
-    sys, target_set, current_safe_set, verbose)
+    current_time, sys, target_set, current_safe_set, verbose)
 
     if current_safe_set.isEmptySet()
         throwAsCaller(SrtInvalidArgsError('Empty next step polytope.'));
     end
     if ~target_set.isFullDim()
+        disp(target_set)
         throwAsCaller(SrtInvalidArgsError('Cannot handle low-dim target set.'));
     end
 
@@ -477,12 +494,22 @@ function one_step_back_reach_polytope = lrsOneStepBackReachSet( ...
     % space. This ensures that when we project 1) we will lie in a subset of
     % current_safe_set (effect of intersection after projection), and 2) the
     % input "selected" during the projection remains feasible.
-    x_u_reaches_target_set_A = [target_set.A * [sys.state_mat sys.input_mat];
-        [zeros(size(sys.input_space.A,1), sys.state_dim), sys.input_space.A];
-        [current_safe_set.A zeros(size(current_safe_set.A,1), sys.input_dim)]];
-    x_u_reaches_target_set_b = [target_set.b;
-                                sys.input_space.b;
-                                current_safe_set.b];
+    if sys.islti
+        x_u_reaches_target_set_A = [target_set.A * [sys.state_mat sys.input_mat];
+            [zeros(size(sys.input_space.A,1), sys.state_dim), sys.input_space.A];
+            [current_safe_set.A zeros(size(current_safe_set.A,1), sys.input_dim)]];
+        x_u_reaches_target_set_b = [target_set.b;
+                                    sys.input_space.b;
+                                    current_safe_set.b];
+    else
+        x_u_reaches_target_set_A = [target_set.A * ...
+                [sys.state_mat(current_time) sys.input_mat(current_time)];
+            [zeros(size(sys.input_space.A,1), sys.state_dim), sys.input_space.A];
+            [current_safe_set.A zeros(size(current_safe_set.A,1), sys.input_dim)]];
+        x_u_reaches_target_set_b = [target_set.b;
+                                    sys.input_space.b;
+                                    current_safe_set.b];
+    end
     %% Compute projection
     if verbose >= 2
         timerVal = tic;
@@ -492,9 +519,12 @@ function one_step_back_reach_polytope = lrsOneStepBackReachSet( ...
  %        projectPolyhedron(x_u_reaches_target_set_A, x_u_reaches_target_set_b,...
  %            uint32(sys.input_dim));
     one_step_back_reach_polytope_V_red = vertexEnumeration(...
-        x_u_reaches_target_set_A, x_u_reaches_target_set_b);
+        x_u_reaches_target_set_A, x_u_reaches_target_set_b);    
+    if isempty(one_step_back_reach_polytope_V_red)
+        throw(SrtInvalidArgsError('Recursion led to an empty target set!'));
+    end
     % Project and reduce vertices
-    one_step_back_reach_polytope_V = vertexreduction(...
+    one_step_back_reach_polytope_V = vertexReduction(...
         one_step_back_reach_polytope_V_red(:,1:sys.state_dim),...
         ones(size(one_step_back_reach_polytope_V_red,1),1));
     if verbose >= 2

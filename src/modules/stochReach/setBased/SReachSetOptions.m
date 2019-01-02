@@ -90,6 +90,7 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %                            - n_particles
 %                                       : Number of particles to use for
 %                                         RandomVector/getProbPolyhedron
+%                                         [Default 1e3]
 %               b. ellipsoid            - Construct an ellipsoid to satify the
 %                                         given probability constraint
 %               c. load                 - Load a predefined polyhedron bounding
@@ -214,6 +215,9 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %               * See following websites for more information: 
 %                   http://cgm.cs.mcgill.ca/~avis/C/lrs.html
 %                   http://worc4021.github.io/GeoCalcLib/
+% * While 'Gaussian' disturbance can have options.bound_set_method be 'polytope'
+%   or 'ellipsoid', 'UserDefined' disturbance requires options.bound_set_method
+%   to be 'polytope'.
 % ============================================================================
 % 
 % This function is part of the Stochastic Reachability Toolbox.
@@ -258,7 +262,7 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
         inpar.addParameter('template_polytope',[], @(x) validateattributes(x,...
             {'Polyhedron'}, {'nonempty'}));
         % n_particles
-        inpar.addParameter('n_particles',1e6, @(x) validateattributes(x, ...
+        inpar.addParameter('n_particles', 1e3, @(x) validateattributes(x, ...
             {'numeric'}, {'scalar','integer','nonempty'}));
         % compute_style
         inpar.addParameter('compute_style', 'vfmethod',...

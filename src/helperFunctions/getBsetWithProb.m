@@ -1,5 +1,5 @@
 function bounded_set = getBsetWithProb(dist, polytope, prob_threshold,...
-    n_particles)
+    n_particles, verbose)
 % Get a scaled version of the user-specified polytope via bisection method
 % =============================================================================
 % 
@@ -67,7 +67,10 @@ function bounded_set = getBsetWithProb(dist, polytope, prob_threshold,...
         'getBsetWithProb', 'prob_threshold');
     validateattributes(n_particles, {'numeric'}, {'scalar','>',0,'integer'},...
         'getBsetWithProb', 'n_particles');
-    
+    if verbose >= 1
+        disp('Computing the bounded disturbance set');
+    end
+            
     bisection_lb = 0;
     bisection_ub = 1;
     
@@ -75,12 +78,18 @@ function bounded_set = getBsetWithProb(dist, polytope, prob_threshold,...
     
     % Bracketing phase
     while prob_theta(bisection_ub) < prob_threshold
+        if verbose >= 2
+            fprintf('Bracketting: [%1.3f, %1.3f]\n', bisection_lb, bisection_ub);
+        end
         bisection_lb = bisection_ub;
         bisection_ub = 2*bisection_ub;
     end
     
     % Bisection phase
-    while abs(bisection_lb-bisection_ub) > 1e-4
+    while abs(bisection_lb-bisection_ub) > 1e-3
+        if verbose >= 2
+            fprintf('Bisection: [%1.3f, %1.3f]\n', bisection_lb, bisection_ub);
+        end
         bisection_test = (bisection_ub + bisection_lb)/2;        
         if prob_theta(bisection_test) > prob_threshold
             % Probability is above the threshold => increase the lower bound

@@ -76,9 +76,12 @@ function bounded_set = SReachSetLagBset(sys, onestep_prob_thresh, options)
                     'options.bound_set_method for Gaussian disturbance');
             case 'UserDefined'
                 % check that the option.bound_set_method is valid
-                validatestring(options.bound_set_method,...
-                    {'polytope'}, 'SReachSetLagBset',...
-                    'options.bound_set_method for UserDefined disturbance');
+                if ~strcmpi(options.bound_set_method,'polytope')
+                    throwAsCaller(SrtInvalidArgsError(['Invalid options ',...
+                        'provided.\nBounded disturbance set computation ', ...
+                        'requires options.bound_set_method to be ', ...
+                        '''polytope'' for UserDefined disturbance']));
+                end
             otherwise
                 throwAsCaller(SrtInvalidArgsError('Got an invalid disturbance'))
         end
@@ -107,7 +110,7 @@ function bounded_set = SReachSetLagBset(sys, onestep_prob_thresh, options)
                 'options.template_polytope for polytope option');
             bounded_set = getBsetWithProb(disturbance,...
                 options.template_polytope, onestep_prob_thresh,...
-                options.n_particles);
+                options.n_particles, options.verbose);
 
         case 'load'
             % load a predefined bounded set, primarily used for comparison with
