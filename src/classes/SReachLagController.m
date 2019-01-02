@@ -206,12 +206,19 @@ classdef SReachLagController
                 'integer', '>=', 0, '<=', obj.time_horizon - 1});
             % time goes from 0 to N, and tube_indx goes from 1 to N+1
             tube_indx = current_time + 1;
-            
             if any(isnan(current_state)) ||...
                 ~(obj.tube(tube_indx).contains(current_state))
                 throwAsCaller(SrtInvalidArgsError('Invalid current state'));
             end
             
+            % Target set is the next time-step 
+            target_set = obj.tube(tube_indx + 1);            
+            % Ensure that the effective target set has a half-space
+            % representation
+            if ~ target_set.hasHRep
+                target_set.computeHRep();
+            end
+
             % Feasible input set is (R_{t+1} \ominus F_t*E_t) \oplus {-A_t x_t}
             % where R_{t+1} is the (t+1)-effective target set, F_t is the
             % disturbance matrix, E_t is the disturbance set, A_t is the state
@@ -240,7 +247,7 @@ classdef SReachLagController
             % Compute a feasible action via MPT's interior point (Chebyshev
             % centering)
             if effective_input_set.isEmptySet()
-                throwAsCaller(SrtInvalidArgsError(['Empty feasible input set'));
+                throwAsCaller(SrtInvalidArgsError('Empty feasible input set'));
             else
                 sol = effective_input_set.interiorPoint();
                 action = sol.x;
