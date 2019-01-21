@@ -66,10 +66,12 @@ classdef RandomVector
 %                               where F is an appropriately dimensioned matrix
 %   rv + v                    - Add v, a deterministic vector of appropriate
 %                               dimension, to rv
+%   [rv1;rv2;rv3]             - Concatenate multiple random vectors
 % 
 % Notes:
 % ------
 % * MATLAB DEPENDENCY: Uses MATLAB's Statistics and Machine Learning Toolbox.
+%
 % 
 % =========================================================================
 % 
@@ -109,10 +111,6 @@ classdef RandomVector
         % Dimension of the random vector
         % 
         dim
-
-    end
-
-    properties (SetAccess = private)
         % RandomVector/generator
         % ==================================================================
         % 
@@ -180,7 +178,6 @@ classdef RandomVector
                     obj.parameters.mean = varargin{1};
                     obj.parameters.covariance = varargin{2};
                     
-                    % TODO: Throw warning as in ellipsoid
                     if ~issymmetric(obj.parameters.covariance)
                         % Compute the symmetric component of it
                         symm_cov_matrix = (obj.parameters.covariance +...
@@ -196,14 +193,26 @@ classdef RandomVector
                         end
                         obj.parameters.covariance = symm_cov_matrix;
                     end
-
-                    % Check if the mean and covariance are of correct dimensions
-                    if size(obj.parameters.mean, 1) ~=...
-                            size(obj.parameters.covariance, 1)
-                        throwAsCaller(SrtInvalidArgsError(['Mean and ',...
-                            'covariance matrix have different dimensions']));
+                    
+                    % Ensure that the covariance matrix is symmetric
+                    if ~issymmetric(obj.parameters.covariance)
+                        % Compute the symmetric component of it
+                        symm_cov_matrix = (obj.parameters.covariance +...
+                            obj.parameters.covariance')/2;
+                        % Max error element-wise
+                        max_err = max(max(abs(obj.parameters.covariance -...
+                            symm_cov_matrix)));
+                        if max_err > eps
+                            warning('SReachTools:runtime',sprintf(...
+                                ['Non-symmetric covariance matrix made ',...
+                                 'symmetric (max element-wise error: ',...
+                                 '%1.3e)!'], max_err));
+                        end
+                        obj.parameters.covariance = symm_cov_matrix;
                     end
-                        
+                    
+                    % Ensure that the covariance matrix has real
+                    % nonnegative eigenvalues
                     % For some reason, -eps alone is not enough?
                     min_eig_val = min(eig(obj.parameters.covariance));
                     if min_eig_val <= -2*eps
@@ -213,8 +222,27 @@ classdef RandomVector
                         warning('SReachTools:runtime',['Creating a ',...
                             'Gaussian which might have a deterministic ',...
                             'component']);
+                        [V, E] = eig(obj.parameters.covariance);
+                        eig_vector = diag(E);
+                        eig_vector_sanitized = zeros(size(eig_vector));
+                        eig_vector_sanitized(abs(eig_vector)>1e-6) = ...
+                            eig_vector(abs(eig_vector)>1e-6);
+                        E_sanitized = diag(eig_vector_sanitized);
+                        cov_temp = V * E_sanitized * V';                     
+                        % Sometimes symmetricity is lost. So just to be
+                        % sure.
+                        obj.parameters.covariance = (cov_temp + cov_temp')/2;
                     end
-                                        
+                    
+                    
+
+                    % Check if the mean and covariance are of correct dimensions
+                    if size(obj.parameters.mean, 1) ~=...
+                            size(obj.parameters.covariance, 1)
+                        throwAsCaller(SrtInvalidArgsError(['Mean and ',...
+                            'covariance matrix have different dimensions']));
+                    end
+                                                                
                     % Update the dimension
                     obj.dim = size(obj.parameters.mean, 1);
                     
@@ -456,72 +484,6 @@ classdef RandomVector
             end
         end
         
-        function newobj = concat(obj, time_horizon)
-        % Create a concatenated random vector of length time_horizon
-        % ====================================================================
-        % 
-        % Inputs:
-        % -------
-        %   obj           - RandomVector object (typically disturbance w_k)
-        %   time_horizon  - The number of time steps of interest N
-        %
-        % Outputs:
-        % --------
-        %   newobj        - RandomVector object (for disturbance, it can be used 
-        %                   as W = [w_0^\top w_1^\top ... w_{N-1}^\top])
-        %
-        % Notes:
-        % ------
-        % * We make the independent and identical assumption to obtain the
-        %   concatenated random vector
-        %
-        % ====================================================================
-        % 
-        % This function is part of the Stochastic Reachability Toolbox.
-        % License for the use of this function is given in
-        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
-        % 
-        %
-            
-            % Check if mean is a nonempty numeric column vector
-            validateattributes(time_horizon, {'numeric'},...
-                {'integer','>',0}, 'RandomVector/concat', 'time_horizon');
-            
-            switch obj.type
-                case 'Gaussian'
-                    muW = repmat(obj.mean(), time_horizon, 1);
-                    covW = kron(eye(time_horizon), obj.cov());
-                    newobj = RandomVector('Gaussian', muW, covW);
-                case 'UserDefined'
-                    % reshape and not repmat because we want independent
-                    % samples | This reshape will take N*time_horizon and
-                    % construct a concatenated vector sample first and then move
-                    % to the next
-                    % >> disp(magic(4))
-                    %     16     2     3    13
-                    %      5    11    10     8
-                    %      9     7     6    12
-                    %      4    14    15     1
-                    % 
-                    % >> disp(reshape(magic(4),[],2))
-                    %     16     3
-                    %      5    10
-                    %      9     6
-                    %      4    15
-                    %      2    13
-                    %     11     8
-                    %      7    12
-                    %     14     1
-                    newGenerator = @(N) reshape(...
-                        obj.generator(N*time_horizon), [], N);
-                    newobj = RandomVector('UserDefined', newGenerator);
-                otherwise
-                    throwAsCaller(SrtInvalidArgsError(sprintf(...
-                        ['Concatenation is not supported for %s-type ',...
-                         'random vectors'], obj.type)));
-            end
-        end
-
         function xs = getRealizations(obj, n_realizations)
         % Generate n_realizations realizations of the random vector
         % ====================================================================
@@ -783,7 +745,8 @@ classdef RandomVector
                                                qscmvnv_ub, ...
                                                desired_accuracy, ...
                                                10);
-                    catch
+                    catch ME
+                        disp(ME);
                         %TODO-Test: Not sure when qscmvnv will bug out!
                         throw(SrtDevError(['Error in qscmvnv (Quadrature ', ...
                             'of multivariate Gaussian)']));
@@ -798,6 +761,183 @@ classdef RandomVector
                          '%s-type random vectors'], obj.type)));
             end
         end
+        function obj = horzcat(varargin)
+        % Horizontal concatenation prevention routine!
+        % ====================================================================
+        % 
+        % Inputs:
+        % -------
+        %   obj             - RandomVector object
+        %
+        % Outputs:
+        % --------
+        %
+        % Notes:
+        % ------
+        % * This function just throws an error since horizontal
+        %   concatenation produces random matrix!
+        % 
+        % ====================================================================
+        % 
+        % This function is part of the Stochastic Reachability Toolbox.
+        % License for the use of this function is given in
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        % 
+        %
+            
+            throwAsCaller(SrtInvalidArgsError(['Horizontal concatentation ',...
+                'of random vectors is not permitted!']));
+            obj = [];
+        end
+        
+        function newobj = vertcat(varargin)
+        % Vertical concatentation routine
+        % ====================================================================
+        % 
+        % Inputs:
+        % -------
+        %   obj             - A collection of RandomVector objects
+        %
+        % Outputs:
+        % --------
+        %   newobj          - A RandomVector object that is the vertical
+        %                     concatenation of random vectors
+        %
+        % Notes:
+        % ------
+        % * This function requires the objects that are being concatenated
+        %   be of same RandomVector.type.
+        % * If the concatenation of a deterministic vector dv is desired with
+        %   a RandomVector object rv, please use the following affine
+        %   transformation-based command:
+        %
+        %   new_rv = [dv; zeros(rv.dim,1)] + [zeros(length(dv), rv.dim);
+        %                                     eye(rv.dim) ] * rv;
+        % 
+        % ====================================================================
+        % 
+        % This function is part of the Stochastic Reachability Toolbox.
+        % License for the use of this function is given in
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        % 
+    
+            if nargin == 0
+                throwAsCaller(SrtInvalidArgsError('Empty input provided!'));
+            else
+                rv_first = varargin{1};
+                rv_type = rv_first.type;
+                % Confirm all of them are:
+                % 1. RandomVector objects
+                % 2. same type
+                for indx = 1:nargin
+                    if ~isa(varargin{indx},'RandomVector') || ...
+                            ~strcmpi(varargin{indx}.type, rv_type)
+                        throwAsCaller(SrtInvalidArgsError(['Concatenation', ...
+                            ' only permitted for RandomVector objects of ', ...
+                            'same type.']));
+                    end
+                end
+                switch rv_type
+                    case 'Gaussian'
+                        muW = [];
+                        covW = [];
+                        for indx = 1:nargin
+                            muW = [muW;
+                                   varargin{indx}.mean()];
+                            new_cov = varargin{indx}.cov();
+                            covW = [covW, zeros(size(covW,1), size(new_cov,2));
+                                    zeros(size(new_cov,1), size(covW,2)),...
+                                        new_cov];                                
+                        end
+                        newobj = RandomVector('Gaussian', muW, covW);
+                    case 'UserDefined'
+                        % Following 
+                        % https://stackoverflow.com/questions/11232323/
+                        % combining-anonymous-functions-in-matlab
+                        % Example given there is:
+                        % ca = {@(X) X, @(X) X+1, @(X) X^2};
+                        % h=@(x) cellfun(@(y) y(x), ca);
+                        newGeneratorCell = cell(nargin,1);
+                        for indx = 1:nargin
+                            newGeneratorCell{indx} = varargin{indx}.generator;
+                        end
+                        newGenerator = @(N) cell2mat(cellfun(@(fun) fun(N), ...
+                            newGeneratorCell, 'UniformOutput', false));
+                        newobj = RandomVector('UserDefined', newGenerator);
+                    otherwise
+                        throwAsCaller(SrtInvalidArgsError(sprintf(...
+                            ['Concatenation is not supported for %s-type ',...
+                             'random vectors'], obj.type)));
+                end
+                
+            end
+        end
+        
+        function newobj = concat(obj, time_horizon)
+        % Create a concatenated random vector of length time_horizon
+        % ====================================================================
+        % 
+        % Inputs:
+        % -------
+        %   obj           - RandomVector object (typically disturbance w_k)
+        %   time_horizon  - The number of time steps of interest N
+        %
+        % Outputs:
+        % --------
+        %   newobj        - RandomVector object (for disturbance, it can be used 
+        %                   as W = [w_0^\top w_1^\top ... w_{N-1}^\top])
+        %
+        % Notes:
+        % ------
+        % * We make the independent and identical assumption to obtain the
+        %   concatenated random vector
+        %
+        % ====================================================================
+        % 
+        % This function is part of the Stochastic Reachability Toolbox.
+        % License for the use of this function is given in
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        % 
+        %
+            
+            % Check if mean is a nonempty numeric column vector
+            validateattributes(time_horizon, {'numeric'},...
+                {'integer','>',0}, 'RandomVector/concat', 'time_horizon');
+            
+            switch obj.type
+                case 'Gaussian'
+                    muW = repmat(obj.mean(), time_horizon, 1);
+                    covW = kron(eye(time_horizon), obj.cov());
+                    newobj = RandomVector('Gaussian', muW, covW);
+                case 'UserDefined'
+                    % reshape and not repmat because we want independent
+                    % samples | This reshape will take N*time_horizon and
+                    % construct a concatenated vector sample first and then move
+                    % to the next
+                    % >> disp(magic(4))
+                    %     16     2     3    13
+                    %      5    11    10     8
+                    %      9     7     6    12
+                    %      4    14    15     1
+                    % 
+                    % >> disp(reshape(magic(4),[],2))
+                    %     16     3
+                    %      5    10
+                    %      9     6
+                    %      4    15
+                    %      2    13
+                    %     11     8
+                    %      7    12
+                    %     14     1
+                    newGenerator = @(N) reshape(...
+                        obj.generator(N*time_horizon), [], N);
+                    newobj = RandomVector('UserDefined', newGenerator);
+                otherwise
+                    throwAsCaller(SrtInvalidArgsError(sprintf(...
+                        ['Concatenation is not supported for %s-type ',...
+                         'random vectors'], obj.type)));
+            end
+        end        
     end
 
     methods (Static)

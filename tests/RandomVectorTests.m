@@ -212,5 +212,38 @@ classdef RandomVectorTests < matlab.unittest.TestCase
                 sprintf('Mismatch in probability MC: %1.3e expected: %1.3f',...
                 prob, prob_expcdf));
         end
+        
+        function vertCatTest(testCase)        
+            % Test probability of set
+            
+            % Gaussian case            
+            mean_vec = [3;4];
+            temp_mat = rand(2,2);
+            cov_matrix = [temp_mat + temp_mat']/2 + diag([1,1]);
+            r_gauss = RandomVector.gaussian(mean_vec, cov_matrix);
+            
+            rnew = [r_gauss;r_gauss;r_gauss];
+            testCase.verifyTrue(max(abs(rnew.mean() - ...
+                [mean_vec;mean_vec;mean_vec])) ...
+                <1e-8,'Failed concatenation of Gaussian random vectors (mean)');
+            testCase.verifyTrue(max(max(abs(rnew.cov() - ...
+                blkdiag(cov_matrix, cov_matrix, cov_matrix))))<1e-8, ...
+                'Failed concatenation of Gaussian random vectors (cov)');
+            testCase.verifyTrue(strcmpi(rnew.type,r_gauss.type), ...
+                'Failed concatenation of Gaussian random vectors (type)');
+            
+            % Exponential case
+            % Define an exponential distribution
+            mean_vec = [1;3]; % 1/lambda
+            r_exp = RandomVector.exponential(mean_vec);
+            rnew = [r_exp;r_exp;r_exp];
+            testCase.verifyTrue( ...
+                max(abs(rnew.mean() - [mean_vec;mean_vec;mean_vec]))<1e-2, ...
+                'Failed concatenation of UserDefined random vectors (mean)');
+            testCase.verifyTrue(strcmpi(rnew.type,r_exp.type), ...
+                'Failed concatenation of Gaussian random vectors (type)');
+            
+            testCase.verifyError(@() [r_gauss;r_exp],'SReachTools:invalidArgs');
+        end
     end
 end
