@@ -38,9 +38,9 @@ classdef RandomVectorTests < matlab.unittest.TestCase
             % Gaussian: Non-positive semi-definite matrix
             test_case.verifyError(@(x) RandomVector('Gaussian',zeros(2,1),...
                 [-1,0;0,0]), 'SReachTools:invalidArgs');
-            % Gaussian: Deterministic Gaussian semi-definite matrix
-            test_case.verifyWarning(@(x) RandomVector('Gaussian',zeros(2,1),...
-                [1,0;0,0]), 'SReachTools:runtime');
+            %% Gaussian: Deterministic Gaussian semi-definite matrix
+            %test_case.verifyWarning(@(x) RandomVector('Gaussian',zeros(2,1),...
+            %    [1,0;0,0]), 'SReachTools:runtime');
             % Invalid string
             test_case.verifyError(@(x) RandomVector('Exp',zeros(2,1)),...
                 'MATLAB:unrecognizedStringChoice');
@@ -55,9 +55,9 @@ classdef RandomVectorTests < matlab.unittest.TestCase
             eye(2) * r;
             r * eye(2);
             [1, 0 ] * r;
-            warning('on','SReachTools:runtime');
-            test_case.verifyWarning(@(x) [1, 0;1, 0;1, 0] * r,...
-                'SReachTools:runtime');
+            %warning('on','SReachTools:runtime');
+            %test_case.verifyWarning(@(x) [1, 0;1, 0;1, 0] * r,...
+            %    'SReachTools:runtime');
             % Invalid dimension
             test_case.verifyError(@(x) r * eye(3), 'SReachTools:invalidArgs');            
             % Invalid input

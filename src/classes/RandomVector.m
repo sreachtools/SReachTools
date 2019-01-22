@@ -178,22 +178,6 @@ classdef RandomVector
                     obj.parameters.mean = varargin{1};
                     obj.parameters.covariance = varargin{2};
                     
-                    if ~issymmetric(obj.parameters.covariance)
-                        % Compute the symmetric component of it
-                        symm_cov_matrix = (obj.parameters.covariance +...
-                            obj.parameters.covariance')/2;
-                        % Max error element-wise
-                        max_err = max(max(abs(obj.parameters.covariance -...
-                            symm_cov_matrix)));
-                        if max_err > eps
-                            warning('SReachTools:runtime',sprintf(...
-                                ['Non-symmetric covariance matrix made ',...
-                                 'symmetric (max element-wise error: ',...
-                                 '%1.3e)!'], max_err));
-                        end
-                        obj.parameters.covariance = symm_cov_matrix;
-                    end
-                    
                     % Ensure that the covariance matrix is symmetric
                     if ~issymmetric(obj.parameters.covariance)
                         % Compute the symmetric component of it
@@ -219,9 +203,9 @@ classdef RandomVector
                         throwAsCaller(SrtInvalidArgsError(['Covariance ',...
                             'matrix can not have negative eigenvalues']));
                     elseif min_eig_val <= eps
-                        warning('SReachTools:runtime',['Creating a ',...
-                            'Gaussian which might have a deterministic ',...
-                            'component']);
+                        %warning('SReachTools:runtime',['Creating a ',...
+                            %'Gaussian which might have a deterministic ',...
+                            %'component']);
                         [V, E] = eig(obj.parameters.covariance);
                         eig_vector = diag(E);
                         eig_vector_sanitized = zeros(size(eig_vector));
