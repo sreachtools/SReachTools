@@ -127,9 +127,13 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
     % Compute mean_X_sans_input, cov_X_sans_input
     sysnoi = LtvSystem('StateMatrix',sys.state_mat,'DisturbanceMatrix', ...
         sys.dist_mat,'Disturbance',sys.dist);
-    [mean_X_sans_input, cov_X_sans_input] = SReachFwd('concat-stoch', ...
-        sysnoi, initial_state, time_horizon);
-
+    X_sans_input_rv = SReachFwd('concat-stoch', sysnoi, initial_state, time_horizon);
+    mean_X_sans_input = X_sans_input_rv.mean();
+    mean_X_sans_input = mean_X_sans_input(sysnoi.state_dim+1:end);
+    cov_X_sans_input = X_sans_input_rv.cov();
+    cov_X_sans_input = cov_X_sans_input(sysnoi.state_dim+1:end, ...
+        sysnoi.state_dim+1:end);
+    
     
     %% Compute M --- the number of polytopic halfspaces to worry about
     n_lin_state = size(concat_safety_tube_A,1);

@@ -44,13 +44,9 @@ classdef SReachFwdTest < matlab.unittest.TestCase
                 'SReachTools:invalidArgs');            
             % target_time is false
             testCase.verifyError(@() SReachFwd(prob_str_test, sys, ...
-                init_state, 0),'SReachTools:invalidArgs');            
-            testCase.verifyError(@() SReachFwd(prob_str_test, sys, ...
                 init_state, -10),'SReachTools:invalidArgs');            
             testCase.verifyError(@() SReachFwd(prob_str_test, sys, ...
                 init_state, Polyhedron()),'SReachTools:invalidArgs');            
-            testCase.verifyError(@() SReachFwd(prob_str_test, sys, ...
-                init_state_rand, 0),'SReachTools:invalidArgs');            
             testCase.verifyError(@() SReachFwd(prob_str_test, sys, ...
                 init_state_rand, -10),'SReachTools:invalidArgs');            
             testCase.verifyError(@() SReachFwd(prob_str_test, sys, ...
@@ -101,11 +97,19 @@ classdef SReachFwdTest < matlab.unittest.TestCase
                     Polyhedron('lb',-2*ones(2,1), ...
                         'ub',ones(2,1)),target_time-1), 1e-3), ...
                 'SReachTools:invalidArgs');            
-            % Target tube long enough --- blind test
+            % Target tube long enough --- blind tegs            
+%% Verify the warning of deterministic component
+%             testCase.verifyWarning(@() ...
+%                 SReachFwd(prob_str_test, sys, init_state, target_time, ...
+%                 Tube('viability',...
+%                     Polyhedron('lb',-2*ones(2,1),...
+%                         'ub',ones(2,1)),target_time+1), 1e-3), ...
+%                         'SReachTools:runtime');       
+            warning('off','SReachTools:runtime');
             SReachFwd(prob_str_test, sys, init_state, target_time, ...
-                Tube('viability',...
-                    Polyhedron('lb',-2*ones(2,1),...
-                        'ub',ones(2,1)),target_time+1), 1e-3);            
+                Tube('viability', Polyhedron('lb',-2*ones(2,1),...
+                        'ub',ones(2,1)),target_time+1), 1e-3);
+            warning('on','SReachTools:runtime');
             % Too strict desired_accuracy TODO --- takes a lot of time
             %testCase.verifyWarning(@() SReachFwd(prob_str_test, sys, init_state, target_time, Polyhedron('lb',-2*ones(2,1),'ub',ones(2,1)), 1e-10),'SReachTools:desiredAccuracy');            
             % More arguments than necessary
@@ -154,8 +158,8 @@ classdef SReachFwdTest < matlab.unittest.TestCase
             init_state = [-10;10;0;0]; 
             % Testing
             % Compute mean and cov
-            [mean_vec, cov_mat] = SReachFwd('state-stoch', sys, init_state, ...
-                target_time);
+            rv = SReachFwd('state-stoch', sys, init_state, target_time);
+            mean_vec = rv.mean();
             % Compute probability
             prob = SReachFwd('state-prob', sys, init_state, target_time, ...
                 target_set, desired_accuracy);
@@ -183,8 +187,8 @@ classdef SReachFwdTest < matlab.unittest.TestCase
             init_state_rand = RandomVector('Gaussian',init_state,0.1*eye(4)); 
             % Testing
             % Compute mean and cov
-            [mean_vec, cov_mat] = SReachFwd('state-stoch', sys, ...
-                init_state_rand, target_time);
+            rv = SReachFwd('state-stoch', sys, init_state_rand, target_time);
+            mean_vec = rv.mean();
             % Compute probability
             prob = SReachFwd('state-prob', sys, init_state_rand, ...
                 target_time, target_set, desired_accuracy);
@@ -208,11 +212,12 @@ classdef SReachFwdTest < matlab.unittest.TestCase
                 max(abs(mean_vec - mean_end_locations)), 1e-2);                    
         end
         
-        function testTubeStochAndProb(testCase)
+        function testTubeStochAndProbNoWarnings(testCase)
             % Performs forward stochastic reachability on the spacecraft 
             % rendezvous problem.
             % Computes the mean, covariance, and probability of lying in a
             % terminal set and compares it with Monte-Carlo simulation
+                        
             n_mcarlo_sims = 1e5;
             %% Problem setup
             % System definition
@@ -270,12 +275,19 @@ classdef SReachFwdTest < matlab.unittest.TestCase
             %% Deterministic initial state
             init_state = [0;-1;0;0]; 
             % Testing
+            % Return the initial state itself
+            testCase.verifyError(@() ...
+                SReachFwd('concat-stoch', sys, init_state, 0), ...
+                'SReachTools:invalidArgs');
             % Compute mean and cov
-            [mean_vec, cov_mat] = SReachFwd('concat-stoch', sys, init_state, ...
-                target_time);
+            rv_stoch = SReachFwd('concat-stoch', sys, init_state, target_time);
             % Compute probability
-            prob = SReachFwd('concat-prob', sys, init_state, target_time, ...
+            [prob, rv] = SReachFwd('concat-prob', sys, init_state, target_time, ...
                 target_tube, desired_accuracy);
+            testCase.verifyLessThanOrEqual( ...
+                max(abs(rv.mean() - rv_stoch.mean())), 1e-8);
+            testCase.verifyLessThanOrEqual( ...
+                max(max(abs(rv.cov() - rv_stoch.cov()))), 1e-8);
             % Validation using Monte-Carlo
             % This function returns the concatenated state vector stacked 
             % columnwise
@@ -284,20 +296,26 @@ classdef SReachFwdTest < matlab.unittest.TestCase
                                                            sys, ...
                                                            init_state, ...
                                                            target_time);
+            % Exclude initial state
+            mean_concat_state = mean(concat_state_realization, 2);
+            % Checking values
+            testCase.verifyLessThanOrEqual(max(abs(rv.mean() -...
+                mean_concat_state)), 1e-2);            
+            
             % Check if the location is within the target_set or not
             mcarlo_result = target_tube.contains(concat_state_realization);
-            mean_concat_state = mean(concat_state_realization,2);
-            % Checking values
             testCase.verifyLessThanOrEqual(abs(sum(...
                 mcarlo_result)/n_mcarlo_sims - prob), desired_accuracy);            
-            testCase.verifyLessThanOrEqual(max(abs(mean_vec -...
-                mean_concat_state(sys.state_dim+1:end))), 1e-2);            
             %% Stochastic initial state
             init_state_rand = RandomVector('Gaussian',init_state,0.001*eye(4)); 
+            % Return the initial state itself
+            rv = SReachFwd('concat-stoch', sys, init_state_rand, 0);
+            testCase.verifyLessThanOrEqual(max(abs(rv.mean() - init_state)), ...
+                1e-8);            
             % Testing
             % Compute mean and cov
-            [mean_vec, cov_mat] = SReachFwd('concat-stoch', sys, ...
-                init_state_rand, target_time);
+            rv = SReachFwd('concat-stoch', sys, init_state_rand, target_time);
+            mean_vec = rv.mean();
             % Compute probability
             prob = SReachFwd('concat-prob', sys, init_state_rand, ...
                 target_time, target_tube, desired_accuracy);
@@ -316,7 +334,7 @@ classdef SReachFwdTest < matlab.unittest.TestCase
             testCase.verifyLessThanOrEqual(abs(sum(...
                 mcarlo_result)/n_mcarlo_sims - prob), desired_accuracy);            
             testCase.verifyLessThanOrEqual(max(abs(mean_vec -...
-                mean_concat_state(sys.state_dim+1:end))), 1e-2);            
+                mean_concat_state)), 1e-2);            
         end
     end
 end

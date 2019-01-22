@@ -115,7 +115,10 @@ initial_state = [-10;10;0;0];
 % probability density of the state at time |target_time starting from this fixed 
 % initial state.|
 
-[mean_x, cov_x] = SReachFwd('state-stoch', sys, initial_state, target_time);
+x_target_time_rv = SReachFwd('state-stoch', sys, initial_state, target_time);
+mean_x = x_target_time_rv.mean();
+cov_x =  x_target_time_rv.cov();
+
 disp(mean_x);
 disp(cov_x);
 %% 
@@ -156,7 +159,10 @@ initial_state_rv = RandomVector('Gaussian', initial_state, 0.1*eye(4));
 % 1. Compute the mean and the covariance of the forward stochastic reach 
 % probability density of the state at time |target_time when the initial state 
 % is stochastic.|
-[mean_x, cov_x] = SReachFwd('state-stoch', sys, initial_state_rv, target_time);
+x_target_time_rv = SReachFwd('state-stoch', sys, initial_state_rv, target_time);
+mean_x = x_target_time_rv.mean();
+cov_x =  x_target_time_rv.cov();
+
 disp(mean_x);
 disp(cov_x);
 %%
@@ -239,7 +245,8 @@ initial_state = [0;
 % probability density of the state at time |target_time starting from this fixed 
 % initial state.|
 
-[mean_X, ~] = SReachFwd('concat-stoch', sys, initial_state, target_time);
+X_target_time_rv = SReachFwd('concat-stoch', sys, initial_state, target_time);
+mean_X = X_target_time_rv.mean();
 mean_X_trajectory = reshape(mean_X,4,[]);
 disp(mean_X_trajectory);
 %% 
@@ -281,7 +288,9 @@ initial_state_rv = RandomVector('Gaussian', ...
 % probability density of the state at time |target_time starting from this fixed 
 % initial state.|
 
-[mean_X, cov_X] = SReachFwd('concat-stoch', sys, initial_state_rv, target_time);
+X_target_time_rv = SReachFwd('concat-stoch', sys, initial_state_rv, target_time);
+mean_X = X_target_time_rv.mean();
+cov_X = X_target_time_rv.cov();
 mean_X_trajectory = reshape(mean_X,4,[]);
 disp(mean_X_trajectory);
 %% 

@@ -132,8 +132,9 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
     % GUARANTEES: well-defined initial_state and time_horizon
     sysnoi = LtvSystem('StateMatrix',sys.state_mat,'DisturbanceMatrix', ...
         sys.dist_mat,'Disturbance',sys.dist);
-    [mean_X_zi, ~] = SReachFwd('concat-stoch', sysnoi, initial_state, ...
-        time_horizon);
+    X_sans_input_rv = SReachFwd('concat-stoch', sysnoi, initial_state, time_horizon);
+    mean_X_zi = X_sans_input_rv.mean();
+    mean_X_zi = mean_X_zi(sysnoi.state_dim + 1:end);
     mean_W = kron(ones(time_horizon,1), sys.dist.mean());
 
     
