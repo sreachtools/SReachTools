@@ -49,7 +49,9 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time, ...
 % Outputs:
 % --------
 %   rv            - ['state/concat-stoch'] Random vector describing the
-%                   state / concatenated state vector
+%                   state / concatenated state vector | It is a vector of
+%                   dimension (target_time + 1) * sys.state_dim to include the
+%                   initial state
 %   prob          - ['state/concat-prob'] Probability of occurence
 %
 % Notes:
