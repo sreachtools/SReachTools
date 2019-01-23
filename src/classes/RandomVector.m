@@ -960,5 +960,20 @@ classdef RandomVector
                
             rv = RandomVector('Gaussian', mu, covar);
         end
+        
+        function rv = uniform(lb, ub)
+            
+            validateattributes(lb, {'numeric'}, {'column', 'nonempty'}, ...
+                'RandomVector/uniform', 'lb');
+            validateattributes(lb, {'numeric'}, {'column', 'nonempty'}, ...
+                'RandomVector/uniform', 'ub');
+            
+            if any(size(lb) ~= size(ub))
+                throw(SrtInvalidArgsError(['Lower and upper bounds must ', ...
+                    'be the same size.']));
+            end
+                
+            rv = RandomVector('UserDefined', @(N) ub * rand(1, N) + lb);
+        end
     end
 end

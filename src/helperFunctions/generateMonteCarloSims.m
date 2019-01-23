@@ -227,17 +227,12 @@ function varargout= generateMonteCarloSims(n_monte_carlo_sims, sys, ...
             reshape(concat_disturb_realizations, sys.dist_dim, [])), [], ...
             n_monte_carlo_sims));
         
-        % for t=1:time_horizon
-        %     if verbose >= 1
-        %         fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b%6d/%6d', t, time_horizon);
-        %     end
-        %     w_reals = concat_disturb_realizations((t-1)*sys.dist_dim + 1:...
-        %         t*sys.dist_dim, :);
-        %     disturb_contains(t,:) = srlcontrol.dist_set.contains(w_reals);
-        % end
-        % trajectory_indx = find(all(disturb_contains)==1);
+        % get the number of good trajectories and their indices in the
+        % realization matrix
         n_traj = sum(good_rlz);
-        bad_inds = find(good_rlz == 0);
+        trajectory_indx = find(good_rlz);
+        
+        % initialization of state and input vectors
         concat_state_realizations = nan(sys.state_dim * (time_horizon + 1),...
             n_traj);
         concat_input_realizations = zeros(sys.input_dim * time_horizon, n_traj);
@@ -251,10 +246,9 @@ function varargout= generateMonteCarloSims(n_monte_carlo_sims, sys, ...
             fprintf('Analyzing particles: %6d/%6d', 0, n_traj);
         end
 
-        concat_disturb_realizations(bad_inds, :) = [];
-
         for t_indx = 1:n_traj
-            W_realization = concat_disturb_realizations(:, t_indx);
+            W_realization = concat_disturb_realizations(:, ...
+                trajectory_indx(t_indx));
             if verbose >= 1
                 fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b%6d/%6d', t_indx, ...
                     n_traj);
