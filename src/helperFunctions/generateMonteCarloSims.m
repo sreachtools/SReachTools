@@ -214,39 +214,49 @@ function varargout= generateMonteCarloSims(n_monte_carlo_sims, sys, ...
         
     if lag_control == 1
         if verbose >= 1
-            disp('Rearranging W realizations');
+            % disp('Rearranging W realizations');
             fprintf(['Pruning infeasible disturbance trajectories,\nwhen it', ... 
                 ' violates at a particular time instant... %6d/%6d'], 0, ...
                 n_monte_carlo_sims);
         end    
         disturb_contains = zeros(time_horizon, n_monte_carlo_sims);
-        for t=1:time_horizon
-            if verbose >= 1
-                fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b%6d/%6d', t, time_horizon);
-            end
-            w_reals = concat_disturb_realizations((t-1)*sys.dist_dim + 1:...
-                t*sys.dist_dim, :);
-            disturb_contains(t,:) = srlcontrol.dist_set.contains(w_reals);
-        end
-        trajectory_indx = find(all(disturb_contains)==1);
-        n_traj = length(trajectory_indx);
+        good_rlz = all(reshape(srlcontrol.dist_set.contains( ...
+            reshape(concat_disturb_realizations, sys.dist_dim, [])), [], ...
+            n_monte_carlo_sims));
+        % for t=1:time_horizon
+        %     if verbose >= 1
+        %         fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b%6d/%6d', t, time_horizon);
+        %     end
+        %     w_reals = concat_disturb_realizations((t-1)*sys.dist_dim + 1:...
+        %         t*sys.dist_dim, :);
+        %     disturb_contains(t,:) = srlcontrol.dist_set.contains(w_reals);
+        % end
+        % trajectory_indx = find(all(disturb_contains)==1);
+        n_traj = sum(good_rlz);
+        bad_inds = find(good_rlz == 0);
         concat_state_realizations = nan(sys.state_dim * (time_horizon + 1),...
             n_traj);
         concat_input_realizations = zeros(sys.input_dim * time_horizon, n_traj);
         concat_state_realizations(1:sys.state_dim, :) = repmat(initial_state,...
-            1, n_traj);            
+            1, n_traj);
         if verbose >= 1
             fprintf(['\b\b\b\b\b\b\b\b\b\b\b\b\bDone.\nFound %d feasible ', ...
                 'disturbance trajectories (~ %1.4f success probability)\n'], ...
                 n_traj, n_traj/n_monte_carlo_sims);    
-            fprintf('Analyze W_realization: %6d/%6d', 0, n_traj);
+            fprintf('Rearranging realizations...\n');
+            fprintf('Analyzing particles: %6d/%6d', 0, n_traj);
         end
+
+        concat_disturb_realizations(bad_inds, :) = [];
+
         for t_indx = 1:n_traj
             W_realization = concat_disturb_realizations(:, ...
                 trajectory_indx(t_indx));
             if verbose >= 1
-                fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b%6d/%6d', t_indx, n_traj);
+                fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b%6d/%6d', t_indx, ...
+                    n_traj);
             end
+
             for current_time = 1:time_horizon
                 prev_time = current_time - 1;
                 % Set the previous state
