@@ -220,9 +220,13 @@ function varargout= generateMonteCarloSims(n_monte_carlo_sims, sys, ...
                 n_monte_carlo_sims);
         end    
         disturb_contains = zeros(time_horizon, n_monte_carlo_sims);
+
+        % determine which realizations are "good", i.e. they satisfy the set
+        % constraints
         good_rlz = all(reshape(srlcontrol.dist_set.contains( ...
             reshape(concat_disturb_realizations, sys.dist_dim, [])), [], ...
             n_monte_carlo_sims));
+        
         % for t=1:time_horizon
         %     if verbose >= 1
         %         fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b%6d/%6d', t, time_horizon);
@@ -250,8 +254,7 @@ function varargout= generateMonteCarloSims(n_monte_carlo_sims, sys, ...
         concat_disturb_realizations(bad_inds, :) = [];
 
         for t_indx = 1:n_traj
-            W_realization = concat_disturb_realizations(:, ...
-                trajectory_indx(t_indx));
+            W_realization = concat_disturb_realizations(:, t_indx);
             if verbose >= 1
                 fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b%6d/%6d', t_indx, ...
                     n_traj);
