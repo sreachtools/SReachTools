@@ -186,7 +186,11 @@ classdef RandomVector
                         % Max error element-wise
                         max_err = max(max(abs(obj.parameters.covariance -...
                             symm_cov_matrix)));
-                        if max_err > eps
+                        if max_err > 1e-8
+                            throwAsCaller(SrtInvalidArgsError(sprintf(...
+                                ['Non-symmetric covariance matrix provided ',...
+                                 '(max element-wise error: %1.3e)'], max_err)));
+                        elseif max_err > eps
                             warning('SReachTools:runtime',sprintf(...
                                 ['Non-symmetric covariance matrix made ',...
                                  'symmetric (max element-wise error: ',...
@@ -857,14 +861,14 @@ classdef RandomVector
             end
         end
         
-        function newobj = concat(obj, time_horizon)
+        function newobj = concat(obj, repeat_times)
         % Create a concatenated random vector of length time_horizon
         % ====================================================================
         % 
         % Inputs:
         % -------
         %   obj           - RandomVector object (typically disturbance w_k)
-        %   time_horizon  - The number of time steps of interest N
+        %   repeat_times  - The number of time steps of interest N
         %
         % Outputs:
         % --------
@@ -884,42 +888,12 @@ classdef RandomVector
         % 
         %
             
-            % Check if mean is a nonempty numeric column vector
-            validateattributes(time_horizon, {'numeric'},...
+            % Check if repeat_times is a nonempty positive integer
+            validateattributes(repeat_times, {'numeric'},...
                 {'integer','>',0}, 'RandomVector/concat', 'time_horizon');
-            
-            switch obj.type
-                case 'Gaussian'
-                    muW = repmat(obj.mean(), time_horizon, 1);
-                    covW = kron(eye(time_horizon), obj.cov());
-                    newobj = RandomVector('Gaussian', muW, covW);
-                case 'UserDefined'
-                    % reshape and not repmat because we want independent
-                    % samples | This reshape will take N*time_horizon and
-                    % construct a concatenated vector sample first and then move
-                    % to the next
-                    % >> disp(magic(4))
-                    %     16     2     3    13
-                    %      5    11    10     8
-                    %      9     7     6    12
-                    %      4    14    15     1
-                    % 
-                    % >> disp(reshape(magic(4),[],2))
-                    %     16     3
-                    %      5    10
-                    %      9     6
-                    %      4    15
-                    %      2    13
-                    %     11     8
-                    %      7    12
-                    %     14     1
-                    newGenerator = @(N) reshape(...
-                        obj.generator(N*time_horizon), [], N);
-                    newobj = RandomVector('UserDefined', newGenerator);
-                otherwise
-                    throwAsCaller(SrtInvalidArgsError(sprintf(...
-                        ['Concatenation is not supported for %s-type ',...
-                         'random vectors'], obj.type)));
+            newobj = obj;
+            for indx = 2:repeat_times
+                newobj = [newobj;obj];
             end
         end        
     end

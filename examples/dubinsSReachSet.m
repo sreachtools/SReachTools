@@ -9,7 +9,7 @@ box_halflength = 4;
 omega = pi/time_horizon/sampling_time;
 turning_rate = omega*ones(time_horizon,1);
 dist_cov = 0.0001;
-prob_thresh = 0.9;
+prob_thresh = 0.99;
 no_of_direction_vectors_ccc = 16;
 v_nominal = 10;
 umax = v_nominal/3*2;
@@ -65,6 +65,8 @@ lagunder_options = SReachSetOptions('term', 'lag-under', ...
     'bound_set_method', 'polytope', 'template_polytope', ...
     Polyhedron('V',[cos(theta_polytope_vec),sin(theta_polytope_vec)]), ...
     'compute_style', 'vfmethod', 'vf_enum_method', 'lrs', 'verbose', 2);
+    %'bound_set_method', 'ellipsoid', 'compute_style', 'vfmethod', ...
+    %'vf_enum','lrs', 'verbose', 2);
 
 [polytope_lagunder, extra_info_under] = SReachSet('term', 'lag-under', ...
     sys, prob_thresh, target_tube, lagunder_options);

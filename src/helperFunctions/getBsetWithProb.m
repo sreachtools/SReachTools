@@ -77,18 +77,27 @@ function bounded_set = getBsetWithProb(dist, polytope, prob_threshold,...
     prob_theta = @(theta) dist.getProbPolyhedron(theta * polytope, n_particles);
     
     % Bracketing phase
-    while prob_theta(bisection_ub) < prob_threshold
+    prob_val_ub = prob_theta(bisection_ub);
+    while prob_val_ub < prob_threshold
         if verbose >= 2
-            fprintf('Bracketting: [%1.3f, %1.3f]\n', bisection_lb, bisection_ub);
+            prob_val_lb = prob_theta(bisection_lb);
+            fprintf(['Bracketting: [%1.3f, %1.3f] | Probability in ',...
+                '(%1.4f,%1.4f)\n'], bisection_lb, bisection_ub, prob_val_lb,...
+                prob_val_ub);
         end
         bisection_lb = bisection_ub;
         bisection_ub = 2*bisection_ub;
+        prob_val_ub = prob_theta(bisection_ub);
     end
     
     % Bisection phase
     while abs(bisection_lb-bisection_ub) > 1e-3
         if verbose >= 2
-            fprintf('Bisection: [%1.3f, %1.3f]\n', bisection_lb, bisection_ub);
+            prob_val_lb = prob_theta(bisection_lb);
+            prob_val_ub = prob_theta(bisection_ub);
+            fprintf(['Bisection: [%1.3f, %1.3f] | Probability in ',...
+                '(%1.4f,%1.4f)\n'], bisection_lb, bisection_ub, prob_val_lb,...
+                prob_val_ub);
         end
         bisection_test = (bisection_ub + bisection_lb)/2;        
         if prob_theta(bisection_test) > prob_threshold
@@ -101,4 +110,10 @@ function bounded_set = getBsetWithProb(dist, polytope, prob_threshold,...
     end
     
     bounded_set = bisection_lb * polytope;
+    
+    test_prob = dist.getProbPolyhedron(bounded_set, 1e5);
+    
+    if abs(test_prob - prob_threshold) > 1e-2
+        throw(SrtInvalidArgsError('Provided too low a n_particles'));
+    end
 end
