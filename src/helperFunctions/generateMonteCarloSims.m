@@ -242,7 +242,8 @@ function varargout= generateMonteCarloSims(n_monte_carlo_sims, sys, ...
             fprintf('Analyze W_realization: %6d/%6d', 0, n_traj);
         end
         for t_indx = 1:n_traj
-            W_realization = concat_disturb_realizations(:, t_indx);
+            W_realization = concat_disturb_realizations(:, ...
+                trajectory_indx(t_indx));
             if verbose >= 1
                 fprintf('\b\b\b\b\b\b\b\b\b\b\b\b\b%6d/%6d', t_indx, n_traj);
             end
