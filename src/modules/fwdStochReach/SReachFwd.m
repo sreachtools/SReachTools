@@ -1,18 +1,30 @@
 function varargout = SReachFwd(prob_str, sys, initial_state, target_time, ...
     varargin)
-% Perform forward stochastic reachability analysis of a Gaussian-perturbed
-% linear system with a Gaussian or a deterministic initial state
+% Perform forward stochastic reachability analysis of a linear system with
+% additive stochastic disturbance, initialized to a random vector
 % ============================================================================
 %
-% Perform forward stochastic reachability analysis of a Gaussian-perturbed
-% linear system. This function implements ideas from
+% Forward stochastic reachability analysis quantifies the stochasticity of the
+% state at a future time instant, as well as the probability of the state lying
+% in a pre-specified set at a future time instant. This function implements
+% ideas from
 %
 % A. Vinod, B. HomChaudhuri, and M. Oishi, "Forward Stochastic Reachability
 % Analysis for Uncontrolled Linear Systems using Fourier Transforms", In
 % Proceedings of the 20th International Conference on Hybrid Systems:
 % Computation and Control (HSCC), 2017.
 %
-% See also examples/forwardStochasticReachCWH.m.
+% While the Fourier transform-based results apply for arbitrary 
+% distributions, SReachFwd considers only Gaussian-perturbed LTI systems. 
+% In this case, the approach coincides with Kalman filter updates, and it 
+% is grid-free, recursion-free, and sampling-free. 
+%
+% SReachFwd also exploits the functionality of random vector to provide
+% forward stochastic reachability analysis of linear systems perturbed by
+% non-Gaussian disturbance. In this case, we use Monte-Carlo simulations to
+% estimate the mean, covariance, and the probability of lying in a set.
+%
+% See also examples/cwhSReachFwd.m.
 %
 % ============================================================================
 % 
@@ -22,7 +34,7 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time, ...
 % -------
 %   prob_str      - String specifying the problem of interest
 %                       1. 'state-stoch' : Provide mean and covariance at state
-%                                          at the specified time
+%                                          at the spjecified time
 %                       2. 'state-prob'  : Compute the probability that the
 %                                          state will lie in a polytope at the
 %                                          specified time
@@ -138,6 +150,7 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time, ...
     
     if strcmpi(prob_str_splits{2},'prob')
         if isa(rv, 'numeric')
+            target_set = varargin{1};                
             % Not really a random vector
             prob = target_set.contains(rv);
         elseif strcmpi(prob_str_splits{1},'state')

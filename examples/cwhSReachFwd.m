@@ -1,9 +1,13 @@
 %% Forward stochastic reachability using Fourier transforms
-% This example will demonstrate the use of SReachTools in forward stochastic
+% This example will demonstrate the use of |SReachTools| in forward stochastic
 % reachability analysis for stochastic continuous-state discrete-time linear
-% time-invariant (LTI) systems.
+% time-invariant (LTI) systems. This example script is part of the
+% |SReachTools| toolbox, which is licensed under GPL v3 or (at your option) any
+% later version. A copy of this license is given in
+% <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+% https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
 % 
-% Specifically, we will discuss how SReachTools uses Fourier transforms to
+% Specifically, we will discuss how |SReachFwd| uses Fourier transforms to
 % efficiently compute
 % 
 % # *Forward stochastic reach probability density*: The probability density 
@@ -12,17 +16,12 @@
 % # *Probability computations*: Probability that the state lies in a target
 % set or the trajectory in a target tube at a future time of interest. 
 % 
-% Our approach is grid-free and recursion-free resulting in highly scalable
-% solutions, especially for Gaussian-perturbed LTI systems. 
-%
-% We will consider the case where the initial state is a known deterministic
-% point in the state space, and the case where the initial state is a random
-% vector.
-%
-% This Live Script is part of the SReachTools toolbox. License for the use 
-% of this function is given in 
-% <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE 
-% https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
+% While the theoretical results apply for arbitrary distributions, |SReachTools|
+% currently permit only Gaussian-perturbed LTI systems. In this case, our
+% approach coincides with Kalman filter updates, and it is grid-free and
+% recursion-free.  We will consider the case where the initial state is a known
+% deterministic point in the state space, and the case where the initial state
+% is a random vector.
 
 % Prescript running: Initializing srtinit, if it already hasn't been initialized
 close all;clearvars;srtinit;srtinit --version;
