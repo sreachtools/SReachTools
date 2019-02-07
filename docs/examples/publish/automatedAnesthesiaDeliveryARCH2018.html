@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>automatedAnesthesiaDeliveryARCH2018</title><meta name="generator" content="MATLAB 9.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2018-11-30"><meta name="DC.source" content="automatedAnesthesiaDeliveryARCH2018.m"><style type="text/css">
+      --><title>automatedAnesthesiaDeliveryARCH2018</title><meta name="generator" content="MATLAB 9.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-02-07"><meta name="DC.source" content="automatedAnesthesiaDeliveryARCH2018.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -66,9 +66,9 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
 
-  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Underapproximative verification of an automated anesthesia delivery system</a></li><li><a href="#2">Problem Formulation</a></li><li><a href="#3">Safety specifications</a></li><li><a href="#4">Computation of the underapproximation of the stochastic viability set</a></li><li><a href="#5">Plotting the stochastic viable set</a></li><li><a href="#6">Validate the underapproximative set and the controller using Monte-Carlo</a></li></ul></div><h2 id="1">Underapproximative verification of an automated anesthesia delivery system</h2><p>This example will demonstrate the use of <tt>SReachTools</tt> for controller synthesis and verification of a stochastic continuous-state discrete-time linear time-invariant (LTI) systems. This example script is part of the <tt>SReachTools</tt> toolbox, which is licensed under GPL v3 or (at your option) any later version. A copy of this license is given in <a href="https://github.com/unm-hscl/SReachTools/blob/master/LICENSE">https://github.com/unm-hscl/SReachTools/blob/master/LICENSE</a>.</p><p>In this example script, we discuss how to use <tt>SReachPoint</tt> to synthesize open-loop controllers and verification for the problem of stochastic reachability of a target tube. Here, by verification, we wish to characterize a set of safe initial states with probabilistic safety above a threshold. We consider the verification of an automated anesthesia delivery model.</p><p>Automated anesthesia delivery systems have the potential to significantly reduce medical operation costs by allowing a single human-anestheologist to monitor multiple operations and delegate the low-level regulation of the patient's sedation level to the automation. Naturally, this system is safety critical, and we wish to ascertain the set of initial states (patient sedation levels) from which the automated anesthesia delivery system can continue to maintain within pre-specified safe bounds. If the patient sedation levels go outside these bounds, the patient may suffer from serious health consequences. This problem has been characterized as a benchmark problem in various papers, <a href="Abate">et. al, ARCH 2018 https://doi.org/10.29007/7ks7</a> and <a href="ARCH">2014 https://doi.org/10.29007/8drm</a>. This script uses the problem formulation given in <a href="Abate">et. al, ARCH 2018 https://doi.org/10.29007/7ks7</a>. To obtain a LTI system description, we consider Problem 2.1.1 with no anestheologist-in-the-loop, but an additive Gaussian disturbance to model the human patients. This script improves upon the Figures 6 and 7.</p><p>This Live Script is part of the SReachTools toolbox. License for the use of this function is given in <a href="https://github.com/unm-hscl/SReachTools/blob/master/LICENSE">https://github.com/unm-hscl/SReachTools/blob/master/LICENSE</a>.</p><pre class="codeinput"><span class="comment">% Prescript running: Initializing srtinit, if it already hasn't been initialized</span>
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Underapproximative verification of an automated anesthesia delivery system</a></li><li><a href="#2">Problem Formulation</a></li><li><a href="#3">Safety specifications</a></li><li><a href="#4">Computation of the underapproximation of the stochastic viability set</a></li><li><a href="#5">Plotting the stochastic viable set</a></li><li><a href="#6">Validate the underapproximative set and the controller using Monte-Carlo</a></li></ul></div><h2 id="1">Underapproximative verification of an automated anesthesia delivery system</h2><p>This example will demonstrate the use of <tt>SReachTools</tt> for controller synthesis and verification of a stochastic continuous-state discrete-time linear time-invariant (LTI) systems. This example script is part of the <tt>SReachTools</tt> toolbox, which is licensed under GPL v3 or (at your option) any later version. A copy of this license is given in <a href="https://github.com/unm-hscl/SReachTools/blob/master/LICENSE">https://github.com/unm-hscl/SReachTools/blob/master/LICENSE</a>.</p><p>In this example script, we discuss how to use <tt>SReachSet</tt> to synthesize open-loop controllers and verification for the problem of stochastic reachability of a target tube. Here, by verification, we wish to characterize a set of safe initial states with probabilistic safety above a threshold. We consider the verification of an automated anesthesia delivery model.</p><p>Automated anesthesia delivery systems have the potential to significantly reduce medical operation costs by allowing a single human-anestheologist to monitor multiple operations and delegate the low-level regulation of the patient's sedation level to the automation. Naturally, this system is safety critical, and we wish to ascertain the set of initial states (patient sedation levels) from which the automated anesthesia delivery system can continue to maintain within pre-specified safe bounds. If the patient sedation levels go outside these bounds, the patient may suffer from serious health consequences. This problem has been characterized as a benchmark problem in Abate et. al, ARCH 2018 paper (<a href="https://doi.org/10.29007/7ks7">https://doi.org/10.29007/7ks7</a>). To obtain a LTI system description, we consider Problem 2.1.1 with no anestheologist-in-the-loop, but an additive Gaussian disturbance to model the human patients. This script improves upon the Figures 6 and 7 of Abate et. al, ARCH 2018 paper (<a href="https://doi.org/10.29007/7ks7">https://doi.org/10.29007/7ks7</a>).</p><pre class="codeinput"><span class="comment">% Prescript running: Initializing srtinit, if it already hasn't been initialized</span>
 close <span class="string">all</span>;clearvars;srtinit;srtinit <span class="string">--version</span>;
-</pre><pre class="codeoutput">SReachTools version 1.2.26
+</pre><pre class="codeoutput">SReachTools version 1.2.31
 </pre><h2 id="2">Problem Formulation</h2><p>We first define a <tt>LtiSystem</tt> object corresponding to the discrete-time approximation of the three-compartment pharmacokinetic system model.</p><p>We bound the anesthesia the automation can deliver to <img src="automatedAnesthesiaDeliveryARCH2018_eq14614078222077133723.png" alt="$[0,7]$"> mg/dL and account for patient model mismatch via an additive Gaussian noise.</p><pre class="codeinput"><span class="comment">% System matrices: State matrix and input matrix</span>
 <span class="comment">% ----------------------------------------------</span>
 systemMatrix = [0.8192, 0.03412, 0.01265;
@@ -121,7 +121,7 @@ timer_val = tic;
     <span class="string">'chance-open'</span>, sys, prob_thresh, safety_tube, options);
 elapsed_time = toc(timer_val);
 disp(elapsed_time)
-</pre><pre class="codeoutput">   11.8099
+</pre><pre class="codeoutput">   19.3448
 
 </pre><h2 id="5">Plotting the stochastic viable set</h2><pre class="codeinput">figure(1);
 hold <span class="string">on</span>;
@@ -136,7 +136,7 @@ box <span class="string">on</span>;
 grid <span class="string">on</span>;
 view([0,90]);
 title(<span class="string">'Open-loop underapproximative stochastic viability set'</span>);
-</pre><img vspace="5" hspace="5" src="automatedAnesthesiaDeliveryARCH2018_01.png" alt=""> <h2 id="6">Validate the underapproximative set and the controller using Monte-Carlo</h2><p>We will now check how the optimal policy computed for one of the corners perform in Monte-Carlo simulations.</p><pre class="codeinput">n_mcarlo_sims = 1e5;            <span class="comment">% How many Monte-Carlo simulations to use</span>
+</pre><img vspace="5" hspace="5" src="automatedAnesthesiaDeliveryARCH2018_01.png" alt=""> <h2 id="6">Validate the underapproximative set and the controller using Monte-Carlo</h2><p>We will now check how the optimal policy computed for one of the corners perform in Monte-Carlo simulations.</p><p>Note that we fail to obtain tight bounding ellipsoids in the initial time steps due to lack of spread in the trajectory.</p><pre class="codeinput">n_mcarlo_sims = 1e5;            <span class="comment">% How many Monte-Carlo simulations to use</span>
 vertex_indx = 8;                <span class="comment">% Index of the vertex corner of interest</span>
 <span class="keyword">if</span> ~isEmptySet(underapprox_stoch_viab_polytope)
     <span class="comment">% Obtain info about the vertices from extra_info struct given by SReachSet</span>
@@ -196,7 +196,13 @@ vertex_indx = 8;                <span class="comment">% Index of the vertex corn
     ylabel(<span class="string">'$x_2$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
 <span class="keyword">end</span>
 </pre><pre class="codeoutput">Open-loop-based lower bound and Monte-Carlo simulation (1e+05 particles): 0.990, 1.000
-</pre><img vspace="5" hspace="5" src="automatedAnesthesiaDeliveryARCH2018_02.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017b</a><br></p></div><!--
+Warning: CVX failed to obtain the ellipsoid at 1, potentially due to numerical
+issues. 
+Warning: CVX failed to obtain the ellipsoid at 2, potentially due to numerical
+issues. 
+Warning: CVX failed to obtain the ellipsoid at 3, potentially due to numerical
+issues. 
+</pre><img vspace="5" hspace="5" src="automatedAnesthesiaDeliveryARCH2018_02.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2018b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Underapproximative verification of an automated anesthesia delivery system
 % This example will demonstrate the use of |SReachTools| for controller
@@ -207,7 +213,7 @@ vertex_indx = 8;                <span class="comment">% Index of the vertex corn
 % <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
 % 
-% In this example script, we discuss how to use |SReachPoint| to synthesize
+% In this example script, we discuss how to use |SReachSet| to synthesize
 % open-loop controllers and verification for the problem of stochastic
 % reachability of a target tube. Here, by verification, we wish to characterize
 % a set of safe initial states with probabilistic safety above a threshold. We
@@ -220,20 +226,14 @@ vertex_indx = 8;                <span class="comment">% Index of the vertex corn
 % critical, and we wish to ascertain the set of initial states (patient sedation
 % levels) from which the automated anesthesia delivery system can continue to
 % maintain within pre-specified safe bounds. If the patient sedation levels go
-% outside these bounds, the patient may suffer from serious health consequences. 
-% This problem has been characterized as a benchmark problem in various papers,
-% <Abate et. al, ARCH 2018 https://doi.org/10.29007/7ks7> and 
-% <ARCH 2014 https://doi.org/10.29007/8drm>. This script uses the problem 
-% formulation given in <Abate et. al, ARCH 2018
-% https://doi.org/10.29007/7ks7>. To obtain a LTI system description, we
+% outside these bounds, the patient may suffer from serious health consequences.
+% This problem has been characterized as a benchmark problem in Abate et. al,
+% ARCH 2018 paper (<https://doi.org/10.29007/7ks7
+% https://doi.org/10.29007/7ks7>). To obtain a LTI system description, we
 % consider Problem 2.1.1 with no anestheologist-in-the-loop, but an additive
 % Gaussian disturbance to model the human patients. This script improves upon
-% the Figures 6 and 7.
-%
-% This Live Script is part of the SReachTools toolbox. License for the use 
-% of this function is given in 
-% <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE 
-% https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
+% the Figures 6 and 7 of Abate et. al, ARCH 2018 paper
+% (<https://doi.org/10.29007/7ks7 https://doi.org/10.29007/7ks7>).
 
 % Prescript running: Initializing srtinit, if it already hasn't been initialized
 close all;clearvars;srtinit;srtinit REPLACE_WITH_DASH_DASHversion;
@@ -328,7 +328,10 @@ title('Open-loop underapproximative stochastic viability set');
 %% Validate the underapproximative set and the controller using Monte-Carlo
 % We will now check how the optimal policy computed for one of the corners
 % perform in Monte-Carlo simulations.
-
+%
+% Note that we fail to obtain tight bounding ellipsoids in the initial time
+% steps due to lack of spread in the trajectory.
+%
 n_mcarlo_sims = 1e5;            % How many Monte-Carlo simulations to use
 vertex_indx = 8;                % Index of the vertex corner of interest
 if ~isEmptySet(underapprox_stoch_viab_polytope)

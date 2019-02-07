@@ -9,16 +9,27 @@ function publish_examples(varargin)
 %
 %   Usage:
 %   ------
-%   publish_examples
-%   publish_examples --no-pdf
-%   publish_examples --no-html
-%   publish_examples --no-html
-%   srtinit('--options');
+%   All types of function calls
 %
-% ======================================================================
+%   1. Publish all examples
+%       publish_examples
+%   2a. Publish all examples with no pdf only html
+%       publish_examples --no-pdf
+%   2b. Publish certain examples with no pdf only html
+%       publish_examples --no-pdf --publish-only SPACE_SEPARATED_FILENAMES
+%   2b. Publish after skipping certain examples with no pdf only html
+%       publish_examples --no-pdf --exclude SPACE_SEPARATED_FILENAMES
+%   3a. Publish all examples with no html only pdf
+%       publish_examples --no-html
+%   3b. Publish certain examples with no html only pdf
+%       publish_examples --no-html --publish-only SPACE_SEPARATED_FILENAMES
+%   3b. Publish after skipping certain examples with no html only pdf
+%       publish_examples --no-html --exclude SPACE_SEPARATED_FILENAMES
+%   4. Publish only certain examples
+%       publish_examples --publish-only SPACE_SEPARATED_FILENAMES
+%   5. Publish after skipping certain examples
+%       publish_examples --exclude SPACE_SEPARATED_FILENAMES
 %
-%   TODO: Update 
-% 
 % =========================================================================
 % 
 %   This function is part of the Stochastic Reachability Toolbox.
@@ -31,19 +42,52 @@ function publish_examples(varargin)
     publish_pdf = 1;
     publish_html = 1;
 
-    exclusions = {'publish_examples.m'};
+    % Get SReachTools path
+    srt_rootpath = srtinit('--rootpath');
+    examples_path = fullfile(srt_rootpath, 'examples');
+    publish_path = fullfile(srt_rootpath, 'examples', 'publish');
 
+    % Get all the MATLAB script files
+    dl = dir(strcat(examples_path,'/*.m'));
+    
+    % Collect the file names into
+    cell_dl_filenames = {dl(:).name};
+    
+    % Makes sure to skip this script
+    index_of_this_script = find(contains(cell_dl_filenames, ...
+        'publish_examples.m')==1);
+    
     if ~isempty(varargin)
         switch lower(varargin{1})
+            case '--publish-only'
+                % Remove all the scripts not provided in varargin
+                indices_to_remove = find(contains(cell_dl_filenames, ...
+                    {varargin{2:end}})==0);
+                dl([index_of_this_script,indices_to_remove])=[];
             case '--exclude'
-                exclusions = [exclusions, varargin(2:end)];
+                % Remove all the scripts provided in varargin
+                indices_to_remove = find(contains(cell_dl_filenames, ...
+                    {varargin{2:end}})==1);
+                dl([index_of_this_script,indices_to_remove])=[];
             case '--no-pdf'
-                publish_pdf = 0;
+                publish_pdf = 0;                
                 if length(varargin) > 1
                     switch lower(varargin{2})
+                        case '--publish-only'
+                            % Remove all the scripts not provided
+                            indices_to_remove = find( ...
+                                contains(cell_dl_filenames, ...
+                                    {varargin{2:end}})==0);
+                            dl([index_of_this_script, ...
+                                indices_to_remove])=[];
                         case '--exclude'
-                            exclusions = [exclusions, varargin(3:end)];
-                        case '--no-html'
+                            % Remove all the scripts provided in varargin
+                            indices_to_remove = find( ...
+                                contains(cell_dl_filenames, ...
+                                    {varargin{2:end}})==1);
+                            dl([index_of_this_script, ...
+                                indices_to_remove])=[];
+                        case '--no-pdf'
                             disp('Nothing left to do');
                             return;
                         otherwise
@@ -54,8 +98,20 @@ function publish_examples(varargin)
                 publish_html = 0;
                 if length(varargin) > 1
                     switch lower(varargin{2})
+                        case '--publish-only'
+                            % Remove all the scripts not provided
+                            indices_to_remove = find( ...
+                                contains(cell_dl_filenames, ...
+                                    {varargin{2:end}})==0);
+                            dl([index_of_this_script, ...
+                                indices_to_remove])=[];
                         case '--exclude'
-                            exclusions = [exclusions, varargin(3:end)];
+                            % Remove all the scripts provided in varargin
+                            indices_to_remove = find( ...
+                                contains(cell_dl_filenames, ...
+                                    {varargin{2:end}})==1);
+                            dl([index_of_this_script, ...
+                                indices_to_remove])=[];
                         case '--no-pdf'
                             disp('Nothing left to do');
                             return;
@@ -73,57 +129,26 @@ function publish_examples(varargin)
 
     set(0,'DefaultFigureWindowStyle','normal')
 
-    % Get SReachTools path
-    srt_rootpath = srtinit('--rootpath');
-    examples_path = fullfile(srt_rootpath, 'examples');
-    publish_path = fullfile(srt_rootpath, 'examples', 'publish');
-
-    % Get the examples
-    dl = dir(examples_path);
-
     for lv = 1:length(dl)
-        if strcmp(dl(lv).name, '.') || strcmp(dl(lv).name, '..')
-            continue;
+        save('PUBLISH_WORKSPACE.mat');
+
+        % pdf
+        fprintf('Publishing %s\n', dl(lv).name);
+        if publish_pdf
+            fprintf('    pdf... ');
+            publish(dl(lv).name, 'format', 'pdf','outputDir',publish_path);
+            fprintf('Done!\n');
         end
 
-        [fpath, fname, ext] = fileparts(fullfile(examples_path, dl(lv).name));
-        if ~strcmp(ext, '.m')
-            fprintf('Skipping %s\n', dl(lv).name);
-        else
-            isExcepted = false;
-            for lexc = 1:length(exclusions)
-                if regexpi(dl(lv).name, ['^' exclusions{lexc}])
-                    isExcepted = true;
-                    break;
-                end
-            end
-
-            if isExcepted
-                fprintf('File ''%s'' matches exclusion filter. Skipping...\n', ...
-                    dl(lv).name);
-                continue;
-            end
-
-            save('PUBLISH_WORKSPACE.mat');
-
-            % pdf
-            fprintf('Publishing %s\n', dl(lv).name);
-            if publish_pdf
-                fprintf('    pdf... ');
-                publish(dl(lv).name, 'format', 'pdf', 'outputDir',publish_path);
-                fprintf('Done!\n');
-            end
-
-            % html
-            if publish_html
-                fprintf('    html... ');
-                publish(dl(lv).name, 'format', 'html','outputDir',publish_path);
-                fprintf('Done!\n')
-            end
-
-            load('PUBLISH_WORKSPACE.mat');
+        % html
+        if publish_html
+            fprintf('    html... ');
+            publish(dl(lv).name, 'format','html','outputDir',publish_path);
+            fprintf('Done!\n')
         end
 
+        load('PUBLISH_WORKSPACE.mat');
+        
         close all;
     end
 

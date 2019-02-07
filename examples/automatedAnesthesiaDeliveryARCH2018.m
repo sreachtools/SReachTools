@@ -7,7 +7,7 @@
 % <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
 % 
-% In this example script, we discuss how to use |SReachPoint| to synthesize
+% In this example script, we discuss how to use |SReachSet| to synthesize
 % open-loop controllers and verification for the problem of stochastic
 % reachability of a target tube. Here, by verification, we wish to characterize
 % a set of safe initial states with probabilistic safety above a threshold. We
@@ -20,20 +20,14 @@
 % critical, and we wish to ascertain the set of initial states (patient sedation
 % levels) from which the automated anesthesia delivery system can continue to
 % maintain within pre-specified safe bounds. If the patient sedation levels go
-% outside these bounds, the patient may suffer from serious health consequences. 
-% This problem has been characterized as a benchmark problem in various papers,
-% <Abate et. al, ARCH 2018 https://doi.org/10.29007/7ks7> and 
-% <ARCH 2014 https://doi.org/10.29007/8drm>. This script uses the problem 
-% formulation given in <Abate et. al, ARCH 2018
-% https://doi.org/10.29007/7ks7>. To obtain a LTI system description, we
+% outside these bounds, the patient may suffer from serious health consequences.
+% This problem has been characterized as a benchmark problem in Abate et. al,
+% ARCH 2018 paper (<https://doi.org/10.29007/7ks7
+% https://doi.org/10.29007/7ks7>). To obtain a LTI system description, we
 % consider Problem 2.1.1 with no anestheologist-in-the-loop, but an additive
 % Gaussian disturbance to model the human patients. This script improves upon
-% the Figures 6 and 7.
-%
-% This Live Script is part of the SReachTools toolbox. License for the use 
-% of this function is given in 
-% <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE 
-% https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
+% the Figures 6 and 7 of Abate et. al, ARCH 2018 paper
+% (<https://doi.org/10.29007/7ks7 https://doi.org/10.29007/7ks7>).
 
 % Prescript running: Initializing srtinit, if it already hasn't been initialized
 close all;clearvars;srtinit;srtinit --version;
@@ -71,8 +65,8 @@ sys = LtiSystem('StateMatrix', systemMatrix, ...
                 'Disturbance', process_disturbance);
 disp(sys)            
 %% Safety specifications
-% We desire that the state remains inside a set $\mathcal{K}=\{x\in \mathbf{R}^3: 
-% 0\leq x_1 \leq 6, 0\leq x_2 \leq 10, 0\leq x_3 \leq 10 \}$.
+% We desire that the state remains inside a set $\mathcal{K}=\{x\in
+% \mathbf{R}^3: 0\leq x_1 \leq 6, 0\leq x_2 \leq 10, 0\leq x_3 \leq 10 \}$.
 
 time_horizon = 5;
 safe_set = Polyhedron('lb',[1, 0, 0], 'ub', [6, 10, 10]);
@@ -128,7 +122,10 @@ title('Open-loop underapproximative stochastic viability set');
 %% Validate the underapproximative set and the controller using Monte-Carlo
 % We will now check how the optimal policy computed for one of the corners
 % perform in Monte-Carlo simulations.
-
+%
+% Note that we fail to obtain tight bounding ellipsoids in the initial time
+% steps due to lack of spread in the trajectory.
+%
 n_mcarlo_sims = 1e5;            % How many Monte-Carlo simulations to use
 vertex_indx = 8;                % Index of the vertex corner of interest
 if ~isEmptySet(underapprox_stoch_viab_polytope)
