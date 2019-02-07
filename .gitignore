@@ -1,5 +1,6 @@
 *.m~
 examples/figs/
+*.mat
 *.asv
 *.swp
 *.todo

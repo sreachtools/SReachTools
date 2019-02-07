@@ -1,7 +1,13 @@
 %% Double Integrator Reach-Avoid Via Dynamic Programming
-% This example demonstrates how to use the SReachTools toolbox to solve a
-% terminal-hitting time reach-avoid problem using
-% <https://doi.org/10.1016/j.automatica.2010.08.006 dynamic programming>.
+% This example will demonstrate the use of |SReachTools| to solve a
+% terminal-hitting time stochastic reach-avoid problem using
+% <https://doi.org/10.1016/j.automatica.2010.08.006 dynamic programming>.  We
+% consider stochastic continuous-state discrete-time linear time-invariant (LTI)
+% systems. This example script is part of the |SReachTools| toolbox, which is
+% licensed under GPL v3 or (at your option) any later version. A copy of this
+% license is given in
+% <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+% https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
 % 
 % In this example, we analyze the following problems via dynamic programming 
 % for a stochastic system with known dynamics:
@@ -20,10 +26,6 @@
 % to be an axis-aligned hypercuboid, and define the grid the smallest
 % hypercuboid containing all the target sets.
 %
-% This Live Script is part of the SReachTools toolbox. License for the use 
-% of this function is given in 
-% <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE 
-% https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
 
 % Prescript running: Initializing srtinit, if it already hasn't been initialized
 close all;clearvars;srtinit;srtinit --version;

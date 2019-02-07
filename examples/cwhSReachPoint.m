@@ -1,10 +1,10 @@
 %% Controller synthesis using |SReachPoint| for a spacecraft rendezvous problem
 % This example will demonstrate the use of |SReachTools| for controller
-% synthesis in a stochastic continuous-state discrete-time linear time-invariant
-% (LTI) systems. This example script is part of the |SReachTools| toolbox, which
-% is licensed under GPL v3 or (at your option) any later version. A copy of this
-% license is given in
-% <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+% synthesis in a terminal hitting-time stochastic reach-avoid problem. We
+% consider continuous-state discrete-time linear time-invariant (LTI) systems.
+% This example script is part of the |SReachTools| toolbox, which is licensed
+% under GPL v3 or (at your option) any later version. A copy of this license is
+% given in <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
 % 
 % In this example script, we discuss how to use |SReachPoint| to synthesize
