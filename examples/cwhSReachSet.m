@@ -1,19 +1,18 @@
 %% Verification of satellite rendezvous problem via SReachSet 
-% This example will demonstrate the use of SReachTools in verification of
-% stochastic continuous-state discrete-time linear time-invariant (LTI) systems.
+% This example will demonstrate the use of |SReachTools| for controller
+% synthesis in a terminal hitting-time stochastic reach-avoid problem. We
+% consider a continuous-state discrete-time linear time-invariant (LTI) system.
+% This example script is part of the |SReachTools| toolbox, which is licensed
+% under GPL v3 or (at your option) any later version. A copy of this license is
+% given in <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+% https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
 % 
 % Specifically, we will discuss how SReachTools can use Fourier transforms
 % (<http://www.math.wsu.edu/faculty/genz/software/matlab/qsimvnv.m Genz's
 % algorithm> and MATLAB's patternsearch), convex chance constraints, and
 % Lagrangian methods to construct underapproximative stochastic reach sets.
-%
-% Our approaches is grid-free and recursion-free resulting in highly scalable
-% solutions, especially for Gaussian-perturbed LTI systems. 
-%
-% This Live Script is part of the SReachTools toolbox. License for the use of
-% this function is given in
-% <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
-% https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
+% Our approaches are grid-free and recursion-free, resulting in highly scalable
+% solutions. 
 
 % Prescript running: Initializing srtinit, if it already hasn't been initialized
 close all;clearvars;srtinit;srtinit --version;
@@ -55,7 +54,6 @@ close all;clearvars;srtinit;srtinit --version;
 % with $\overline{w}_{k} \in \mathbf{R}^{4}$ as an IID Gaussian zero-mean 
 % random process with a known covariance matrix $\Sigma_{\overline{w}}$. 
  
-%% System definition
 umax = 0.1;
 mean_disturbance = zeros(4,1);
 covariance_disturbance = diag([1e-4, 1e-4, 5e-8, 5e-8]);
@@ -65,13 +63,16 @@ sys = getCwhLtiSystem(4, Polyhedron('lb', -umax*ones(2,1), ...
                                     'ub',  umax*ones(2,1)), ...
        RandomVector('Gaussian', mean_disturbance,covariance_disturbance));
 
-%% Methods to run   
-ft_run = 0;
-cc_open_run = 0;
-lagunder_run = 1;
-lagover_run = 1;
-
 %% Target tube construction --- reach-avoid specification
+% We define the target tube to be a collection of time-varying boxes
+% $\{\mathcal{T}_k\}_{k=0}^N$ where $N$ is the time horizon.
+%
+% In this problem, we define $\mathcal{T}_k$ to be line-of-sight cone 
+% originating from origin (location of the chief spacecraft) for
+% $k\in\{0,1,\ldots,N-1\}$ and the terminal target set $\mathcal{T}_N$ as a
+% box around the origin. This special sequence of target sets allows us to
+% impose a reach-avoid specification of safety.
+
 time_horizon = 5;          % Stay within a line of sight cone for 4 time steps and 
                          % reach the target at t=5% Safe Set --- LoS cone
 % Safe set definition --- LoS cone |x|<=y and y\in[0,ymax] and |vx|<=vxmax and 
@@ -98,25 +99,58 @@ safe_set = Polyhedron(A_safe_set, b_safe_set);
 target_set = Polyhedron('lb', [-0.1; -0.1; -0.01; -0.01], ...
                         'ub', [0.1; 0; 0.01; 0.01]);
 target_tube = Tube('reach-avoid',safe_set, target_set, time_horizon);                    
-slice_at_vx_vy = zeros(2,1);
-%%
+
 
 %% Preparation for set computation
-prob_thresh = 0.8;
 
-n_dir_vecs = 10;
+% Specify restrictions on the initial velocity
+slice_at_vx_vy = zeros(2,1);      
+init_safe_set_affine = Polyhedron('He',[zeros(2,2) eye(2,2) slice_at_vx_vy]);
+prob_thresh = 0.8;
+% Direction vectors for Fourier transform approach
+n_dir_vecs = 15;
 theta_vec = linspace(0, 2*pi, n_dir_vecs);
 set_of_dir_vecs_ft = [cos(theta_vec);
                       sin(theta_vec);
                       zeros(2,n_dir_vecs)];
+% Direction vectors for chance-constrained approach
 n_dir_vecs = 40;
 theta_vec = linspace(0, 2*pi, n_dir_vecs);
 set_of_dir_vecs_cc_open = [cos(theta_vec);
                            sin(theta_vec);
                            zeros(2,n_dir_vecs)];
-init_safe_set_affine = Polyhedron('He',[zeros(2,2) eye(2,2) slice_at_vx_vy]);
+% THIS SCRIPT ONLY --- Flags that enable running specific components
+ft_run = 1;
+cc_open_run = 1;
+lagunder_run = 1;
+lagover_run = 0;
 
-%% CC (Linear program approach)
+%% Verification via |SReachSet|
+% These approaches utilizes the convexity and compactness guarantees of the 
+% stochastic reach set to the problem of stochastic reachability of a target
+% tube as discussed in
+%
+% # A. Vinod and M. Oishi, "Scalable underapproximative verification of stochastic
+% LTI systems using convexity and compactness," In Proc. Hybrid Syst.: Comput. &
+% Ctrl., pages 1--10, 2018. HSCC 2018
+% # A. Vinod and M. Oishi, "Stochastic reachability of a target tube: Theory and
+% computation," IEEE Transactions in Automatic Control, 2018 (submitted)
+% https://arxiv.org/pdf/1810.05217.pdf.
+%
+% The three different approaches explored in this example are
+%
+% # Chance-constrained open-loop-based verification (Linear program approach)
+% # Genz's algorithm+MATLAB's patternsearch+open-loop-based verification
+% # Lagrangian-based underapproximation
+%
+% While the first two methods use ray-shooting and |SReachPoint| to compute
+% a polytopic underapproximation, the third approach utilizes
+% Lagrangian-based underapproximation as described in
+%
+% * J. D. Gleason, A. P. Vinod, M. M. K. Oishi, "Underapproximation of
+%   Reach-Avoid Sets for Discrete-Time Stochastic Systems via Lagrangian
+%   Methods," in Proceedings of the IEEE Conference on Decision and Control,
+%   2017.
 if cc_open_run
     cc_options = SReachSetOptions('term', 'chance-open', ...
         'set_of_dir_vecs', set_of_dir_vecs_cc_open, ...
@@ -128,7 +162,6 @@ if cc_open_run
     elapsed_time_cc_open = toc(timer_cc_open);
 end
 
-%% Fourier transform (Genz's algorithm and MATLAB's patternsearch)
 if ft_run
     ft_options = SReachSetOptions('term', 'genzps-open', ...
         'set_of_dir_vecs', set_of_dir_vecs_ft, ...
@@ -138,15 +171,11 @@ if ft_run
         target_tube, ft_options);  
     elapsed_time_ft = toc(timer_ft);
 end
-
-%% Lagrangian approach
 if lagunder_run
-%     lag_options = SReachSetOptions('term', 'lag-under', 'bound_set_method',...
-%          'ellipsoid', 'compute_style','vfmethod', 'verbose', 2);
     n_dim = sys.state_dim + sys.input_dim;
     lagunder_options = SReachSetOptions('term', 'lag-under',...
         'bound_set_method', 'ellipsoid', 'compute_style','support',...
-        'system', sys, 'vf_enum_method', 'cdd', 'verbose', 2,...
+        'system', sys, 'vf_enum_method', 'lrs', 'verbose', 2,...
         'n_underapprox_vertices', 2^n_dim * 6 + 2*n_dim);
     
     timer_lagunder = tic;
@@ -154,12 +183,12 @@ if lagunder_run
         sys, prob_thresh, target_tube, lagunder_options);
     elapsed_time_lagunder = toc(timer_lagunder);
 end
-
+% Lagrangian-based overapproximation
 if lagover_run
     n_dim = sys.state_dim;
     lagover_options = SReachSetOptions('term', 'lag-over', ...
         'bound_set_method', 'ellipsoid', 'compute_style','support', ...
-        'system', sys, 'vf_enum_method', 'cdd', 'verbose', 1, ...
+        'system', sys, 'vf_enum_method', 'lrs', 'verbose', 1, ...
         'n_underapprox_vertices', 2^n_dim * 6 + 2*n_dim);
     
     timer_lagover = tic;
@@ -169,12 +198,7 @@ if lagover_run
 end
 
 
-%% Preparation for Monte-Carlo simulations of the optimal controllers
-% Monte-Carlo simulation parameters
-n_mcarlo_sims = 1e5;
-n_sims_to_plot = 5;
-
-%% Plotting and Monte-Carlo simulation-based validation
+%% Plotting the sets
 figure(101);
 clf
 box on;
@@ -210,6 +234,12 @@ else
     polytope_lagover = Polyhedron();
     elapsed_time_lagover = NaN;
 end
+
+%% Monte-Carlo based validation of the optimal controller
+
+% Monte-Carlo simulation parameters
+n_mcarlo_sims = 1e5;
+n_sims_to_plot = 5;
 direction_index_to_plot = 30;
 if ~isEmptySet(polytope_cc_open)
     init_state = extra_info(2).vertices_underapprox_polytope(:,direction_index_to_plot);
@@ -235,8 +265,6 @@ end
 legend(legend_cell, 'Location','South');
 xlabel('$x$','interpreter','latex');
 ylabel('$y$','interpreter','latex');
-
-%% Reporting solution times
 if any(isnan([elapsed_time_ft, elapsed_time_cc_open, elapsed_time_lagunder]))
     disp('Skipped items would show up as NaN');
 end
@@ -245,12 +273,12 @@ fprintf(['Elapsed time: (genzps-open) %1.3f | (chance-open) %1.3f',...
     elapsed_time_ft, elapsed_time_cc_open, elapsed_time_lagunder,...
     elapsed_time_lagover);
 
-%% Helper functions
-% Plotting function
+%%
+%% A helper function to plot a subset of the Monte-Carlo simulations
 function [legend_cell] = plotMonteCarlo(method_str, mcarlo_result, ...
     concat_state_realization, n_mcarlo_sims, n_sims_to_plot, state_dim, ...
     initial_state, legend_cell)
-% Plots a selection of Monte-Carlo simulations on top of the plot
+    % Plots a selection of Monte-Carlo simulations on top of the plot
 
     green_legend_updated = 0;
     red_legend_updated = 0;

@@ -2,9 +2,9 @@
 % This example will demonstrate the use of |SReachTools| to solve a
 % terminal-hitting time stochastic reach-avoid problem using
 % <https://doi.org/10.1016/j.automatica.2010.08.006 dynamic programming>.  We
-% consider stochastic continuous-state discrete-time linear time-invariant (LTI)
-% systems. This example script is part of the |SReachTools| toolbox, which is
-% licensed under GPL v3 or (at your option) any later version. A copy of this
+% consider a stochastic continuous-state discrete-time linear time-invariant
+% (LTI) system. This example script is part of the |SReachTools| toolbox, which
+% is licensed under GPL v3 or (at your option) any later version. A copy of this
 % license is given in
 % <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
