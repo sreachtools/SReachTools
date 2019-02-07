@@ -15,8 +15,8 @@ function [overapprox_m, overapprox_c, lb_phiinv, norminv_knots] =...
 % This function implements Algorithm 2 of the following paper:
 %
 % A. Vinod and M. Oishi. Affine controller synthesis for stochastic reachability
-% via difference of convex programming. In Proc. Hybrid Syst.: Comput. & Ctrl.,
-% 2019. (submitted). https://hscl.unm.edu/affinecontrollersynthesis/
+% via difference of convex programming. In Proc. Conf. Dec. & Ctrl. 2019.
+% (submitted). https://hscl.unm.edu/affinecontrollersynthesis/
 %
 % =============================================================================
 %

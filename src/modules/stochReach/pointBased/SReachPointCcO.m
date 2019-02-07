@@ -18,8 +18,8 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
 % overapproximations of the convex constraints, as discussed in
 %
 % A. Vinod and M. Oishi. Affine controller synthesis for stochastic reachability
-% via difference of convex programming. In Proc. Hybrid Syst.: Comput. & Ctrl.,
-% 2019. (submitted). https://hscl.unm.edu/affinecontrollersynthesis/
+% via difference of convex programming. In Proc. Conf. Dec. & Ctrl., 2019.
+% (submitted). https://hscl.unm.edu/affinecontrollersynthesis/
 %
 %    High-level desc.   : Use Boole's inequality, Gaussian random vector, and
 %                         piecewise linear approximation of the inverse of the

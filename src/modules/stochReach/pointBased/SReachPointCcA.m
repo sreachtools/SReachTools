@@ -11,8 +11,8 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
 % controller. This technique is discussed in detail in the paper,
 %
 % A. Vinod and M. Oishi. Affine controller synthesis for stochastic reachability
-% via difference of convex programming. In Proc. Hybrid Syst.: Comput. & Ctrl.,
-% 2019. (submitted). https://hscl.unm.edu/affinecontrollersynthesis/
+% via difference of convex programming. In Proc. Conf. Dec. & Ctrl., 2019.
+% (submitted). https://hscl.unm.edu/affinecontrollersynthesis/
 %
 %    High-level desc.   : Use Boole's inequality, Gaussian random vector,
 %                         hyperbolic constraints-to-second order cone constraint

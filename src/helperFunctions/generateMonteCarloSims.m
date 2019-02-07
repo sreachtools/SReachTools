@@ -343,8 +343,7 @@ function varargout= generateMonteCarloSims(n_monte_carlo_sims, sys, ...
                 end
                 % Saturate the resulting inputs
                 cvx_begin quiet
-                    variable (concat_saturated_input( ...
-                        sys.input_dim * time_horizon, 1));
+                    variable concat_saturated_input(sys.input_dim * time_horizon, 1);
 
                     minimize (norm(concat_saturated_input -...
                         concat_input_realizations(:, realization_indx)))

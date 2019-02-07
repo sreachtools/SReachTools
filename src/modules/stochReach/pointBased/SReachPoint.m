@@ -51,8 +51,8 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %                            motion," In Proc. IEEE Conf. Dec. & Ctrl., 2013.
 %                         b. A. Vinod and M. Oishi. Affine controller synthesis
 %                            for stochastic reachability via difference of
-%                            convex programming. In Proc. Hybrid Syst.: Comput.
-%                            & Ctrl., 2019. (submitted).
+%                            convex programming. In Proc. Conf. of Dec. & Ctrl.,
+%                            2019. (submitted).
 %                            https://hscl.unm.edu/affinecontrollersynthesis/
 %
 % 2. Convex chance-constrained-based approach (chance-affine):
@@ -75,8 +75,8 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %    Dependency (EXT)   : CVX
 %    Paper              : A. Vinod and M. Oishi. Affine controller synthesis for
 %                         stochastic reachability via difference of convex
-%                         programming. In Proc.  Hybrid Syst.: Comput.  & Ctrl.,
-%                         2019. (submitted).
+%                         programming. In Proc. Conf. of Dec. & Ctrl., 2019.
+%                         (submitted).
 %                         https://hscl.unm.edu/affinecontrollersynthesis/
 %
 % 3. Fourier transform + Patternsearch (genzps-open):
@@ -136,27 +136,6 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %                         Sampling-based Stochastic Reachability Computation of
 %                         LTI Systems", In Proc. Amer. Ctrl. Conf., 2019
 %
-% 6. Particle control-based approach with undersampling via Voronoi partitions 
-%    (voronoi-affine):
-%
-%    High-level desc.   : Sample particles based on the additive noise and solve
-%                         a mixed-integer linear program to make the maximum
-%                         number of particles satisfy the reachability objective
-%                         In addition, we use Voronoi partition to
-%                         drastically improve the tractability while
-%                         preserving the underapproximation quality
-%    Approximation      : Overapproximation bounded above (in probability) by a
-%                         user-specified tolerance
-%    Controller type    : A history-dependent affine controller that satisfies
-%                         softened input constraints (controller satisfies the
-%                         hard input bounds upto a user-specified probabilistic
-%                         threshold)
-%    Optimality         : Suboptimal (w.r.t particles drawn) affine disturbance
-%                         feedback controller 
-%    Dependency (EXT)   : CVX, Gurobi
-%    SReachTool function: SReachPointVoA
-%    Paper              : TODO
-%
 % See also examples/cwhSReachPointDemo.m and examples/dubinsSReachPointDemo.m.
 %
 % =============================================================================
@@ -181,9 +160,6 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %                                        open-loop controller synthesis
 %                      'voronoi-open' -- Voronoi undersampling of Particle
 %                                        control-based approach for an open-loop
-%                                        controller synthesis
-%                     'voronoi-affine'-- Voronoi undersampling of Particle
-%                                        control-based approach for an affine
 %                                        controller synthesis
 %   sys          - System description (LtvSystem/LtiSystem object)
 %   initial_state- Initial state for which the maximal reach probability must be
@@ -244,7 +220,7 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
     % Input parsing
     valid_prob = {'term'}; % TODO-first: 'first',
     valid_method= {'chance-open','chance-affine','genzps-open',...
-        'particle-open','voronoi-open','voronoi-affine'};
+        'particle-open','voronoi-open'};
 
     inpar = inputParser();
     inpar.addRequired('prob_str', @(x) any(validatestring(x,valid_prob)));
@@ -310,13 +286,6 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
                 [approx_reach_prob, opt_input_vec, kmeans_info] =...
                     SReachPointVoO(sys, initial_state, safety_tube, options);
                  opt_input_gain = [];
-                 varargout{1} = kmeans_info;
-            case 'voronoi-affine'
-                % Undersampled particle control approach to compute
-                % affine disturbance feedback controller (MILP)
-                [approx_reach_prob, opt_input_vec, opt_input_gain,...
-                    kmeans_info] = SReachPointVoA(sys, initial_state,...
-                        safety_tube, options);
                  varargout{1} = kmeans_info;
             case 'chance-affine'
                 % Chance-constrained formulation with piecewise-linear 
@@ -410,8 +379,7 @@ function [options, varargout] = otherInputHandling(prob_str,method_str, ...
     if strcmpi(prob_str,'term') && length(additional_args) <= 1        
         %% terminal time problem handling
         if isempty(additional_args) || isempty(additional_args{1})
-            if strcmpi(method_str, 'chance-affine') ||...
-                strcmpi(method_str, 'voronoi-affine')
+            if strcmpi(method_str, 'chance-affine')
                 throwAsCaller(SrtInvalidArgsError(['Default options for ', ...
                     'chance-affine requires a user specified parameter.\n', ...
                     'Expected max_input_viol_prob, the maximum allowed ', ...

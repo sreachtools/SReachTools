@@ -12,12 +12,11 @@
 % problem of stochastic reachability of a target tube. We demonstrate the
 % following solution techniques:
 % 
-% * |chance-open|: Chance-constrained approach that uses risk allocation and 
-%    piecewise-affine approximations to formulate a linear program to
-%    synthesize an open-loop controller (See
-%    <http://hscl.unm.edu/affinecontrollersynthesis Vinod and Oishi, Hybrid
-%    Systems: Computation and Control, 2019 (submitted)>,
-%    <http://doi.org/10.1109/CDC.2013.6760626 Lesser et. al., Conference on
+% * |chance-open|: Chance-constrained approach that uses risk allocation and
+%    piecewise-affine approximations to formulate a linear program to synthesize
+%    an open-loop controller (See <http://hscl.unm.edu/affinecontrollersynthesis
+%    Vinod and Oishi, Conference in Decision and Control, 2019 (submitted)>, 
+%    <http://doi.org/10.1109/CDC.2013.6760626 Lesser et.  al., Conference on 
 %    Decision and Control, 2013>)
 % * |genzps-open|: Fourier transforms that uses
 %    <http://www.math.wsu.edu/faculty/genz/software/matlab/qsimvnv.m Genz's 
@@ -34,22 +33,18 @@
 %    contrast to |particle-open|, |voronoi-open| permits a user-specified upper
 %    bound on the overapproximation error in the maximal reach probability and
 %    has significant computational advantages due to its undersampling approach.
-%    (See <arxiv_link_TODO Sartipizadeh et. al., American Control Conference,
-%    2019 (submitted)>)
-% * |chance-affine|: Chance-constrained approach that uses risk allocation and 
+%    (See <https://arxiv.org/abs/1811.03643 Sartipizadeh et. al., American
+%    Control Conference, 2019 (accepted)>)
+% * |chance-affine|: Chance-constrained approach that uses risk allocation and
 %    piecewise-affine approximations to formulate a difference-of-convex program
-%    to synthesize a closed-loop (affine disturbance feedback) controller.  The
+%    to synthesize a closed-loop (affine disturbance feedback) controller. The
 %    controller synthesis is done by solving a series of second-order cone
-%    programs. (See <http://hscl.unm.edu/affinecontrollersynthesis Vinod and
-%    Oishi, Hybrid Systems: Computation and Control, 2019 (submitted)>)
+%    programs. (See <http://hscl.unm.edu/affinecontrollersynthesis
+%    Vinod and Oishi, Conference in Decision and Control, 2019 (submitted)>)
 %
-% All computations were performed using MATLAB on an Intel Xeon CPU with 3.4GHz
-% clock rate and 32 GB RAM. The simulation times for individual methods are
-% reported in each section along with a Monte-Carlo simulation validation. The
-% overall simulation time was 2 minutes. For sake of clarity, all commands were 
-% asked to be verbose (via SReachPointOptions). In practice, this can be turned 
-% off.
-%
+% All computations were performed using MATLAB on an Intel Xeon CPU with 3.7GHz
+% clock rate and 16 GB RAM. For sake of clarity, all commands were asked to be
+% verbose (via SReachPointOptions). In practice, this can be turned off.
 
 % Prescript running: Initializing srtinit, if it already hasn't been initialized
 close all;clearvars;srtinit;srtinit --version;
@@ -113,9 +108,6 @@ close all;clearvars;srtinit;srtinit --version;
 % control bounds. In contrast to the open-loop controller synthesis, affine
 % disturbance feedback controller synthesis is a non-convex problem, and we
 % obtain a locally optimal solution using difference-of-convex programming. 
-% See <http://hscl.unm.edu/affinecontrollersynthesis
-% Vinod and Oishi, Hybrid Systems: Computation and Control, 2019 (submitted)>
-% for more details.
 %
 % All of our approaches are grid-free resulting in highly scalable solutions,
 % especially for Gaussian-perturbed linear systems. 
@@ -208,10 +200,9 @@ genzps_open_run = 1;
 particle_open_run = 1;
 voronoi_open_run = 1;
 chance_affine_run = 1;
-voronoi_affine_run = 1;
 % Initial state definition
-initial_state = [-1.15;         % Initial x relative position
-                 -1.15;         % Initial y relative position
+initial_state = [-0.75;         % Initial x relative position
+                 -0.75;         % Initial y relative position
                  0;             % Initial x relative velocity
                  0];            % Initial y relative velocity
 slice_at_vx_vy = initial_state(3:4); 
@@ -221,7 +212,6 @@ init_state_genzps_open = initial_state;
 init_state_particle_open = initial_state;
 init_state_voronoi_open = initial_state;
 init_state_chance_affine = initial_state;
-init_state_voronoi_affine = initial_state;
 
 
 %% Quantities needed to compute the optimal mean trajectory and Monte-Carlo sims
@@ -238,7 +228,7 @@ n_mcarlo_sims_affine = 1e5;
 
 %% |SReachPoint|: |chance-open|
 % This method is discussed in <http://hscl.unm.edu/affinecontrollersynthesis
-% Vinod and Oishi, Hybrid Systems: Computation and Control, 2019 (submitted)>.
+% Vinod and Oishi, Conference in Decision and Control, 2019 (submitted)>.
 % It was introduced for stochastic reachability in
 % <http://doi.org/10.1109/CDC.2013.6760626 Lesser et. al., Conference on
 % Decision and Control, 2013>.
@@ -277,7 +267,7 @@ if chance_open_run
     end
     fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
         prob_chance_open, simulated_prob_chance_open);
-    fprintf('Computation time: %1.3f\n', elapsed_time_chance_open);
+    fprintf('Computation time (s): %1.3f\n', elapsed_time_chance_open);
 end
 
 %% |SReachPoint|: |genzps-open|
@@ -319,7 +309,7 @@ if genzps_open_run
     end
     fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
         prob_genzps_open, simulated_prob_genzps_open);
-    fprintf('Computation time: %1.3f\n', elapsed_time_genzps);    
+    fprintf('Computation time (s): %1.3f\n', elapsed_time_genzps);    
 end
 
 %% |SReachPoint|: |particle-open|
@@ -359,7 +349,7 @@ if particle_open_run
     end
     fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
         prob_particle_open, simulated_prob_particle_open);
-    fprintf('Computation time: %1.3f\n', elapsed_time_particle);
+    fprintf('Computation time (s): %1.3f\n', elapsed_time_particle);
 end
 
 %% |SReachPoint|: |voronoi-open|
@@ -404,12 +394,12 @@ if voronoi_open_run
     end
     fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
         prob_voronoi_open, simulated_prob_voronoi_open);
-    fprintf('Computation time: %1.3f\n', elapsed_time_voronoi);
+    fprintf('Computation time (s): %1.3f\n', elapsed_time_voronoi);
 end
 
 %% |SReachPoint|: |chance-affine|
 % This method is discussed in <http://hscl.unm.edu/affinecontrollersynthesis
-% Vinod and Oishi, Hybrid Systems: Computation and Control, 2019 (submitted)>.
+% Vinod and Oishi, Conference in Decision and Control, 2019 (submitted)>.
 %
 % This approach implements the chance-constrained approach to compute a locally
 % optimal affine disturbance feedback controller. In contrast to |chance-open|,
@@ -433,7 +423,7 @@ if chance_affine_run
         opt_input_gain_chance_affine] = SReachPoint('term', 'chance-affine',...
             sys, init_state_chance_affine, target_tube, opts);
     elapsed_time_chance_affine = toc;
-    fprintf('Computation time: %1.3f\n', elapsed_time_chance_affine);
+    fprintf('Computation time (s): %1.3f\n', elapsed_time_chance_affine);
     if prob_chance_affine > 0
         % mean_X = Z * x_0 + H * (M \mu_W + d) + G * \mu_W
         opt_mean_X_chance_affine = Z * init_state_chance_affine +...
@@ -454,45 +444,6 @@ if chance_affine_run
     end
     fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
         prob_chance_affine, simulated_prob_chance_affine);
-end
-
-%% |SReachPoint|: |voronoi-affine|
-% This method extends our previous work in <https://arxiv.org/abs/1811.03643 
-% Sartipizadeh, et. al., American Control Conference, 2019 (submitted)> to
-% compute an affine controller. This work will be made available online
-% soon. TODO
-%
-if voronoi_affine_run
-    fprintf('\n\nSReachPoint with voronoi-affine\n');
-    opts = SReachPointOptions('term', 'voronoi-affine',...
-        'max_input_viol_prob', 5e-2, 'verbose', 2, 'max_overapprox_err', 1e-2);
-    tic
-    [prob_voronoi_affine, opt_input_vec_voronoi_affine,...
-        opt_input_gain_voronoi_affine, kmeans_info_affine] = SReachPoint( ...
-            'term', 'voronoi-affine', sys, init_state_voronoi_affine,...
-                target_tube, opts);
-    elapsed_time_voronoi_affine = toc;
-    fprintf('Computation time: %1.3f\n', elapsed_time_voronoi_affine);
-    if prob_voronoi_affine > 0
-        % mean_X = Z * x_0 + H * (M \mu_W + d) + G * \mu_W
-        opt_mean_X_voronoi_affine = Z * init_state_voronoi_affine +...
-            H * opt_input_vec_voronoi_affine + ...
-            (H * opt_input_gain_voronoi_affine + G) * muW;
-        % Optimal mean trajectory construction
-        opt_mean_traj_voronoi_affine = reshape(opt_mean_X_voronoi_affine, ...
-            sys.state_dim,[]);
-        % Check via Monte-Carlo simulation
-        concat_state_realization_voa = generateMonteCarloSims(...
-            n_mcarlo_sims_affine, sys, init_state_voronoi_affine,...
-             time_horizon, opt_input_vec_voronoi_affine,...
-             opt_input_gain_voronoi_affine, 1);
-        mcarlo_result = target_tube.contains(concat_state_realization_voa);
-        simulated_prob_voronoi_affine = sum(mcarlo_result)/n_mcarlo_sims_affine;
-    else
-        simulated_prob_voronoi_affine = NaN;
-    end
-    fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
-        prob_voronoi_affine, simulated_prob_voronoi_affine);
 end
 
 %% Summary of results
@@ -523,7 +474,7 @@ if chance_open_run && prob_chance_open > 0
     disp('>>> SReachPoint with chance-open')
     fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
         prob_chance_open, simulated_prob_chance_open);
-    fprintf('Computation time: %1.3f\n', elapsed_time_chance_open);    
+    fprintf('Computation time (s): %1.3f\n', elapsed_time_chance_open);    
 end
 if genzps_open_run && prob_genzps_open > 0
     h_opt_mean_genzps = scatter(...
@@ -538,7 +489,7 @@ if genzps_open_run && prob_genzps_open > 0
     disp('>>> SReachPoint with genzps-open')
     fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
         prob_genzps_open, simulated_prob_genzps_open);
-    fprintf('Computation time: %1.3f\n', elapsed_time_genzps);    
+    fprintf('Computation time (s): %1.3f\n', elapsed_time_genzps);    
 end
 if particle_open_run && prob_particle_open > 0
     h_opt_mean_particle = scatter(...
@@ -553,7 +504,7 @@ if particle_open_run && prob_particle_open > 0
     disp('>>> SReachPoint with particle-open')
     fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
         prob_particle_open, simulated_prob_particle_open);
-    fprintf('Computation time: %1.3f\n', elapsed_time_particle);    
+    fprintf('Computation time (s): %1.3f\n', elapsed_time_particle);    
 end
 if voronoi_open_run && prob_voronoi_open > 0
     h_opt_mean_voronoi = scatter(...
@@ -568,7 +519,7 @@ if voronoi_open_run && prob_voronoi_open > 0
     disp('>>> SReachPoint with voronoi-open')
     fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
         prob_voronoi_open, simulated_prob_voronoi_open);
-    fprintf('Computation time: %1.3f\n', elapsed_time_voronoi);
+    fprintf('Computation time (s): %1.3f\n', elapsed_time_voronoi);
 end
 if chance_affine_run && prob_chance_affine > 0
     h_opt_mean_chance_affine = scatter(...
@@ -583,22 +534,7 @@ if chance_affine_run && prob_chance_affine > 0
     disp('>>> SReachPoint with chance-affine')
     fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
         prob_chance_affine, simulated_prob_chance_affine);
-    fprintf('Computation time: %1.3f\n', elapsed_time_chance_affine);    
-end
-if voronoi_affine_run && prob_voronoi_affine > 0
-    h_opt_mean_voronoi_affine = scatter(...
-          [init_state_voronoi_affine(1), opt_mean_traj_voronoi_affine(1,:)], ...
-          [init_state_voronoi_affine(2), opt_mean_traj_voronoi_affine(2,:)], ...
-          30, 'ks', 'filled','DisplayName', 'Mean trajectory (voronoi-affine)');
-    legend_cell{end+1} = 'Mean trajectory (voronoi-affine)';
-    h_vec(end+1) = h_opt_mean_voronoi_affine;
-    ellipsoidsFromMonteCarloSims(...
-        concat_state_realization_voa(sys.state_dim+1:end,:), sys.state_dim,...
-        dims_to_consider, {'k'});
-    disp('>>> SReachPoint with voronoi-affine')
-    fprintf('SReachPoint approx. prob: %1.2f | Simulated prob: %1.2f\n',...
-        prob_voronoi_affine, simulated_prob_voronoi_affine);
-    fprintf('Computation time: %1.3f\n', elapsed_time_voronoi_affine);    
+    fprintf('Computation time (s): %1.3f\n', elapsed_time_chance_affine);    
 end
 legend(h_vec, legend_cell, 'Location','EastOutside', 'interpreter','latex');
 title(['Ellipsoids fit 100 random Monte-Carlo sims.']);
