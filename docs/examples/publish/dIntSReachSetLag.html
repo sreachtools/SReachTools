@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>Lagrangian Approximations for the Stochastic Reachability of a Target Tube</title><meta name="generator" content="MATLAB 9.3"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2018-11-30"><meta name="DC.source" content="dIntSReachSetLag.m"><style type="text/css">
+      --><title>Lagrangian Approximations for the Stochastic Reachability of a Target Tube</title><meta name="generator" content="MATLAB 9.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-02-07"><meta name="DC.source" content="dIntSReachSetLag.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -66,10 +66,10 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
 
-  </style></head><body><div class="content"><h1>Lagrangian Approximations for the Stochastic Reachability of a Target Tube</h1><!--introduction--><p>This example will demonstrate how to use the SReachTools toolbox to compute over and under approximations for the stochastic reachability of a target tube via Lagrangian methods.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Lagrangian Methods</a></li><li><a href="#2">Problem Definition</a></li><li><a href="#4">Viability problem as a stochastic reachability of a target tube problem</a></li><li><a href="#6">Lagrangian approximation for stochastic reachability of a target tube</a></li><li><a href="#12">Dynamic programming solution</a></li><li><a href="#15">Simulation times --- Lagrangian approximation is much faster than dynamic programming</a></li><li><a href="#17">Plotting all the sets together</a></li></ul></div><h2 id="1">Lagrangian Methods</h2><p>Lagrangian methods perform computations with sets using operations like unions, intersection, Minkowski addition/differences, etc. This computation using set operations can be used to approximate (either over or under) the stochastic reachability of a target tube problem. We will demonstrate that this approach while being be approximative can outperform the current state-of-the-art <a href="https://doi.org/10.1016/j.automatica.2010.08.006">dynamic programming</a> solution in terms of computation time.</p><p>Advantages:</p><div><ul><li>No gridding, which partially evades the curse of dimensionality</li><li>Provides verification for closed-loop feedback strategies</li></ul></div><p>Disadvantages:</p><div><ul><li>Using Polyhedral representation, must solve the vertex-facet enumeration problem, limiting computations to ~4 dimensional systems</li><li>Does not provide an explicit control policy, only verifies the existence</li></ul></div><p>The theory for this approach can be found in</p><div><ul><li>J. D. Gleason, A. P. Vinod, M. M. K. Oishi, "Underapproximation of Reach-Avoid   Sets for Discrete-Time Stochastic Systems via Lagrangian Methods," in Proceedings   of the IEEE Conference on Decision and Control, 2017.</li><li>J. D. Gleason, A. P. Vinod, M. M. K. Oishi, "Underapproximation of   Reach-Avoid Sets for Discrete-Time Stochastic Systems via Lagrangian   Methods," in Proceedings of the IEEE Conference on Decision and Control,   2017</li></ul></div><p>This example is part of the SReachTools toolbox. License for the use of this function is given in <a href="https://github.com/unm-hscl/SReachTools/blob/master/LICENSE">https://github.com/unm-hscl/SReachTools/blob/master/LICENSE</a>.</p><pre class="codeinput"><span class="comment">% Prescript running: Initializing srtinit, if it already hasn't been initialized</span>
+  </style></head><body><div class="content"><h1>Lagrangian Approximations for the Stochastic Reachability of a Target Tube</h1><!--introduction--><p>This example will demonstrate the use of <tt>SReachTools</tt> for Lagrangian-based verification of stochastic continuous-state discrete-time linear time-invariant (LTI) systems.  This example script is part of the <tt>SReachTools</tt> toolbox, which is licensed under GPL v3 or (at your option) any later version. A copy of this license is given in <a href="https://github.com/unm-hscl/SReachTools/blob/master/LICENSE">https://github.com/unm-hscl/SReachTools/blob/master/LICENSE</a>.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Lagrangian Methods</a></li><li><a href="#2">Problem Definition</a></li><li><a href="#4">Viability problem as a stochastic reachability of a target tube problem</a></li><li><a href="#6">Lagrangian underapproximation for stochastic reachability of a target tube</a></li><li><a href="#7">Underapprox. type 1: Bound_set_method - Ellipsoid | Compute_style - VFmethod</a></li><li><a href="#8">Underapprox. type 2: Bound_set_method - Ellipsoid | Compute_style - Support</a></li><li><a href="#9">Underapprox. type 3: Bound_set_method - Polytope | Compute_style - VFmethod</a></li><li><a href="#10">Underapprox. type 3: Bound_set_method - Polytope | Compute_style - Support</a></li><li><a href="#11">Lagrangian overapproximation for stochastic reachability of a target tube</a></li><li><a href="#12">Overapprox. type 1: Bound_set_method - Ellipsoid | Compute_style - VFmethod</a></li><li><a href="#13">Overapprox. type 2: Bound_set_method - Ellipsoid | Compute_style - Support</a></li><li><a href="#14">Overapprox. type 3: Bound_set_method - Polytope | Compute_style - VFmethod</a></li><li><a href="#15">Overapprox. type 4: Bound_set_method - Polytope | Compute_style - Support</a></li><li><a href="#16">Dynamic programming solution</a></li><li><a href="#19">Simulation times: Lagrangian approximation beats dynamic programming</a></li><li><a href="#21">Plotting all the sets together</a></li></ul></div><h2 id="1">Lagrangian Methods</h2><p>Lagrangian methods perform computations with sets using operations like unions, intersection, Minkowski addition/differences, etc. This computation using set operations can be used to approximate (either over or under) the stochastic reachability of a target tube problem. We will demonstrate that this approach, while being be approximative, can outperform the current state-of-the-art <a href="https://doi.org/10.1016/j.automatica.2010.08.006">dynamic programming</a> solution in terms of computation time.</p><p>Advantages:</p><div><ul><li>No gridding, which partially evades the curse of dimensionality</li><li>Provides verification for closed-loop feedback strategies</li><li>Synthesis of a closed-loop feedback strategy</li></ul></div><p>Disadvantages:</p><div><ul><li>Using Polyhedral representation, must solve the vertex-facet enumeration problem, limiting computations to ~4 dimensional systems</li></ul></div><p>The theory for this approach can be found in</p><div><ul><li>J. D. Gleason, A. P. Vinod, M. M. K. Oishi, "Underapproximation of   Reach-Avoid Sets for Discrete-Time Stochastic Systems via Lagrangian   Methods," in Proceedings of the IEEE Conference on Decision and Control,   2017.</li></ul></div><p>Further, we explore multiple implementations of the Lagrangian-based verification, where the vertex-facet enumeration is mitigated either via recursion-free support method in overapproximation or vertex-complexity preserving support vector method in underapproximation.</p><pre class="codeinput"><span class="comment">% Prescript running: Initializing srtinit, if it already hasn't been initialized</span>
 close <span class="string">all</span>;clearvars;srtinit;srtinit <span class="string">--version</span>;
-</pre><pre class="codeoutput">SReachTools version 1.2.26
-</pre><h2 id="2">Problem Definition</h2><p>In this example we will look at the viability problem for a double integrator. The system dynamics are:</p><p><img src="dIntSReachSetLag_eq03203775996097170917.png" alt="$$  x_{k+1} = \left[ \begin{array}{cc}    1 &amp; T \\    0 &amp; 1  \end{array}\right]&#xA;x_{k} + \left[\begin{array}{c}    \frac{T^{2}}{2} \\    T  \end{array}\right]&#xA;u_{k} + w_{k}$$"></p><p>where <img src="dIntSReachSetLag_eq06821165808764004272.png" alt="$x_{k+1} \in \mathbf{R}^{2}$"> is the state, <img src="dIntSReachSetLag_eq09748864305045641102.png" alt="$u_{k} \in \mathbf{R}$"> is the input, and <img src="dIntSReachSetLag_eq01336762545978364673.png" alt="$w_{k} \in \mathbf{R}^{2}$"> is the disturbance. The following code defines this system with <img src="dIntSReachSetLag_eq17066019916537791851.png" alt="$w_{k}$"> as an i.i.d. Gaussian disturbance with mean <img src="dIntSReachSetLag_eq16230577049557160276.png" alt="$[0, 0]^{\top}$"> and variance <img src="dIntSReachSetLag_eq14669468135061266778.png" alt="$\mathrm{diag}(0.01, 0.01)$">.</p><p>example parameters</p><pre class="codeinput">T = 0.25;
+</pre><pre class="codeoutput">SReachTools version 1.2.31
+</pre><h2 id="2">Problem Definition</h2><p>In this example we will look at the viability problem for a double integrator. The system dynamics are:</p><p><img src="dIntSReachSetLag_eq10500098239847735597.png" alt="$$  x_{k+1} = \left[ \begin{array}{cc}    1 &amp; T \\   0 &amp; 1  \end{array}\right]&#xA;x_{k} + \left[\begin{array}{c}    \frac{T^{2}}{2} \\    T  \end{array}\right]&#xA;u_{k} + w_{k}$$"></p><p>where <img src="dIntSReachSetLag_eq06821165808764004272.png" alt="$x_{k+1} \in \mathbf{R}^{2}$"> is the state, <img src="dIntSReachSetLag_eq09748864305045641102.png" alt="$u_{k} \in \mathbf{R}$"> is the input, and <img src="dIntSReachSetLag_eq01336762545978364673.png" alt="$w_{k} \in \mathbf{R}^{2}$"> is the disturbance. The following code defines this system with <img src="dIntSReachSetLag_eq17066019916537791851.png" alt="$w_{k}$"> as an i.i.d. Gaussian disturbance with mean <img src="dIntSReachSetLag_eq16230577049557160276.png" alt="$[0, 0]^{\top}$"> and variance <img src="dIntSReachSetLag_eq14669468135061266778.png" alt="$\mathrm{diag}(0.01, 0.01)$">.</p><p>example parameters</p><pre class="codeinput">T = 0.25;
 
 <span class="comment">% define the system</span>
 sys = getChainOfIntegLtiSystem(2, <span class="keyword">...</span>
@@ -85,10 +85,14 @@ target_tube = Tube(<span class="string">'viability'</span>, safe_set, time_horiz
 <span class="comment">% probability threshold desired</span>
 beta = 0.8;
 <span class="comment">% Plotting of target tube</span>
-figure()
+figure(1)
+clf
 hold <span class="string">on</span>
 <span class="keyword">for</span> time_indx = 0:time_horizon
-    target_tube_at_time_indx = Polyhedron(<span class="string">'H'</span>,[target_tube(time_indx+1).A,zeros(size(target_tube(time_indx+1).A,1),1), target_tube(time_indx+1).b], <span class="string">'He'</span>,[0 0 1 time_indx]);
+    target_tube_at_time_indx = Polyhedron(<span class="string">'H'</span>,<span class="keyword">...</span>
+        [target_tube(time_indx+1).A, <span class="keyword">...</span>
+        zeros(size(target_tube(time_indx+1).A,1),1), <span class="keyword">...</span>
+        target_tube(time_indx+1).b], <span class="string">'He'</span>,[0 0 1 time_indx]);
     plot(target_tube_at_time_indx, <span class="string">'alpha'</span>,0.25);
 <span class="keyword">end</span>
 axis([-1 1 -1 1 0 time_horizon]);
@@ -99,61 +103,73 @@ ylabel(<span class="string">'y'</span>);
 zlabel(<span class="string">'time'</span>);
 title(<span class="string">'Target tube'</span>);
 axis <span class="string">equal</span>;
-</pre><img vspace="5" hspace="5" src="dIntSReachSetLag_01.png" alt=""> <h2 id="6">Lagrangian approximation for stochastic reachability of a target tube</h2><p>For the Lagrangian methods we compute robust and augmented effective target sets---for the under and overapproximations, respectively. For this computation we need to convert the Gaussian disturbance into a bounded distrubance set which will satisfy the required conditions detailed in the aforementioned papers. We do this here for a an 0.8 probability with the given target tube.</p><p>There are several ways to create bounded disturbance sets. Here, we formulate a bounded disturbance by creating a polyhedral approximation of an ellipsoid through random direction choices.</p><p>bounded set for Lagrangian</p><pre class="codeinput">fprintf(<span class="string">'Setting up options for lag-under with bound_set_method: ellipsoid\n'</span>);
+</pre><img vspace="5" hspace="5" src="dIntSReachSetLag_01.png" alt=""> <h2 id="6">Lagrangian underapproximation for stochastic reachability of a target tube</h2><p><tt>SReachSet</tt> can compute Lagrangian underapproximation via multiple approaches. It can approximate the disturbance set, against which the robust computation is done, as a polytope or an ellipsoid (as specified by <tt>bound_set_method</tt>). Further, it can either perform an exact (and time-consuming) vertex-facet enumeration or an underapproximative (and complexity-preserving) computation using support vectors (as specified by <tt>compute_style</tt>). The vertex-facet enumeration may be performed by CDD or LRS, two popular enumeration techinques. We use CDD by default, but it can be switched to LRS using <tt>vf_enum_method</tt>.</p><pre class="codeinput">n_dim = sys.state_dim + sys.input_dim; <span class="comment">% Require unit vectors to sample X x U</span>
+lagrange_under_time = zeros(4,1);
+</pre><h2 id="7">Underapprox. type 1: Bound_set_method - Ellipsoid | Compute_style - VFmethod</h2><p>This is the best method in this case, since it leverages the fact that the distubance is Gaussian and for two-dimensional polytopes, vertex-facet enumeration is not significantly hard.</p><pre class="codeinput">timerVal=tic;
+luOpts1 = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'lag-under'</span>, <span class="string">'bound_set_method'</span>, <span class="keyword">...</span>
+    <span class="string">'ellipsoid'</span>, <span class="string">'verbose'</span>,1,<span class="string">'compute_style'</span>,<span class="string">'vfmethod'</span>);
+luOpts_time(1) = toc(timerVal);
 timerVal=tic;
-n_dim = sys.state_dim + sys.input_dim;
-luOpts = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'lag-under'</span>, <span class="string">'bound_set_method'</span>, <span class="keyword">...</span>
+luSet(1) = SReachSet(<span class="string">'term'</span>, <span class="string">'lag-under'</span>, sys, beta, target_tube, luOpts1);
+lagrange_under_time(1) = toc(timerVal);
+</pre><pre class="codeoutput">Computing Lagragian under approximation
+Time_horizon: 5
+Computation for time step: 4
+Computation for time step: 3
+Computation for time step: 2
+Computation for time step: 1
+Computation for time step: 0
+</pre><h2 id="8">Underapprox. type 2: Bound_set_method - Ellipsoid | Compute_style - Support</h2><p>Compared to type 1, this method will result in more conservative solution. The benefit of this approach becomes clear when we use it in high-dimensional systems where vertex-facet enumeration is hard. By the virtue of being recursion-free, this approach will scale better than type 1.</p><pre class="codeinput">timerVal=tic;
+luOpts2 = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'lag-under'</span>, <span class="string">'bound_set_method'</span>, <span class="keyword">...</span>
     <span class="string">'ellipsoid'</span>, <span class="string">'system'</span>, sys, <span class="string">'n_underapprox_vertices'</span>, 2^n_dim*10+2*n_dim,<span class="keyword">...</span>
-    <span class="string">'verbose'</span>,1);
-options_time = toc(timerVal);
+    <span class="string">'verbose'</span>,1,<span class="string">'compute_style'</span>,<span class="string">'support'</span>);
+luOpts_time(2) = toc(timerVal);
 timerVal=tic;
-[luSet, extra_info] = SReachSet(<span class="string">'term'</span>, <span class="string">'lag-under'</span>, sys, 0.8, target_tube,<span class="keyword">...</span>
-    luOpts);
-lagrange_under_time = toc(timerVal);
-</pre><pre class="codeoutput">Setting up options for lag-under with bound_set_method: ellipsoid
-Spreading 86 unit-length vectors in 3-dim space
+luSet(2) = SReachSet(<span class="string">'term'</span>, <span class="string">'lag-under'</span>, sys, beta, target_tube, luOpts2);
+lagrange_under_time(2) = toc(timerVal);
+</pre><pre class="codeoutput">Spreading 86 unit-length vectors in 3-dim space
 Analyzing 10 unit-length vectors in first quadrant
  1. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 1.807e-12 (&lt; 1.000e-08)
-Change in opt cost: 2.432e-01 (&lt; 1.000e-05)
+Sum of slack: 5.231e-03 (&lt; 1.000e-08)
+Change in opt cost: 2.449e-01 (&lt; 1.000e-05)
 
  2. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 1.212e-09 (&lt; 1.000e-08)
-Change in opt cost: 1.044e-01 (&lt; 1.000e-05)
+Sum of slack: 5.198e-10 (&lt; 1.000e-08)
+Change in opt cost: 8.874e-02 (&lt; 1.000e-05)
 
  3. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 1.646e-09 (&lt; 1.000e-08)
-Change in opt cost: 1.260e-02 (&lt; 1.000e-05)
+Sum of slack: 1.116e-09 (&lt; 1.000e-08)
+Change in opt cost: 1.858e-02 (&lt; 1.000e-05)
 
  4. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 5.479e-11 (&lt; 1.000e-08)
-Change in opt cost: 1.057e-03 (&lt; 1.000e-05)
+Sum of slack: 2.298e-10 (&lt; 1.000e-08)
+Change in opt cost: 4.030e-03 (&lt; 1.000e-05)
 
  5. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 8.004e-11 (&lt; 1.000e-08)
-Change in opt cost: 1.202e-05 (&lt; 1.000e-05)
+Sum of slack: 2.274e-09 (&lt; 1.000e-08)
+Change in opt cost: 6.647e-05 (&lt; 1.000e-05)
 
  6. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 6.804e-10 (&lt; 1.000e-08)
-Change in opt cost: 1.030e-08 (&lt; 1.000e-05)
+Sum of slack: 1.129e-09 (&lt; 1.000e-08)
+Change in opt cost: 2.639e-08 (&lt; 1.000e-05)
 
 Completed spreading the vectors!
 Computing Lagragian under approximation
@@ -163,12 +179,98 @@ Computation for time step: 3
 Computation for time step: 2
 Computation for time step: 1
 Computation for time step: 0
-</pre><pre class="codeinput">tic;
-loOpts = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'lag-over'</span>, <span class="string">'bound_set_method'</span>, <span class="string">'polytope'</span>,<span class="keyword">...</span>
-    <span class="string">'verbose'</span>, 1, <span class="string">'template_polytope'</span>,<span class="keyword">...</span>
+</pre><h2 id="9">Underapprox. type 3: Bound_set_method - Polytope | Compute_style - VFmethod</h2><p>Compared to type 1, this method will result in more conservative solution since the bounded disturbance set is larger in volume. This approach is best used when the disturbance is non-Gaussian. This approach is best used when the disturbance is non-Gaussian.</p><pre class="codeinput">luOpts3 = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'lag-under'</span>, <span class="string">'bound_set_method'</span>, <span class="keyword">...</span>
+    <span class="string">'polytope'</span>, <span class="string">'verbose'</span>, 1, <span class="string">'compute_style'</span>,<span class="string">'vfmethod'</span>,<span class="string">'template_polytope'</span>,<span class="keyword">...</span>
     Polyhedron(<span class="string">'lb'</span>,-ones(sys.dist.dim,1),<span class="string">'ub'</span>,ones(sys.dist.dim,1)));
-loSet = SReachSet(<span class="string">'term'</span>, <span class="string">'lag-over'</span>, sys, 0.8, target_tube, loOpts);
-lagrange_over_time = toc();
+luOpts_time(3) = toc(timerVal);
+timerVal=tic;
+luSet(3) = SReachSet(<span class="string">'term'</span>, <span class="string">'lag-under'</span>, sys, beta, target_tube, luOpts3);
+lagrange_under_time(3) = toc(timerVal);
+</pre><pre class="codeoutput">Computing Lagragian under approximation
+Computing the bounded disturbance set
+Time_horizon: 5
+Computation for time step: 4
+Computation for time step: 3
+Computation for time step: 2
+Computation for time step: 1
+Computation for time step: 0
+</pre><h2 id="10">Underapprox. type 3: Bound_set_method - Polytope | Compute_style - Support</h2><p>Compared to type 1, this method will result in more conservative solution since the bounded disturbance set is larger in volume. Compared to type 3, this set will be more conservative since an underapproximative vertex-facet enumeration is performed.</p><pre class="codeinput">luOpts4 = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'lag-under'</span>, <span class="string">'bound_set_method'</span>, <span class="keyword">...</span>
+    <span class="string">'polytope'</span>, <span class="string">'system'</span>, sys, <span class="string">'n_underapprox_vertices'</span>, 2^n_dim*10+2*n_dim,<span class="keyword">...</span>
+    <span class="string">'verbose'</span>, 1, <span class="string">'compute_style'</span>,<span class="string">'support'</span>, <span class="string">'template_polytope'</span>,<span class="keyword">...</span>
+    Polyhedron(<span class="string">'lb'</span>,-ones(sys.dist.dim,1),<span class="string">'ub'</span>,ones(sys.dist.dim,1)));
+luOpts_time(4) = toc(timerVal);
+timerVal=tic;
+luSet(4) = SReachSet(<span class="string">'term'</span>, <span class="string">'lag-under'</span>, sys, beta, target_tube, luOpts4);
+lagrange_under_time(4) = toc(timerVal);
+</pre><pre class="codeoutput">Spreading 86 unit-length vectors in 3-dim space
+Analyzing 10 unit-length vectors in first quadrant
+ 1. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 1.128e-11 (&lt; 1.000e-08)
+Change in opt cost: 2.294e-01 (&lt; 1.000e-05)
+
+ 2. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 6.078e-10 (&lt; 1.000e-08)
+Change in opt cost: 8.814e-02 (&lt; 1.000e-05)
+
+ 3. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 1.348e-10 (&lt; 1.000e-08)
+Change in opt cost: 3.043e-02 (&lt; 1.000e-05)
+
+ 4. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 1.108e-09 (&lt; 1.000e-08)
+Change in opt cost: 7.707e-03 (&lt; 1.000e-05)
+
+ 5. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 9.054e-11 (&lt; 1.000e-08)
+Change in opt cost: 3.760e-03 (&lt; 1.000e-05)
+
+ 6. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 1.791e-09 (&lt; 1.000e-08)
+Change in opt cost: 4.213e-05 (&lt; 1.000e-05)
+
+ 7. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 3.243e-10 (&lt; 1.000e-08)
+Change in opt cost: 5.772e-08 (&lt; 1.000e-05)
+
+Completed spreading the vectors!
+Computing Lagragian under approximation
+Computing the bounded disturbance set
+Time_horizon: 5
+Computation for time step: 4
+Computation for time step: 3
+Computation for time step: 2
+Computation for time step: 1
+Computation for time step: 0
+</pre><h2 id="11">Lagrangian overapproximation for stochastic reachability of a target tube</h2><p><tt>SReachSet</tt> can compute Lagrangian overapproximation via multiple approaches. It can approximate the disturbance set which augments the input space as a polytope or an ellipsoid (as specified by <tt>bound_set_method</tt>). Further, it can perform a recursive computation using vertex-facet enumeration or a recursion-free computation using support functions (as specified by <tt>compute_style</tt>). The vertex-facet enumeration may be performed by CDD or LRS, two popular enumeration techinques. We use CDD by default, but it can be switched to LRS using <tt>vf_enum_method</tt>.</p><pre class="codeinput">n_dim_over = sys.state_dim;     <span class="comment">% Require unit vectors to sample X</span>
+lagrange_over_time = zeros(4,1);
+</pre><h2 id="12">Overapprox. type 1: Bound_set_method - Ellipsoid | Compute_style - VFmethod</h2><p>This is the best method in this case, since it leverages the fact that the distubance is Gaussian and for two-dimensional polytopes, vertex-facet enumeration is not significantly hard.</p><pre class="codeinput">timerVal=tic;
+loOpts1 = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'lag-over'</span>, <span class="string">'bound_set_method'</span>, <span class="keyword">...</span>
+    <span class="string">'ellipsoid'</span>, <span class="string">'verbose'</span>, 1, <span class="string">'compute_style'</span>,<span class="string">'vfmethod'</span>);
+loOpts_time(1) = toc(timerVal);
+timerVal=tic;
+loSet(1) = SReachSet(<span class="string">'term'</span>, <span class="string">'lag-over'</span>, sys, beta, target_tube, loOpts1);
+lagrange_over_time(1) = toc(timerVal);
 </pre><pre class="codeoutput">Computing Lagragian over approximation
 Time_horizon: 5
 Computation for time step: 4
@@ -176,92 +278,406 @@ Computation for time step: 3
 Computation for time step: 2
 Computation for time step: 1
 Computation for time step: 0
-</pre><p>Now we can compute the Lagrangian under and overapproximations which we call the robust and augmented effective target sets</p><pre class="codeinput"><span class="comment">% robust_eff_target = getRobustEffTarget(sys, target_tube, lag_bounded_set);</span>
-<span class="comment">% aug_eff_target    = getAugEffTarget(sys, target_tube, lag_bounded_set);</span>
-</pre><p>Plotting these sets</p><pre class="codeinput">figure();
-plot(safe_set, <span class="string">'color'</span>, <span class="string">'k'</span>, <span class="string">'alpha'</span>,1);
-hold <span class="string">on</span>;
-plot(loSet, <span class="string">'color'</span>, <span class="string">'y'</span>);
-plot(luSet, <span class="string">'color'</span>, <span class="string">'g'</span>);
-hold <span class="string">off</span>;
-xlabel(<span class="string">'$x_1$'</span>, <span class="string">'Interpreter'</span>, <span class="string">'latex'</span>)
-ylabel(<span class="string">'$x_2$'</span>, <span class="string">'Interpreter'</span>, <span class="string">'latex'</span>)
-box <span class="string">on</span>;
-leg = legend(<span class="string">'Safe set'</span>,<span class="string">'Overapproximation'</span>,<span class="string">'Underapproximation'</span>);
-set(leg,<span class="string">'Location'</span>,<span class="string">'EastOutside'</span>);
-axis <span class="string">equal</span>;
-</pre><img vspace="5" hspace="5" src="dIntSReachSetLag_02.png" alt=""> <p>Because of the choice or random directions for the ellipse <tt>robust_eff_target</tt> and <tt>robust_target_2</tt> are not exactly equivalent (same for the augmented sets). However they can be seen to be visually near identical.</p><h2 id="12">Dynamic programming solution</h2><p>We compare the results with <a href="https://doi.org/10.1016/j.automatica.2010.08.006">dynamic programming</a> to see how the approximations appear and how they compare in simulation times.</p><pre class="codeinput">dyn_prog_xinc = 0.025;
+</pre><h2 id="13">Overapprox. type 2: Bound_set_method - Ellipsoid | Compute_style - Support</h2><p>Compared to type 1, this method will provide an overapproximative solution but can potentially be faster since it is recursion-free.</p><pre class="codeinput">timerVal=tic;
+loOpts2 = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'lag-over'</span>, <span class="string">'bound_set_method'</span>, <span class="keyword">...</span>
+    <span class="string">'ellipsoid'</span>, <span class="string">'verbose'</span>, 1, <span class="string">'compute_style'</span>,<span class="string">'support'</span>, <span class="string">'system'</span>, sys,<span class="keyword">...</span>
+    <span class="string">'n_underapprox_vertices'</span>, 2^n_dim_over * 7+2*n_dim_over);
+loOpts_time(2) = toc(timerVal);
+timerVal=tic;
+loSet(2) = SReachSet(<span class="string">'term'</span>, <span class="string">'lag-over'</span>, sys, beta, target_tube, loOpts2);
+lagrange_over_time(2) = toc(timerVal);
+</pre><pre class="codeoutput">Spreading 32 unit-length vectors in 2-dim space
+Analyzing 7 unit-length vectors in first quadrant
+ 1. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 6.226e-02 (&lt; 1.000e-08)
+Change in opt cost: 1.178e-01 (&lt; 1.000e-05)
+
+ 2. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 3.976e-02 (&lt; 1.000e-08)
+Change in opt cost: 4.412e-02 (&lt; 1.000e-05)
+
+ 3. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 4.917e-02 (&lt; 1.000e-08)
+Change in opt cost: 1.096e-02 (&lt; 1.000e-05)
+
+ 4. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 5.013e-02 (&lt; 1.000e-08)
+Change in opt cost: 8.776e-04 (&lt; 1.000e-05)
+
+ 5. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 5.014e-02 (&lt; 1.000e-08)
+Change in opt cost: 7.628e-06 (&lt; 1.000e-05)
+
+ 6. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 5.014e-02 (&lt; 1.000e-08)
+Change in opt cost: 7.547e-10 (&lt; 1.000e-05)
+
+ 7. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 5.014e-02 (&lt; 1.000e-08)
+Change in opt cost: 1.278e-09 (&lt; 1.000e-05)
+
+ 8. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 5.014e-02 (&lt; 1.000e-08)
+Change in opt cost: 1.638e-09 (&lt; 1.000e-05)
+
+ 9. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 5.014e-02 (&lt; 1.000e-08)
+Change in opt cost: 4.692e-09 (&lt; 1.000e-05)
+
+10. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 4.496e-02 (&lt; 1.000e-08)
+Change in opt cost: 3.328e-04 (&lt; 1.000e-05)
+
+11. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 3.716e-02 (&lt; 1.000e-08)
+Change in opt cost: 9.663e-04 (&lt; 1.000e-05)
+
+12. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 4.712e-10 (&lt; 1.000e-08)
+Change in opt cost: 1.313e-01 (&lt; 1.000e-05)
+
+13. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 1.286e-11 (&lt; 1.000e-08)
+Change in opt cost: 1.786e-02 (&lt; 1.000e-05)
+
+14. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 2.240e-10 (&lt; 1.000e-08)
+Change in opt cost: 4.951e-03 (&lt; 1.000e-05)
+
+15. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 2.160e-11 (&lt; 1.000e-08)
+Change in opt cost: 1.496e-04 (&lt; 1.000e-05)
+
+16. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 4.868e-13 (&lt; 1.000e-08)
+Change in opt cost: 1.249e-07 (&lt; 1.000e-05)
+
+Completed spreading the vectors!
+Computing Lagragian over approximation
+Evaluating support function:    32/   32
+</pre><h2 id="14">Overapprox. type 3: Bound_set_method - Polytope | Compute_style - VFmethod</h2><p>Compared to type 1, this method will result in more conservative solution since the bounded disturbance set is larger in volume.</p><pre class="codeinput">timerVal=tic;
+loOpts3 = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'lag-over'</span>, <span class="string">'bound_set_method'</span>, <span class="keyword">...</span>
+    <span class="string">'polytope'</span>, <span class="string">'verbose'</span>, 1, <span class="string">'n_particles'</span>, 1e6, <span class="string">'template_polytope'</span>,<span class="keyword">...</span>
+    Polyhedron(<span class="string">'lb'</span>,-ones(sys.dist.dim,1),<span class="string">'ub'</span>,ones(sys.dist.dim,1)),<span class="keyword">...</span>
+    <span class="string">'compute_style'</span>,<span class="string">'vfmethod'</span>);
+loOpts_time(3) = toc(timerVal);
+timerVal=tic;
+loSet(3) = SReachSet(<span class="string">'term'</span>, <span class="string">'lag-over'</span>, sys, beta, target_tube, loOpts3);
+lagrange_over_time(3) = toc(timerVal);
+</pre><pre class="codeoutput">Computing Lagragian over approximation
+Computing the bounded disturbance set
+Time_horizon: 5
+Computation for time step: 4
+Computation for time step: 3
+Computation for time step: 2
+Computation for time step: 1
+Computation for time step: 0
+</pre><h2 id="15">Overapprox. type 4: Bound_set_method - Polytope | Compute_style - Support</h2><p>Compared to type 1, this method will result in more conservative solution since the bounded disturbance set is larger in volume. Compared to type 3, this method will provide an overapproximative solution but can potentially be faster since it is recursion-free.</p><pre class="codeinput">loOpts4 = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'lag-over'</span>, <span class="string">'bound_set_method'</span>, <span class="keyword">...</span>
+    <span class="string">'polytope'</span>, <span class="string">'verbose'</span>, 1, <span class="string">'template_polytope'</span>,<span class="keyword">...</span>
+    Polyhedron(<span class="string">'lb'</span>,-ones(sys.dist.dim,1),<span class="string">'ub'</span>,ones(sys.dist.dim,1)),<span class="keyword">...</span>
+    <span class="string">'compute_style'</span>,<span class="string">'support'</span>, <span class="string">'system'</span>, sys,<span class="keyword">...</span>
+    <span class="string">'n_underapprox_vertices'</span>, 2^n_dim_over* 7 +2*n_dim_over);
+loOpts_time(4) = toc(timerVal);
+timerVal=tic;
+loSet(4) = SReachSet(<span class="string">'term'</span>, <span class="string">'lag-over'</span>, sys, beta, target_tube, loOpts4);
+lagrange_over_time(4) = toc(timerVal);
+</pre><pre class="codeoutput">Spreading 32 unit-length vectors in 2-dim space
+Analyzing 7 unit-length vectors in first quadrant
+ 1. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 3.467e-02 (&lt; 1.000e-08)
+Change in opt cost: 1.512e-01 (&lt; 1.000e-05)
+
+ 2. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 4.861e-02 (&lt; 1.000e-08)
+Change in opt cost: 1.907e-02 (&lt; 1.000e-05)
+
+ 3. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 5.014e-02 (&lt; 1.000e-08)
+Change in opt cost: 1.788e-03 (&lt; 1.000e-05)
+
+ 4. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 5.014e-02 (&lt; 1.000e-08)
+Change in opt cost: 1.858e-05 (&lt; 1.000e-05)
+
+ 5. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 5.014e-02 (&lt; 1.000e-08)
+Change in opt cost: 1.100e-08 (&lt; 1.000e-05)
+
+ 6. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 5.014e-02 (&lt; 1.000e-08)
+Change in opt cost: 4.181e-10 (&lt; 1.000e-05)
+
+ 7. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 5.014e-02 (&lt; 1.000e-08)
+Change in opt cost: 1.282e-09 (&lt; 1.000e-05)
+
+ 8. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 5.014e-02 (&lt; 1.000e-08)
+Change in opt cost: 1.637e-09 (&lt; 1.000e-05)
+
+ 9. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 5.014e-02 (&lt; 1.000e-08)
+Change in opt cost: 4.692e-09 (&lt; 1.000e-05)
+
+10. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 4.496e-02 (&lt; 1.000e-08)
+Change in opt cost: 3.328e-04 (&lt; 1.000e-05)
+
+11. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 3.716e-02 (&lt; 1.000e-08)
+Change in opt cost: 9.648e-04 (&lt; 1.000e-05)
+
+12. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 8.673e-13 (&lt; 1.000e-08)
+Change in opt cost: 1.319e-01 (&lt; 1.000e-05)
+
+13. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 3.525e-10 (&lt; 1.000e-08)
+Change in opt cost: 1.829e-02 (&lt; 1.000e-05)
+
+14. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 4.959e-10 (&lt; 1.000e-08)
+Change in opt cost: 4.022e-03 (&lt; 1.000e-05)
+
+15. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 4.188e-11 (&lt; 1.000e-08)
+Change in opt cost: 1.775e-04 (&lt; 1.000e-05)
+
+16. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 2.190e-10 (&lt; 1.000e-08)
+Change in opt cost: 4.594e-07 (&lt; 1.000e-05)
+
+Completed spreading the vectors!
+Computing Lagragian over approximation
+Computing the bounded disturbance set
+Evaluating support function:    32/   32
+</pre><h2 id="16">Dynamic programming solution</h2><p>We compare the results with <a href="https://doi.org/10.1016/j.automatica.2010.08.006">dynamic programming</a> to see how the approximations appear and how they compare in simulation times.</p><pre class="codeinput">dyn_prog_xinc = 0.025;
 dyn_prog_uinc = 0.1;
 tic;
 [prob_x, cell_of_xvec] = SReachDynProg(<span class="string">'term'</span>, sys, dyn_prog_xinc, <span class="keyword">...</span>
     dyn_prog_uinc, target_tube);
 dynprog_time = toc();
-</pre><p>Compute the 0.8- stochastic level set</p><pre class="codeinput">dyn_soln_lvl_set = getDynProgLevelSets2D(cell_of_xvec, prob_x, 0.8, target_tube);
-</pre><h2 id="15">Simulation times --- Lagrangian approximation is much faster than dynamic programming</h2><p>The simulation times for Lagrangian computation is much faster than dynamic programming, even when the former computes both an underapproximation and an overapproximation.</p><pre class="codeinput">fprintf(<span class="string">'Simulation times [seconds]:\n'</span>);
+</pre><p>Compute the beta-stochastic level set</p><pre class="codeinput">dyn_soln_lvl_set=getDynProgLevelSets2D(cell_of_xvec, prob_x, beta, target_tube);
+</pre><h2 id="19">Simulation times: Lagrangian approximation beats dynamic programming</h2><p>The simulation times for Lagrangian computation is much faster (in most cases) than dynamic programming. Further, dynamic programming solution provides no approximation guarantees while Lagrangian approach provides grid-free approximation guarantee.</p><pre class="codeinput">fprintf(<span class="string">'Simulation times [seconds]:\n'</span>);
 fprintf(<span class="string">' Lagrangian:\n'</span>);
-fprintf(<span class="string">'   Overapproximation  : %.3f\n'</span>, lagrange_over_time);
-fprintf(<span class="string">'   Underapproximation : %.3f (online: %1.3f | offline: %1.3f)\n'</span>,<span class="keyword">...</span>
-    lagrange_under_time + options_time, lagrange_under_time, options_time);
+<span class="comment">% fprintf('   Overapproximation  : %.3f (online: %1.3f | offline: %1.3f)\n',...</span>
+<span class="comment">%     lagrange_over_time + loOpts_time, lagrange_over_time, loOpts_time);</span>
+fprintf(<span class="string">'   Overapproximation   online  |  offline | Total\n'</span>);
+fprintf(<span class="string">'(Ellipsoid,VFmethod)  %1.2e | %1.2e | %1.2f\n'</span>,<span class="keyword">...</span>
+    lagrange_over_time(1),loOpts_time(1),lagrange_over_time(1)+loOpts_time(1));
+fprintf(<span class="string">'(Ellipsoid, support)  %1.2e | %1.2e | %1.2f\n'</span>,<span class="keyword">...</span>
+    lagrange_over_time(2),loOpts_time(2),lagrange_over_time(2)+loOpts_time(2));
+fprintf(<span class="string">'(Polytope ,VFmethod)  %1.2e | %1.2e | %1.2f\n'</span>,<span class="keyword">...</span>
+    lagrange_over_time(3),loOpts_time(3),lagrange_over_time(3)+loOpts_time(3));
+fprintf(<span class="string">'(Polytope , support)  %1.2e | %1.2e | %1.2f\n'</span>,<span class="keyword">...</span>
+    lagrange_over_time(4),loOpts_time(4),lagrange_over_time(4)+loOpts_time(4));
+fprintf(<span class="string">'   Underapproximation  online  |  offline | Total\n'</span>);
+fprintf(<span class="string">'(Ellipsoid,VFmethod)  %1.2e | %1.2e | %1.2f\n'</span>,<span class="keyword">...</span>
+    lagrange_under_time(1),luOpts_time(1),lagrange_under_time(1)+luOpts_time(1));
+fprintf(<span class="string">'(Ellipsoid, support)  %1.2e | %1.2e | %1.2f\n'</span>,<span class="keyword">...</span>
+    lagrange_under_time(2),luOpts_time(2),lagrange_under_time(2)+luOpts_time(2));
+fprintf(<span class="string">'(Polytope ,VFmethod)  %1.2e | %1.2e | %1.2f\n'</span>,<span class="keyword">...</span>
+    lagrange_under_time(3),luOpts_time(3),lagrange_under_time(3)+luOpts_time(3));
+fprintf(<span class="string">'(Polytope , support)  %1.2e | %1.2e | %1.2f\n'</span>,<span class="keyword">...</span>
+    lagrange_under_time(4),luOpts_time(4),lagrange_under_time(4)+luOpts_time(4));
 fprintf(<span class="string">'   Dynamic programming: %.3f\n'</span>, dynprog_time);
 </pre><pre class="codeoutput">Simulation times [seconds]:
  Lagrangian:
-   Overapproximation  : 0.609
-   Underapproximation : 26.107 (online: 2.642 | offline: 23.465)
-   Dynamic programming: 21.273
-</pre><h2 id="17">Plotting all the sets together</h2><p>As expected, the over-approximation and the under-approximation obtained via Lagrangian approach bounds the dynamic programming solution from "inside" and "outside".</p><pre class="codeinput">figure();
-plot(safe_set, <span class="string">'color'</span>, <span class="string">'k'</span>, <span class="string">'alpha'</span>,1);
+   Overapproximation   online  |  offline | Total
+(Ellipsoid,VFmethod)  1.02e+00 | 1.18e-03 | 1.02
+(Ellipsoid, support)  1.03e+01 | 2.20e+01 | 32.27
+(Polytope ,VFmethod)  1.00e+00 | 5.04e-03 | 1.01
+(Polytope , support)  7.83e+00 | 2.21e+01 | 29.95
+   Underapproximation  online  |  offline | Total
+(Ellipsoid,VFmethod)  7.19e-01 | 1.52e-03 | 0.72
+(Ellipsoid, support)  2.46e+00 | 1.55e+01 | 18.00
+(Polytope ,VFmethod)  8.95e-01 | 2.52e+00 | 3.42
+(Polytope , support)  2.74e+00 | 1.82e+01 | 20.98
+   Dynamic programming: 15.707
+</pre><h2 id="21">Plotting all the sets together</h2><p>As expected, the over-approximation and the under-approximation obtained via Lagrangian approach bounds the dynamic programming solution from "inside" and "outside".</p><pre class="codeinput">figure(2);
+clf
+plot(safe_set, <span class="string">'color'</span>, <span class="string">'k'</span>);
 hold <span class="string">on</span>;
-plot(loSet, <span class="string">'color'</span>, <span class="string">'y'</span>);
+plot(loSet(2), <span class="string">'color'</span>, <span class="string">'y'</span>,<span class="string">'alpha'</span>,1);
+plot(loSet(1), <span class="string">'color'</span>, <span class="string">'r'</span>,<span class="string">'alpha'</span>,0.5);
 plot(dyn_soln_lvl_set,<span class="string">'color'</span>, <span class="string">'b'</span>)
-plot(luSet, <span class="string">'color'</span>, <span class="string">'g'</span>);
+plot(luSet(1), <span class="string">'color'</span>, <span class="string">'m'</span>,<span class="string">'alpha'</span>,1);
+plot(luSet(2), <span class="string">'color'</span>, <span class="string">'g'</span>,<span class="string">'alpha'</span>,0.75);
 hold <span class="string">off</span>;
 xlabel(<span class="string">'$x_1$'</span>, <span class="string">'Interpreter'</span>, <span class="string">'latex'</span>)
 ylabel(<span class="string">'$x_2$'</span>, <span class="string">'Interpreter'</span>, <span class="string">'latex'</span>)
-leg = legend(<span class="string">'Safe set'</span>,<span class="string">'Overapproximation'</span>, <span class="string">'Dyn. prog. soln.'</span>,<span class="keyword">...</span>
-    <span class="string">'Underapproximation'</span>);
+leg = legend(<span class="string">'Safe set'</span>,<span class="keyword">...</span>
+    <span class="string">'Overapproximation (Ell, support)'</span>,<span class="keyword">...</span>
+    <span class="string">'Overapproximation (Ell, VF)'</span>,<span class="keyword">...</span>
+     <span class="string">'Dyn. prog. soln.'</span>,<span class="keyword">...</span>
+    <span class="string">'Underapproximation (Ell, VF)'</span>,<span class="keyword">...</span>
+    <span class="string">'Underapproximation (Ell, support)'</span>);
 set(leg,<span class="string">'Location'</span>,<span class="string">'EastOutside'</span>);
 box <span class="string">on</span>;
 axis <span class="string">equal</span>;
-</pre><img vspace="5" hspace="5" src="dIntSReachSetLag_03.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2017b</a><br></p></div><!--
+axis <span class="string">tight</span>;
+
+figure(3);
+clf
+plot(safe_set, <span class="string">'color'</span>, <span class="string">'k'</span>);
+hold <span class="string">on</span>;
+plot(loSet(4), <span class="string">'color'</span>, <span class="string">'y'</span>,<span class="string">'alpha'</span>,1);
+plot(loSet(3), <span class="string">'color'</span>, <span class="string">'r'</span>,<span class="string">'alpha'</span>,0.5);
+plot(dyn_soln_lvl_set,<span class="string">'color'</span>, <span class="string">'b'</span>)
+plot(luSet(3), <span class="string">'color'</span>, <span class="string">'m'</span>,<span class="string">'alpha'</span>,1);
+plot(luSet(4), <span class="string">'color'</span>, <span class="string">'g'</span>,<span class="string">'alpha'</span>,0.75);
+hold <span class="string">off</span>;
+xlabel(<span class="string">'$x_1$'</span>, <span class="string">'Interpreter'</span>, <span class="string">'latex'</span>)
+ylabel(<span class="string">'$x_2$'</span>, <span class="string">'Interpreter'</span>, <span class="string">'latex'</span>)
+leg = legend(<span class="string">'Safe set'</span>,<span class="keyword">...</span>
+    <span class="string">'Overapproximation (Poly, support)'</span>,<span class="keyword">...</span>
+    <span class="string">'Overapproximation (Poly, VF)'</span>,<span class="keyword">...</span>
+     <span class="string">'Dyn. prog. soln.'</span>,<span class="keyword">...</span>
+    <span class="string">'Underapproximation (Poly, VF)'</span>,<span class="keyword">...</span>
+    <span class="string">'Underapproximation (Poly, support)'</span>);
+set(leg,<span class="string">'Location'</span>,<span class="string">'EastOutside'</span>);
+box <span class="string">on</span>;
+axis <span class="string">equal</span>;
+axis <span class="string">tight</span>;
+</pre><img vspace="5" hspace="5" src="dIntSReachSetLag_02.png" alt=""> <img vspace="5" hspace="5" src="dIntSReachSetLag_03.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2018b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Lagrangian Approximations for the Stochastic Reachability of a Target Tube
-% This example will demonstrate how to use the SReachTools toolbox to compute 
-% over and under approximations for the stochastic reachability of a target tube 
-% via Lagrangian methods.
+% This example will demonstrate the use of |SReachTools| for Lagrangian-based 
+% verification of stochastic continuous-state discrete-time linear
+% time-invariant (LTI) systems.  This example script is part of the
+% |SReachTools| toolbox, which is licensed under GPL v3 or (at your option) any
+% later version. A copy of this license is given in
+% <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+% https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
 % 
 %% Lagrangian Methods
 % Lagrangian methods perform computations with sets using operations like unions, 
 % intersection, Minkowski addition/differences, etc. This computation using set 
 % operations can be used to approximate (either over or under) the stochastic 
-% reachability of a target tube problem. We will demonstrate that this approach 
-% while being be approximative can outperform the current state-of-the-art <https://doi.org/10.1016/j.automatica.2010.08.006 
-% dynamic programming> solution in terms of computation time.
+% reachability of a target tube problem. We will demonstrate that this approach, 
+% while being be approximative, can outperform the current state-of-the-art
+% <https://doi.org/10.1016/j.automatica.2010.08.006 dynamic programming>
+% solution in terms of computation time.
 % 
 % Advantages:
 % 
 % * No gridding, which partially evades the curse of dimensionality
 % * Provides verification for closed-loop feedback strategies
+% * Synthesis of a closed-loop feedback strategy
 % 
 % Disadvantages:
 % 
 % * Using Polyhedral representation, must solve the vertex-facet enumeration 
 % problem, limiting computations to ~4 dimensional systems
-% * Does not provide an explicit control policy, only verifies the existence
 % 
 % The theory for this approach can be found in
 % 
-% * J. D. Gleason, A. P. Vinod, M. M. K. Oishi, "Underapproximation of Reach-Avoid 
-%   Sets for Discrete-Time Stochastic Systems via Lagrangian Methods," in Proceedings 
-%   of the IEEE Conference on Decision and Control, 2017. 
-% * J. D. Gleason, A. P. Vinod, M. M. K. Oishi, "Underapproximation of 
-%   Reach-Avoid Sets for Discrete-Time Stochastic Systems via Lagrangian 
-%   Methods," in Proceedings of the IEEE Conference on Decision and Control, 
-%   2017
-% 
-% This example is part of the SReachTools toolbox. License for the use 
-% of this function is given in <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE 
-% https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
-% 
+% * J. D. Gleason, A. P. Vinod, M. M. K. Oishi, "Underapproximation of
+%   Reach-Avoid Sets for Discrete-Time Stochastic Systems via Lagrangian
+%   Methods," in Proceedings of the IEEE Conference on Decision and Control,
+%   2017. 
+%
+% Further, we explore multiple implementations of the Lagrangian-based
+% verification, where the vertex-facet enumeration is mitigated either via
+% recursion-free support method in overapproximation or vertex-complexity
+% preserving support vector method in underapproximation.
+%
 
 % Prescript running: Initializing srtinit, if it already hasn't been initialized
 close all;clearvars;srtinit;srtinit REPLACE_WITH_DASH_DASHversion;
@@ -270,7 +686,7 @@ close all;clearvars;srtinit;srtinit REPLACE_WITH_DASH_DASHversion;
 % In this example we will look at the viability problem for a double integrator. 
 % The system dynamics are:
 % 
-% $$  x_{k+1} = \left[ \begin{array}{cc}    1 & T \\    0 & 1  \end{array}\right] 
+% $$  x_{k+1} = \left[ \begin{array}{cc}    1 & T \\   0 & 1  \end{array}\right] 
 % x_{k} + \left[\begin{array}{c}    \frac{T^{2}}{2} \\    T  \end{array}\right] 
 % u_{k} + w_{k}$$
 % 
@@ -304,10 +720,14 @@ target_tube = Tube('viability', safe_set, time_horizon);
 % probability threshold desired
 beta = 0.8;
 % Plotting of target tube
-figure()
+figure(1)
+clf
 hold on    
 for time_indx = 0:time_horizon
-    target_tube_at_time_indx = Polyhedron('H',[target_tube(time_indx+1).A,zeros(size(target_tube(time_indx+1).A,1),1), target_tube(time_indx+1).b], 'He',[0 0 1 time_indx]);
+    target_tube_at_time_indx = Polyhedron('H',...
+        [target_tube(time_indx+1).A, ...
+        zeros(size(target_tube(time_indx+1).A,1),1), ...
+        target_tube(time_indx+1).b], 'He',[0 0 1 time_indx]);
     plot(target_tube_at_time_indx, 'alpha',0.25);
 end
 axis([-1 1 -1 1 0 time_horizon]);    
@@ -318,62 +738,131 @@ ylabel('y');
 zlabel('time');
 title('Target tube');
 axis equal;
-%% Lagrangian approximation for stochastic reachability of a target tube
-% For the Lagrangian methods we compute robust and augmented effective target 
-% setsREPLACE_WITH_DASH_DASH-for the under and overapproximations, respectively. For this computation 
-% we need to convert the Gaussian disturbance into a bounded distrubance set which 
-% will satisfy the required conditions detailed in the aforementioned papers. 
-% We do this here for a an 0.8 probability with the given target tube.
-% 
-% There are several ways to create bounded disturbance sets. Here, we formulate 
-% a bounded disturbance by creating a polyhedral approximation of an ellipsoid 
-% through random direction choices.
-%%
-% bounded set for Lagrangian
-fprintf('Setting up options for lag-under with bound_set_method: ellipsoid\n');
+
+%% Lagrangian underapproximation for stochastic reachability of a target tube
+% |SReachSet| can compute Lagrangian underapproximation via multiple
+% approaches. It can approximate the disturbance set, against which the robust
+% computation is done, as a polytope or an ellipsoid (as specified by
+% |bound_set_method|). Further, it can either perform an exact (and
+% time-consuming) vertex-facet enumeration or an underapproximative (and
+% complexity-preserving) computation using support vectors (as specified by
+% |compute_style|). The vertex-facet enumeration may be performed by CDD or LRS,
+% two popular enumeration techinques. We use CDD by default, but it can be
+% switched to LRS using |vf_enum_method|.
+n_dim = sys.state_dim + sys.input_dim; % Require unit vectors to sample X x U
+lagrange_under_time = zeros(4,1);
+%% Underapprox. type 1: Bound_set_method - Ellipsoid | Compute_style - VFmethod
+% This is the best method in this case, since it leverages the fact that the
+% distubance is Gaussian and for two-dimensional polytopes, vertex-facet
+% enumeration is not significantly hard.
 timerVal=tic;
-n_dim = sys.state_dim + sys.input_dim;
-luOpts = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
+luOpts1 = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
+    'ellipsoid', 'verbose',1,'compute_style','vfmethod');
+luOpts_time(1) = toc(timerVal);
+timerVal=tic;
+luSet(1) = SReachSet('term', 'lag-under', sys, beta, target_tube, luOpts1);
+lagrange_under_time(1) = toc(timerVal);
+%% Underapprox. type 2: Bound_set_method - Ellipsoid | Compute_style - Support
+% Compared to type 1, this method will result in more conservative
+% solution. The benefit of this approach becomes clear when we use it in
+% high-dimensional systems where vertex-facet enumeration is hard. By the virtue
+% of being recursion-free, this approach will scale better than type 1.
+timerVal=tic;
+luOpts2 = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
     'ellipsoid', 'system', sys, 'n_underapprox_vertices', 2^n_dim*10+2*n_dim,...
-    'verbose',1);
-options_time = toc(timerVal);
+    'verbose',1,'compute_style','support');
+luOpts_time(2) = toc(timerVal);
 timerVal=tic;
-[luSet, extra_info] = SReachSet('term', 'lag-under', sys, 0.8, target_tube,...
-    luOpts);
-lagrange_under_time = toc(timerVal);
-
-%%
-tic;
-loOpts = SReachSetOptions('term', 'lag-over', 'bound_set_method', 'polytope',...
-    'verbose', 1, 'template_polytope',...
+luSet(2) = SReachSet('term', 'lag-under', sys, beta, target_tube, luOpts2);
+lagrange_under_time(2) = toc(timerVal);
+%% Underapprox. type 3: Bound_set_method - Polytope | Compute_style - VFmethod
+% Compared to type 1, this method will result in more conservative
+% solution since the bounded disturbance set is larger in volume. This approach
+% is best used when the disturbance is non-Gaussian. This approach is best used
+% when the disturbance is non-Gaussian.
+luOpts3 = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
+    'polytope', 'verbose', 1, 'compute_style','vfmethod','template_polytope',...
     Polyhedron('lb',-ones(sys.dist.dim,1),'ub',ones(sys.dist.dim,1)));
-loSet = SReachSet('term', 'lag-over', sys, 0.8, target_tube, loOpts);
-lagrange_over_time = toc();
-%% 
-% Now we can compute the Lagrangian under and overapproximations which we 
-% call the robust and augmented effective target sets
+luOpts_time(3) = toc(timerVal);
+timerVal=tic;
+luSet(3) = SReachSet('term', 'lag-under', sys, beta, target_tube, luOpts3);
+lagrange_under_time(3) = toc(timerVal);
+%% Underapprox. type 3: Bound_set_method - Polytope | Compute_style - Support
+% Compared to type 1, this method will result in more conservative
+% solution since the bounded disturbance set is larger in volume. Compared to
+% type 3, this set will be more conservative since an underapproximative
+% vertex-facet enumeration is performed.
+luOpts4 = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
+    'polytope', 'system', sys, 'n_underapprox_vertices', 2^n_dim*10+2*n_dim,...
+    'verbose', 1, 'compute_style','support', 'template_polytope',...
+    Polyhedron('lb',-ones(sys.dist.dim,1),'ub',ones(sys.dist.dim,1)));
+luOpts_time(4) = toc(timerVal);
+timerVal=tic;
+luSet(4) = SReachSet('term', 'lag-under', sys, beta, target_tube, luOpts4);
+lagrange_under_time(4) = toc(timerVal);
 
-% robust_eff_target = getRobustEffTarget(sys, target_tube, lag_bounded_set);
-% aug_eff_target    = getAugEffTarget(sys, target_tube, lag_bounded_set);
-%% 
-% Plotting these sets
+%% Lagrangian overapproximation for stochastic reachability of a target tube
+% |SReachSet| can compute Lagrangian overapproximation via multiple
+% approaches. It can approximate the disturbance set which augments the
+% input space as a polytope or an ellipsoid (as specified by
+% |bound_set_method|). Further, it can perform a recursive computation
+% using vertex-facet enumeration or a recursion-free computation using
+% support functions (as specified by |compute_style|). The vertex-facet
+% enumeration may be performed by CDD or LRS, two popular enumeration 
+% techinques. We use CDD by default, but it can be switched to LRS using
+% |vf_enum_method|.
+n_dim_over = sys.state_dim;     % Require unit vectors to sample X
+lagrange_over_time = zeros(4,1);
+%% Overapprox. type 1: Bound_set_method - Ellipsoid | Compute_style - VFmethod
+% This is the best method in this case, since it leverages the fact that the
+% distubance is Gaussian and for two-dimensional polytopes, vertex-facet
+% enumeration is not significantly hard.
+timerVal=tic;
+loOpts1 = SReachSetOptions('term', 'lag-over', 'bound_set_method', ...
+    'ellipsoid', 'verbose', 1, 'compute_style','vfmethod');
+loOpts_time(1) = toc(timerVal);
+timerVal=tic;
+loSet(1) = SReachSet('term', 'lag-over', sys, beta, target_tube, loOpts1);
+lagrange_over_time(1) = toc(timerVal);
+%% Overapprox. type 2: Bound_set_method - Ellipsoid | Compute_style - Support
+% Compared to type 1, this method will provide an overapproximative solution but
+% can potentially be faster since it is recursion-free.
+timerVal=tic;
+loOpts2 = SReachSetOptions('term', 'lag-over', 'bound_set_method', ...
+    'ellipsoid', 'verbose', 1, 'compute_style','support', 'system', sys,...
+    'n_underapprox_vertices', 2^n_dim_over * 7+2*n_dim_over);
+loOpts_time(2) = toc(timerVal);
+timerVal=tic;
+loSet(2) = SReachSet('term', 'lag-over', sys, beta, target_tube, loOpts2);
+lagrange_over_time(2) = toc(timerVal);
+%% Overapprox. type 3: Bound_set_method - Polytope | Compute_style - VFmethod
+% Compared to type 1, this method will result in more conservative
+% solution since the bounded disturbance set is larger in volume.
+timerVal=tic;
+loOpts3 = SReachSetOptions('term', 'lag-over', 'bound_set_method', ...
+    'polytope', 'verbose', 1, 'n_particles', 1e6, 'template_polytope',...
+    Polyhedron('lb',-ones(sys.dist.dim,1),'ub',ones(sys.dist.dim,1)),...
+    'compute_style','vfmethod');
+loOpts_time(3) = toc(timerVal);
+timerVal=tic;
+loSet(3) = SReachSet('term', 'lag-over', sys, beta, target_tube, loOpts3);
+lagrange_over_time(3) = toc(timerVal);
+%% Overapprox. type 4: Bound_set_method - Polytope | Compute_style - Support
+% Compared to type 1, this method will result in more conservative
+% solution since the bounded disturbance set is larger in volume. Compared to
+% type 3, this method will provide an overapproximative solution but can
+% potentially be faster since it is recursion-free.
+loOpts4 = SReachSetOptions('term', 'lag-over', 'bound_set_method', ...
+    'polytope', 'verbose', 1, 'template_polytope',...
+    Polyhedron('lb',-ones(sys.dist.dim,1),'ub',ones(sys.dist.dim,1)),...
+    'compute_style','support', 'system', sys,...
+    'n_underapprox_vertices', 2^n_dim_over* 7 +2*n_dim_over);
+loOpts_time(4) = toc(timerVal);
+timerVal=tic;
+loSet(4) = SReachSet('term', 'lag-over', sys, beta, target_tube, loOpts4);
+lagrange_over_time(4) = toc(timerVal);
+                   
 
-figure();
-plot(safe_set, 'color', 'k', 'alpha',1);
-hold on;
-plot(loSet, 'color', 'y');
-plot(luSet, 'color', 'g');
-hold off;
-xlabel('$x_1$', 'Interpreter', 'latex')
-ylabel('$x_2$', 'Interpreter', 'latex')
-box on;
-leg = legend('Safe set','Overapproximation','Underapproximation');
-set(leg,'Location','EastOutside');
-axis equal;
-%% 
-% Because of the choice or random directions for the ellipse |robust_eff_target| 
-% and |robust_target_2| are not exactly equivalent (same for the augmented sets). 
-% However they can be seen to be visually near identical.
 %% Dynamic programming solution
 % We compare the results with <https://doi.org/10.1016/j.automatica.2010.08.006 
 % dynamic programming> to see how the approximations appear and how they compare 
@@ -386,38 +875,89 @@ tic;
     dyn_prog_uinc, target_tube);
 dynprog_time = toc();
 %%
-% Compute the 0.8- stochastic level set
+% Compute the beta-stochastic level set
 %
-dyn_soln_lvl_set = getDynProgLevelSets2D(cell_of_xvec, prob_x, 0.8, target_tube);
-%% Simulation times REPLACE_WITH_DASH_DASH- Lagrangian approximation is much faster than dynamic programming
-% The simulation times for Lagrangian computation is much faster than dynamic 
-% programming, even when the former computes both an underapproximation and an 
-% overapproximation.
+dyn_soln_lvl_set=getDynProgLevelSets2D(cell_of_xvec, prob_x, beta, target_tube);
+%% Simulation times: Lagrangian approximation beats dynamic programming 
+% The simulation times for Lagrangian computation is much faster (in most
+% cases) than dynamic programming. Further, dynamic programming solution
+% provides no approximation guarantees while Lagrangian approach provides
+% grid-free approximation guarantee.
 %%
 fprintf('Simulation times [seconds]:\n');
 fprintf(' Lagrangian:\n');
-fprintf('   Overapproximation  : %.3f\n', lagrange_over_time);
-fprintf('   Underapproximation : %.3f (online: %1.3f | offline: %1.3f)\n',...
-    lagrange_under_time + options_time, lagrange_under_time, options_time);
+% fprintf('   Overapproximation  : %.3f (online: %1.3f | offline: %1.3f)\n',...
+%     lagrange_over_time + loOpts_time, lagrange_over_time, loOpts_time);
+fprintf('   Overapproximation   online  |  offline | Total\n');
+fprintf('(Ellipsoid,VFmethod)  %1.2e | %1.2e | %1.2f\n',...
+    lagrange_over_time(1),loOpts_time(1),lagrange_over_time(1)+loOpts_time(1));
+fprintf('(Ellipsoid, support)  %1.2e | %1.2e | %1.2f\n',...
+    lagrange_over_time(2),loOpts_time(2),lagrange_over_time(2)+loOpts_time(2));
+fprintf('(Polytope ,VFmethod)  %1.2e | %1.2e | %1.2f\n',...
+    lagrange_over_time(3),loOpts_time(3),lagrange_over_time(3)+loOpts_time(3));
+fprintf('(Polytope , support)  %1.2e | %1.2e | %1.2f\n',...
+    lagrange_over_time(4),loOpts_time(4),lagrange_over_time(4)+loOpts_time(4));
+fprintf('   Underapproximation  online  |  offline | Total\n');
+fprintf('(Ellipsoid,VFmethod)  %1.2e | %1.2e | %1.2f\n',...
+    lagrange_under_time(1),luOpts_time(1),lagrange_under_time(1)+luOpts_time(1));
+fprintf('(Ellipsoid, support)  %1.2e | %1.2e | %1.2f\n',...
+    lagrange_under_time(2),luOpts_time(2),lagrange_under_time(2)+luOpts_time(2));
+fprintf('(Polytope ,VFmethod)  %1.2e | %1.2e | %1.2f\n',...
+    lagrange_under_time(3),luOpts_time(3),lagrange_under_time(3)+luOpts_time(3));
+fprintf('(Polytope , support)  %1.2e | %1.2e | %1.2f\n',...
+    lagrange_under_time(4),luOpts_time(4),lagrange_under_time(4)+luOpts_time(4));
 fprintf('   Dynamic programming: %.3f\n', dynprog_time);
+
 %% Plotting all the sets together
 % As expected, the over-approximation and the under-approximation obtained via 
 % Lagrangian approach bounds the dynamic programming solution from "inside" and 
 % "outside".
 %%
-figure();
-plot(safe_set, 'color', 'k', 'alpha',1);
+figure(2);
+clf
+plot(safe_set, 'color', 'k');
 hold on;
-plot(loSet, 'color', 'y');
+plot(loSet(2), 'color', 'y','alpha',1);
+plot(loSet(1), 'color', 'r','alpha',0.5);
 plot(dyn_soln_lvl_set,'color', 'b')
-plot(luSet, 'color', 'g');
+plot(luSet(1), 'color', 'm','alpha',1);
+plot(luSet(2), 'color', 'g','alpha',0.75);
 hold off;
 xlabel('$x_1$', 'Interpreter', 'latex')
 ylabel('$x_2$', 'Interpreter', 'latex')
-leg = legend('Safe set','Overapproximation', 'Dyn. prog. soln.',...
-    'Underapproximation');
+leg = legend('Safe set',...
+    'Overapproximation (Ell, support)',...
+    'Overapproximation (Ell, VF)',...
+     'Dyn. prog. soln.',...
+    'Underapproximation (Ell, VF)',...
+    'Underapproximation (Ell, support)');
 set(leg,'Location','EastOutside');
 box on;
 axis equal;
+axis tight;
+
+figure(3);
+clf
+plot(safe_set, 'color', 'k');
+hold on;
+plot(loSet(4), 'color', 'y','alpha',1);
+plot(loSet(3), 'color', 'r','alpha',0.5);
+plot(dyn_soln_lvl_set,'color', 'b')
+plot(luSet(3), 'color', 'm','alpha',1);
+plot(luSet(4), 'color', 'g','alpha',0.75);
+hold off;
+xlabel('$x_1$', 'Interpreter', 'latex')
+ylabel('$x_2$', 'Interpreter', 'latex')
+leg = legend('Safe set',...
+    'Overapproximation (Poly, support)',...
+    'Overapproximation (Poly, VF)',...
+     'Dyn. prog. soln.',...
+    'Underapproximation (Poly, VF)',...
+    'Underapproximation (Poly, support)');
+set(leg,'Location','EastOutside');
+box on;
+axis equal;
+axis tight;
+
 ##### SOURCE END #####
 --></body></html>

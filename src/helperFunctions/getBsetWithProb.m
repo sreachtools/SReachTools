@@ -109,11 +109,14 @@ function bounded_set = getBsetWithProb(dist, polytope, prob_threshold,...
         end      
     end
     
-    bounded_set = bisection_lb * polytope;
+    bounded_set = bisection_ub * polytope;
     
-    test_prob = dist.getProbPolyhedron(bounded_set, 1e5);
+    test_prob = dist.getProbPolyhedron(bounded_set, 1e6);
     
-    if abs(test_prob - prob_threshold) > 1e-2
-        throw(SrtInvalidArgsError('Provided too low a n_particles'));
+    if prob_threshold > test_prob + 1e-2 
+        throw(SrtInvalidArgsError(sprintf(['Validation via a fresh set of ',...
+            'samples (1e6) showed a variation greater than 0.01 (required ',...
+            '>=%1.2f, and obtained %1.2f). Increasing n_particles should ',...
+            'help.'], test_prob, prob_threshold)));
     end
 end

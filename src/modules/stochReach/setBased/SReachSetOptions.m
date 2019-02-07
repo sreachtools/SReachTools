@@ -327,8 +327,10 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
                 (exist('vertexreduction','file') == 3))
                 % Throw an error stating LRS is not in path, which prevents use
                 % of this options
-                throw(SrtInvalidArgsError(['GeoCalcLib (MATLAB interface',...
-                    ' to Avis''s LRS library) is not installed correctly.']));
+                warning('SReachTools:setup', ['GeoCalcLib (MATLAB interface',...
+                    ' to Avis''s LRS library) is not installed correctly.',...
+                    ' Switching to CDDMEX.']);
+                options.vf_enum_method = 'cdd';
             end
         end
         if strcmpi(options.compute_style,'support') 
@@ -376,7 +378,8 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
                         ' a Polyhedron object that contains 0 as input ', ...
                         'for bound_set_method: polytope']));
                 end
-            case 'ellipsoid'        
+            case 'ellipsoid'
+                % Nothing to enforce                
         end        
     elseif strcmpi(method_str,'chance-open') || ...
            strcmpi(method_str,'genzps-open')
