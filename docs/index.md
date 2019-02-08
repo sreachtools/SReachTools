@@ -175,18 +175,22 @@ This will disable some of the features of SReachTools or hamper performance.
     1. Install the CVX (Standard bundle, including Gurobi and/or MOSEK)
     1. Installation instructions are given in
        [http://cvxr.com/cvx/download/](http://cvxr.com/cvx/download/).
+    1. No license is required, if you do not plan on using Gurobi (see next step). See [http://web.cvxr.com/cvx/doc/intro.html#licensing](http://web.cvxr.com/cvx/doc/intro.html#licensing) for more details.
 1. (**Optional**) Gurobi --- recommended backend solver for the convex programs
-   formulated by SReachTools and a requirement for all particle-based approaches
+   formulated by SReachTools and required for all particle-based approaches
    in `SReachPoint`. We also find both CVX and MPT3 perform much better with
    Gurobi.
-    1. Requires two licenses, both free for academia
-        1. Gurobi offers free academic license. For more details, see
+    1. CVX works best with Gurobi v7.5.2. See installation details:
+       http://web.cvxr.com/cvx/doc/gurobi.html#gurobi        
+    1. To use Gurobi with CVX, we requires two licenses (one for CVX and one for
+       Gurobi). Both of these license are free for non-commercial academic
+       research.
+        1. Gurobi offers free academic license, which can be requested at
            [http://www.gurobi.com/registration/download-reg](http://www.gurobi.com/registration/download-reg).
-        1. CVX requires a professional license to use Gurobi. CVX Research Inc.
-           provides free academic license, which can be requested at
+        1. CVX provides free academic license, which can be requested at
            [http://cvxr.com/cvx/academic/](http://cvxr.com/cvx/academic/).
-    1. MPT3 will automatically update its backend solver to Gurobi, when gurobi
-       is in the path and the license is found.
+    1. MPT3 will automatically update its backend solver to Gurobi, when Gurobi
+       is installed as a standalone and the license is found.
 1. (**Optional**) [GeoCalcLib](https://github.com/worc4021/GeoCalcLib) --- a
    MATLAB interface to Avis's [LRS vertex-facet enumeration
    library](http://cgm.cs.mcgill.ca/~avis/C/lrs.html), an alternative to MPT's

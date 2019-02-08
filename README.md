@@ -82,8 +82,11 @@ This will disable some of the features of SReachTools or hamper performance.
    formulated by SReachTools and required for all particle-based approaches
    in `SReachPoint`. We also find both CVX and MPT3 perform much better with
    Gurobi.
-    1. CVX works best with Gurobi v7.5.2. See installation details: http://web.cvxr.com/cvx/doc/gurobi.html#gurobi        
-    1. To use Gurobi with CVX, we requires two licenses (one for CVX and one for Gurobi). Both of these license are free for non-commercial academic research.
+    1. CVX works best with Gurobi v7.5.2. See installation details:
+       http://web.cvxr.com/cvx/doc/gurobi.html#gurobi        
+    1. To use Gurobi with CVX, we requires two licenses (one for CVX and one for
+       Gurobi). Both of these license are free for non-commercial academic
+       research.
         1. Gurobi offers free academic license, which can be requested at
            [http://www.gurobi.com/registration/download-reg](http://www.gurobi.com/registration/download-reg).
         1. CVX provides free academic license, which can be requested at
