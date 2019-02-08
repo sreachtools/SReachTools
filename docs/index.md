@@ -3,77 +3,16 @@ layout: home
 title: "Stochastic Reachability Toolbox"
 ---
 
+{% include news.html %}
+
+## About
+
 SReachTools is an open-source MATLAB Toolbox for performing stochastic
 verification and controller synthesis.  The authors of this toolbox are [Abraham
 P.  Vinod](http://www.unm.edu/~abyvinod/) and [Joseph D.
 Gleason](http://www.unm.edu/~gleasonj/). The authors are PhD advisees of [Prof.
 Meeko Oishi](http://www.unm.edu/~oishi/). We had our first stable release of
 this toolbox on [October, 2018](./jekyll/update/2018/10/22/release-of-v1.html).
-
-
-
-- What does SReachTools do? 
-    - SReachTools provides *safety and performance guarantees* for linear
-      time-varying or time-invariant systems with additive
-      Gaussian or non-Gaussian stochastic disturbance.
-    - SReachTools can construct a set of safe initial states that
-      probabilistically satisfy some specification (*verification*) and design
-      controllers that achieve these specifications while satisfying soft/hard
-      control bounds (*controller synthesis*). 
-    - SReachTools obtains tractable solutions to these problems by exploiting
-      convex optimization, Fourier transforms, and computational geometry.
-    - See a more detailed answer [below](#what-does-sreachtools-do).
-- Can you show me some examples of SReachTools working? 
-    - We have cataloged a number of
-      [examples](https://unm-hscl.github.io/SReachTools/examples/) implemented
-      using SReachTools. These examples are also available as part of the source
-      code of SReachTools, see `examples/*.m`. 
-- How do I install this toolbox? What are the dependencies?
-    - Our [quick start guide](#quick-start-guide), described further
-      down this page, walks through the installation process.
-- Where do I get the source code from?
-    - See our [Github repository](https://github.com/unm-hscl/SReachTools), or
-      our [release page](https://github.com/unm-hscl/SReachTools/releases) for
-      zip files. 
-- Can I contribute to this toolbox?
-    - Of course, we welcome pull requests. See [Contributing guidelines](contributing/). 
-- Where do I ask questions or give feedback? 
-    - Use our [Google groups](https://groups.google.com/d/forum/sreachtools) or
-      the [Github issues](https://github.com/unm-hscl/SReachTools/issues) page.
-- How can I use this toolbox? What are the terms and conditions to follow to use
-  SReachTools?
-    - SReachTools is licensed under [GNU General Public License
-      v3](https://www.gnu.org/licenses/), or (at your option) any later version.
-      See our [License](license/).
-    - If this toolbox comes handy in your research, please consider citing our
-      toolpaper. A copy of this paper is [available in the
-      repository](https://github.com/unm-hscl/SReachTools/raw/master/SReachTools.pdf).
-    - IEEE citation style
-    ```
-A. P. Vinod, J. D. Gleason, and M. M. K. Oishi. SReachTools: A MATLAB
-Stochastic Reachability Toolbox. In Proceedings of the  International
-Conference on Hybrid Systems: Computation and Control, Montreal, Canada,
-April 16--18, 2019.  https://unm-hscl.github.io/SReachTools/ (accepted).
-    ```
-    - BibTeX entry for use in LaTeX with `\usepackage{url}`: 
-      ```
-@misc{SReachTools,
-  author={Vinod, Abraham P. and Gleason, Joseph D. and Oishi, Meeko M.
-  K.},
-  title={ {S}{R}each{T}ools: A {MATLAB} {S}tochastic {R}eachability
-  {T}oolbox},
-  booktitle={Proceedings of the International Conference on Hybrid
-Systems: Computation and Control},
-  year={2019},
-  address={Montreal, Canada},
-  month={April 16--18},
-  note = {\url{https://unm-hscl.github.io/SReachTools/} (accepted)}
-}
-      ```
-
-{% include news.html %}
-
-## What does SReachTools do?
 
 SReachTools focuses on the problem of stochastic reachability of a target
 tube[^TAC2018_verification] --- Construct **controllers** and characterize the
@@ -126,125 +65,81 @@ programming approach. Among these techniques, Lagrangian and particle control
 (along with Voronoi-based extensions) can handle arbitrary disturbances.
 
 SReachTools also provides APIs to analyze the forward stochastic reachability
-problem[^HSCC2017_Fwd] using Genz's algorithm [^GenzAlgorithm]. 
+problem[^HSCC2017_Fwd] using Genz's algorithm [^GenzAlgorithm].
 
-## Summary of features in SReachTools
+## Some Questions Answered 
 
-The following table[^table_ack] summarizes the features in SReachTools.
+### \# What does SReachTools do? 
 
-|    Function   |   method-str  |                                                       Utility                                                       | Notes                                      |
-|:-------------:|:---------------:|:-------------------------------------------------------------------------------------------------------------------:|--------------------------------------------|
-| `SReachPoint` |                 |          **Approximation of the maximal reach  probability for a target tube from  a given initial state** [^TAC2018_verification]         | **Synthesize open-loop or affine disturbance feedback controllers** |
-|               |  `chance-open`  |                                            Guaranteed underapproximation [^CDC2013_Lesser]<sup>,</sup>  [^CDC2019_chance]                                             | Open-loop                                  |
-|               |  `genzps-open`  |                                  Approximate up to \\( \\epsilon\_\\mathrm{genz}\\), a user-specified quadrature error tolerance [^CSSL2017_genzps]                                 | Open-loop                                  |
-|               | `particle-open` |                        Approximate with quality proportional  to the number of particles used [^CDC2013_Lesser]                     | Open-loop                                  |
-|               |  `voronoi-open` |                          Probabilistically enforced upper  bound on overapproximation error  [^ACC2019_Voronoi]                          | Open-loop                                  |
-|               | `chance-affine` |                                            Guaranteed underapproximation  [^CDC2019_chance]                                            | Affine   disturbance-feedback              |
-|  `SReachSet`  |                 |  **Polytopic approximation of the stochastic  reach sets for the stochastic reachabilty  of a target tube problem**[^TAC2018_verification]<sup>,</sup>[^HSCC2018_cvxcmpt] | **Synthesize open-loop controllers in some cases** |
-|               |  `chance-open`  |                                            Guaranteed underapproximation  [^TAC2018_verification]                                           | Optimal  open-loop controllers at vertices |
-|               |  `genzps-open`  |                                 Approximation up to \\( \\epsilon\_\\mathrm{genz}\\), a user-specified quadrature error tolerance  [^TAC2018_verification]<sup>,</sup>[^HSCC2018_cvxcmpt]                                | Optimal  open-loop controllers at vertices |
-|               |   `lag-under`   |                                            Guaranteed underapproximation [^CDC2017_Lagrangian]                                            |                                            |
-|               |    `lag-over`   |                                             Guaranteed overapproximation [^CDC2017_Lagrangian]                                            |                                            |
-|  `SReachFwd`  |                 |      **Forward stochastic reachability analysis of an uncontrolled LTI/LTV system from a given initial state** [^HSCC2017_Fwd]<sup>,</sup>[^GenzAlgorithm]    |                                            |
-|               |  `state-stoch`  |                                     Stochasticity of the state at a future time                                     |                                            |
-|               |  `concat-stoch` |                     Stochasticity of the concatenated state vector up to a specified future time                    |                                            |
-|               | `state-prob`    | Probability that the concatenated state vector (trajectory) up to a future time will lie in a given target tube set [^GenzAlgorithm] |                                            |
-|               | `concat-prob`   | Probability that the state at a future time will lie in a given target set [^GenzAlgorithm]                                          |                                            |
-|  `SReachDyn`  |                 |              **Dynamic programming approximation of the maximal reach probability and the reach  set**              |  **Analyze 2D and 3D LTI/LTV systems**     |
+SReachTools performs various calculations for stochastic reachability problems
+which provide guarantees on safety and performance for linear time-varying
+(or time-invariant) systems with additive disturbances. SReachTools can 
+determine the set of initial states that has achieves the reachability objective
+with a certain probabilitic specification (verification) and design controllers
+that can achieve the objective given soft or hard control bounds (controller
+synthesis). 
 
-## Quick start guide
+Our toolbox uses state-of-the-art algorithms for solving these problems in a 
+computationally tractable manner. 
 
-### Dependencies
+### \# Can you show me some examples of SReachTools working? 
+We have cataloged a number of
+[examples](examples/) implemented
+using SReachTools. These examples are also available as part of the source
+code of SReachTools, see `examples/`.
 
-You can skip installing the dependencies marked **optional**.
-This will disable some of the features of SReachTools or hamper performance.
-1. MATLAB (>2017a)
-    1. Toolboxes
-        1. MATLAB's Statistics and Machine Learning Toolbox
-        1. (**Optional**) MATLAB's Global Optimization Toolbox --- required for
-           `genzps-open` options in `SReachPoint` and `SReachSet`
-        1. (**Optional**) MATLAB's Optimization Toolbox --- recommended
-           installation for MATLAB's Global Optimization Toolbox
-1. MPT3 ([https://www.mpt3.org/](https://www.mpt3.org/)) --- for polytopic
-   computational geometry
-    1. Copy the MATLAB script [install_mpt3.m](https://www.mpt3.org/Main/Installation?action=download&upname=install_mpt3.m)
-       provided by MPT3 from the browser, and run it in MATLAB to automatically
-       download MPT3 and its dependencies.
-1. CVX v2.1 ([http://cvxr.com/cvx/](http://cvxr.com/cvx/)) --- for
-       parsing convex and mixed-integer programs
-    1. Install the CVX (Standard bundle, including Gurobi and/or MOSEK)
-    1. Installation instructions are given in
-       [http://cvxr.com/cvx/download/](http://cvxr.com/cvx/download/).
-    1. No license is required, if you do not plan on using Gurobi (see next step). See [http://web.cvxr.com/cvx/doc/intro.html#licensing](http://web.cvxr.com/cvx/doc/intro.html#licensing) for more details.
-1. (**Optional**) Gurobi --- recommended backend solver for the convex programs
-   formulated by SReachTools and required for all particle-based approaches
-   in `SReachPoint`. We also find both CVX and MPT3 perform much better with
-   Gurobi.
-    1. CVX works best with Gurobi v7.5.2. See installation details:
-       http://web.cvxr.com/cvx/doc/gurobi.html#gurobi        
-    1. To use Gurobi with CVX, we requires two licenses (one for CVX and one for
-       Gurobi). Both of these license are free for non-commercial academic
-       research.
-        1. Gurobi offers free academic license, which can be requested at
-           [http://www.gurobi.com/registration/download-reg](http://www.gurobi.com/registration/download-reg).
-        1. CVX provides free academic license, which can be requested at
-           [http://cvxr.com/cvx/academic/](http://cvxr.com/cvx/academic/).
-    1. MPT3 will automatically update its backend solver to Gurobi, when Gurobi
-       is installed as a standalone and the license is found.
-1. (**Optional**) [GeoCalcLib](https://github.com/worc4021/GeoCalcLib) --- a
-   MATLAB interface to Avis's [LRS vertex-facet enumeration
-   library](http://cgm.cs.mcgill.ca/~avis/C/lrs.html), an alternative to MPT's
-   preferred approach for vertex-facet enumeration,
-   [CDD](https://www.inf.ethz.ch/personal/fukudak/cdd_home/index.html).
+### \# How do I install this toolbox? What are the dependencies?
 
-    {% include important-note.html content="GeoCalcLib currently works only Unix
-    and MAC OS.  SReachTools will gracefully switch back to CDD, if installation
-    of GeoCalcLib is not correct." %}
+Our [installation page](installation/) walks through the installation process.
 
-    1. Download the zip file from
-       [https://github.com/worc4021/GeoCalcLib/archive/master.zip](https://github.com/worc4021/GeoCalcLib/archive/master.zip).
-    1. Extract the contents of this zip file to a desired location, whose full path is referred to here as `/path/to/GeoCalcLib`
-    1. Open a terminal and change directory to GeoCalcLib by `$cd /path/to/GeoCalcLib`. We will refer to this location as the GeoCalcLib root folder.
-    1. Create a folder `mexfiles` in GeoCalcLib root folder. 
-    1. Create a file named `User.make` in GeoCalcLib root folder using your
-       favorite editor with the following contents, and save it. See
-       [https://www.mathworks.com/matlabcentral/answers/66570-what-is-the-default-installation-path-for-matlab-on-architecture-x#answer_78163](https://www.mathworks.com/matlabcentral/answers/66570-what-is-the-default-installation-path-for-matlab-on-architecture-x#answer_78163)
-       for hints on how to identify your matlab root folder for your OS.
-        ```
-        # Specify the absolute path to the root folder of your Matlab
-        # installation where <FULL-PATH-TO-YOUR-MATLAB-INSTALLATION>/bin/mex
-        # exists
-        MATLABROOT = <FULL-PATH-TO-YOUR-MATLAB-INSTALLATION>
-        
-        # Path to which everything should be installed
-        INSTALLDIR = ../mexfiles/
-        ```
-    1. In the command prompt in GeoCalcLib root folder, execute `$ make`.
-    1. Add `/path/to/GeoCalcLib/mexfiles` to MATLAB path. If you want to use
-       this across sessions, we recommend adding the following command to
-       your MATLAB startup.
+### \# Where do I get the source code from?
+
+See our [Github repository](https://github.com/unm-hscl/SReachTools), or
+our [release page](https://github.com/unm-hscl/SReachTools/releases) for
+zip files. 
+
+### \# Can I contribute to this toolbox?
+
+Of course, we welcome contributions. See [Contributing guidelines](contributing/). 
+
+### \# Where do I ask questions or give feedback?
+
+We prefer feedback be given on our 
+[Github issues](https://github.com/unm-hscl/SReachTools/issues) page because it
+allows for better tracking. However if you are unable to access the issues page
+for any reason, you can also contact us via our 
+[Google groups](https://groups.google.com/d/forum/sreachtools) page.
+
+### \# How can I use this toolbox? What are the terms and conditions to follow to use SReachTools?
+SReachTools is licensed under [GNU General Public License
+v3](https://www.gnu.org/licenses/), or (at your option) any later version.
+See our [License](license/).
+
+If this toolbox comes handy in your research, please consider citing our
+work. A copy of this paper is [available in the
+repository](https://github.com/unm-hscl/SReachTools/raw/master/SReachTools.pdf).
+
+IEEE citation style:
+
+A. P. Vinod, J. D. Gleason, and M. M. K. Oishi. "SReachTools: A MATLAB
+Stochastic Reachability Toolbox," In Proceedings of the  International
+Conference on Hybrid Systems: Computation and Control, Montreal, Canada,
+April 16--18, 2019.  https://unm-hscl.github.io/SReachTools/ (accepted).
+    
+BibTeX entry for use in LaTeX with `\usepackage{url}`: 
 ```
-addpath('/path/to/GeoCalcLib/mexfiles');
+@misc{SReachTools,
+    author    = {Vinod, Abraham P. and Gleason, Joseph D. and Oishi, Meeko M. K.},
+    title     = {{ '{' }}{S}{R}each{T}ools: A {MATLAB} {S}tochastic {R}eachability {T}oolbox},
+    booktitle = {Proceedings of the International Conference on Hybrid Systems: Computation and Control},
+    year      = {2019},
+    address   = {Montreal, Canada},
+    month     = {April 16--18},
+    note      = {\url{https://unm-hscl.github.io/SReachTools/} (accepted)}
+}
 ```
 
-### Installation
 
-1. Install the necessary dependencies listed above
-1. Clone the SReachTools repository (or download the latest zip file from
-   [Releases](https://github.com/unm-hscl/SReachTools/releases))
-1. Change the MATLAB current working directory to where SReachTools was
-   downloaded. 
-   {% include important-note.html content="Do not add the SReachTools folder to the path manually." %}
-1. Run `srtinit` in MATLAB to add the toolbox to the paths and ensure all
-   must-have dependencies are properly installed.
-   - You can add `cd <path_to_sreachtools_repo>;srtinit` to your MATLAB's
-     `startup.m` to automatically have this done in future.
-   - (**Optional**) Additional steps:
-       - Run `srtinit -t` to run all the unit tests.
-       - Run `srtinit -v` to visualize the steps the changes to the path and
-         check for recommended dependencies.  
-       - Run `srtinit -x` to remove functions of SReachTools from MATLAB's path
-         after use.  
 
 ------
 [^TAC2018_verification]: A. Vinod and M. Oishi, "[Stochastic reachability of a target tube:  Theory and computation](https://arxiv.org/pdf/1810.05217.pdf)", submitted to IEEE Transactions of Automatic Control, 2018 (submitted).
@@ -258,5 +153,5 @@ addpath('/path/to/GeoCalcLib/mexfiles');
 [^Automatica_Abate]: A. Abate, M. Prandini, J. Lygeros, and S. Sastry, "[Probabilistic reachability and safety for controlled discrete time stochastic hybrid systems](https://doi.org/10.1016/j.automatica.2008.03.027)," Automatica, 2008.
 [^HSCC2017_Fwd]:  A. Vinod, B. HomChaudhuri, and M. Oishi, "[Forward Stochastic Reachability Analysis for Uncontrolled Linear Systems using Fourier Transforms](https://dl.acm.org/citation.cfm?doid=3049797.3049818)", in Proceedings of the 20th International Conference on Hybrid Systems: Computation and Control (HSCC), pp. 35-44, 2017. 
 [^GenzAlgorithm]: A. Genz, "[Quadrature of a multivariate normal distribution over a region specified by linear inequalities: QSCMVNV](http://www.math.wsu.edu/faculty/genz/software/matlab/qscmvnv.m)", 2014. 
-[^table_ack]: This table was generated using [https://www.tablesgenerator.com/markdown_tables#](https://www.tablesgenerator.com/markdown_tables#).
+
 
