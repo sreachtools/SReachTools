@@ -4,10 +4,15 @@ title: "Stochastic Reachability Toolbox"
 ---
 
 SReachTools is an open-source MATLAB Toolbox for performing stochastic
-verification and controller synthesis. We had our first stable release of this
-toolbox on [October, 2018](./jekyll/update/2018/10/22/release-of-v1.html).
+verification and controller synthesis.  The authors of this toolbox are [Abraham
+P.  Vinod](http://www.unm.edu/~abyvinod/) and [Joseph D.
+Gleason](http://www.unm.edu/~gleasonj/). The authors are PhD advisees of [Prof.
+Meeko Oishi](http://www.unm.edu/~oishi/). We had our first stable release of
+this toolbox on [October, 2018](./jekyll/update/2018/10/22/release-of-v1.html).
 
-- What can SReachTools do? 
+
+
+- What does SReachTools do? 
     - SReachTools provides *safety and performance guarantees* for linear
       time-varying or time-invariant systems with additive
       Gaussian or non-Gaussian stochastic disturbance.
@@ -17,6 +22,7 @@ toolbox on [October, 2018](./jekyll/update/2018/10/22/release-of-v1.html).
       control bounds (*controller synthesis*). 
     - SReachTools obtains tractable solutions to these problems by exploiting
       convex optimization, Fourier transforms, and computational geometry.
+    - See a more detailed answer [below](#what-does-sreachtools-do).
 - Can you show me some examples of SReachTools working? 
     - We have cataloged a number of
       [examples](https://unm-hscl.github.io/SReachTools/examples/) implemented
@@ -29,30 +35,41 @@ toolbox on [October, 2018](./jekyll/update/2018/10/22/release-of-v1.html).
     - See our [Github repository](https://github.com/unm-hscl/SReachTools), or
       our [release page](https://github.com/unm-hscl/SReachTools/releases) for
       zip files. 
-- How can I use this toolbox? What are the terms and conditions to follow to use
-  SReachTools?
-    - SReachTools is licensed under [GNU General Public License
-      v3](https://www.gnu.org/licenses/), or (at your option) any later version.
-      See our [License](license/).
 - Can I contribute to this toolbox?
     - Of course, we welcome pull requests. See [Contributing guidelines](contributing/). 
 - Where do I ask questions or give feedback? 
     - Use our [Google groups](https://groups.google.com/d/forum/sreachtools) or
       the [Github issues](https://github.com/unm-hscl/SReachTools/issues) page.
-
-The authors of this toolbox are [Abraham P.
-Vinod](http://www.unm.edu/~abyvinod/) and [Joseph D.
-Gleason](http://www.unm.edu/~gleasonj/). Please cite their [relevant
-papers](https://scholar.google.com/citations?user=yb5Z7AwAAAAJ&hl=en) when using
-the toolbox. The authors are PhD advisees of [Prof. Meeko
-Oishi](http://www.unm.edu/~oishi/).
-
-{% include important-note.html content="Our tool paper, describing the features
-of SReachTools, was accepted to the *22nd ACM International Conference on Hybrid
-Systems: Computation and Control*.  A copy of this submission is [available in
-the
-repository](https://github.com/unm-hscl/SReachTools/raw/master/SReachTools.pdf)."
-%}
+- How can I use this toolbox? What are the terms and conditions to follow to use
+  SReachTools?
+    - SReachTools is licensed under [GNU General Public License
+      v3](https://www.gnu.org/licenses/), or (at your option) any later version.
+      See our [License](license/).
+    - If this toolbox comes handy in your research, please consider citing our
+      toolpaper. A copy of this paper is [available in the
+      repository](https://github.com/unm-hscl/SReachTools/raw/master/SReachTools.pdf).
+    - IEEE citation style
+    ```
+A. P. Vinod, J. D. Gleason, and M. M. K. Oishi. SReachTools: A MATLAB
+Stochastic Reachability Toolbox. In Proceedings of the  International
+Conference on Hybrid Systems: Computation and Control, Montreal, Canada,
+April 16--18, 2019.  https://unm-hscl.github.io/SReachTools/ (accepted).
+    ```
+    - BibTeX entry for use in LaTeX with `\usepackage{url}`: 
+      ```
+@misc{SReachTools,
+  author={Vinod, Abraham P. and Gleason, Joseph D. and Oishi, Meeko M.
+  K.},
+  title={ {S}{R}each{T}ools: A {MATLAB} {S}tochastic {R}eachability
+  {T}oolbox},
+  booktitle={Proceedings of the International Conference on Hybrid
+Systems: Computation and Control},
+  year={2019},
+  address={Montreal, Canada},
+  month={April 16--18},
+  note = {\url{https://unm-hscl.github.io/SReachTools/} (accepted)}
+}
+      ```
 
 {% include news.html %}
 
