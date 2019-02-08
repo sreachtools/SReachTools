@@ -47,11 +47,12 @@ papers](https://scholar.google.com/citations?user=yb5Z7AwAAAAJ&hl=en) when using
 the toolbox. The authors are PhD advisees of [Prof. Meeko
 Oishi](http://www.unm.edu/~oishi/).
 
-We have submitted a tool paper describing the features of SReachTools to the
-*22nd ACM International Conference on Hybrid Systems: Computation and Control
-summarizing the features of SReachTools*. A copy of this submission is
-[available in the
-repository](https://github.com/unm-hscl/SReachTools/raw/master/SReachTools.pdf).
+{% include important-note.html content="Our tool paper, describing the features
+of SReachTools, was accepted to the *22nd ACM International Conference on Hybrid
+Systems: Computation and Control*.  A copy of this submission is [available in
+the
+repository](https://github.com/unm-hscl/SReachTools/raw/master/SReachTools.pdf)."
+%}
 
 {% include news.html %}
 
@@ -92,7 +93,7 @@ of a target tube problem**
 (time-varying or time-invariant) systems.  SReachTools can construct polytopic
 (over- and under-) approximations and (open-loop and affine) controller
 synthesis for this problem.  Our solution techniques include:
-1. chance-constrained approaches[^CDC2013_Lesser]<sup>,</sup>[^HSCC2019_chance],
+1. chance-constrained approaches[^CDC2013_Lesser]<sup>,</sup>[^CDC2019_chance],
 1. Fourier transforms[^CSSL2017_genzps], 
 1. particle control (and Voronoi partition-based undersampling)
    [^CDC2013_Lesser]<sup>,</sup>[^ACC2019_Voronoi], 
@@ -117,12 +118,11 @@ The following table[^table_ack] summarizes the features in SReachTools.
 |    Function   |   method-str  |                                                       Utility                                                       | Notes                                      |
 |:-------------:|:---------------:|:-------------------------------------------------------------------------------------------------------------------:|--------------------------------------------|
 | `SReachPoint` |                 |          **Approximation of the maximal reach  probability for a target tube from  a given initial state** [^TAC2018_verification]         | **Synthesize open-loop or affine disturbance feedback controllers** |
-|               |  `chance-open`  |                                            Guaranteed underapproximation [^CDC2013_Lesser]<sup>,</sup>  [^HSCC2019_chance]                                             | Open-loop                                  |
+|               |  `chance-open`  |                                            Guaranteed underapproximation [^CDC2013_Lesser]<sup>,</sup>  [^CDC2019_chance]                                             | Open-loop                                  |
 |               |  `genzps-open`  |                                  Approximate up to \\( \\epsilon\_\\mathrm{genz}\\), a user-specified quadrature error tolerance [^CSSL2017_genzps]                                 | Open-loop                                  |
 |               | `particle-open` |                        Approximate with quality proportional  to the number of particles used [^CDC2013_Lesser]                     | Open-loop                                  |
 |               |  `voronoi-open` |                          Probabilistically enforced upper  bound on overapproximation error  [^ACC2019_Voronoi]                          | Open-loop                                  |
-|               |  `voronoi-affine` |                          Probabilistically enforced upper  bound on overapproximation error  [^ACC2019_Voronoi]                          | Affine disturbance-feedback                                   |
-|               | `chance-affine` |                                            Guaranteed underapproximation  [^HSCC2019_chance]                                            | Affine   disturbance-feedback              |
+|               | `chance-affine` |                                            Guaranteed underapproximation  [^CDC2019_chance]                                            | Affine   disturbance-feedback              |
 |  `SReachSet`  |                 |  **Polytopic approximation of the stochastic  reach sets for the stochastic reachabilty  of a target tube problem**[^TAC2018_verification]<sup>,</sup>[^HSCC2018_cvxcmpt] | **Synthesize open-loop controllers in some cases** |
 |               |  `chance-open`  |                                            Guaranteed underapproximation  [^TAC2018_verification]                                           | Optimal  open-loop controllers at vertices |
 |               |  `genzps-open`  |                                 Approximation up to \\( \\epsilon\_\\mathrm{genz}\\), a user-specified quadrature error tolerance  [^TAC2018_verification]<sup>,</sup>[^HSCC2018_cvxcmpt]                                | Optimal  open-loop controllers at vertices |
@@ -141,32 +141,70 @@ The following table[^table_ack] summarizes the features in SReachTools.
 
 You can skip installing the dependencies marked **optional**.
 This will disable some of the features of SReachTools or hamper performance.
-
 1. MATLAB (>2017a)
     1. Toolboxes
         1. MATLAB's Statistics and Machine Learning Toolbox
         1. (**Optional**) MATLAB's Global Optimization Toolbox --- required for
-           `genzps-open` option in `SReachPoint`
-1. MPT3 ([https://www.mpt3.org/](https://www.mpt3.org/))
+           `genzps-open` options in `SReachPoint` and `SReachSet`
+        1. (**Optional**) MATLAB's Optimization Toolbox --- recommended
+           installation for MATLAB's Global Optimization Toolbox
+1. MPT3 ([https://www.mpt3.org/](https://www.mpt3.org/)) --- for polytopic
+   computational geometry
     1. Copy the MATLAB script [install_mpt3.m](https://www.mpt3.org/Main/Installation?action=download&upname=install_mpt3.m)
        provided by MPT3 from the browser, and run it in MATLAB to automatically
        download MPT3 and its dependencies.
-1. CVX v2.1 ([http://cvxr.com/cvx/](http://cvxr.com/cvx/))
+1. CVX v2.1 ([http://cvxr.com/cvx/](http://cvxr.com/cvx/)) --- for
+       parsing convex and mixed-integer programs
     1. Install the CVX (Standard bundle, including Gurobi and/or MOSEK)
     1. Installation instructions are given in
        [http://cvxr.com/cvx/download/](http://cvxr.com/cvx/download/).
-1. (**Optional**) We recommend using Gurobi as the backend solver for the convex
-   programs formulated by SReachTools --- required for all particle-based
-   approaches in `SReachPoint`. We also find both CVX and MPT3 perform much
-   better with Gurobi.
-    1. To use Gurobi, a license is required from Gurobi Inc. Note that Gurobi
-       offers free academic license. For more details, see
-       [http://www.gurobi.com/registration/download-reg](http://www.gurobi.com/registration/download-reg).
-    1. MPT3 automatically updates its backend solver to Gurobi, when gurobi is
-       in the path and the license is found.
-    1. CVX requires a professional license to use Gurobi. CVX Research Inc.
-       provides free academic license, which can be requested at
-       [http://cvxr.com/cvx/academic/](http://cvxr.com/cvx/academic/).
+1. (**Optional**) Gurobi --- recommended backend solver for the convex programs
+   formulated by SReachTools and a requirement for all particle-based approaches
+   in `SReachPoint`. We also find both CVX and MPT3 perform much better with
+   Gurobi.
+    1. Requires two licenses, both free for academia
+        1. Gurobi offers free academic license. For more details, see
+           [http://www.gurobi.com/registration/download-reg](http://www.gurobi.com/registration/download-reg).
+        1. CVX requires a professional license to use Gurobi. CVX Research Inc.
+           provides free academic license, which can be requested at
+           [http://cvxr.com/cvx/academic/](http://cvxr.com/cvx/academic/).
+    1. MPT3 will automatically update its backend solver to Gurobi, when gurobi
+       is in the path and the license is found.
+1. (**Optional**) [GeoCalcLib](https://github.com/worc4021/GeoCalcLib) --- a
+   MATLAB interface to Avis's [LRS vertex-facet enumeration
+   library](http://cgm.cs.mcgill.ca/~avis/C/lrs.html), an alternative to MPT's
+   preferred approach for vertex-facet enumeration,
+   [CDD](https://www.inf.ethz.ch/personal/fukudak/cdd_home/index.html).
+
+    {% include important-note.html content="GeoCalcLib currently works only Unix
+    and MAC OS.  SReachTools will gracefully switch back to CDD, if installation
+    of GeoCalcLib is not correct." %}
+
+    1. Download the zip file from
+       [https://github.com/worc4021/GeoCalcLib/archive/master.zip](https://github.com/worc4021/GeoCalcLib/archive/master.zip).
+    1. Extract the contents of this zip file to a desired location, whose full path is referred to here as `/path/to/GeoCalcLib`
+    1. Open a terminal and change directory to GeoCalcLib by `$cd /path/to/GeoCalcLib`. We will refer to this location as the GeoCalcLib root folder.
+    1. Create a folder `mexfiles` in GeoCalcLib root folder. 
+    1. Create a file named `User.make` in GeoCalcLib root folder using your
+       favorite editor with the following contents, and save it. See
+       [https://www.mathworks.com/matlabcentral/answers/66570-what-is-the-default-installation-path-for-matlab-on-architecture-x#answer_78163](https://www.mathworks.com/matlabcentral/answers/66570-what-is-the-default-installation-path-for-matlab-on-architecture-x#answer_78163)
+       for hints on how to identify your matlab root folder for your OS.
+        ```
+        # Specify the absolute path to the root folder of your Matlab
+        # installation where <FULL-PATH-TO-YOUR-MATLAB-INSTALLATION>/bin/mex
+        # exists
+        MATLABROOT = <FULL-PATH-TO-YOUR-MATLAB-INSTALLATION>
+        
+        # Path to which everything should be installed
+        INSTALLDIR = ../mexfiles/
+        ```
+    1. In the command prompt in GeoCalcLib root folder, execute `$ make`.
+    1. Add `/path/to/GeoCalcLib/mexfiles` to MATLAB path. If you want to use
+       this across sessions, we recommend adding the following command to
+       your MATLAB startup.
+```
+addpath('/path/to/GeoCalcLib/mexfiles');
+```
 
 ### Installation
 
@@ -174,7 +212,8 @@ This will disable some of the features of SReachTools or hamper performance.
 1. Clone the SReachTools repository (or download the latest zip file from
    [Releases](https://github.com/unm-hscl/SReachTools/releases))
 1. Change the MATLAB current working directory to where SReachTools was
-   downloaded. **WARNING**: Please do not add the folder to the path manually.
+   downloaded. 
+   {% include important-note.html content="Do not add the SReachTools folder to the path manually." %}
 1. Run `srtinit` in MATLAB to add the toolbox to the paths and ensure all
    must-have dependencies are properly installed.
    - You can add `cd <path_to_sreachtools_repo>;srtinit` to your MATLAB's
@@ -189,10 +228,10 @@ This will disable some of the features of SReachTools or hamper performance.
 ------
 [^TAC2018_verification]: A. Vinod and M. Oishi, "[Stochastic reachability of a target tube:  Theory and computation](https://arxiv.org/pdf/1810.05217.pdf)", submitted to IEEE Transactions of Automatic Control, 2018 (submitted).
 [^HSCC2018_cvxcmpt]: A. Vinod and M. Oishi, "[Scalable Underapproximative Verification of Stochastic LTI Systems using Convexity and Compactness](https://doi.org/10.1145/3178126.3178148)", in Proceedings of Hybrid Systems: Computation and Control, pp. 1--10, 2018.
-[^HSCC2019_chance]: A. Vinod and M. Oishi, "[Affine controller synthesis for stochastic reachability via difference of convex programming](https://hscl.unm.edu/affinecontrollersynthesis/)", in Proceedings of Hybrid Systems: Computation and Control, 2019 (submitted).
+[^CDC2019_chance]: A. Vinod and M. Oishi, "[Affine controller synthesis for stochastic reachability via difference of convex programming](https://hscl.unm.edu/affinecontrollersynthesis/)", in Proceedings of Conference on Decision and Control, 2019 (submitted).
 [^CSSL2017_genzps]: A. Vinod and M. Oishi, "[Scalable Underapproximation for Stochastic Reach-Avoid Problem for High-Dimensional LTI Systems using Fourier Transforms](https://ieeexplore.ieee.org/document/7950904/)", in IEEE Control Systems Letters (CSS-L), pp. 316--321, 2017. 
 [^CDC2013_Lesser]: K. Lesser, M. Oishi, and R. S. Erwin, "[Stochastic reachability for control of spacecraft relative motion](https://doi.org/10.1109/CDC.2013.6760626)," in Proceedings of the IEEE Conference on Decision and Control, pp. 4705-4712, 2013.
-[^ACC2019_Voronoi]: H. Sartipizadeh, A. Vinod,  B. Acikmese, and M. Oishi, "[Voronoi Partition-based Scenario Reduction for Fast Sampling-based Stochastic Reachability Computation of LTI Systems](https://arxiv.org/abs/1811.03643)", In Proceedings of American Control Conference, 2019 (submitted).
+[^ACC2019_Voronoi]: H. Sartipizadeh, A. Vinod,  B. Acikmese, and M. Oishi, "[Voronoi Partition-based Scenario Reduction for Fast Sampling-based Stochastic Reachability Computation of LTI Systems](https://arxiv.org/abs/1811.03643)", In Proceedings of American Control Conference, 2019 (accepted).
 [^CDC2017_Lagrangian]: J. Gleason, A. Vinod, and M. Oishi, "[Underapproximation of Reach-Avoid Sets for Discrete-Time Stochastic Systems via Lagrangian Methods](https://doi.org/10.1109/CDC.2017.8264291)," in Proceedings of the IEEE Conference on Decision and Control, pp. 4283-4290, 2017.
 [^Automatica_Summers]: S. Summers and J. Lygeros, "[Verification of discrete time stochastic hybrid systems: A stochastic reach-avoid decision problem](https://doi.org/10.1016/j.automatica.2010.08.006)," Automatica, 2010.  
 [^Automatica_Abate]: A. Abate, M. Prandini, J. Lygeros, and S. Sastry, "[Probabilistic reachability and safety for controlled discrete time stochastic hybrid systems](https://doi.org/10.1016/j.automatica.2008.03.027)," Automatica, 2008.
