@@ -41,7 +41,7 @@ toolbox on [October, 2018](./jekyll/update/2018/10/22/release-of-v1.html).
       the [Github issues](https://github.com/unm-hscl/SReachTools/issues) page.
 
 The authors of this toolbox are [Abraham P.
-Vinod](http://www.unm.edu/~abyvinod/) (primary maintainer) and [Joseph D.
+Vinod](http://www.unm.edu/~abyvinod/) and [Joseph D.
 Gleason](http://www.unm.edu/~gleasonj/). Please cite their [relevant
 papers](https://scholar.google.com/citations?user=yb5Z7AwAAAAJ&hl=en) when using
 the toolbox. The authors are PhD advisees of [Prof. Meeko
