@@ -1,6 +1,6 @@
 %% Controller synthesis using |SReachPoint| for a Dubin's vehicle
-% This example will demonstrate the use of |SReachTools| for controller
-% synthesis in a terminal hitting-time stochastic reach-avoid problem. We
+% This example will demonstrate the use of |SReachTools| for the controller
+% synthesis with respect to the stochastic reachability of a target tube. We
 % consider a continuous-state discrete-time linear time-varying (LTV) system.
 % This example script is part of the |SReachTools| toolbox, which is licensed
 % under GPL v3 or (at your option) any later version. A copy of this license is
@@ -8,11 +8,11 @@
 % https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
 % 
 % In this example script, we discuss how to use |SReachPoint| to synthesize
-% open-loop controllers and affine-disturbance feedback controllers for the
-% problem of stochastic reachability of a target tube. We demonstrate the
-% following solution techniques:
+% open-loop controllers and affine-disturbance feedback controllers such that
+% the system stays within a target tube with maximum likelihood. We demonstrate
+% the following solution techniques:
 % 
-% * |chance-open|: Chance-constrained approach that uses risk allocation and
+% * |chance-open|: Chance-constrained approach that uses ris/nonk allocation and
 %    piecewise-affine approximations to formulate a linear program to synthesize
 %    an open-loop controller (See <http://hscl.unm.edu/affinecontrollersynthesis
 %    Vinod and Oishi, Conference in Decision and Control, 2019 (submitted)>, 
@@ -20,7 +20,7 @@
 %    Decision and Control, 2013>)
 % * |genzps-open|: Fourier transforms that uses
 %    <http://www.math.wsu.edu/faculty/genz/software/matlab/qsimvnv.m Genz's 
-%    algorithm> to formulate a nonlinear log-concave optimization problem to be
+%    algorithm> to formulate a log-concave optimization problem to be
 %    solved using MATLAB's patternsearch to synthesize an open-loop controller
 %    (See <http://doi.org/10.1109/LCSYS.2017.2716364 Vinod and Oishi, Control
 %    System Society- Letters, 2017>)
@@ -297,7 +297,7 @@ end
 if genzps_open_run_gauss
     fprintf('\n\nSReachPoint with genzps-open\n');
     opts = SReachPointOptions('term', 'genzps-open', ...
-        'PSoptions',psoptimset('display','iter'));
+        'PSoptions',psoptimset('display','iter'),'desired_accuracy', 5e-2);
     timerVal = tic;
     [prob_genzps_open_gauss, opt_input_vec_genzps_open_gauss] = ...
         SReachPoint('term', 'genzps-open', sys_gauss, ...

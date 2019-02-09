@@ -83,8 +83,8 @@ function varargout = SReachSetLag(method_str, sys, prob_thresh, safety_tube,...
         varargout{3} = [];
     elseif time_horizon > 0 && prob_thresh > 0   
         if options.verbose
-            under_or_over=strsplit(method_str,'-');
-            fprintf('Computing Lagragian %s approximation\n', under_or_over{2});
+            under_over=strsplit(method_str,'-');
+            fprintf('Computing Lagragian %s approximation\n\n', under_over{2});
         end
         switch(lower(method_str))
             case 'lag-under'
@@ -112,8 +112,8 @@ function varargout = SReachSetLag(method_str, sys, prob_thresh, safety_tube,...
                     case 'support'
                         if nargout >= 2
                             throw(SrtInvalidArgsError(['Too many output ',...
-                                'arguments. compute_style = support can not',...
-                                ' compute overapproximation reach tube.']));
+                                'arguments.\ncompute_style = support can ',...
+                                'not compute overapproximation REACH TUBE.']));
                         end
                         approx_set = getSReachLagOverapprox(sys, safety_tube,...
                             bounded_set, options);

@@ -9,7 +9,7 @@
 % 
 % In this example script, we discuss how to use |SReachPoint| to synthesize
 % open-loop controllers and affine-disturbance feedback controllers for the
-% problem of stochastic reachability of a target tube. We demonstrate the
+% terminal hitting-time stochastic reach-avoid problem. We demonstrate the
 % following solution techniques:
 % 
 % * |chance-open|: Chance-constrained approach that uses risk allocation and
@@ -244,10 +244,10 @@ n_mcarlo_sims_affine = 1e5;
 if chance_open_run
     fprintf('\n\nSReachPoint with chance-open\n');
     % Set the maximum piecewise-affine overapproximation error to 1e-3
-    opts = SReachPointOptions('term', 'chance-open','pwa_accuracy',1e-3);
+    ccO_opts = SReachPointOptions('term', 'chance-open','pwa_accuracy',1e-3);
     tic;
     [prob_chance_open, opt_input_vec_chance_open] = SReachPoint('term', ...
-        'chance-open', sys, init_state_chance_open, target_tube, opts);
+        'chance-open', sys, init_state_chance_open, target_tube, ccO_opts);
     elapsed_time_chance_open = toc;
     if prob_chance_open
         % Optimal mean trajectory construction
@@ -285,11 +285,11 @@ end
 % return an open-loop controller with safety at least as good as |chance-open|.
 if genzps_open_run
     fprintf('\n\nSReachPoint with genzps-open\n');
-    opts = SReachPointOptions('term', 'genzps-open', ...
-        'PSoptions',psoptimset('display','iter'));
+    genzps_opts = SReachPointOptions('term', 'genzps-open', ...
+        'PSoptions',psoptimset('display','iter'), 'desired_accuracy', 5e-2);
     tic
     [prob_genzps_open, opt_input_vec_genzps_open] = SReachPoint('term', ...
-        'genzps-open', sys, init_state_genzps_open, target_tube, opts);
+        'genzps-open', sys, init_state_genzps_open, target_tube, genzps_opts);
     elapsed_time_genzps = toc;
     if prob_genzps_open > 0
         % Optimal mean trajectory construction
@@ -325,11 +325,11 @@ end
 % increase in computational time.
 if particle_open_run
     fprintf('\n\nSReachPoint with particle-open\n');
-    opts = SReachPointOptions('term','particle-open','verbose', 1,...
+    paO_opts = SReachPointOptions('term','particle-open','verbose', 1,...
         'n_particles',50);
     tic
     [prob_particle_open, opt_input_vec_particle_open] = SReachPoint('term', ...
-        'particle-open', sys, init_state_particle_open, target_tube, opts);
+        'particle-open', sys, init_state_particle_open, target_tube, paO_opts);
     elapsed_time_particle = toc;
     if prob_particle_open > 0
         % Optimal mean trajectory construction
@@ -369,12 +369,12 @@ end
 % maximum overapproximation error as well being computationally tractable.
 if voronoi_open_run
     fprintf('\n\nSReachPoint with voronoi-open\n');
-    opts = SReachPointOptions('term','voronoi-open','verbose',1,...
+    voO_opts = SReachPointOptions('term','voronoi-open','verbose',1,...
         'max_overapprox_err', 1e-2);
     tic
     [prob_voronoi_open, opt_input_vec_voronoi_open, kmeans_info_open] = ...
         SReachPoint('term', 'voronoi-open', sys, init_state_voronoi_open,...
-            target_tube, opts);
+            target_tube, voO_opts);
     elapsed_time_voronoi = toc;
     if prob_voronoi_open > 0
         % Optimal mean trajectory construction
@@ -416,12 +416,12 @@ end
 % probability guarantee.  
 if chance_affine_run
     fprintf('\n\nSReachPoint with chance-affine\n');
-    opts = SReachPointOptions('term', 'chance-affine',...
+    ccA_opts = SReachPointOptions('term', 'chance-affine',...
         'max_input_viol_prob', 1e-2, 'verbose', 2);
     tic
     [prob_chance_affine, opt_input_vec_chance_affine,...
         opt_input_gain_chance_affine] = SReachPoint('term', 'chance-affine',...
-            sys, init_state_chance_affine, target_tube, opts);
+            sys, init_state_chance_affine, target_tube, ccA_opts);
     elapsed_time_chance_affine = toc;
     fprintf('Computation time (s): %1.3f\n', elapsed_time_chance_affine);
     if prob_chance_affine > 0

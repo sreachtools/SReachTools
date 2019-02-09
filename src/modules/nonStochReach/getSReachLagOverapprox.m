@@ -90,7 +90,8 @@ function varargout = getSReachLagOverapprox(sys, target_tube,...
                 disturbance_set, options);
             varargout{1} = effective_target_set;            
         otherwise
-            throw(SrtInvalidArgsError('Invalid computation style specified'));
+            throwAsCaller(SrtInvalidArgsError(['Invalid computation style ', ...
+                'specified']));
     end
 end
 
@@ -137,11 +138,13 @@ function [effective_target_tube] = computeViaRecursion(sys, target_tube,...
             if isa(disturbance_set,'Polyhedron') && disturbance_set.isEmptySet
                 % No augmentation
                 new_target = effective_target_tube(itt+1);
-            else
+            elseif ~effective_target_tube(itt+1).isEmptySet()
                 % Compute a new target set for this iteration that is robust to 
                 % the disturbance
                 new_target = minus_scaled_dist_set.plus(...
                     effective_target_tube(itt+1));
+            else
+                throw(SrtRuntimeError('Recursion led to an empty target set!'));
             end
 
             % One-step backward reach set
@@ -282,8 +285,8 @@ function [val] = support(ell, sys, target_tube, dist_set, options)
                 % enforce the constraint in an epigraph form
                 minimize ((concat_target_tube_b'*dual_var_target) + sum(slack_var_inputdist))
             otherwise
-                throw(SrtInvalidArgsError(sprintf(['Disturbance (%s) is not',...
-                    ' configured as of yet'], class(scaled_dist_set))));
+                throwAsCaller(SrtInvalidArgsError(sprintf(['Disturbance (%s',...
+                    ') is not configured as of yet'], class(scaled_dist_set))));
         end
         
         
@@ -353,8 +356,8 @@ function [val] = support(ell, sys, target_tube, dist_set, options)
                                 - nu(:, tube_indx)' * inv_sys_now * ...
                                     sys.dist_mat(current_time);
                         otherwise
-                            throw(SrtInvalidArgsError(sprintf(['Disturbance',...
-                                ' (%s) is not configured as of yet'],...
+                            throwAsCaller(SrtInvalidArgsError(sprintf( ...
+                                'Unconfigured disturbance (%s) provided',...
                                 class(scaled_dist_set))));
                     end
                 end
@@ -364,6 +367,6 @@ function [val] = support(ell, sys, target_tube, dist_set, options)
         case {'Solved','Solved/Inaccurate'}
             val = cvx_optval;
         otherwise
-            throw(SrtInvalidArgsError('Support function computation failed.'));
+            throw(SrtRuntimeError('Support function computation failed.'));
     end
 end

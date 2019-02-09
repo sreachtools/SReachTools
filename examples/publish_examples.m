@@ -77,16 +77,23 @@ function publish_examples(varargin)
                             % Remove all the scripts not provided
                             indices_to_remove = find( ...
                                 contains(cell_dl_filenames, ...
-                                    {varargin{2:end}})==0);
+                                    {varargin{3:end}})==0);
                             dl([index_of_this_script, ...
                                 indices_to_remove])=[];
+                            if length(indices_to_remove) == ...
+                                    length(cell_dl_filenames)
+                                error('Nothing to publish? Check filenames.');
+                            end
                         case '--exclude'
                             % Remove all the scripts provided in varargin
                             indices_to_remove = find( ...
                                 contains(cell_dl_filenames, ...
-                                    {varargin{2:end}})==1);
+                                    {varargin{3:end}})==1);
                             dl([index_of_this_script, ...
                                 indices_to_remove])=[];
+                            if isempty(indices_to_remove)
+                                error('Nothing to exclude? Check filenames.');
+                            end
                         case '--no-pdf'
                             disp('Nothing left to do');
                             return;
@@ -102,16 +109,23 @@ function publish_examples(varargin)
                             % Remove all the scripts not provided
                             indices_to_remove = find( ...
                                 contains(cell_dl_filenames, ...
-                                    {varargin{2:end}})==0);
+                                    {varargin{3:end}})==0);
                             dl([index_of_this_script, ...
                                 indices_to_remove])=[];
+                            if length(indices_to_remove) == ...
+                                    length(cell_dl_filenames)
+                                error('Nothing to publish? Check filenames.');
+                            end
                         case '--exclude'
                             % Remove all the scripts provided in varargin
                             indices_to_remove = find( ...
                                 contains(cell_dl_filenames, ...
-                                    {varargin{2:end}})==1);
+                                    {varargin{3:end}})==1);
                             dl([index_of_this_script, ...
                                 indices_to_remove])=[];
+                            if isempty(indices_to_remove)
+                                error('Nothing to exclude? Check filenames.');
+                            end
                         case '--no-pdf'
                             disp('Nothing left to do');
                             return;
