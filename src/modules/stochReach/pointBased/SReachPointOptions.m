@@ -164,7 +164,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
                 throw(exc);
             end
             inpar.addParameter('desired_accuracy',1e-2, @(x)...
-                validateattributes(x, {'numeric'}, {'scalar','>',0}));
+                validateattributes(x, {'numeric'}, {'scalar','>=',1e-2,'<',1}));
             inpar.addParameter('PSoptions',psoptimset('display','off'));
             inpar.addParameter('thresh', 1, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0, '<=', 1}));

@@ -44,7 +44,7 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state, ..
 % --------
 %   lb_stoch_reach 
 %               - Lower bound on the stochastic reachability of a target tube
-%                   problem computed
+%                   problem computed | Returns -1 if infeasible
 %   opt_input_vec
 %               - Open-loop controller: column vector of dimension
 %                 (sys.input_dim*N) x 1
@@ -103,9 +103,12 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state, ..
     concat_input_space_A = extra_info.concat_input_space_A;
     concat_input_space_b = extra_info.concat_input_space_b;
     H = extra_info.H;
-    mean_X_sans_input = extra_info.mean_X_sans_input;
-    cov_X_sans_input = extra_info.cov_X_sans_input;
-
+    
+    % Setup for probability computation
+    X_sans_input = RandomVector.gaussian(extra_info.mean_X_sans_input, ...
+        extra_info.cov_X_sans_input);
+    poly_tube = Polyhedron('A', concat_safety_tube_A, 'b',concat_safety_tube_b);
+    
     % Ensure options is good
     otherInputHandling(options);
     
@@ -134,7 +137,7 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state, ..
             variable slack_vars(length(concat_safety_tube_b)) nonnegative;
             minimize sum(slack_vars)
             subject to
-                mean_X == mean_X_sans_input + H * U;
+                mean_X == X_sans_input.mean() + H * U;
                 concat_safety_tube_A * mean_X <= concat_safety_tube_b...
                                                     + slack_vars;
                 concat_input_space_A * U <= concat_input_space_b;
@@ -153,23 +156,29 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state, ..
         lb_stoch_reach = -1;
         opt_input_vec = nan(sys.input_dim * time_horizon, 1);
     else
+        % Minimum saturated ReachProb(U)=\int_{safety_tube}\psi_{\bX}(Z;x_0,U)dZ
+        % Specifically, we saturate the reach probability from below by 
+        % options.desired_accuracy => max(options.desired_accuracy,ReachProb(U))
+        MinSatReachProbGivenInputVec = @(input_vec) max( ...
+            options.desired_accuracy, ...
+            getProbPolyhedron(X_sans_input + H * input_vec, poly_tube, ...
+                options.desired_accuracy));
         %% Got an initial solution to work with
         % Construct the reach cost function
         if 1 - options.thresh > options.desired_accuracy
-            % -log(ReachProb(U)) = -log(\int_{safety_tube} \psi_{\bX}(Z;x_0,U)dZ
-            % reach cost function is min(-log(ReachProb(U)), options.thresh)
-            negLogReachProbGivenInputVec= @(input_vec) -log( min(...
-                    computeReachProb(...
-                        input_vec, mean_X_sans_input, cov_X_sans_input, H, ...
-                        concat_safety_tube_A, concat_safety_tube_b, ...
-                        options.desired_accuracy),...
-                    options.thresh));
+            % Since we do not care about feasibility beyond options.thresh,
+            % we saturate it by consider min(ReachProb(U), options.thresh)
+            if options.thresh < options.desired_accuracy
+                throw(SrtInvalidArgsError(['Threshold can not be smaller ', ...
+                    'than the desired accuracy']));
+            else
+                negLogReachProbGivenInputVec= @(input_vec) -log( min( ...
+                    options.thresh, MinSatReachProbGivenInputVec(input_vec)));
+            end
         else
-            % -log(ReachProb(U)) = -log(\int_{safety_tube} \psi_{\bX}(Z;x_0,U)dZ            
-            negLogReachProbGivenInputVec= @(input_vec) -log(computeReachProb(...
-                input_vec, mean_X_sans_input, cov_X_sans_input, H, ...
-                concat_safety_tube_A, concat_safety_tube_b, ...
-                options.desired_accuracy));
+            % We wish to minimize -log(ReachProb(U))
+            negLogReachProbGivenInputVec= @(input_vec) ...
+                -log(MinSatReachProbGivenInputVec(input_vec));
         end
 
         % Compute the optimal admissible input_vec that minimizes
@@ -180,12 +189,19 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state, ..
         % minimize -log(ReachProb(U))
         % subject to
         %        concat_input_space_A * U <= concat_input_space_b
-        opt_input_vec = patternsearch(negLogReachProbGivenInputVec, ...
-                guess_opt_input_vec, concat_input_space_A, ...
-                concat_input_space_b, [],[],[],[],[], options.PSoptions);
+        [opt_input_vec,~, exitflag] = patternsearch(...
+            negLogReachProbGivenInputVec, guess_opt_input_vec, ...
+            concat_input_space_A, concat_input_space_b, [],[],[],[],[], ...
+            options.PSoptions);
         
         % Compute the lower bound and the optimal open_loop_control_policy
-        lb_stoch_reach = exp(-negLogReachProbGivenInputVec(opt_input_vec));
+        % using a fresh set of samples
+        if exitflag >= 1
+            lb_stoch_reach = exp(-negLogReachProbGivenInputVec(opt_input_vec));
+        else
+            lb_stoch_reach = -1;
+            opt_input_vec = nan(sys.input_dim * time_horizon, 1);
+        end
     end
 end
 

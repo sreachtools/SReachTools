@@ -108,7 +108,7 @@ classdef SReachFwdTest < matlab.unittest.TestCase
             warning('off','SReachTools:runtime');
             SReachFwd(prob_str_test, sys, init_state, target_time, ...
                 Tube('viability', Polyhedron('lb',-2*ones(2,1),...
-                        'ub',ones(2,1)),target_time+1), 1e-3);
+                        'ub',ones(2,1)),target_time+1), 1e-2);
             warning('on','SReachTools:runtime');
             % Too strict desired_accuracy TODO --- takes a lot of time
             %testCase.verifyWarning(@() SReachFwd(prob_str_test, sys, init_state, target_time, Polyhedron('lb',-2*ones(2,1),'ub',ones(2,1)), 1e-10),'SReachTools:desiredAccuracy');            
@@ -212,7 +212,7 @@ classdef SReachFwdTest < matlab.unittest.TestCase
                 max(abs(mean_vec - mean_end_locations)), 1e-2);                    
         end
         
-        function testTubeStochAndProbNoWarnings(testCase)
+        function testTubeStochAndProb(testCase)
             % Performs forward stochastic reachability on the spacecraft 
             % rendezvous problem.
             % Computes the mean, covariance, and probability of lying in a

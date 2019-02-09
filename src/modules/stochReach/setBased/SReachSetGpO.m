@@ -16,6 +16,8 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
 % computation," IEEE Transactions in Automatic Control, 2018 (submitted)
 % https://arxiv.org/pdf/1810.05217.pdf.
 %
+% This computation involves an UNJUSTIFIED HEURISTIC. Please see the notes.
+%
 % =============================================================================
 %
 % [polytope, extra_info] = SReachSetGpO(method_str, sys, prob_thresh,...
@@ -79,27 +81,29 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
 %   - The bisection is guided by feasibility of finding an open-loop controller
 %     at each value of theta that minimizes 
 %
-%         -log(min(Reach_prob, prob_thresh + 5 * options.desired_accuracy)) (1)
+%         -log(min(Reach_prob, prob_thresh)) (1)
 %
 %     Reach_prob is a log-concave function over the open-loop and thus (1) is a
 %     convex objective. 
-%     There are few adjustments done for computational purposes:
 %       1. Using options.thresh, an inner min operation is used that is
-%          convexity-preserving. This is an attempt to ensure that the quasi
-%          Monte-Carlo simulation-driven optimization:
-%          - does report a safety probability that is above prob_thresh, and
-%          - does not spend too much time looking for global optimality, when a 
-%            certificate of exceeding a lower bound suffices. 
+%          convexity-preserving. This is an attempt to ensure that the
+%          Monte-Carlo simulation-driven optimization does not spend too much 
+%          time looking for global optimality, when a certificate of exceeding a
+%          lower bound suffices. 
 %       2. After the optimization, the optimal value is reevaluated using a
 %          fresh set of particles for generality.
 %       3. At each value of theta, feasibility is determined if the optimal
-%          value of the optimization is above prob_thresh +
-%          options.desired_accuracy. This step is also to tackle the potential
-%          variation in the Monte-Carlo simulation-based evaluation of the reach
-%          probability.
+%          value of the optimization is above prob_thresh. Note that this
+%          is an UNJUSTIFIED HEURSITIC, since it is not clear with what
+%          probability this will hold. However, by using a sufficiently low
+%          desired_accuracy, it can be understood that we will not be too
+%          off.
 %     The first two adjustments are implemented in SReachPointGpO, the
-%     point-based stochastic reachability computation using genzps-open method.
-% 
+%     point-based stochastic reachability computation using genzps-open
+%     method. 
+% * Xmax computation is done with a heuristic of centering the initial
+%   state with respect to the polytope obtained via SReachSet
+%   (chance-open), followed by a patternsearch-based xmax computation
 % =============================================================================
 % 
 % This function is part of the Stochastic Reachability Toolbox.
@@ -186,10 +190,9 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
         opt_theta_i = zeros(1, n_dir_vecs);
         opt_reach_prob_i = zeros(1, n_dir_vecs);
         opt_input_vec_at_vertices =nan(sys.input_dim * time_horizon,n_dir_vecs);
-        % ADJUSTMENT 1: Use SReachPointGpO to not search beyond 
-        % prob_thresh + 5 * options.desired_accuracy
         optionsGpO = SReachPointOptions('term', 'genzps-open', 'thresh',...
-            prob_thresh + 5 * options.desired_accuracy);
+            prob_thresh, 'desired_accuracy', options.desired_accuracy, ...
+            'PSOptions', options.PSoptions);
         
         %% Iterate over all direction vectors + xmax and perform a line search 
         %% via bisection
@@ -206,7 +209,7 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
             [lb_theta, ub_theta, opt_theta_so_far, opt_inputs_so_far,...
                 opt_reachAvoid_prob_so_far] = computeBisectionParms(dir_vec,...
                     init_safe_set, polytope_cc_open, xmax, sys, safety_tube, ...
-                    options, prob_thresh);
+                    options);
             
             if options.verbose >= 1  && ((ub_theta - lb_theta) > ... 
                     options.tol_bisect)
@@ -227,12 +230,7 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
                 [prob_value_at_this_step, opt_input_at_this_step] = ...
                     SReachPointGpO(sys, candidate_initial_state, safety_tube,...
                         optionsGpO);
-                % ADJUSTMENT 2: Declare feasibility only if 
-                % prob_value_at_this_step >= prob_thresh +...
-                %                               options.desired_accuracy
-                % so that we are most likely going to have a sound algorithm
-                if  prob_value_at_this_step >= prob_thresh + ...
-                        options.desired_accuracy
+                if prob_value_at_this_step >= prob_thresh
                     % Update values only if it is above the thresh
                     opt_reachAvoid_prob_so_far = prob_value_at_this_step;
                     opt_inputs_so_far = opt_input_at_this_step;
@@ -248,7 +246,7 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
                     % Print current solution
                     fprintf(strcat('  %1.4f  |  %1.2e  |  %1.2e  |  %1.2e  ',...
                         '  |  %1.2e  |  ', exitmessage, ' \n'), ...
-                        prob_value_at_this_step, opt_theta_so_far, ...
+                        opt_reachAvoid_prob_so_far, opt_theta_so_far, ...
                         lb_theta,ub_theta,opt_inputs_so_far'*opt_inputs_so_far);
                 end
                 % Update bounds
@@ -320,14 +318,28 @@ end
 
 function [lb_theta, ub_theta, opt_theta_so_far, opt_inputs_so_far, ...
     opt_reachAvoid_prob_so_far] = computeBisectionParms(dir_vec, ...
-        init_safe_set, polytope_cc_open, xmax, sys, safety_tube, options, ...
-        prob_thresh)
+        init_safe_set, polytope_cc_open, xmax, sys, safety_tube, options)
+    %
+    % Compute the bisection parameters:
+    % lb_theta         - Lower bound on theta via a ray shooting on the 
+    %                    chance-constrained polytope
+    % ub_theta         - Upper bound on theta via a ray shooting on the safe set 
+    %                    for the initial state
+    % opt_theta_so_far - Same as lb_theta
+    % opt_inputs_so_far, opt_reachAvoid_prob_so_far
+    %                  - Obtained via chance-constrained SReachPoint at
+    %                    xmax + lb_theta * dir_vec
     %% Computation of the upper bound ub_theta using cvx optimization
     cvx_begin quiet
         variable theta(1) nonnegative;        
+        variable safe_boundary_point(sys.state_dim, 1);
         maximize theta
         subject to
-            init_safe_set.A * (xmax + theta *  dir_vec) <= init_safe_set.b;
+            % Define boundary point using theta
+            safe_boundary_point == xmax + theta *  dir_vec;
+            % Define boundary point as a convex combination of the vertices
+            % defining polytope_cc_open
+            init_safe_set.A * safe_boundary_point <= init_safe_set.b;
     cvx_end
     switch cvx_status
         case 'Solved'
@@ -341,91 +353,59 @@ function [lb_theta, ub_theta, opt_theta_so_far, opt_inputs_so_far, ...
     %% Computation of the lower bound ub_theta using cvx optimization
     % Lower bound>= 0 as xmax could be a vertex. We will use
     % polytope_cc_open to further fine tune
+    lb_theta = 0;
+    opt_theta_so_far = 0;
     if ~polytope_cc_open.isEmptySet()
         cvx_begin quiet
             variable theta(1) nonnegative;
-            variable boundary_point(sys.state_dim, 1);
+            variable ccc_boundary_point(sys.state_dim, 1);
             maximize theta
             subject to
                 % Can't exceed the upper bound
                 theta <= ub_theta; 
                 % Define boundary point using theta
-                boundary_point == xmax + theta * dir_vec;
+                ccc_boundary_point == xmax + theta * dir_vec;
                 % Define boundary point as a convex combination of the vertices
                 % defining polytope_cc_open
-                polytope_cc_open.A * boundary_point <= polytope_cc_open.b;
+                polytope_cc_open.A * ccc_boundary_point <= polytope_cc_open.b;
         cvx_end
         switch cvx_status
             case 'Solved'
                 lb_theta = theta;
                 opt_theta_so_far = lb_theta;
             otherwise
-                lb_theta = 0;
-                opt_theta_so_far = 0;
-        end 
-    else
-        lb_theta = 0;
-        opt_theta_so_far = 0;
+                % Both of these are set to zero by default           
+                throw(SrtInvalidArgsError(sprintf('CVX failed (status: ',...
+                    '%s) to obtain the lower bound on theta for direction',...
+                    ' %d/%d, potentially due to numerical issues.'), ...
+                    cvx_status, dir_index, n_dir_vecs));
+        end
     end
     if options.verbose >= 1
         fprintf(['\b | Theta --- lower bound: %1.2f | upper bound: ',...
-        '%1.2f\n'], lb_theta, ub_theta);
+            '%1.2f\n'], lb_theta, ub_theta);
     end
-    % Compute the reach probability and the input => Guaranteed to be above
-    % prob_thresh by the convexity properties.
-    if (ub_theta - lb_theta) <= options.tol_bisect
-        if options.verbose >= 1
-            disp('Skipped since (ub_theta - lb_theta) < tol_bisect');
-        end            
-        % No further bisection required => Get a feasible input quickly using
-        % chance-open
-        optionsCcO = SReachPointOptions('term', 'chance-open');
-        [opt_reachAvoid_prob_so_far, opt_inputs_so_far] = SReachPointCcO(...
-            sys, boundary_point, safety_tube, optionsCcO);    
-    else
-        % See if the upper bound can actually be sufficiently safe
-        if options.verbose >= 1
-            disp('Computing reach probability at ub_theta.');
-        end           
-        optionsGpO = SReachPointOptions('term', 'genzps-open', 'thresh',...
-            prob_thresh + 5 * options.desired_accuracy);
-        
-        [opt_reachAvoid_prob_ub, opt_inputs_ub] = SReachPointGpO(...
-            sys, xmax + ub_theta * dir_vec, safety_tube, optionsGpO);    
-        if opt_reachAvoid_prob_ub >= prob_thresh + options.desired_accuracy
-            if options.verbose >= 1
-                disp(['Skipped since ub_theta is safe. Setting lb_theta = ',...
-                    'ub_theta']);
-            end            
-            lb_theta = ub_theta;
-            opt_theta_so_far = ub_theta;
-            opt_reachAvoid_prob_so_far = opt_reachAvoid_prob_ub;
-            opt_inputs_so_far = opt_inputs_ub;
-        else
-            % Further bisection required => Initialize using genzps-open
-            if options.verbose >= 1
-                fprintf(['Ub_theta is not safe (%1.4f < %1.4f).\nComputing',...
-                    ' reach probability at lb_theta.\n'], ...
-                    opt_reachAvoid_prob_ub, prob_thresh);
-            end           
-            [opt_reachAvoid_prob_so_far, opt_inputs_so_far] = SReachPointGpO(...
-                sys, boundary_point, safety_tube, optionsGpO);    
-            if options.verbose >= 1
-                disp('Must bisect since ub_theta is not safe.');
-            end                        
-        end        
-    end
-    if options.verbose >= 1
-        fprintf('Optimal reach probability at lb_theta: %1.4f (> %1.4f)\n',...
-            opt_reachAvoid_prob_so_far, prob_thresh);
-    end            
+    % Initialize the solution
+    optionsCcO = SReachPointOptions('term', 'chance-open');
+    [opt_reachAvoid_prob_so_far, opt_inputs_so_far] = SReachPointCcO(...
+        sys, ccc_boundary_point, safety_tube, optionsCcO);       
 end
 
 function [xmax_reach_prob, Umax, xmax] = computeXmaxViaPatternsearch(...
     init_safe_set, polytope_cc_open, sys, time_horizon, safety_tube, options)
+    %
+    % Compute the xmax for the patternsearch
+    % 1. Compute a chebyshev center for the polytope_cc_open such that a
+    %    safe mean trajectory exists
+    % 2. Use the point as the initial point to compute the maximally safe
+    %    initial state
+    % Step 1 ensures that we are "centered".
+    
     % Half-space representation for the safety tube
     [concat_safety_tube_A, concat_safety_tube_b] =...
         safety_tube.concat([1 time_horizon]+1);
+    prob_poly = Polyhedron('A', concat_safety_tube_A, ...
+        'b', concat_safety_tube_b);
     
     % Half-space representation for the concatenated input space
     [concat_input_space_A, concat_input_space_b] = getConcatInputSpace(sys, ...
@@ -437,9 +417,7 @@ function [xmax_reach_prob, Umax, xmax] = computeXmaxViaPatternsearch(...
     % Compute the mean of G*W vector --- mean of concatenated state vector
     % under zero input and zero state conditions
     GW = G * sys.dist.concat(time_horizon);
-    mean_X_zizs = GW.mean();
-    cov_X_sans_input = GW.cov();
-   
+       
     dual_norm_of_init_safe_set_A = norms(init_safe_set.A,2,2); 
     dual_norm_of_polytope_cc_open_A = norms(polytope_cc_open.A,2,2); 
     % maximize R - 0.01 |U| 
@@ -465,7 +443,7 @@ function [xmax_reach_prob, Umax, xmax] = computeXmaxViaPatternsearch(...
         subject to
             resulting_X_for_xmax == (Z * initial_x_for_xmax ...
                             + H * guess_concatentated_input_vector...
-                            + mean_X_zizs);
+                            + GW.mean());
             concat_input_space_A * guess_concatentated_input_vector <= ...
                                                       concat_input_space_b;
             concat_safety_tube_A * resulting_X_for_xmax <= ...
@@ -491,19 +469,14 @@ function [xmax_reach_prob, Umax, xmax] = computeXmaxViaPatternsearch(...
     end
     
     % Construct the reach cost function: 
-    %   -log(ReachAvoidProbability(x_0,U))
+    %   -log( max( options.desired_accuracy, ReachAvoidProbability(x_0,U)))
     % input_vector_and_xmax has first the unrolled input vector followed by
     % the initial state that is optimized
     negLogReachProbGivenInputVecInitState = @(input_vector_and_xmax)...
-      -log(computeReachProb(...
-                input_vector_and_xmax(1: sys.input_dim * time_horizon), ...
-                Z * input_vector_and_xmax(...
-                    sys.input_dim * time_horizon + 1: end) + mean_X_zizs, ...
-                cov_X_sans_input, ...
-                H, ...
-                concat_safety_tube_A, ...
-                concat_safety_tube_b, ...
-                options.desired_accuracy));
+      -log( max(options.desired_accuracy, getProbPolyhedron(...
+        Z * input_vector_and_xmax(sys.input_dim * time_horizon + 1: end) +...
+        H * input_vector_and_xmax(1: sys.input_dim * time_horizon) + GW, ...
+        prob_poly, options.desired_accuracy)));
     
     % Constraint generation --- decision variable [input_vector;xmax]
     input_vector_augmented_affine_hull_Aeq = ...
@@ -518,24 +491,21 @@ function [xmax_reach_prob, Umax, xmax] = computeXmaxViaPatternsearch(...
 
     % Compute xmax, the input policy, and the max reach probability
     if options.verbose >= 1 
-            disp(' ');
-            disp('Compute the xmax via patternsearch');
+        fprintf('\n\nCompute the xmax via patternsearch\n');
     end
-    [opt_input_vec_and_xmax, opt_neg_log_reach_prob]= ...
-              patternsearch(...
-                negLogReachProbGivenInputVecInitState, ...
-                initial_guess_input_vector_and_xmax, ...
-                input_vector_augmented_safe_Aineq, ...
-                input_vector_augmented_safe_bineq, ...
-                input_vector_augmented_affine_hull_Aeq, ...
-                input_vector_augmented_affine_hull_beq, ...
-                [],[],[], ...
-                options.PSoptions);
+    opt_input_vec_and_xmax = patternsearch(...
+        negLogReachProbGivenInputVecInitState, ...
+        initial_guess_input_vector_and_xmax, ...
+        input_vector_augmented_safe_Aineq, ...
+        input_vector_augmented_safe_bineq, ...
+        input_vector_augmented_affine_hull_Aeq, ...
+        input_vector_augmented_affine_hull_beq, [],[],[], options.PSoptions);
     
     %% Parse the output of patternsearch
     % Maximum attainable terminal hitting-time stochastic reach
     % probability using open-loop controller
-    xmax_reach_prob = exp(-opt_neg_log_reach_prob);
+    xmax_reach_prob = exp(-negLogReachProbGivenInputVecInitState(...
+        opt_input_vec_and_xmax));
     % Optimal open_loop_control_policy
     Umax=opt_input_vec_and_xmax(1:sys.input_dim*time_horizon);
     % Corresponding xmax

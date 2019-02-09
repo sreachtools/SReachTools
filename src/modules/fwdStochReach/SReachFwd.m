@@ -54,9 +54,8 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time, ...
 %                 - [Required only for state/concat-prob] Polyhedron/Tube object
 %                   over which the probability must be computed
 %   desired_accuracy 
-%                 - [Required only for state/concat-prob] Accuracy for the
-%                   integral
-%   
+%                 - [Optional for state/concat-prob] Maximum absolute deviation
+%                   from the true probability estimate [Default: 1e-2]
 %
 % Outputs:
 % --------
@@ -75,6 +74,9 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time, ...
 %   target_tube has a length of N+1 (N+1 target sets to include the
 %   constraints on the initial state).
 % * For XXX-prob, the random vector is provided as the second output.
+% * Prob{ w \in \theta Polytope(A,b) } is computed using
+%   RandomVector/getProbPolyhedron.
+% * Requires the desired_accuracy to be at least 1e-2.
 %
 % ============================================================================
 %
@@ -149,21 +151,31 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time, ...
     end
     
     if strcmpi(prob_str_splits{2},'prob')
+        if length(varargin) == 2
+            desired_accuracy = varargin{2};
+            validateattributes(desired_accuracy, {'numeric'}, {'scalar', ...
+                '>=', 1e-2, '<', 1});
+        elseif length(varargin) == 1
+            desired_accuracy = 1e-2;
+        else
+            throwAsCaller(SrtInvalidArgsError('Too many input arguments'));
+        end
         if isa(rv, 'numeric')
             target_set = varargin{1};                
             % Not really a random vector
             prob = target_set.contains(rv);
         elseif strcmpi(prob_str_splits{1},'state')
-            target_set = varargin{1};                
+            target_set = varargin{1};                      
             % Compute probability at time target_time of x \in target_set
-            prob = rv.getProbPolyhedron(target_set);
+            prob = rv.getProbPolyhedron(target_set, desired_accuracy);
         elseif strcmpi(prob_str_splits{1},'concat')
             target_tube = varargin{1};
             [concat_safety_tube_A, concat_safety_tube_b] = ...
                 target_tube.concat([1 target_time+1]);
             polytope_for_concat_tube = Polyhedron('H', ...
                 [concat_safety_tube_A, concat_safety_tube_b]);
-            prob = rv.getProbPolyhedron(polytope_for_concat_tube);
+            prob = rv.getProbPolyhedron(polytope_for_concat_tube, ...
+                desired_accuracy);
         end
         varargout{1} = prob;
         varargout{2} = rv;

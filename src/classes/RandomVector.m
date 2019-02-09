@@ -657,31 +657,51 @@ classdef RandomVector
         end
         
         function prob = getProbPolyhedron(obj, test_polyhedron, varargin)
-        % Compute the probability of a random vector lying in the given
-        % polyhedron
+        % Compute the probability of a random vector lying in a polyhedron 
         % ====================================================================
+        % Probability computation is done via Monte-Carlo (quasi Monte-Carlo in
+        % Gaussian case). A distribution-independent lower bound on the number
+        % of particles needed is obtained via Hoeffding's inequality.
+        %
+        % Hoeffding's inequality states that 
+        %
+        %       Prob{|X-E[X]|\geq \delta} \leq \beta, with
+        %        \beta = 2 * exp(-2 * n_particles * \delta^2). 
+        %
+        % Here, X is a Bernoulli random variable, \delta is the
+        % desired_accuracy, \beta is the failure risk (the probability of the
+        % statement |X-E[X]|\geq \delta fails). 
+        %
+        % In this case, X corresponds to the indicator function of the polytope
+        % composed with the random vector. Given a failure risk \beta and
+        % desired accuracy \delta, we backcompute the number of particles,
+        % 
+        %       n_particles = -ln(\beta/2) / (2 * delta^2) 
+        % 
+        % enforces the condition that empirical mean does not deviate more than
+        % delta from the true mean, by Hoeffding's inequality.
         % 
         % Inputs:
         % -------
         %   obj             - RandomVector object
         %   test_polyhedron - Polyhedron object (polytope whose probability of
         %                     occurrence is of interest)
-        %   n_particles     - [Optional] Number of particles to use in integration
-        %                     for UserDefined random vector [Default: 1e6]
+        %   desired_accuracy- [Optional] Maximum absolute deviation from the
+        %                     true probability estimate [Default: 1e-2]
         %
         % Outputs:
         % --------
         %   covar           - Probability of the random vector lying in the
         %                     given polytope
-        %
         % Notes:
         % ------
-        % * For Random Vectors of type 'Gaussian', we use Genz's algorithm.
-        %   We enforce an accuracy of 1e-3 via iteratedQscvmnv or a maximum of
-        %   10 iterations.
-        % * For Random Vectors of type 'UserDefined', we use a Monte-Carlo
-        %   simulation using n_particles
-        % 
+        % * Due to the inverse-square dependence on the desired_accuracy, we
+        %   impose a hard lower bound of 1e-2 on the desired_accuracy. This
+        %   leads to the requirement of 2e5 particles.
+        % * We set the default failure risk as 2e-15.
+        % * Ill-formed (mean/cov has Inf/NaN) Gaussian random vectors return
+        %   zero probability.
+        %
         % ====================================================================
         % 
         % This function is part of the Stochastic Reachability Toolbox.
@@ -690,15 +710,24 @@ classdef RandomVector
         % 
         %
 
+            failure_risk = 2e-15;
             if ~isempty(varargin) 
-                n_particles = varargin{1};
-                validateattributes(n_particles, {'numeric'},...
-                    {'integer','>',0});
+                desired_accuracy = varargin{1};
+                validateattributes(desired_accuracy, {'numeric'},...
+                    {'scalar','>=', 1e-2, '<=', 1});
                 if length(varargin) > 1
                     throwAsCaller(SrtInvalidArgsError('Too many inputs'));
                 end
             else
-                n_particles = 1e6;
+                desired_accuracy = 1e-2;
+            end
+            % By Hoeffding's inequality
+            n_particles = ceil(-log(failure_risk/2)/(2*desired_accuracy^2));
+
+            if n_particles > 2e5
+                warning('SReachTools:runtime', sprintf(['Number of ', ...
+                        'particles required: %1.2e. Consider increasing ', ...
+                        'desired_accuracy!'], n_particles));
             end
 
             % Check if we got a MPT's Polyhedron object of correct dimensions
@@ -711,33 +740,35 @@ classdef RandomVector
 
             switch obj.type
                 case 'Gaussian'
-                    % Use Genz's algorithm's error estimate to enforce this
-                    % accuracy via iteratedQscmvnv
-                    desired_accuracy = 1e-3;
-                    
-                    % Construct the half-space representation for qscmvnv
-                    qscmvnv_lb = repmat(-Inf, [size(test_polyhedron.A, 1), 1]);
-                    qscmvnv_coeff_matrix = test_polyhedron.A;
-                    % We have the polytope given by Ax <= b, but qscmvnv expects 
-                    % a zero mean Gaussian. Hence, define x -> x + mean
-                    qscmvnv_ub = test_polyhedron.b-test_polyhedron.A*obj.mean();
-
-                    % Call Genz's algorithm in an iterative approach to compute
-                    % the probability. Uses the desired_accuracy and the
-                    % error_estimate from qscmvnv to navigate the number of
-                    % particles used in qscmvnv
-                    try
-                        prob = iteratedQscmvnv(obj.cov(), ...
-                                               qscmvnv_lb, ...
-                                               qscmvnv_coeff_matrix, ...
-                                               qscmvnv_ub, ...
-                                               desired_accuracy, ...
-                                               10);
-                    catch ME
-                        disp(ME);
-                        %TODO-Test: Not sure when qscmvnv will bug out!
-                        throw(SrtDevError(['Error in qscmvnv (Quadrature ', ...
-                            'of multivariate Gaussian)']));
+                    if any(isinf(abs(obj.mean()))) || ...
+                            any(isnan(abs(obj.mean()))) || ...
+                            any(any(isinf(abs(obj.cov())))) || ...
+                            any(any(isnan(abs(obj.cov()))))
+                        % Return zero probability if ill-formed random vector
+                        prob = 0;
+                    else
+                        % Construct the half-space representation for qscmvnv
+                        qscmvnv_lb = repmat(-Inf,[size(test_polyhedron.A, 1),1]);
+                        qscmvnv_coeff_matrix = test_polyhedron.A;
+                        % We have the polytope given by Ax <= b, but qscmvnv 
+                        % expects a zero mean Gaussian. Hence, define x->x+mean
+                        qscmvnv_ub = test_polyhedron.b - ...
+                            test_polyhedron.A*obj.mean();
+                        % Call Genz's algorithm in an iterative approach to 
+                        % compute the probability. Uses the desired_accuracy and 
+                        % the error_estimate from qscmvnv to navigate the number 
+                        % of particles used in qscmvnv
+                        try                            
+                            temp_probability = qscmvnv(n_particles,obj.cov(),...
+                                qscmvnv_lb, qscmvnv_coeff_matrix, qscmvnv_ub);
+                            % Rounding off the integral to the desired accuracy
+                            prob = desired_accuracy *...
+                                round(temp_probability/desired_accuracy);        
+                        catch ME
+                            disp(ME);
+                            throw(SrtDevError(['Error in qscmvnv (', ...
+                                'Quadrature of multivariate Gaussian)']));
+                        end
                     end
                 case 'UserDefined'
                     mcarlo_sims = obj.getRealizations(n_particles);
@@ -748,34 +779,6 @@ classdef RandomVector
                         ['Probability computation not available for ',...
                          '%s-type random vectors'], obj.type)));
             end
-        end
-        function obj = horzcat(varargin)
-        % Horizontal concatenation prevention routine!
-        % ====================================================================
-        % 
-        % Inputs:
-        % -------
-        %   obj             - RandomVector object
-        %
-        % Outputs:
-        % --------
-        %
-        % Notes:
-        % ------
-        % * This function just throws an error since horizontal
-        %   concatenation produces random matrix!
-        % 
-        % ====================================================================
-        % 
-        % This function is part of the Stochastic Reachability Toolbox.
-        % License for the use of this function is given in
-        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
-        % 
-        %
-            
-            throwAsCaller(SrtInvalidArgsError(['Horizontal concatentation ',...
-                'of random vectors is not permitted!']));
-            obj = [];
         end
         
         function newobj = vertcat(varargin)
@@ -975,5 +978,25 @@ classdef RandomVector
                 
             rv = RandomVector('UserDefined', @(N) ub * rand(1, N) + lb);
         end
+        
+        function horzcat()
+        % Horizontal concatenation prevention routine!
+        % ====================================================================
+        % 
+        % Notes:
+        % ------
+        % * This function just throws an error since horizontal
+        %   concatenation produces random matrix!
+        % 
+        % ====================================================================
+        % 
+        % This function is part of the Stochastic Reachability Toolbox.
+        % License for the use of this function is given in
+        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        % 
+        %
+            throwAsCaller(SrtInvalidArgsError(['Horizontal concatentation ',...
+                'of random vectors is not permitted!']));
+        end        
     end
 end

@@ -69,7 +69,8 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %           5. desired_accuracy     - Accuracy expected for the integral of the
 %                                     Gaussian random vector X over the safety
 %                                     tube => Accuracy of the result [Default
-%                                     1e-2]
+%                                     1e-2] | This value can't be smaller
+%                                     than 1e-2
 %           6. PSoptions            - MATLAB struct from psoptimset(), options
 %                                     for MATLAB's patternsearch 
 %                                     [Default psoptimset('Display', 'off')]
@@ -87,10 +88,11 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %                                       : [MUST HAVE] Template polytope
 %                                         which is scaled to get the
 %                                         bounded set
-%                            - n_particles
-%                                       : Number of particles to use for
-%                                         RandomVector/getProbPolyhedron
-%                                         [Default 1e3]
+%                            - desired_accuracy
+%                                       : Accuracy for 
+%                                         RandomVector/getProbPolyhedron | This 
+%                                         value can't be smaller than 1e-2
+%                                         [Default 1e-2]
 %               b. ellipsoid            - Construct an ellipsoid to satify the
 %                                         given probability constraint
 %               c. load                 - Load a predefined polyhedron bounding
@@ -124,7 +126,7 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %                                         computations
 %                            - system   : [MUST HAVE] LtvSystem/LtiSystem object
 %                                         that is being analyzed
-%                            - n_underapprox_vertices
+%                            - n_vertices
 %                                       : Number of vertices to use 
 %                                            [For lag-under] underapproximating
 %                                                   one-step backward reach set
@@ -194,7 +196,7 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %                 to obtain the vertex form of an underapproximate polytope,
 %                 which after projection, is converted back into its half-space
 %                 form.
-% * While specifying n_underapprox_vertices, use the formula 
+% * While specifying n_vertices, use the formula 
 %   2^{n_dim} points_per_quad + 2 * n_dim 
 %   to obtain a spread of points where each quadrant has `points_per_quad`
 %   and the standard axis are also included.
@@ -244,7 +246,7 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
         inpar.addParameter('load_str', ' ', @(x) validateattributes(x, ...
             {'char'}, {'nonempty'}));
         % Equi-directional vector generation
-        inpar.addParameter('n_underapprox_vertices', 100,...
+        inpar.addParameter('n_vertices', 100,...
             @(x) validateattributes(x, {'numeric'}, {'scalar', 'integer',...
             'positive'}));
         % Verbosity
@@ -261,9 +263,10 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
         % Template polytope
         inpar.addParameter('template_polytope',[], @(x) validateattributes(x,...
             {'Polyhedron'}, {'nonempty'}));
-        % n_particles
-        inpar.addParameter('n_particles', 1e3, @(x) validateattributes(x, ...
-            {'numeric'}, {'scalar','integer','nonempty'}));
+        % desired_accuracy
+        inpar.addParameter('desired_accuracy', 1e-2, ...
+            @(x) validateattributes(x, {'numeric'}, ...
+            {'scalar','>=','1e-2','<=',1}));
         % compute_style
         inpar.addParameter('compute_style', 'vfmethod',...
             @(x) any(validatestring(x,valid_compute_style)));
@@ -296,7 +299,8 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
                     validateattributes(x, {'numeric'}, {'scalar','>',0}));
                 % Accuracy for Genz's algorithm to compute integral of Gaussian
                 inpar.addParameter('desired_accuracy',1e-2, @(x)...
-                    validateattributes(x, {'numeric'}, {'scalar','>',0}));
+                    validateattributes(x, {'numeric'}, {'scalar', ...
+                    '>=',1e-2, '<', 1}));
                 % Patternsearch options
                 inpar.addParameter('PSoptions',psoptimset('display','off'));
             case 'chance-open'
@@ -348,11 +352,11 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
                 case 'lag-under'
                     options.equi_dir_vecs = spreadPointsOnUnitSphere(...,
                         options.system.state_dim + options.system.input_dim,...
-                        options.n_underapprox_vertices, options.verbose);                
+                        options.n_vertices, options.verbose);                
                 case 'lag-over'
                     options.equi_dir_vecs = spreadPointsOnUnitSphere(...,
                         options.system.state_dim,...
-                        options.n_underapprox_vertices, options.verbose);                
+                        options.n_vertices, options.verbose);                
             end
             if options.verbose >= 2
                 fprintf('Time to spread the vectors: %1.3f s\n\n',...

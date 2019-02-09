@@ -110,7 +110,7 @@ function bounded_set = SReachSetLagBset(sys, onestep_prob_thresh, options)
                 'options.template_polytope for polytope option');
             bounded_set = getBsetWithProb(disturbance,...
                 options.template_polytope, onestep_prob_thresh,...
-                options.n_particles, options.verbose);
+                options.desired_accuracy, options.verbose);
 
         case 'load'
             % load a predefined bounded set, primarily used for comparison with

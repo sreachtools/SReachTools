@@ -479,8 +479,8 @@ end
 function one_step_back_reach_polytope = lrsOneStepBackReachSet( ...
     current_time, sys, target_set, current_safe_set, verbose)
 
-    if current_safe_set.isEmptySet()
-        throwAsCaller(SrtInvalidArgsError('Empty next step polytope.'));
+    if current_safe_set.isEmptySet() || target_set.isEmptySet()
+        throwAsCaller(SrtInvalidArgsError('Recursion led to an empty set.'));
     end
     if ~target_set.isFullDim()
         disp(target_set)
@@ -555,9 +555,9 @@ function one_step_back_reach_polytope = lrsOneStepBackReachSet( ...
         [one_step_back_reach_polytope_A, one_step_back_reach_polytope_b]);
     if verbose >= 2
         fprintf('Time to get minimal H-rep     : %1.3f s\n',toc(timerVal));
+        fprintf('Number of minimal halfspaces  : %d inequalities\n', ...
+                length(one_step_back_reach_polytope_b));
     end
-    fprintf('Number of minimal halfspaces  : %d inequalities\n', ...
-            length(one_step_back_reach_polytope_b));
 end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

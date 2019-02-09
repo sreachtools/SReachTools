@@ -1,5 +1,5 @@
 function bounded_set = getBsetWithProb(dist, polytope, prob_threshold,...
-    n_particles, verbose)
+    desired_accuracy, verbose)
 % Get a scaled version of the user-specified polytope via bisection method
 % =============================================================================
 % 
@@ -20,20 +20,18 @@ function bounded_set = getBsetWithProb(dist, polytope, prob_threshold,...
 %   Stochastic Reachability of a Target Tube," 2018.
 %   https://arxiv.org/abs/1810.07118 TODO
 %
-% Usage: See SReachSetLagBset.
+% Usage: See SReachSetLagBset, RandomVector/getProbPolyhedron.
 % 
 % =============================================================================
 % 
-% bounded_set = getBsetWithProb(dist, polytope, prob_threshold, n_particles)
+% bounded_set = getBsetWithProb(dist, polytope, prob_threshold,desired_accuracy)
 % 
 % Inputs:
 % -------
 %   dist            - RandomVector object
 %   polytope        - Polyhedron object whose scaled version is the bounded_set                     
 %   prob_threshold  - Probability threshold (gamma)
-%   n_particles     - Number of particles to use in the Monte-Carlo
-%                     simulation estimation of the probability in 
-%                     RandomVector/getProbPolyhedron
+%   desired_accuracy- Maximum absolute deviation in the probability estimate
 % 
 % Outputs:
 % --------
@@ -42,7 +40,8 @@ function bounded_set = getBsetWithProb(dist, polytope, prob_threshold,...
 % Notes:
 % ------
 % * Prob{ w \in \theta Polytope(A,b) } is computed using
-%   RandomVector/getProbPolyhedron
+%   RandomVector/getProbPolyhedron.
+% * Requires the desired_accuracy to be at least 1e-2.
 % 
 % ============================================================================
 %
@@ -65,8 +64,8 @@ function bounded_set = getBsetWithProb(dist, polytope, prob_threshold,...
     end
     validateattributes(prob_threshold, {'numeric'}, {'scalar','>',0,'<=',1},...
         'getBsetWithProb', 'prob_threshold');
-    validateattributes(n_particles, {'numeric'}, {'scalar','>',0,'integer'},...
-        'getBsetWithProb', 'n_particles');
+    validateattributes(desired_accuracy, {'numeric'}, {'scalar','>=', 1e-2, ...
+        '<=', 1}, 'getBsetWithProb', 'desired_accuracy');
     if verbose >= 1
         disp('Computing the bounded disturbance set');
     end
@@ -74,7 +73,8 @@ function bounded_set = getBsetWithProb(dist, polytope, prob_threshold,...
     bisection_lb = 0;
     bisection_ub = 1;
     
-    prob_theta = @(theta) dist.getProbPolyhedron(theta * polytope, n_particles);
+    prob_theta = @(theta) dist.getProbPolyhedron(theta * polytope, ...
+        desired_accuracy);
     
     % Bracketing phase
     prob_val_ub = prob_theta(bisection_ub);
@@ -110,13 +110,4 @@ function bounded_set = getBsetWithProb(dist, polytope, prob_threshold,...
     end
     
     bounded_set = bisection_ub * polytope;
-    
-    test_prob = dist.getProbPolyhedron(bounded_set, 1e6);
-    
-    if prob_threshold > test_prob + 1e-2 
-        throw(SrtInvalidArgsError(sprintf(['Validation via a fresh set of ',...
-            'samples (1e6) showed a variation greater than 0.01 (required ',...
-            '>=%1.2f, and obtained %1.2f). Increasing n_particles should ',...
-            'help.'], test_prob, prob_threshold)));
-    end
 end
