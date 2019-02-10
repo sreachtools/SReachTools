@@ -41,7 +41,7 @@
 %
 
 % Prescript running: Initializing srtinit, if it already hasn't been initialized
-close all;clearvars;srtinit;srtinit --version;
+close all;clearvars;srtinit;
 
 %% Problem Definition
 % In this example we will look at the viability problem for a double integrator. 

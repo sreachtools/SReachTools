@@ -18,7 +18,7 @@
 %
 
 % Prescript running: Initializing srtinit, if it already hasn't been initialized
-close all;clearvars;srtinit;srtinit --version;
+close all;clearvars;srtinit;
 
 %% Problem formulation: Stochastic reachability of a target tube
 % Given an initial state $x_0$, a time horizon $N$, a linear system dynamics

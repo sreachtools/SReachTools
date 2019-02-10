@@ -30,7 +30,7 @@
 % (<https://doi.org/10.29007/7ks7 https://doi.org/10.29007/7ks7>).
 
 % Prescript running: Initializing srtinit, if it already hasn't been initialized
-close all;clearvars;srtinit;srtinit --version;
+close all;clearvars;srtinit;
 
 %% Problem Formulation
 % We first define a |LtiSystem| object corresponding to the discrete-time 

@@ -28,7 +28,7 @@
 %
 
 % Prescript running: Initializing srtinit, if it already hasn't been initialized
-close all;clearvars;srtinit;srtinit --version;
+close all;clearvars;srtinit;
 
 %% Problem setup
 % In this example we use a discretized double integrator dynamics given by:

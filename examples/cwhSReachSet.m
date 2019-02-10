@@ -19,7 +19,7 @@
 % verbose (via SReachPointOptions). In practice, this can be turned off.
 
 % Prescript running: Initializing srtinit, if it already hasn't been initialized
-close all;clearvars;srtinit;srtinit --version;
+close all;clearvars;srtinit;
 
 %% Problem formulation: Spacecraft motion via CWH dynamics
 % We consider both the spacecrafts, referred to as the deputy spacecraft and 
