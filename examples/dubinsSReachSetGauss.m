@@ -286,4 +286,3 @@ end
 axis equal
 axis(axis_v);
 box on;
-set(gca,'FontSize',20);

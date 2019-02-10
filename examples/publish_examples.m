@@ -70,8 +70,10 @@ function publish_examples(varargin)
                     {varargin{2:end}})==1);
                 dl([index_of_this_script,indices_to_remove])=[];
             case '--no-pdf'
-                publish_pdf = 0;                
-                if length(varargin) > 1
+                publish_pdf = 0;
+                if length(varargin) == 1
+                    dl(index_of_this_script)=[];                            
+                else
                     switch lower(varargin{2})
                         case '--publish-only'
                             % Remove all the scripts not provided
@@ -103,7 +105,9 @@ function publish_examples(varargin)
                 end
             case '--no-html'
                 publish_html = 0;
-                if length(varargin) > 1
+                if length(varargin) == 1
+                    dl(index_of_this_script)=[];                            
+                else
                     switch lower(varargin{2})
                         case '--publish-only'
                             % Remove all the scripts not provided

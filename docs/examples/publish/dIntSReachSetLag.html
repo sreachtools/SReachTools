@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>Lagrangian Approximations for the Stochastic Reachability of a Target Tube</title><meta name="generator" content="MATLAB 9.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-02-07"><meta name="DC.source" content="dIntSReachSetLag.m"><style type="text/css">
+      --><title>Lagrangian Approximations for the Stochastic Reachability of a Target Tube</title><meta name="generator" content="MATLAB 9.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-02-09"><meta name="DC.source" content="dIntSReachSetLag.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -113,6 +113,7 @@ timerVal=tic;
 luSet(1) = SReachSet(<span class="string">'term'</span>, <span class="string">'lag-under'</span>, sys, beta, target_tube, luOpts1);
 lagrange_under_time(1) = toc(timerVal);
 </pre><pre class="codeoutput">Computing Lagragian under approximation
+
 Time_horizon: 5
 Computation for time step: 4
 Computation for time step: 3
@@ -121,7 +122,7 @@ Computation for time step: 1
 Computation for time step: 0
 </pre><h2 id="8">Underapprox. type 2: Bound_set_method - Ellipsoid | Compute_style - Support</h2><p>Compared to type 1, this method will result in more conservative solution. The benefit of this approach becomes clear when we use it in high-dimensional systems where vertex-facet enumeration is hard. By the virtue of being recursion-free, this approach will scale better than type 1.</p><pre class="codeinput">timerVal=tic;
 luOpts2 = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'lag-under'</span>, <span class="string">'bound_set_method'</span>, <span class="keyword">...</span>
-    <span class="string">'ellipsoid'</span>, <span class="string">'system'</span>, sys, <span class="string">'n_underapprox_vertices'</span>, 2^n_dim*10+2*n_dim,<span class="keyword">...</span>
+    <span class="string">'ellipsoid'</span>, <span class="string">'system'</span>, sys, <span class="string">'n_vertices'</span>, 2^n_dim*10+2*n_dim,<span class="keyword">...</span>
     <span class="string">'verbose'</span>,1,<span class="string">'compute_style'</span>,<span class="string">'support'</span>);
 luOpts_time(2) = toc(timerVal);
 timerVal=tic;
@@ -133,46 +134,47 @@ Analyzing 10 unit-length vectors in first quadrant
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 5.231e-03 (&lt; 1.000e-08)
-Change in opt cost: 2.449e-01 (&lt; 1.000e-05)
+Sum of slack: 4.225e-02 (&lt; 1.000e-08)
+Change in opt cost: 2.014e-01 (&lt; 1.000e-05)
 
  2. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 5.198e-10 (&lt; 1.000e-08)
-Change in opt cost: 8.874e-02 (&lt; 1.000e-05)
+Sum of slack: 2.936e-10 (&lt; 1.000e-08)
+Change in opt cost: 1.355e-01 (&lt; 1.000e-05)
 
  3. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 1.116e-09 (&lt; 1.000e-08)
-Change in opt cost: 1.858e-02 (&lt; 1.000e-05)
+Sum of slack: 3.027e-10 (&lt; 1.000e-08)
+Change in opt cost: 2.499e-02 (&lt; 1.000e-05)
 
  4. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 2.298e-10 (&lt; 1.000e-08)
-Change in opt cost: 4.030e-03 (&lt; 1.000e-05)
+Sum of slack: 4.684e-10 (&lt; 1.000e-08)
+Change in opt cost: 3.076e-03 (&lt; 1.000e-05)
 
  5. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 2.274e-09 (&lt; 1.000e-08)
-Change in opt cost: 6.647e-05 (&lt; 1.000e-05)
+Sum of slack: 2.112e-10 (&lt; 1.000e-08)
+Change in opt cost: 1.032e-04 (&lt; 1.000e-05)
 
  6. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 1.129e-09 (&lt; 1.000e-08)
-Change in opt cost: 2.639e-08 (&lt; 1.000e-05)
+Sum of slack: 1.878e-10 (&lt; 1.000e-08)
+Change in opt cost: 1.224e-07 (&lt; 1.000e-05)
 
 Completed spreading the vectors!
 Computing Lagragian under approximation
+
 Time_horizon: 5
 Computation for time step: 4
 Computation for time step: 3
@@ -187,6 +189,7 @@ timerVal=tic;
 luSet(3) = SReachSet(<span class="string">'term'</span>, <span class="string">'lag-under'</span>, sys, beta, target_tube, luOpts3);
 lagrange_under_time(3) = toc(timerVal);
 </pre><pre class="codeoutput">Computing Lagragian under approximation
+
 Computing the bounded disturbance set
 Time_horizon: 5
 Computation for time step: 4
@@ -195,7 +198,7 @@ Computation for time step: 2
 Computation for time step: 1
 Computation for time step: 0
 </pre><h2 id="10">Underapprox. type 3: Bound_set_method - Polytope | Compute_style - Support</h2><p>Compared to type 1, this method will result in more conservative solution since the bounded disturbance set is larger in volume. Compared to type 3, this set will be more conservative since an underapproximative vertex-facet enumeration is performed.</p><pre class="codeinput">luOpts4 = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'lag-under'</span>, <span class="string">'bound_set_method'</span>, <span class="keyword">...</span>
-    <span class="string">'polytope'</span>, <span class="string">'system'</span>, sys, <span class="string">'n_underapprox_vertices'</span>, 2^n_dim*10+2*n_dim,<span class="keyword">...</span>
+    <span class="string">'polytope'</span>, <span class="string">'system'</span>, sys, <span class="string">'n_vertices'</span>, 2^n_dim*10+2*n_dim,<span class="keyword">...</span>
     <span class="string">'verbose'</span>, 1, <span class="string">'compute_style'</span>,<span class="string">'support'</span>, <span class="string">'template_polytope'</span>,<span class="keyword">...</span>
     Polyhedron(<span class="string">'lb'</span>,-ones(sys.dist.dim,1),<span class="string">'ub'</span>,ones(sys.dist.dim,1)));
 luOpts_time(4) = toc(timerVal);
@@ -208,53 +211,40 @@ Analyzing 10 unit-length vectors in first quadrant
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 1.128e-11 (&lt; 1.000e-08)
-Change in opt cost: 2.294e-01 (&lt; 1.000e-05)
+Sum of slack: 8.715e-11 (&lt; 1.000e-08)
+Change in opt cost: 2.882e-01 (&lt; 1.000e-05)
 
  2. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 6.078e-10 (&lt; 1.000e-08)
-Change in opt cost: 8.814e-02 (&lt; 1.000e-05)
+Sum of slack: 5.707e-10 (&lt; 1.000e-08)
+Change in opt cost: 6.045e-02 (&lt; 1.000e-05)
 
  3. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 1.348e-10 (&lt; 1.000e-08)
-Change in opt cost: 3.043e-02 (&lt; 1.000e-05)
+Sum of slack: 1.563e-11 (&lt; 1.000e-08)
+Change in opt cost: 6.767e-03 (&lt; 1.000e-05)
 
  4. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 1.108e-09 (&lt; 1.000e-08)
-Change in opt cost: 7.707e-03 (&lt; 1.000e-05)
+Sum of slack: 1.314e-10 (&lt; 1.000e-08)
+Change in opt cost: 1.148e-04 (&lt; 1.000e-05)
 
  5. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 9.054e-11 (&lt; 1.000e-08)
-Change in opt cost: 3.760e-03 (&lt; 1.000e-05)
-
- 6. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 1.791e-09 (&lt; 1.000e-08)
-Change in opt cost: 4.213e-05 (&lt; 1.000e-05)
-
- 7. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 3.243e-10 (&lt; 1.000e-08)
-Change in opt cost: 5.772e-08 (&lt; 1.000e-05)
+Sum of slack: 1.497e-09 (&lt; 1.000e-08)
+Change in opt cost: 6.185e-08 (&lt; 1.000e-05)
 
 Completed spreading the vectors!
 Computing Lagragian under approximation
+
 Computing the bounded disturbance set
 Time_horizon: 5
 Computation for time step: 4
@@ -272,6 +262,7 @@ timerVal=tic;
 loSet(1) = SReachSet(<span class="string">'term'</span>, <span class="string">'lag-over'</span>, sys, beta, target_tube, loOpts1);
 lagrange_over_time(1) = toc(timerVal);
 </pre><pre class="codeoutput">Computing Lagragian over approximation
+
 Time_horizon: 5
 Computation for time step: 4
 Computation for time step: 3
@@ -281,7 +272,7 @@ Computation for time step: 0
 </pre><h2 id="13">Overapprox. type 2: Bound_set_method - Ellipsoid | Compute_style - Support</h2><p>Compared to type 1, this method will provide an overapproximative solution but can potentially be faster since it is recursion-free.</p><pre class="codeinput">timerVal=tic;
 loOpts2 = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'lag-over'</span>, <span class="string">'bound_set_method'</span>, <span class="keyword">...</span>
     <span class="string">'ellipsoid'</span>, <span class="string">'verbose'</span>, 1, <span class="string">'compute_style'</span>,<span class="string">'support'</span>, <span class="string">'system'</span>, sys,<span class="keyword">...</span>
-    <span class="string">'n_underapprox_vertices'</span>, 2^n_dim_over * 7+2*n_dim_over);
+    <span class="string">'n_vertices'</span>, 2^n_dim_over * 7+2*n_dim_over);
 loOpts_time(2) = toc(timerVal);
 timerVal=tic;
 loSet(2) = SReachSet(<span class="string">'term'</span>, <span class="string">'lag-over'</span>, sys, beta, target_tube, loOpts2);
@@ -292,120 +283,44 @@ Analyzing 7 unit-length vectors in first quadrant
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 6.226e-02 (&lt; 1.000e-08)
-Change in opt cost: 1.178e-01 (&lt; 1.000e-05)
+Sum of slack: 2.273e-02 (&lt; 1.000e-08)
+Change in opt cost: 1.307e-01 (&lt; 1.000e-05)
 
  2. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 3.976e-02 (&lt; 1.000e-08)
-Change in opt cost: 4.412e-02 (&lt; 1.000e-05)
+Sum of slack: 8.736e-12 (&lt; 1.000e-08)
+Change in opt cost: 5.118e-02 (&lt; 1.000e-05)
 
  3. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 4.917e-02 (&lt; 1.000e-08)
-Change in opt cost: 1.096e-02 (&lt; 1.000e-05)
+Sum of slack: 2.161e-10 (&lt; 1.000e-08)
+Change in opt cost: 1.497e-02 (&lt; 1.000e-05)
 
  4. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 5.013e-02 (&lt; 1.000e-08)
-Change in opt cost: 8.776e-04 (&lt; 1.000e-05)
+Sum of slack: 3.669e-11 (&lt; 1.000e-08)
+Change in opt cost: 1.409e-03 (&lt; 1.000e-05)
 
  5. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 5.014e-02 (&lt; 1.000e-08)
-Change in opt cost: 7.628e-06 (&lt; 1.000e-05)
-
- 6. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |  7 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 5.014e-02 (&lt; 1.000e-08)
-Change in opt cost: 7.547e-10 (&lt; 1.000e-05)
-
- 7. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |  7 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 5.014e-02 (&lt; 1.000e-08)
-Change in opt cost: 1.278e-09 (&lt; 1.000e-05)
-
- 8. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |  7 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 5.014e-02 (&lt; 1.000e-08)
-Change in opt cost: 1.638e-09 (&lt; 1.000e-05)
-
- 9. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |  7 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 5.014e-02 (&lt; 1.000e-08)
-Change in opt cost: 4.692e-09 (&lt; 1.000e-05)
-
-10. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |  7 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 4.496e-02 (&lt; 1.000e-08)
-Change in opt cost: 3.328e-04 (&lt; 1.000e-05)
-
-11. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |  7 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 3.716e-02 (&lt; 1.000e-08)
-Change in opt cost: 9.663e-04 (&lt; 1.000e-05)
-
-12. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |  7 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 4.712e-10 (&lt; 1.000e-08)
-Change in opt cost: 1.313e-01 (&lt; 1.000e-05)
-
-13. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |  7 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 1.286e-11 (&lt; 1.000e-08)
-Change in opt cost: 1.786e-02 (&lt; 1.000e-05)
-
-14. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |  7 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 2.240e-10 (&lt; 1.000e-08)
-Change in opt cost: 4.951e-03 (&lt; 1.000e-05)
-
-15. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |  7 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 2.160e-11 (&lt; 1.000e-08)
-Change in opt cost: 1.496e-04 (&lt; 1.000e-05)
-
-16. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |  7 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 4.868e-13 (&lt; 1.000e-08)
-Change in opt cost: 1.249e-07 (&lt; 1.000e-05)
+Sum of slack: 4.585e-11 (&lt; 1.000e-08)
+Change in opt cost: 9.101e-06 (&lt; 1.000e-05)
 
 Completed spreading the vectors!
 Computing Lagragian over approximation
+
 Evaluating support function:    32/   32
 </pre><h2 id="14">Overapprox. type 3: Bound_set_method - Polytope | Compute_style - VFmethod</h2><p>Compared to type 1, this method will result in more conservative solution since the bounded disturbance set is larger in volume.</p><pre class="codeinput">timerVal=tic;
 loOpts3 = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'lag-over'</span>, <span class="string">'bound_set_method'</span>, <span class="keyword">...</span>
-    <span class="string">'polytope'</span>, <span class="string">'verbose'</span>, 1, <span class="string">'n_particles'</span>, 1e6, <span class="string">'template_polytope'</span>,<span class="keyword">...</span>
+    <span class="string">'polytope'</span>, <span class="string">'verbose'</span>, 1, <span class="string">'template_polytope'</span>,<span class="keyword">...</span>
     Polyhedron(<span class="string">'lb'</span>,-ones(sys.dist.dim,1),<span class="string">'ub'</span>,ones(sys.dist.dim,1)),<span class="keyword">...</span>
     <span class="string">'compute_style'</span>,<span class="string">'vfmethod'</span>);
 loOpts_time(3) = toc(timerVal);
@@ -413,6 +328,7 @@ timerVal=tic;
 loSet(3) = SReachSet(<span class="string">'term'</span>, <span class="string">'lag-over'</span>, sys, beta, target_tube, loOpts3);
 lagrange_over_time(3) = toc(timerVal);
 </pre><pre class="codeoutput">Computing Lagragian over approximation
+
 Computing the bounded disturbance set
 Time_horizon: 5
 Computation for time step: 4
@@ -424,7 +340,7 @@ Computation for time step: 0
     <span class="string">'polytope'</span>, <span class="string">'verbose'</span>, 1, <span class="string">'template_polytope'</span>,<span class="keyword">...</span>
     Polyhedron(<span class="string">'lb'</span>,-ones(sys.dist.dim,1),<span class="string">'ub'</span>,ones(sys.dist.dim,1)),<span class="keyword">...</span>
     <span class="string">'compute_style'</span>,<span class="string">'support'</span>, <span class="string">'system'</span>, sys,<span class="keyword">...</span>
-    <span class="string">'n_underapprox_vertices'</span>, 2^n_dim_over* 7 +2*n_dim_over);
+    <span class="string">'n_vertices'</span>, 2^n_dim_over* 7 +2*n_dim_over);
 loOpts_time(4) = toc(timerVal);
 timerVal=tic;
 loSet(4) = SReachSet(<span class="string">'term'</span>, <span class="string">'lag-over'</span>, sys, beta, target_tube, loOpts4);
@@ -435,116 +351,40 @@ Analyzing 7 unit-length vectors in first quadrant
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 3.467e-02 (&lt; 1.000e-08)
-Change in opt cost: 1.512e-01 (&lt; 1.000e-05)
+Sum of slack: 9.873e-10 (&lt; 1.000e-08)
+Change in opt cost: 1.607e-01 (&lt; 1.000e-05)
 
  2. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 4.861e-02 (&lt; 1.000e-08)
-Change in opt cost: 1.907e-02 (&lt; 1.000e-05)
+Sum of slack: 5.556e-10 (&lt; 1.000e-08)
+Change in opt cost: 3.210e-02 (&lt; 1.000e-05)
 
  3. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 5.014e-02 (&lt; 1.000e-08)
-Change in opt cost: 1.788e-03 (&lt; 1.000e-05)
+Sum of slack: 7.131e-10 (&lt; 1.000e-08)
+Change in opt cost: 3.231e-03 (&lt; 1.000e-05)
 
  4. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 5.014e-02 (&lt; 1.000e-08)
-Change in opt cost: 1.858e-05 (&lt; 1.000e-05)
+Sum of slack: 8.043e-11 (&lt; 1.000e-08)
+Change in opt cost: 2.123e-05 (&lt; 1.000e-05)
 
  5. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 5.014e-02 (&lt; 1.000e-08)
-Change in opt cost: 1.100e-08 (&lt; 1.000e-05)
-
- 6. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |  7 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 5.014e-02 (&lt; 1.000e-08)
-Change in opt cost: 4.181e-10 (&lt; 1.000e-05)
-
- 7. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |  7 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 5.014e-02 (&lt; 1.000e-08)
-Change in opt cost: 1.282e-09 (&lt; 1.000e-05)
-
- 8. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |  7 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 5.014e-02 (&lt; 1.000e-08)
-Change in opt cost: 1.637e-09 (&lt; 1.000e-05)
-
- 9. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |  7 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 5.014e-02 (&lt; 1.000e-08)
-Change in opt cost: 4.692e-09 (&lt; 1.000e-05)
-
-10. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |  7 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 4.496e-02 (&lt; 1.000e-08)
-Change in opt cost: 3.328e-04 (&lt; 1.000e-05)
-
-11. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |  7 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 3.716e-02 (&lt; 1.000e-08)
-Change in opt cost: 9.648e-04 (&lt; 1.000e-05)
-
-12. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |  7 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 8.673e-13 (&lt; 1.000e-08)
-Change in opt cost: 1.319e-01 (&lt; 1.000e-05)
-
-13. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |  7 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 3.525e-10 (&lt; 1.000e-08)
-Change in opt cost: 1.829e-02 (&lt; 1.000e-05)
-
-14. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |  7 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 4.959e-10 (&lt; 1.000e-08)
-Change in opt cost: 4.022e-03 (&lt; 1.000e-05)
-
-15. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |  7 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 4.188e-11 (&lt; 1.000e-08)
-Change in opt cost: 1.775e-04 (&lt; 1.000e-05)
-
-16. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |  7 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 2.190e-10 (&lt; 1.000e-08)
-Change in opt cost: 4.594e-07 (&lt; 1.000e-05)
+Sum of slack: 1.848e-11 (&lt; 1.000e-08)
+Change in opt cost: 1.966e-09 (&lt; 1.000e-05)
 
 Completed spreading the vectors!
 Computing Lagragian over approximation
+
 Computing the bounded disturbance set
 Evaluating support function:    32/   32
 </pre><h2 id="16">Dynamic programming solution</h2><p>We compare the results with <a href="https://doi.org/10.1016/j.automatica.2010.08.006">dynamic programming</a> to see how the approximations appear and how they compare in simulation times.</p><pre class="codeinput">dyn_prog_xinc = 0.025;
@@ -580,16 +420,16 @@ fprintf(<span class="string">'   Dynamic programming: %.3f\n'</span>, dynprog_ti
 </pre><pre class="codeoutput">Simulation times [seconds]:
  Lagrangian:
    Overapproximation   online  |  offline | Total
-(Ellipsoid,VFmethod)  1.02e+00 | 1.18e-03 | 1.02
-(Ellipsoid, support)  1.03e+01 | 2.20e+01 | 32.27
-(Polytope ,VFmethod)  1.00e+00 | 5.04e-03 | 1.01
-(Polytope , support)  7.83e+00 | 2.21e+01 | 29.95
+(Ellipsoid,VFmethod)  1.13e+00 | 4.44e-03 | 1.14
+(Ellipsoid, support)  1.01e+01 | 6.67e+00 | 16.81
+(Polytope ,VFmethod)  1.27e+00 | 1.23e-02 | 1.28
+(Polytope , support)  8.24e+00 | 8.09e+00 | 16.33
    Underapproximation  online  |  offline | Total
-(Ellipsoid,VFmethod)  7.19e-01 | 1.52e-03 | 0.72
-(Ellipsoid, support)  2.46e+00 | 1.55e+01 | 18.00
-(Polytope ,VFmethod)  8.95e-01 | 2.52e+00 | 3.42
-(Polytope , support)  2.74e+00 | 1.82e+01 | 20.98
-   Dynamic programming: 15.707
+(Ellipsoid,VFmethod)  1.06e+00 | 6.97e-03 | 1.07
+(Ellipsoid, support)  2.50e+00 | 1.49e+01 | 17.39
+(Polytope ,VFmethod)  1.25e+00 | 2.91e+00 | 4.16
+(Polytope , support)  2.91e+00 | 1.38e+01 | 16.75
+   Dynamic programming: 15.268
 </pre><h2 id="21">Plotting all the sets together</h2><p>As expected, the over-approximation and the under-approximation obtained via Lagrangian approach bounds the dynamic programming solution from "inside" and "outside".</p><pre class="codeinput">figure(2);
 clf
 plot(safe_set, <span class="string">'color'</span>, <span class="string">'k'</span>);
@@ -769,7 +609,7 @@ lagrange_under_time(1) = toc(timerVal);
 % of being recursion-free, this approach will scale better than type 1.
 timerVal=tic;
 luOpts2 = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
-    'ellipsoid', 'system', sys, 'n_underapprox_vertices', 2^n_dim*10+2*n_dim,...
+    'ellipsoid', 'system', sys, 'n_vertices', 2^n_dim*10+2*n_dim,...
     'verbose',1,'compute_style','support');
 luOpts_time(2) = toc(timerVal);
 timerVal=tic;
@@ -793,7 +633,7 @@ lagrange_under_time(3) = toc(timerVal);
 % type 3, this set will be more conservative since an underapproximative
 % vertex-facet enumeration is performed.
 luOpts4 = SReachSetOptions('term', 'lag-under', 'bound_set_method', ...
-    'polytope', 'system', sys, 'n_underapprox_vertices', 2^n_dim*10+2*n_dim,...
+    'polytope', 'system', sys, 'n_vertices', 2^n_dim*10+2*n_dim,...
     'verbose', 1, 'compute_style','support', 'template_polytope',...
     Polyhedron('lb',-ones(sys.dist.dim,1),'ub',ones(sys.dist.dim,1)));
 luOpts_time(4) = toc(timerVal);
@@ -830,7 +670,7 @@ lagrange_over_time(1) = toc(timerVal);
 timerVal=tic;
 loOpts2 = SReachSetOptions('term', 'lag-over', 'bound_set_method', ...
     'ellipsoid', 'verbose', 1, 'compute_style','support', 'system', sys,...
-    'n_underapprox_vertices', 2^n_dim_over * 7+2*n_dim_over);
+    'n_vertices', 2^n_dim_over * 7+2*n_dim_over);
 loOpts_time(2) = toc(timerVal);
 timerVal=tic;
 loSet(2) = SReachSet('term', 'lag-over', sys, beta, target_tube, loOpts2);
@@ -840,7 +680,7 @@ lagrange_over_time(2) = toc(timerVal);
 % solution since the bounded disturbance set is larger in volume.
 timerVal=tic;
 loOpts3 = SReachSetOptions('term', 'lag-over', 'bound_set_method', ...
-    'polytope', 'verbose', 1, 'n_particles', 1e6, 'template_polytope',...
+    'polytope', 'verbose', 1, 'template_polytope',...
     Polyhedron('lb',-ones(sys.dist.dim,1),'ub',ones(sys.dist.dim,1)),...
     'compute_style','vfmethod');
 loOpts_time(3) = toc(timerVal);
@@ -856,7 +696,7 @@ loOpts4 = SReachSetOptions('term', 'lag-over', 'bound_set_method', ...
     'polytope', 'verbose', 1, 'template_polytope',...
     Polyhedron('lb',-ones(sys.dist.dim,1),'ub',ones(sys.dist.dim,1)),...
     'compute_style','support', 'system', sys,...
-    'n_underapprox_vertices', 2^n_dim_over* 7 +2*n_dim_over);
+    'n_vertices', 2^n_dim_over* 7 +2*n_dim_over);
 loOpts_time(4) = toc(timerVal);
 timerVal=tic;
 loSet(4) = SReachSet('term', 'lag-over', sys, beta, target_tube, loOpts4);
