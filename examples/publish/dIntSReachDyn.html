@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>dIntSReachDyn</title><meta name="generator" content="MATLAB 9.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-02-07"><meta name="DC.source" content="dIntSReachDyn.m"><style type="text/css">
+      --><title>dIntSReachDyn</title><meta name="generator" content="MATLAB 9.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-02-09"><meta name="DC.source" content="dIntSReachDyn.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -66,7 +66,7 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
 
-  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Double Integrator Reach-Avoid Via Dynamic Programming</a></li><li><a href="#2">Problem setup</a></li><li><a href="#3">Case 1: Stochastic viability problem</a></li><li><a href="#6">Case 2: Terminal hitting-time stochastic reach-avoid</a></li><li><a href="#10">Case 3: Time-varying safety sets (Stochastic reachability of a target tube)</a></li></ul></div><h2 id="1">Double Integrator Reach-Avoid Via Dynamic Programming</h2><p>This example will demonstrate the use of <tt>SReachTools</tt> to solve a terminal-hitting time stochastic reach-avoid problem using <a href="https://doi.org/10.1016/j.automatica.2010.08.006">dynamic programming</a>.  We consider stochastic continuous-state discrete-time linear time-invariant (LTI) systems. This example script is part of the <tt>SReachTools</tt> toolbox, which is licensed under GPL v3 or (at your option) any later version. A copy of this license is given in <a href="https://github.com/unm-hscl/SReachTools/blob/master/LICENSE">https://github.com/unm-hscl/SReachTools/blob/master/LICENSE</a>.</p><p>In this example, we analyze the following problems via dynamic programming for a stochastic system with known dynamics:</p><div><ol><li><b>stochastic viability problem</b>: Compute a controller to stay within a safe set with maximum likelihood</li><li><b>the terminal-hitting time stochastic reach-avoid problem</b>: Compute a controller that maximizes the probability of reaching a target set at a time horizon, <tt>N</tt>, while maintaining the system in a set of safe states</li><li><b>stochastic reachability of a moving target tube</b>: Compute a controller that maximizes the probability of staying within a target tube (a collection of time-varying safe sets)</li></ol></div><p>SReachTools has a dynamic programing implementation that can analyze systems upto three dimensions. For efficient implementation, we require the input set to be an axis-aligned hypercuboid, and define the grid the smallest hypercuboid containing all the target sets.</p><pre class="codeinput"><span class="comment">% Prescript running: Initializing srtinit, if it already hasn't been initialized</span>
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Double Integrator Reach-Avoid Via Dynamic Programming</a></li><li><a href="#2">Problem setup</a></li><li><a href="#3">Case 1: Stochastic viability problem</a></li><li><a href="#6">Case 2: Terminal hitting-time stochastic reach-avoid</a></li><li><a href="#10">Case 3: Time-varying safety sets (Stochastic reachability of a target tube)</a></li></ul></div><h2 id="1">Double Integrator Reach-Avoid Via Dynamic Programming</h2><p>This example will demonstrate the use of <tt>SReachTools</tt> to solve a terminal-hitting time stochastic reach-avoid problem using <a href="https://doi.org/10.1016/j.automatica.2010.08.006">dynamic programming</a>.  We consider a stochastic continuous-state discrete-time linear time-invariant (LTI) system. This example script is part of the <tt>SReachTools</tt> toolbox, which is licensed under GPL v3 or (at your option) any later version. A copy of this license is given in <a href="https://github.com/unm-hscl/SReachTools/blob/master/LICENSE">https://github.com/unm-hscl/SReachTools/blob/master/LICENSE</a>.</p><p>In this example, we analyze the following problems via dynamic programming for a stochastic system with known dynamics:</p><div><ol><li><b>stochastic viability problem</b>: Compute a controller to stay within a safe set with maximum likelihood</li><li><b>the terminal-hitting time stochastic reach-avoid problem</b>: Compute a controller that maximizes the probability of reaching a target set at a time horizon, <tt>N</tt>, while maintaining the system in a set of safe states</li><li><b>stochastic reachability of a moving target tube</b>: Compute a controller that maximizes the probability of staying within a target tube (a collection of time-varying safe sets)</li></ol></div><p>SReachTools has a dynamic programing implementation that can analyze systems upto three dimensions. For efficient implementation, we require the input set to be an axis-aligned hypercuboid, and define the grid the smallest hypercuboid containing all the target sets.</p><pre class="codeinput"><span class="comment">% Prescript running: Initializing srtinit, if it already hasn't been initialized</span>
 close <span class="string">all</span>;clearvars;srtinit;srtinit <span class="string">--version</span>;
 </pre><pre class="codeoutput">SReachTools version 1.2.31
 </pre><h2 id="2">Problem setup</h2><p>In this example we use a discretized double integrator dynamics given by:</p><p><img src="dIntSReachDyn_eq10500098239847735597.png" alt="$$  x_{k+1} = \left[ \begin{array}{cc}    1 &amp; T \\   0 &amp; 1  \end{array}\right]&#xA;x_{k} + \left[\begin{array}{c}    \frac{T^{2}}{2} \\    T  \end{array}\right]&#xA;u_{k} + w_{k}$$"></p><p>with state <img src="dIntSReachDyn_eq04084560418051301441.png" alt="$x_k$">, input <img src="dIntSReachDyn_eq06185581748565047363.png" alt="$u_k$">, disturbance <img src="dIntSReachDyn_eq17066019916537791851.png" alt="$w_{k}$">, and sampling time <img src="dIntSReachDyn_eq14047577632175690031.png" alt="$T$">.</p><p>The double integrator system can be used as a simple model of a vehicle on a lane.</p><div><ol><li>The state is position and velocity of the vehicle.</li><li>The vehicle is acceleration-controlled with restrictions on the maximum and   minimum acceleration provided</li><li>The stochastic disturbance affects its position and velocity accounting for   unmodelled phenomena like slipping or engine model mismatch.</li></ol></div><pre class="codeinput"><span class="comment">% System definition</span>
@@ -145,7 +145,7 @@ zlabel(<span class="string">'Safety probability'</span>)
 title(<span class="string">'Optimal value function $V_{SR}^\ast(\cdot)$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
 box <span class="string">on</span>
 view(45, 45)
-</pre><pre class="codeoutput">Elapsed time is 3.035715 seconds.
+</pre><pre class="codeoutput">Elapsed time is 3.134245 seconds.
 </pre><img vspace="5" hspace="5" src="dIntSReachDyn_02.png" alt=""> <pre class="codeinput"><span class="comment">% Obtain the stochastic viability sets</span>
 <span class="comment">% ------------------------------------</span>
 poly_array1 = getDynProgLevelSets2D(cell_of_xvec_x1, prob_x1, <span class="keyword">...</span>
@@ -223,7 +223,7 @@ zlabel(<span class="string">'Safety probability'</span>)
 box <span class="string">on</span>
 view(45, 45)
 title(<span class="string">'Optimal value function $V_{SR}^\ast(\cdot)$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
-</pre><pre class="codeoutput">Elapsed time is 3.133454 seconds.
+</pre><pre class="codeoutput">Elapsed time is 2.989215 seconds.
 </pre><img vspace="5" hspace="5" src="dIntSReachDyn_05.png" alt=""> <pre class="codeinput"><span class="comment">% Obtain the stochastic reach-avoid sets</span>
 <span class="comment">% --------------------------------------</span>
 poly_array2 = getDynProgLevelSets2D(cell_of_xvec_x2, prob_x2, <span class="keyword">...</span>
@@ -294,7 +294,7 @@ zlabel(<span class="string">'Safety probability'</span>)
 box <span class="string">on</span>
 view(45, 45)
 title(<span class="string">'Optimal value function $V_{SR}^\ast(\cdot)$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
-</pre><pre class="codeoutput">Elapsed time is 3.016990 seconds.
+</pre><pre class="codeoutput">Elapsed time is 2.907527 seconds.
 </pre><img vspace="5" hspace="5" src="dIntSReachDyn_08.png" alt=""> <pre class="codeinput"><span class="comment">% Obtain the stochastic reach sets</span>
 <span class="comment">% --------------------------------</span>
 poly_array3 = getDynProgLevelSets2D(cell_of_xvec_x3, prob_x3, <span class="keyword">...</span>
@@ -321,9 +321,9 @@ title(<span class="string">'Stochastic reach sets $L_{SR}^\ast(\cdot)$'</span>,<
 % This example will demonstrate the use of |SReachTools| to solve a
 % terminal-hitting time stochastic reach-avoid problem using
 % <https://doi.org/10.1016/j.automatica.2010.08.006 dynamic programming>.  We
-% consider stochastic continuous-state discrete-time linear time-invariant (LTI)
-% systems. This example script is part of the |SReachTools| toolbox, which is
-% licensed under GPL v3 or (at your option) any later version. A copy of this
+% consider a stochastic continuous-state discrete-time linear time-invariant
+% (LTI) system. This example script is part of the |SReachTools| toolbox, which
+% is licensed under GPL v3 or (at your option) any later version. A copy of this
 % license is given in
 % <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.

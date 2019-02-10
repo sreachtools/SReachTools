@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>cwhSReachSet</title><meta name="generator" content="MATLAB 9.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-02-07"><meta name="DC.source" content="cwhSReachSet.m"><style type="text/css">
+      --><title>cwhSReachSet</title><meta name="generator" content="MATLAB 9.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-02-09"><meta name="DC.source" content="cwhSReachSet.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -66,7 +66,7 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
 
-  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Verification of satellite rendezvous problem via SReachSet</a></li><li><a href="#2">Problem formulation: Spacecraft motion via CWH dynamics</a></li><li><a href="#4">Dynamics model for the deputy relative to the chief spacecraft</a></li><li><a href="#5">Target tube construction --- reach-avoid specification</a></li><li><a href="#6">Preparation for set computation</a></li><li><a href="#7">Verification via <tt>SReachSet</tt></a></li><li><a href="#8">Plotting the sets</a></li><li><a href="#9">Monte-Carlo based validation of the optimal controller</a></li><li><a href="#11">A helper function to plot a subset of the Monte-Carlo simulations</a></li></ul></div><h2 id="1">Verification of satellite rendezvous problem via SReachSet</h2><p>This example will demonstrate the use of <tt>SReachTools</tt> for controller synthesis in a terminal hitting-time stochastic reach-avoid problem. We consider a continuous-state discrete-time linear time-invariant (LTI) system. This example script is part of the <tt>SReachTools</tt> toolbox, which is licensed under GPL v3 or (at your option) any later version. A copy of this license is given in <a href="https://github.com/unm-hscl/SReachTools/blob/master/LICENSE">https://github.com/unm-hscl/SReachTools/blob/master/LICENSE</a>.</p><p>Specifically, we will discuss how SReachTools can use Fourier transforms (<a href="http://www.math.wsu.edu/faculty/genz/software/matlab/qsimvnv.m">Genz's algorithm</a> and MATLAB's patternsearch), convex chance constraints, and Lagrangian methods to construct underapproximative stochastic reach sets. Our approaches are grid-free and recursion-free, resulting in highly scalable solutions.</p><pre class="codeinput"><span class="comment">% Prescript running: Initializing srtinit, if it already hasn't been initialized</span>
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Verification of satellite rendezvous problem via SReachSet</a></li><li><a href="#2">Problem formulation: Spacecraft motion via CWH dynamics</a></li><li><a href="#4">Dynamics model for the deputy relative to the chief spacecraft</a></li><li><a href="#5">Target tube construction --- reach-avoid specification</a></li><li><a href="#6">Preparation for set computation</a></li><li><a href="#7">Verification via <tt>SReachSet</tt></a></li><li><a href="#8">Plotting the sets</a></li><li><a href="#9">Monte-Carlo based validation of the optimal controller</a></li><li><a href="#11">A helper function to plot a subset of the Monte-Carlo simulations</a></li></ul></div><h2 id="1">Verification of satellite rendezvous problem via SReachSet</h2><p>This example will demonstrate the use of <tt>SReachTools</tt> for controller synthesis in a terminal hitting-time stochastic reach-avoid problem. We consider a continuous-state discrete-time linear time-invariant (LTI) system. This example script is part of the <tt>SReachTools</tt> toolbox, which is licensed under GPL v3 or (at your option) any later version. A copy of this license is given in <a href="https://github.com/unm-hscl/SReachTools/blob/master/LICENSE">https://github.com/unm-hscl/SReachTools/blob/master/LICENSE</a>.</p><p>Specifically, we will discuss how SReachTools can use Fourier transforms (<a href="http://www.math.wsu.edu/faculty/genz/software/matlab/qsimvnv.m">Genz's algorithm</a> and MATLAB's patternsearch), convex chance constraints, and Lagrangian methods to construct underapproximative stochastic reach sets. Our approaches are grid-free and recursion-free, resulting in highly scalable solutions.</p><p>All computations were performed using MATLAB on an Intel Xeon CPU with 3.7GHz clock rate and 16 GB RAM. For sake of clarity, all commands were asked to be verbose (via SReachPointOptions). In practice, this can be turned off.</p><pre class="codeinput"><span class="comment">% Prescript running: Initializing srtinit, if it already hasn't been initialized</span>
 close <span class="string">all</span>;clearvars;srtinit;srtinit <span class="string">--version</span>;
 </pre><pre class="codeoutput">SReachTools version 1.2.31
 </pre><h2 id="2">Problem formulation: Spacecraft motion via CWH dynamics</h2><p>We consider both the spacecrafts, referred to as the deputy spacecraft and the chief spacecraft, to be in the same circular orbit. In this example, we will consider the problem of verification for the spacecraft rendezvous problem, i.e., identify all the initial states from which the deputy can can rendezvous with the chief while staying within the line-of-sight cone with a likelihood above a user-specified threshold.</p><p><img vspace="5" hspace="5" src="cwh_sketch.png" alt=""> </p><h2 id="4">Dynamics model for the deputy relative to the chief spacecraft</h2><p>The relative planar dynamics of the deputy with respect to the chief are described by the <a href="https://doi.org/10.1109/CDC.2013.6760626">Clohessy-Wiltshire-Hill (CWH) equations,</a></p><p><img src="cwhSReachSet_eq00898161790449768620.png" alt="$$\ddot{x} - 3 \omega x - 2 \omega \dot{y} = \frac{F_{x}}{m_{d}}$$"></p><p><img src="cwhSReachSet_eq15283232495949856112.png" alt="$$            \ddot{y} + 2 \omega \dot{x} = \frac{F_{y}}{m_{d}}$$"></p><p>where the position of the deputy relative to the chief is <img src="cwhSReachSet_eq15556242510480314522.png" alt="$x,y \in \mathbf{R}$">, <img src="cwhSReachSet_eq07285538383886324120.png" alt="$\omega = \sqrt{\frac{\mu}{R_{0}^{3}}}$"> is the orbital frequency, <img src="cwhSReachSet_eq05371638286043275527.png" alt="$\mu$"> is the gravitational constant, and <img src="cwhSReachSet_eq10871390185993502494.png" alt="$R_{0}$"> is the orbital radius of the chief spacecraft.  We define the state as <img src="cwhSReachSet_eq10872751811371042055.png" alt="$\overline{x} = {[x\ y\ \dot{x}\ \dot{y}]}^\top \in \mathbf{R}^{4}$"> which is the position and velocity of the deputy relative to the chief along <img src="cwhSReachSet_eq15238746908345155538.png" alt="$\mathrm{x}$">- and <img src="cwhSReachSet_eq06683332128004049953.png" alt="$\mathrm{y}$">- axes, and the input as <img src="cwhSReachSet_eq03681831066756660658.png" alt="$\overline{u} = {[F_{x}\ F_{y}]}^\top \in \mathcal{U}\subset\mathbf{R}^{2}$">.</p><p>We will discretize the CWH dynamics in time, via zero-order hold, to obtain the discrete-time linear time-invariant system and add a Gaussian disturbance to account for the modeling uncertainties and the disturbance forces,</p><p><img src="cwhSReachSet_eq17824561326300448854.png" alt="$$\overline{x}_{k+1} = A \overline{x}_{k} + B \overline{u}_{k} +&#xA;\overline{w}_{k}$$"></p><p>with <img src="cwhSReachSet_eq17592557756310175309.png" alt="$\overline{w}_{k} \in \mathbf{R}^{4}$"> as an IID Gaussian zero-mean random process with a known covariance matrix <img src="cwhSReachSet_eq13715931348400830039.png" alt="$\Sigma_{\overline{w}}$">.</p><pre class="codeinput">umax = 0.1;
@@ -138,7 +138,8 @@ lagover_run = 0;
 <span class="keyword">if</span> ft_run
     ft_options = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'genzps-open'</span>, <span class="keyword">...</span>
         <span class="string">'set_of_dir_vecs'</span>, set_of_dir_vecs_ft, <span class="keyword">...</span>
-        <span class="string">'init_safe_set_affine'</span>, init_safe_set_affine, <span class="string">'verbose'</span>, 1);
+        <span class="string">'init_safe_set_affine'</span>, init_safe_set_affine, <span class="string">'verbose'</span>, 1, <span class="keyword">...</span>
+        <span class="string">'desired_accuracy'</span>, 5e-2);
     timer_ft = tic;
     polytope_ft = SReachSet(<span class="string">'term'</span>,<span class="string">'genzps-open'</span>, sys, prob_thresh, <span class="keyword">...</span>
         target_tube, ft_options);
@@ -149,7 +150,7 @@ lagover_run = 0;
     lagunder_options = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'lag-under'</span>,<span class="keyword">...</span>
         <span class="string">'bound_set_method'</span>, <span class="string">'ellipsoid'</span>, <span class="string">'compute_style'</span>,<span class="string">'support'</span>,<span class="keyword">...</span>
         <span class="string">'system'</span>, sys, <span class="string">'vf_enum_method'</span>, <span class="string">'lrs'</span>, <span class="string">'verbose'</span>, 2,<span class="keyword">...</span>
-        <span class="string">'n_underapprox_vertices'</span>, 2^n_dim * 6 + 2*n_dim);
+        <span class="string">'n_vertices'</span>, 2^n_dim * 6 + 2*n_dim);
 
     timer_lagunder = tic;
     [polytope_lagunder, extra_info_under] = SReachSet(<span class="string">'term'</span>, <span class="string">'lag-under'</span>, <span class="keyword">...</span>
@@ -162,7 +163,7 @@ lagover_run = 0;
     lagover_options = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'lag-over'</span>, <span class="keyword">...</span>
         <span class="string">'bound_set_method'</span>, <span class="string">'ellipsoid'</span>, <span class="string">'compute_style'</span>,<span class="string">'support'</span>, <span class="keyword">...</span>
         <span class="string">'system'</span>, sys, <span class="string">'vf_enum_method'</span>, <span class="string">'lrs'</span>, <span class="string">'verbose'</span>, 1, <span class="keyword">...</span>
-        <span class="string">'n_underapprox_vertices'</span>, 2^n_dim * 6 + 2*n_dim);
+        <span class="string">'n_vertices'</span>, 2^n_dim * 6 + 2*n_dim);
 
     timer_lagover = tic;
     polytope_lagover = SReachSet(<span class="string">'term'</span>, <span class="string">'lag-over'</span>, sys,  prob_thresh, <span class="keyword">...</span>
@@ -180,242 +181,177 @@ Computing the polytope via the Chebyshev center
 Analyzing direction :  15/  15
  
 Compute an initial guess for the xmax
- 
+
+
 Compute the xmax via patternsearch
 
-Polytopic underapproximation exists for alpha = 0.80 since W(x_max) = 0.870.
+Polytopic underapproximation exists for alpha = 0.80 since W(x_max) = 0.850.
 
 Analyzing direction : 1/15 | Theta --- lower bound: 0.64 | upper bound: 0.64
-Skipped since (ub_theta - lb_theta) &lt; tol_bisect
-Optimal reach probability at lb_theta: 0.4628 (&gt; 0.8000)
 
 Analyzing direction : 2/15 | Theta --- lower bound: 0.48 | upper bound: 0.48
-Skipped since (ub_theta - lb_theta) &lt; tol_bisect
-Optimal reach probability at lb_theta: 0.4822 (&gt; 0.8000)
 
 Analyzing direction : 3/15 | Theta --- lower bound: 0.46 | upper bound: 0.46
-Skipped since (ub_theta - lb_theta) &lt; tol_bisect
-Optimal reach probability at lb_theta: 0.4826 (&gt; 0.8000)
 
 Analyzing direction : 4/15 | Theta --- lower bound: 0.53 | upper bound: 0.54
-Skipped since (ub_theta - lb_theta) &lt; tol_bisect
-Optimal reach probability at lb_theta: 0.4826 (&gt; 0.8000)
 
 Analyzing direction : 5/15 | Theta --- lower bound: 0.51 | upper bound: 0.54
-Computing reach probability at ub_theta.
-Skipped since ub_theta is safe. Setting lb_theta = ub_theta
-Optimal reach probability at lb_theta: 0.8500 (&gt; 0.8000)
+OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
+  0.8000  |  5.23e-01  |  5.08e-01  |  5.38e-01  |  5.78e-02  | Feasible 
+  0.8000  |  5.31e-01  |  5.23e-01  |  5.38e-01  |  5.90e-02  | Feasible 
 
 Analyzing direction : 6/15 | Theta --- lower bound: 0.46 | upper bound: 0.46
-Skipped since (ub_theta - lb_theta) &lt; tol_bisect
-Optimal reach probability at lb_theta: 0.4826 (&gt; 0.8000)
 
 Analyzing direction : 7/15 | Theta --- lower bound: 0.48 | upper bound: 0.48
-Skipped since (ub_theta - lb_theta) &lt; tol_bisect
-Optimal reach probability at lb_theta: 0.4816 (&gt; 0.8000)
 
 Analyzing direction : 8/15 | Theta --- lower bound: 0.64 | upper bound: 0.64
-Skipped since (ub_theta - lb_theta) &lt; tol_bisect
-Optimal reach probability at lb_theta: 0.4540 (&gt; 0.8000)
 
 Analyzing direction : 9/15 | Theta --- lower bound: 1.29 | upper bound: 1.38
-Computing reach probability at ub_theta.
-Ub_theta is not safe (0.4200 &lt; 0.8000).
-Computing reach probability at lb_theta.
-Must bisect since ub_theta is not safe.
-Optimal reach probability at lb_theta: 0.7500 (&gt; 0.8000)
 OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
-  0.7800  |  1.29e+00  |  1.29e+00  |  1.38e+00  |  8.05e-02  | Infeasible (0.780) 
-  0.8400  |  1.32e+00  |  1.29e+00  |  1.34e+00  |  8.94e-02  | Feasible 
-  0.8100  |  1.33e+00  |  1.32e+00  |  1.34e+00  |  8.91e-02  | Feasible 
-  0.8100  |  1.33e+00  |  1.33e+00  |  1.34e+00  |  9.01e-02  | Feasible 
+  0.8000  |  1.34e+00  |  1.29e+00  |  1.38e+00  |  8.99e-02  | Feasible 
+  0.8000  |  1.34e+00  |  1.34e+00  |  1.38e+00  |  8.99e-02  | Infeasible (0.650) 
+  0.8000  |  1.34e+00  |  1.34e+00  |  1.36e+00  |  8.99e-02  | Infeasible (0.700) 
+  0.8000  |  1.34e+00  |  1.34e+00  |  1.35e+00  |  8.99e-02  | Infeasible (0.750) 
 
 Analyzing direction :10/15 | Theta --- lower bound: 0.81 | upper bound: 1.73
-Computing reach probability at ub_theta.
-Ub_theta is not safe (0.0100 &lt; 0.8000).
-Computing reach probability at lb_theta.
-Must bisect since ub_theta is not safe.
-Optimal reach probability at lb_theta: 0.7500 (&gt; 0.8000)
 OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
-  0.0100  |  8.14e-01  |  8.14e-01  |  1.73e+00  |  7.80e-02  | Infeasible (0.010) 
-  0.0100  |  8.14e-01  |  8.14e-01  |  1.27e+00  |  7.80e-02  | Infeasible (0.010) 
-  0.0100  |  8.14e-01  |  8.14e-01  |  1.04e+00  |  7.80e-02  | Infeasible (0.010) 
-  0.3900  |  8.14e-01  |  8.14e-01  |  9.29e-01  |  7.80e-02  | Infeasible (0.390) 
-  0.5600  |  8.14e-01  |  8.14e-01  |  8.72e-01  |  7.80e-02  | Infeasible (0.560) 
-  0.6700  |  8.14e-01  |  8.14e-01  |  8.43e-01  |  7.80e-02  | Infeasible (0.670) 
-  0.7900  |  8.14e-01  |  8.14e-01  |  8.28e-01  |  7.80e-02  | Infeasible (0.790) 
+  0.0604  |  8.14e-01  |  8.14e-01  |  1.73e+00  |  8.21e-02  | Infeasible (0.050) 
+  0.0604  |  8.14e-01  |  8.14e-01  |  1.27e+00  |  8.21e-02  | Infeasible (0.050) 
+  0.0604  |  8.14e-01  |  8.14e-01  |  1.04e+00  |  8.21e-02  | Infeasible (0.050) 
+  0.0604  |  8.14e-01  |  8.14e-01  |  9.29e-01  |  8.21e-02  | Infeasible (0.350) 
+  0.0604  |  8.14e-01  |  8.14e-01  |  8.72e-01  |  8.21e-02  | Infeasible (0.600) 
+  0.0604  |  8.14e-01  |  8.14e-01  |  8.43e-01  |  8.21e-02  | Infeasible (0.750) 
+  0.0604  |  8.14e-01  |  8.14e-01  |  8.28e-01  |  8.21e-02  | Infeasible (0.750) 
 
 Analyzing direction :11/15 | Theta --- lower bound: 0.67 | upper bound: 1.39
-Computing reach probability at ub_theta.
-Ub_theta is not safe (0.0100 &lt; 0.8000).
-Computing reach probability at lb_theta.
-Must bisect since ub_theta is not safe.
-Optimal reach probability at lb_theta: 0.8300 (&gt; 0.8000)
 OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
-  0.0100  |  6.67e-01  |  6.67e-01  |  1.39e+00  |  8.12e-02  | Infeasible (0.010) 
-  0.0100  |  6.67e-01  |  6.67e-01  |  1.03e+00  |  8.12e-02  | Infeasible (0.010) 
-  0.0100  |  6.67e-01  |  6.67e-01  |  8.48e-01  |  8.12e-02  | Infeasible (0.010) 
-  0.5300  |  6.67e-01  |  6.67e-01  |  7.57e-01  |  8.12e-02  | Infeasible (0.530) 
-  0.6100  |  6.67e-01  |  6.67e-01  |  7.12e-01  |  8.12e-02  | Infeasible (0.610) 
-  0.7300  |  6.67e-01  |  6.67e-01  |  6.90e-01  |  8.12e-02  | Infeasible (0.730) 
-  0.7800  |  6.67e-01  |  6.67e-01  |  6.78e-01  |  8.12e-02  | Infeasible (0.780) 
+  0.0817  |  6.67e-01  |  6.67e-01  |  1.39e+00  |  8.09e-02  | Infeasible (0.050) 
+  0.0817  |  6.67e-01  |  6.67e-01  |  1.03e+00  |  8.09e-02  | Infeasible (0.050) 
+  0.0817  |  6.67e-01  |  6.67e-01  |  8.48e-01  |  8.09e-02  | Infeasible (0.050) 
+  0.0817  |  6.67e-01  |  6.67e-01  |  7.57e-01  |  8.09e-02  | Infeasible (0.450) 
+  0.0817  |  6.67e-01  |  6.67e-01  |  7.12e-01  |  8.09e-02  | Infeasible (0.650) 
+  0.0817  |  6.67e-01  |  6.67e-01  |  6.90e-01  |  8.09e-02  | Infeasible (0.750) 
+  0.0817  |  6.67e-01  |  6.67e-01  |  6.78e-01  |  8.09e-02  | Infeasible (0.750) 
 
 Analyzing direction :12/15 | Theta --- lower bound: 0.67 | upper bound: 1.39
-Computing reach probability at ub_theta.
-Ub_theta is not safe (0.0100 &lt; 0.8000).
-Computing reach probability at lb_theta.
-Must bisect since ub_theta is not safe.
-Optimal reach probability at lb_theta: 0.8400 (&gt; 0.8000)
 OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
-  0.0100  |  6.73e-01  |  6.73e-01  |  1.39e+00  |  8.30e-02  | Infeasible (0.010) 
-  0.0100  |  6.73e-01  |  6.73e-01  |  1.03e+00  |  8.30e-02  | Infeasible (0.010) 
-  0.0100  |  6.73e-01  |  6.73e-01  |  8.52e-01  |  8.30e-02  | Infeasible (0.010) 
-  0.5800  |  6.73e-01  |  6.73e-01  |  7.63e-01  |  8.30e-02  | Infeasible (0.580) 
-  0.7300  |  6.73e-01  |  6.73e-01  |  7.18e-01  |  8.30e-02  | Infeasible (0.730) 
-  0.7600  |  6.73e-01  |  6.73e-01  |  6.95e-01  |  8.30e-02  | Infeasible (0.760) 
-  0.8200  |  6.79e-01  |  6.73e-01  |  6.84e-01  |  8.38e-02  | Feasible 
+  0.0993  |  6.73e-01  |  6.73e-01  |  1.39e+00  |  8.49e-02  | Infeasible (0.050) 
+  0.0993  |  6.73e-01  |  6.73e-01  |  1.03e+00  |  8.49e-02  | Infeasible (0.050) 
+  0.0993  |  6.73e-01  |  6.73e-01  |  8.52e-01  |  8.49e-02  | Infeasible (0.050) 
+  0.0993  |  6.73e-01  |  6.73e-01  |  7.63e-01  |  8.49e-02  | Infeasible (0.500) 
+  0.0993  |  6.73e-01  |  6.73e-01  |  7.18e-01  |  8.49e-02  | Infeasible (0.750) 
+  0.8000  |  6.84e-01  |  6.73e-01  |  6.95e-01  |  7.91e-02  | Feasible 
+  0.8000  |  6.84e-01  |  6.84e-01  |  6.95e-01  |  7.91e-02  | Infeasible (0.700) 
 
 Analyzing direction :13/15 | Theta --- lower bound: 0.83 | upper bound: 1.73
-Computing reach probability at ub_theta.
-Ub_theta is not safe (0.0100 &lt; 0.8000).
-Computing reach probability at lb_theta.
-Must bisect since ub_theta is not safe.
-Optimal reach probability at lb_theta: 0.8500 (&gt; 0.8000)
 OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
-  0.0100  |  8.28e-01  |  8.28e-01  |  1.73e+00  |  8.17e-02  | Infeasible (0.010) 
-  0.0100  |  8.28e-01  |  8.28e-01  |  1.28e+00  |  8.17e-02  | Infeasible (0.010) 
-  0.0100  |  8.28e-01  |  8.28e-01  |  1.05e+00  |  8.17e-02  | Infeasible (0.010) 
-  0.6200  |  8.28e-01  |  8.28e-01  |  9.41e-01  |  8.17e-02  | Infeasible (0.620) 
-  0.8100  |  8.56e-01  |  8.28e-01  |  8.85e-01  |  7.90e-02  | Feasible 
-  0.7400  |  8.56e-01  |  8.56e-01  |  8.85e-01  |  7.90e-02  | Infeasible (0.740) 
-  0.7500  |  8.56e-01  |  8.56e-01  |  8.70e-01  |  7.90e-02  | Infeasible (0.750) 
+  0.1418  |  8.28e-01  |  8.28e-01  |  1.73e+00  |  8.30e-02  | Infeasible (0.050) 
+  0.1418  |  8.28e-01  |  8.28e-01  |  1.28e+00  |  8.30e-02  | Infeasible (0.050) 
+  0.1418  |  8.28e-01  |  8.28e-01  |  1.05e+00  |  8.30e-02  | Infeasible (0.050) 
+  0.1418  |  8.28e-01  |  8.28e-01  |  9.41e-01  |  8.30e-02  | Infeasible (0.600) 
+  0.8000  |  8.56e-01  |  8.28e-01  |  8.85e-01  |  8.04e-02  | Feasible 
+  0.8000  |  8.56e-01  |  8.56e-01  |  8.85e-01  |  8.04e-02  | Infeasible (0.750) 
+  0.8000  |  8.56e-01  |  8.56e-01  |  8.70e-01  |  8.04e-02  | Infeasible (0.750) 
 
 Analyzing direction :14/15 | Theta --- lower bound: 1.07 | upper bound: 1.38
-Computing reach probability at ub_theta.
-Ub_theta is not safe (0.2900 &lt; 0.8000).
-Computing reach probability at lb_theta.
-Must bisect since ub_theta is not safe.
-Optimal reach probability at lb_theta: 0.8500 (&gt; 0.8000)
 OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
-  0.8400  |  1.23e+00  |  1.07e+00  |  1.38e+00  |  8.32e-02  | Feasible 
-  0.7900  |  1.23e+00  |  1.23e+00  |  1.38e+00  |  8.32e-02  | Infeasible (0.790) 
-  0.8000  |  1.23e+00  |  1.23e+00  |  1.30e+00  |  8.32e-02  | Infeasible (0.800) 
-  0.8500  |  1.25e+00  |  1.23e+00  |  1.27e+00  |  8.25e-02  | Feasible 
-  0.8400  |  1.26e+00  |  1.25e+00  |  1.27e+00  |  8.08e-02  | Feasible 
+  0.8000  |  1.23e+00  |  1.07e+00  |  1.38e+00  |  8.46e-02  | Feasible 
+  0.8000  |  1.30e+00  |  1.23e+00  |  1.38e+00  |  8.21e-02  | Feasible 
+  0.8000  |  1.30e+00  |  1.30e+00  |  1.38e+00  |  8.21e-02  | Infeasible (0.550) 
+  0.8000  |  1.30e+00  |  1.30e+00  |  1.34e+00  |  8.21e-02  | Infeasible (0.650) 
+  0.8000  |  1.30e+00  |  1.30e+00  |  1.32e+00  |  8.21e-02  | Infeasible (0.750) 
 
 Analyzing direction :15/15 | Theta --- lower bound: 0.64 | upper bound: 0.64
-Skipped since (ub_theta - lb_theta) &lt; tol_bisect
-Optimal reach probability at lb_theta: 0.4628 (&gt; 0.8000)
 Spreading 396 unit-length vectors in 6-dim space
 Analyzing 6 unit-length vectors in first quadrant
  1. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 4.339e-10 (&lt; 1.000e-08)
-Change in opt cost: 3.766e-01 (&lt; 1.000e-05)
+Sum of slack: 2.685e-11 (&lt; 1.000e-08)
+Change in opt cost: 4.646e-01 (&lt; 1.000e-05)
 
  2. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 2.766e-10 (&lt; 1.000e-08)
-Change in opt cost: 9.182e-02 (&lt; 1.000e-05)
+Sum of slack: 3.050e-10 (&lt; 1.000e-08)
+Change in opt cost: 9.233e-02 (&lt; 1.000e-05)
 
  3. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 5.552e-11 (&lt; 1.000e-08)
-Change in opt cost: 2.500e-02 (&lt; 1.000e-05)
+Sum of slack: 7.919e-10 (&lt; 1.000e-08)
+Change in opt cost: 4.181e-02 (&lt; 1.000e-05)
 
  4. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 8.443e-11 (&lt; 1.000e-08)
-Change in opt cost: 1.582e-02 (&lt; 1.000e-05)
+Sum of slack: 1.944e-10 (&lt; 1.000e-08)
+Change in opt cost: 8.901e-03 (&lt; 1.000e-05)
 
  5. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 1.034e-10 (&lt; 1.000e-08)
-Change in opt cost: 4.527e-02 (&lt; 1.000e-05)
+Sum of slack: 4.648e-10 (&lt; 1.000e-08)
+Change in opt cost: 9.522e-05 (&lt; 1.000e-05)
 
  6. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 1.562e-12 (&lt; 1.000e-08)
-Change in opt cost: 4.483e-02 (&lt; 1.000e-05)
-
- 7. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 1.061e-11 (&lt; 1.000e-08)
-Change in opt cost: 8.270e-03 (&lt; 1.000e-05)
-
- 8. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 2.914e-10 (&lt; 1.000e-08)
-Change in opt cost: 1.586e-04 (&lt; 1.000e-05)
-
- 9. Setting up the CVX problem...
-  1 |  2 |  3 |  4 |  5 |  6 |
-Solving the CVX problem...done
-Status: Solved
-Sum of slack: 2.167e-11 (&lt; 1.000e-08)
-Change in opt cost: 3.294e-08 (&lt; 1.000e-05)
+Sum of slack: 2.593e-12 (&lt; 1.000e-08)
+Change in opt cost: 7.685e-08 (&lt; 1.000e-05)
 
 Completed spreading the vectors!
-Time to spread the vectors: 15.606 s
+Time to spread the vectors: 10.586 s
 
 Computing Lagragian under approximation
+
 Time_horizon: 5
 
 Computation for time step: 4
-Time to setup x_u_reaches_target_set: 0.002 s
-Time for MVE computation      : 0.429 s
-Time to get v-rep underapprox.: 0.019 s
-Time to get minimal v-rep     : 1.769 s
-Time to get inner min. H-rep  : 1.459 s
-Time for oneStepBack: 3.683 s
+Time to setup x_u_reaches_target_set: 0.007 s
+Time for MVE computation      : 0.698 s
+Time to get v-rep underapprox.: 0.028 s
+Time to get minimal v-rep     : 1.568 s
+Time to get inner min. H-rep  : 1.478 s
+Time for oneStepBack: 3.789 s
 
 Computation for time step: 3
-Time to setup x_u_reaches_target_set: 0.002 s
-Time for MVE computation      : 1.430 s
-Time to get v-rep underapprox.: 0.028 s
-Time to get minimal v-rep     : 1.724 s
-Time to get inner min. H-rep  : 1.556 s
-Time for oneStepBack: 4.774 s
+Time to setup x_u_reaches_target_set: 0.003 s
+Time for MVE computation      : 1.458 s
+Time to get v-rep underapprox.: 0.030 s
+Time to get minimal v-rep     : 1.533 s
+Time to get inner min. H-rep  : 1.451 s
+Time for oneStepBack: 4.509 s
 
 Computation for time step: 2
-Time to setup x_u_reaches_target_set: 0.002 s
-Time for MVE computation      : 1.431 s
-Time to get v-rep underapprox.: 0.029 s
-Time to get minimal v-rep     : 1.733 s
-Time to get inner min. H-rep  : 1.732 s
-Time for oneStepBack: 4.960 s
+Time to setup x_u_reaches_target_set: 0.003 s
+Time for MVE computation      : 1.357 s
+Time to get v-rep underapprox.: 0.030 s
+Time to get minimal v-rep     : 1.562 s
+Time to get inner min. H-rep  : 1.748 s
+Time for oneStepBack: 4.732 s
 
 Computation for time step: 1
-Time to setup x_u_reaches_target_set: 0.002 s
-Time for MVE computation      : 1.465 s
-Time to get v-rep underapprox.: 0.032 s
-Time to get minimal v-rep     : 1.798 s
-Time to get inner min. H-rep  : 1.801 s
-Time for oneStepBack: 5.134 s
+Time to setup x_u_reaches_target_set: 0.003 s
+Time for MVE computation      : 1.460 s
+Time to get v-rep underapprox.: 0.030 s
+Time to get minimal v-rep     : 1.803 s
+Time to get inner min. H-rep  : 1.794 s
+Time for oneStepBack: 5.121 s
 
 Computation for time step: 0
-Time to setup x_u_reaches_target_set: 0.002 s
-Time for MVE computation      : 1.590 s
+Time to setup x_u_reaches_target_set: 0.005 s
+Time for MVE computation      : 1.621 s
 Time to get v-rep underapprox.: 0.030 s
-Time to get minimal v-rep     : 1.808 s
-Time to get inner min. H-rep  : 1.820 s
-Time for oneStepBack: 5.286 s
+Time to get minimal v-rep     : 1.735 s
+Time to get inner min. H-rep  : 1.778 s
+Time for oneStepBack: 5.205 s
 </pre><h2 id="8">Plotting the sets</h2><pre class="codeinput">figure(101);
 clf
 box <span class="string">on</span>;
@@ -529,7 +465,7 @@ fprintf([<span class="string">'Elapsed time: (genzps-open) %1.3f | (chance-open)
     <span class="keyword">end</span>
 <span class="keyword">end</span>
 </pre><pre class="codeoutput">Expected probability: 0.800, Simulated probability: 0.810
-Elapsed time: (genzps-open) 323.976 | (chance-open) 26.969 | (lag-under) 23.856 | (lag-over) NaN seconds
+Elapsed time: (genzps-open) 325.643 | (chance-open) 26.160 | (lag-under) 23.523 | (lag-over) NaN seconds
 </pre><img vspace="5" hspace="5" src="cwhSReachSet_02.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2018b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Verification of satellite rendezvous problem via SReachSet 
@@ -547,6 +483,10 @@ Elapsed time: (genzps-open) 323.976 | (chance-open) 26.969 | (lag-under) 23.856 
 % Lagrangian methods to construct underapproximative stochastic reach sets.
 % Our approaches are grid-free and recursion-free, resulting in highly scalable
 % solutions. 
+%
+% All computations were performed using MATLAB on an Intel Xeon CPU with 3.7GHz
+% clock rate and 16 GB RAM. For sake of clarity, all commands were asked to be
+% verbose (via SReachPointOptions). In practice, this can be turned off.
 
 % Prescript running: Initializing srtinit, if it already hasn't been initialized
 close all;clearvars;srtinit;srtinit REPLACE_WITH_DASH_DASHversion;
@@ -699,7 +639,8 @@ end
 if ft_run
     ft_options = SReachSetOptions('term', 'genzps-open', ...
         'set_of_dir_vecs', set_of_dir_vecs_ft, ...
-        'init_safe_set_affine', init_safe_set_affine, 'verbose', 1);
+        'init_safe_set_affine', init_safe_set_affine, 'verbose', 1, ...
+        'desired_accuracy', 5e-2);
     timer_ft = tic;
     polytope_ft = SReachSet('term','genzps-open', sys, prob_thresh, ...
         target_tube, ft_options);  
@@ -710,7 +651,7 @@ if lagunder_run
     lagunder_options = SReachSetOptions('term', 'lag-under',...
         'bound_set_method', 'ellipsoid', 'compute_style','support',...
         'system', sys, 'vf_enum_method', 'lrs', 'verbose', 2,...
-        'n_underapprox_vertices', 2^n_dim * 6 + 2*n_dim);
+        'n_vertices', 2^n_dim * 6 + 2*n_dim);
     
     timer_lagunder = tic;
     [polytope_lagunder, extra_info_under] = SReachSet('term', 'lag-under', ...
@@ -723,7 +664,7 @@ if lagover_run
     lagover_options = SReachSetOptions('term', 'lag-over', ...
         'bound_set_method', 'ellipsoid', 'compute_style','support', ...
         'system', sys, 'vf_enum_method', 'lrs', 'verbose', 1, ...
-        'n_underapprox_vertices', 2^n_dim * 6 + 2*n_dim);
+        'n_vertices', 2^n_dim * 6 + 2*n_dim);
     
     timer_lagover = tic;
     polytope_lagover = SReachSet('term', 'lag-over', sys,  prob_thresh, ...
