@@ -69,7 +69,7 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %           5. desired_accuracy     - Accuracy expected for the integral of the
 %                                     Gaussian random vector X over the safety
 %                                     tube => Accuracy of the result [Default
-%                                     1e-2] | This value can't be smaller
+%                                     5e-2] | This value can't be smaller
 %                                     than 1e-2
 %           6. PSoptions            - MATLAB struct from psoptimset(), options
 %                                     for MATLAB's patternsearch 
@@ -298,7 +298,7 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
                 inpar.addParameter('tol_bisect',1e-2, @(x)...
                     validateattributes(x, {'numeric'}, {'scalar','>',0}));
                 % Accuracy for Genz's algorithm to compute integral of Gaussian
-                inpar.addParameter('desired_accuracy',1e-2, @(x)...
+                inpar.addParameter('desired_accuracy', 5e-2, @(x) ...
                     validateattributes(x, {'numeric'}, {'scalar', ...
                     '>=',1e-2, '<', 1}));
                 % Patternsearch options

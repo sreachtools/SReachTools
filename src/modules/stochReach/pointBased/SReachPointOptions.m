@@ -26,7 +26,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 %                     'genzps-open'  -- Genz's algorithm + Patternsearch
 %                                       1. desired_accuracy: Accuracy of
 %                                               Gaussian integral => Accuracy of
-%                                               the result [Default: 1e-2]
+%                                               the result [Default: 5e-2]
 %                                       2. PSoptions: MATLAB struct generated
 %                                               using psoptimset()
 %                                       3. thresh: An upper bound on useful
@@ -163,7 +163,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
                     'option needs MATLAB''s Global Optimization Toolbox.']);
                 throw(exc);
             end
-            inpar.addParameter('desired_accuracy',1e-2, @(x)...
+            inpar.addParameter('desired_accuracy', 5e-2, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>=',1e-2,'<',1}));
             inpar.addParameter('PSoptions',psoptimset('display','off'));
             inpar.addParameter('thresh', 1, @(x)...

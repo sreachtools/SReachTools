@@ -77,7 +77,7 @@ sys = getCwhLtiSystem(4, Polyhedron('lb', -umax*ones(2,1), ...
 % box around the origin. This special sequence of target sets allows us to
 % impose a reach-avoid specification of safety.
 
-time_horizon = 5;          % Stay within a line of sight cone for 4 time steps and 
+time_horizon = 5;        % Stay within a line of sight cone for 4 time steps and 
                          % reach the target at t=5% Safe Set --- LoS cone
 % Safe set definition --- LoS cone |x|<=y and y\in[0,ymax] and |vx|<=vxmax and 
 % |vy|<=vymax
@@ -99,6 +99,7 @@ b_safe_set = [0;
               vymax;
               vymax];
 safe_set = Polyhedron(A_safe_set, b_safe_set);
+
 % Target set --- Box [-0.1,0.1]x[-0.1,0]x[-0.01,0.01]x[-0.01,0.01]
 target_set = Polyhedron('lb', [-0.1; -0.1; -0.01; -0.01], ...
                         'ub', [0.1; 0; 0.01; 0.01]);
@@ -155,6 +156,8 @@ lagover_run = 0;
 %   Reach-Avoid Sets for Discrete-Time Stochastic Systems via Lagrangian
 %   Methods," in Proceedings of the IEEE Conference on Decision and Control,
 %   2017.
+
+% Convex chance constrained-based underapproximation
 if cc_open_run
     cc_options = SReachSetOptions('term', 'chance-open', ...
         'set_of_dir_vecs', set_of_dir_vecs_cc_open, ...
@@ -165,7 +168,9 @@ if cc_open_run
         prob_thresh, target_tube, cc_options);  
     elapsed_time_cc_open = toc(timer_cc_open);
 end
+%%
 
+% Genz's algorithm + Patternsearch-based underapproximation
 if ft_run
     ft_options = SReachSetOptions('term', 'genzps-open', ...
         'set_of_dir_vecs', set_of_dir_vecs_ft, ...
@@ -176,6 +181,9 @@ if ft_run
         target_tube, ft_options);  
     elapsed_time_ft = toc(timer_ft);
 end
+%%
+
+% Lagrangian-based underapproximation
 if lagunder_run
     n_dim = sys.state_dim + sys.input_dim;
     lagunder_options = SReachSetOptions('term', 'lag-under',...
@@ -188,6 +196,8 @@ if lagunder_run
         sys, prob_thresh, target_tube, lagunder_options);
     elapsed_time_lagunder = toc(timer_lagunder);
 end
+%%
+
 % Lagrangian-based overapproximation
 if lagover_run
     n_dim = sys.state_dim;
@@ -202,7 +212,6 @@ if lagover_run
     elapsed_time_lagover = toc(timer_lagover);
 end
 
-
 %% Plotting the sets
 figure(101);
 clf
@@ -212,6 +221,9 @@ plot(safe_set.slice([3,4], slice_at_vx_vy), 'color', 'y');
 plot(target_set.slice([3,4], slice_at_vx_vy), 'color', 'g');
 legend_cell = {'Safe set','Target set'};
 if cc_open_run && ~isEmptySet(polytope_cc_open)
+    % Since we specify the init_safe_set (polytope is already intersected by 
+    % the constant vx and vy at t=0), we can simply throw out the
+    % states 3 and 4 to get the 2D set
     plot(Polyhedron('V',polytope_cc_open.V(:,1:2)), 'color','k','alpha',0.5);
     legend_cell{end+1} = 'Underapprox. polytope (chance-open)';
 else
@@ -219,6 +231,9 @@ else
     elapsed_time_cc_open = NaN;
 end
 if ft_run && ~isEmptySet(polytope_ft)
+    % Since we specify the init_safe_set (polytope is already intersected by 
+    % the constant vx and vy at t=0), we can simply throw out the
+    % states 3 and 4 to get the 2D set
     plot(Polyhedron('V',polytope_ft.V(:,1:2)), 'color','b','alpha',0.5);
     legend_cell{end+1} = 'Underapprox. polytope (genzps-open)';
 else
@@ -226,14 +241,17 @@ else
     elapsed_time_ft = NaN;
 end
 if lagunder_run && ~isEmptySet(polytope_lagunder)
-    plot(Polyhedron('V',polytope_lagunder.V(:,1:2)), 'color','r','alpha',0.5);    
+    % Since we specify the init_safe_set (polytope is already intersected by 
+    % the constant vx and vy at t=0), we can simply throw out the
+    % states 3 and 4 to get the 2D set
+    plot(polytope_lagunder.slice([3,4], slice_at_vx_vy), 'color','r','alpha',1);
     legend_cell{end+1} = 'Underapprox. polytope (lag-under)';
 else
     polytope_lagunder = Polyhedron();
     elapsed_time_lagunder = NaN;
 end
 if lagover_run && ~isEmptySet(polytope_lagover)
-    plot(Polyhedron('V',polytope_lagover.V(:,1:2)), 'color','m','alpha',0.5);    
+    plot(polytope_lagover.slice([3,4], slice_at_vx_vy), 'color','m','alpha',1);
     legend_cell{end+1} = 'Overapprox. polytope (lag-over)';
 else
     polytope_lagover = Polyhedron();
