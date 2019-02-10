@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>Lagrangian Approximations for the Stochastic Reachability of a Target Tube</title><meta name="generator" content="MATLAB 9.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-02-09"><meta name="DC.source" content="dIntSReachSetLag.m"><style type="text/css">
+      --><title>Lagrangian Approximations for the Stochastic Reachability of a Target Tube</title><meta name="generator" content="MATLAB 9.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-02-10"><meta name="DC.source" content="dIntSReachSetLag.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -66,9 +66,8 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
 
-  </style></head><body><div class="content"><h1>Lagrangian Approximations for the Stochastic Reachability of a Target Tube</h1><!--introduction--><p>This example will demonstrate the use of <tt>SReachTools</tt> for Lagrangian-based verification of stochastic continuous-state discrete-time linear time-invariant (LTI) systems.  This example script is part of the <tt>SReachTools</tt> toolbox, which is licensed under GPL v3 or (at your option) any later version. A copy of this license is given in <a href="https://github.com/unm-hscl/SReachTools/blob/master/LICENSE">https://github.com/unm-hscl/SReachTools/blob/master/LICENSE</a>.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Lagrangian Methods</a></li><li><a href="#2">Problem Definition</a></li><li><a href="#4">Viability problem as a stochastic reachability of a target tube problem</a></li><li><a href="#6">Lagrangian underapproximation for stochastic reachability of a target tube</a></li><li><a href="#7">Underapprox. type 1: Bound_set_method - Ellipsoid | Compute_style - VFmethod</a></li><li><a href="#8">Underapprox. type 2: Bound_set_method - Ellipsoid | Compute_style - Support</a></li><li><a href="#9">Underapprox. type 3: Bound_set_method - Polytope | Compute_style - VFmethod</a></li><li><a href="#10">Underapprox. type 3: Bound_set_method - Polytope | Compute_style - Support</a></li><li><a href="#11">Lagrangian overapproximation for stochastic reachability of a target tube</a></li><li><a href="#12">Overapprox. type 1: Bound_set_method - Ellipsoid | Compute_style - VFmethod</a></li><li><a href="#13">Overapprox. type 2: Bound_set_method - Ellipsoid | Compute_style - Support</a></li><li><a href="#14">Overapprox. type 3: Bound_set_method - Polytope | Compute_style - VFmethod</a></li><li><a href="#15">Overapprox. type 4: Bound_set_method - Polytope | Compute_style - Support</a></li><li><a href="#16">Dynamic programming solution</a></li><li><a href="#19">Simulation times: Lagrangian approximation beats dynamic programming</a></li><li><a href="#21">Plotting all the sets together</a></li></ul></div><h2 id="1">Lagrangian Methods</h2><p>Lagrangian methods perform computations with sets using operations like unions, intersection, Minkowski addition/differences, etc. This computation using set operations can be used to approximate (either over or under) the stochastic reachability of a target tube problem. We will demonstrate that this approach, while being be approximative, can outperform the current state-of-the-art <a href="https://doi.org/10.1016/j.automatica.2010.08.006">dynamic programming</a> solution in terms of computation time.</p><p>Advantages:</p><div><ul><li>No gridding, which partially evades the curse of dimensionality</li><li>Provides verification for closed-loop feedback strategies</li><li>Synthesis of a closed-loop feedback strategy</li></ul></div><p>Disadvantages:</p><div><ul><li>Using Polyhedral representation, must solve the vertex-facet enumeration problem, limiting computations to ~4 dimensional systems</li></ul></div><p>The theory for this approach can be found in</p><div><ul><li>J. D. Gleason, A. P. Vinod, M. M. K. Oishi, "Underapproximation of   Reach-Avoid Sets for Discrete-Time Stochastic Systems via Lagrangian   Methods," in Proceedings of the IEEE Conference on Decision and Control,   2017.</li></ul></div><p>Further, we explore multiple implementations of the Lagrangian-based verification, where the vertex-facet enumeration is mitigated either via recursion-free support method in overapproximation or vertex-complexity preserving support vector method in underapproximation.</p><pre class="codeinput"><span class="comment">% Prescript running: Initializing srtinit, if it already hasn't been initialized</span>
-close <span class="string">all</span>;clearvars;srtinit;srtinit <span class="string">--version</span>;
-</pre><pre class="codeoutput">SReachTools version 1.2.31
+  </style></head><body><div class="content"><h1>Lagrangian Approximations for the Stochastic Reachability of a Target Tube</h1><!--introduction--><p>This example will demonstrate the use of <tt>SReachTools</tt> for Lagrangian-based verification of stochastic continuous-state discrete-time linear time-invariant (LTI) systems.  This example script is part of the <tt>SReachTools</tt> toolbox, which is licensed under GPL v3 or (at your option) any later version. A copy of this license is given in <a href="https://github.com/unm-hscl/SReachTools/blob/master/LICENSE">https://github.com/unm-hscl/SReachTools/blob/master/LICENSE</a>.</p><!--/introduction--><h2>Contents</h2><div><ul><li><a href="#1">Lagrangian Methods</a></li><li><a href="#2">Problem Definition</a></li><li><a href="#4">Viability problem as a stochastic reachability of a target tube problem</a></li><li><a href="#6">Lagrangian underapproximation for stochastic reachability of a target tube</a></li><li><a href="#7">Underapprox. type 1: Bound_set_method - Ellipsoid | Compute_style - VFmethod</a></li><li><a href="#8">Underapprox. type 2: Bound_set_method - Ellipsoid | Compute_style - Support</a></li><li><a href="#9">Underapprox. type 3: Bound_set_method - Polytope | Compute_style - VFmethod</a></li><li><a href="#10">Underapprox. type 3: Bound_set_method - Polytope | Compute_style - Support</a></li><li><a href="#11">Lagrangian overapproximation for stochastic reachability of a target tube</a></li><li><a href="#12">Overapprox. type 1: Bound_set_method - Ellipsoid | Compute_style - VFmethod</a></li><li><a href="#13">Overapprox. type 2: Bound_set_method - Ellipsoid | Compute_style - Support</a></li><li><a href="#14">Overapprox. type 3: Bound_set_method - Polytope | Compute_style - VFmethod</a></li><li><a href="#15">Overapprox. type 4: Bound_set_method - Polytope | Compute_style - Support</a></li><li><a href="#16">Dynamic programming solution</a></li><li><a href="#19">Simulation times: Lagrangian approximation beats dynamic programming</a></li><li><a href="#21">Plotting all the sets together</a></li></ul></div><h2 id="1">Lagrangian Methods</h2><p>Lagrangian methods perform computations with sets using operations like unions, intersection, Minkowski addition/differences, etc. This computation using set operations can be used to approximate (either over or under) the stochastic reachability of a target tube problem. We will demonstrate that this approach, while being be approximative, can outperform the current state-of-the-art <a href="https://doi.org/10.1016/j.automatica.2010.08.006">dynamic programming</a> solution in terms of computation time.</p><p>Advantages:</p><div><ul><li>No gridding, which partially evades the curse of dimensionality</li><li>Provides verification for closed-loop feedback strategies</li><li>Synthesis of a closed-loop feedback strategy</li></ul></div><p>Disadvantages:</p><div><ul><li>Using Polyhedral representation, must solve the vertex-facet enumeration problem, limiting computations to ~4 dimensional systems</li></ul></div><p>The theory for this approach can be found in</p><div><ul><li>J. D. Gleason, A. P. Vinod, M. M. K. Oishi, "Underapproximation of   Reach-Avoid Sets for Discrete-Time Stochastic Systems via Lagrangian   Methods," in Proceedings of the IEEE Conference on Decision and Control,   2017.</li></ul></div><p>Further, we explore multiple implementations of the Lagrangian-based verification, where the vertex-facet enumeration is mitigated either via recursion-free support method in overapproximation or vertex-complexity preserving support vector method in underapproximation.</p><p>All computations were performed using MATLAB on an Ubuntu OS running on a laptop with Intel i7 CPU with 2.1GHz clock rate and 8 GB RAM. For sake of clarity, all commands were asked to be verbose (via `SReachSetOptions`). In practice, this can be turned off.</p><pre class="codeinput"><span class="comment">% Prescript running: Initializing srtinit, if it already hasn't been initialized</span>
+close <span class="string">all</span>;clearvars;srtinit;
 </pre><h2 id="2">Problem Definition</h2><p>In this example we will look at the viability problem for a double integrator. The system dynamics are:</p><p><img src="dIntSReachSetLag_eq10500098239847735597.png" alt="$$  x_{k+1} = \left[ \begin{array}{cc}    1 &amp; T \\   0 &amp; 1  \end{array}\right]&#xA;x_{k} + \left[\begin{array}{c}    \frac{T^{2}}{2} \\    T  \end{array}\right]&#xA;u_{k} + w_{k}$$"></p><p>where <img src="dIntSReachSetLag_eq06821165808764004272.png" alt="$x_{k+1} \in \mathbf{R}^{2}$"> is the state, <img src="dIntSReachSetLag_eq09748864305045641102.png" alt="$u_{k} \in \mathbf{R}$"> is the input, and <img src="dIntSReachSetLag_eq01336762545978364673.png" alt="$w_{k} \in \mathbf{R}^{2}$"> is the disturbance. The following code defines this system with <img src="dIntSReachSetLag_eq17066019916537791851.png" alt="$w_{k}$"> as an i.i.d. Gaussian disturbance with mean <img src="dIntSReachSetLag_eq16230577049557160276.png" alt="$[0, 0]^{\top}$"> and variance <img src="dIntSReachSetLag_eq14669468135061266778.png" alt="$\mathrm{diag}(0.01, 0.01)$">.</p><p>example parameters</p><pre class="codeinput">T = 0.25;
 
 <span class="comment">% define the system</span>
@@ -134,43 +133,57 @@ Analyzing 10 unit-length vectors in first quadrant
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 4.225e-02 (&lt; 1.000e-08)
-Change in opt cost: 2.014e-01 (&lt; 1.000e-05)
+Sum of slack: 1.823e-10 (&lt; 1.000e-08)
+Change in opt cost: 2.486e-01 (&lt; 1.000e-05)
 
  2. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 2.936e-10 (&lt; 1.000e-08)
-Change in opt cost: 1.355e-01 (&lt; 1.000e-05)
+Sum of slack: 9.634e-10 (&lt; 1.000e-08)
+Change in opt cost: 9.331e-02 (&lt; 1.000e-05)
 
  3. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 3.027e-10 (&lt; 1.000e-08)
-Change in opt cost: 2.499e-02 (&lt; 1.000e-05)
+Sum of slack: 2.356e-10 (&lt; 1.000e-08)
+Change in opt cost: 1.267e-02 (&lt; 1.000e-05)
 
  4. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 4.684e-10 (&lt; 1.000e-08)
-Change in opt cost: 3.076e-03 (&lt; 1.000e-05)
+Sum of slack: 5.508e-10 (&lt; 1.000e-08)
+Change in opt cost: 2.698e-03 (&lt; 1.000e-05)
 
  5. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 2.112e-10 (&lt; 1.000e-08)
-Change in opt cost: 1.032e-04 (&lt; 1.000e-05)
+Sum of slack: 2.703e-10 (&lt; 1.000e-08)
+Change in opt cost: 2.332e-03 (&lt; 1.000e-05)
 
  6. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 1.878e-10 (&lt; 1.000e-08)
-Change in opt cost: 1.224e-07 (&lt; 1.000e-05)
+Sum of slack: 4.364e-11 (&lt; 1.000e-08)
+Change in opt cost: 2.813e-03 (&lt; 1.000e-05)
+
+ 7. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 4.795e-10 (&lt; 1.000e-08)
+Change in opt cost: 2.917e-04 (&lt; 1.000e-05)
+
+ 8. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 3.338e-11 (&lt; 1.000e-08)
+Change in opt cost: 5.333e-06 (&lt; 1.000e-05)
 
 Completed spreading the vectors!
 Computing Lagragian under approximation
@@ -211,36 +224,71 @@ Analyzing 10 unit-length vectors in first quadrant
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 8.715e-11 (&lt; 1.000e-08)
-Change in opt cost: 2.882e-01 (&lt; 1.000e-05)
+Sum of slack: 2.881e-11 (&lt; 1.000e-08)
+Change in opt cost: 2.623e-01 (&lt; 1.000e-05)
 
  2. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 5.707e-10 (&lt; 1.000e-08)
-Change in opt cost: 6.045e-02 (&lt; 1.000e-05)
+Sum of slack: 8.479e-11 (&lt; 1.000e-08)
+Change in opt cost: 8.764e-02 (&lt; 1.000e-05)
 
  3. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 1.563e-11 (&lt; 1.000e-08)
-Change in opt cost: 6.767e-03 (&lt; 1.000e-05)
+Sum of slack: 4.575e-10 (&lt; 1.000e-08)
+Change in opt cost: 9.331e-03 (&lt; 1.000e-05)
 
  4. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 1.314e-10 (&lt; 1.000e-08)
-Change in opt cost: 1.148e-04 (&lt; 1.000e-05)
+Sum of slack: 9.452e-11 (&lt; 1.000e-08)
+Change in opt cost: 4.208e-04 (&lt; 1.000e-05)
 
  5. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 1.497e-09 (&lt; 1.000e-08)
-Change in opt cost: 6.185e-08 (&lt; 1.000e-05)
+Sum of slack: 5.622e-10 (&lt; 1.000e-08)
+Change in opt cost: 1.130e-03 (&lt; 1.000e-05)
+
+ 6. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 2.781e-11 (&lt; 1.000e-08)
+Change in opt cost: 3.392e-05 (&lt; 1.000e-05)
+
+ 7. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 1.490e-11 (&lt; 1.000e-08)
+Change in opt cost: 8.457e-04 (&lt; 1.000e-05)
+
+ 8. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 1.285e-10 (&lt; 1.000e-08)
+Change in opt cost: 1.034e-03 (&lt; 1.000e-05)
+
+ 9. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 1.929e-10 (&lt; 1.000e-08)
+Change in opt cost: 1.257e-05 (&lt; 1.000e-05)
+
+10. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |  8 |  9 | 10 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 1.066e-10 (&lt; 1.000e-08)
+Change in opt cost: 1.956e-09 (&lt; 1.000e-05)
 
 Completed spreading the vectors!
 Computing Lagragian under approximation
@@ -283,36 +331,106 @@ Analyzing 7 unit-length vectors in first quadrant
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 2.273e-02 (&lt; 1.000e-08)
-Change in opt cost: 1.307e-01 (&lt; 1.000e-05)
+Sum of slack: 4.533e-02 (&lt; 1.000e-08)
+Change in opt cost: 7.758e-02 (&lt; 1.000e-05)
 
  2. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 8.736e-12 (&lt; 1.000e-08)
-Change in opt cost: 5.118e-02 (&lt; 1.000e-05)
+Sum of slack: 6.699e-02 (&lt; 1.000e-08)
+Change in opt cost: 3.602e-03 (&lt; 1.000e-05)
 
  3. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 2.161e-10 (&lt; 1.000e-08)
-Change in opt cost: 1.497e-02 (&lt; 1.000e-05)
+Sum of slack: 4.488e-02 (&lt; 1.000e-08)
+Change in opt cost: 8.827e-02 (&lt; 1.000e-05)
 
  4. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 3.669e-11 (&lt; 1.000e-08)
-Change in opt cost: 1.409e-03 (&lt; 1.000e-05)
+Sum of slack: 4.982e-02 (&lt; 1.000e-08)
+Change in opt cost: 4.775e-03 (&lt; 1.000e-05)
 
  5. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 4.585e-11 (&lt; 1.000e-08)
-Change in opt cost: 9.101e-06 (&lt; 1.000e-05)
+Sum of slack: 5.014e-02 (&lt; 1.000e-08)
+Change in opt cost: 2.527e-04 (&lt; 1.000e-05)
+
+ 6. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 5.014e-02 (&lt; 1.000e-08)
+Change in opt cost: 1.144e-06 (&lt; 1.000e-05)
+
+ 7. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 5.014e-02 (&lt; 1.000e-08)
+Change in opt cost: 5.104e-09 (&lt; 1.000e-05)
+
+ 8. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 5.014e-02 (&lt; 1.000e-08)
+Change in opt cost: 1.341e-09 (&lt; 1.000e-05)
+
+ 9. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 5.014e-02 (&lt; 1.000e-08)
+Change in opt cost: 2.637e-09 (&lt; 1.000e-05)
+
+10. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 4.496e-02 (&lt; 1.000e-08)
+Change in opt cost: 3.328e-04 (&lt; 1.000e-05)
+
+11. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 3.716e-02 (&lt; 1.000e-08)
+Change in opt cost: 9.676e-04 (&lt; 1.000e-05)
+
+12. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 4.649e-11 (&lt; 1.000e-08)
+Change in opt cost: 1.306e-01 (&lt; 1.000e-05)
+
+13. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 2.101e-12 (&lt; 1.000e-08)
+Change in opt cost: 6.162e-03 (&lt; 1.000e-05)
+
+14. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 1.763e-10 (&lt; 1.000e-08)
+Change in opt cost: 2.991e-04 (&lt; 1.000e-05)
+
+15. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 2.166e-10 (&lt; 1.000e-08)
+Change in opt cost: 1.264e-06 (&lt; 1.000e-05)
 
 Completed spreading the vectors!
 Computing Lagragian over approximation
@@ -351,36 +469,36 @@ Analyzing 7 unit-length vectors in first quadrant
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 9.873e-10 (&lt; 1.000e-08)
-Change in opt cost: 1.607e-01 (&lt; 1.000e-05)
+Sum of slack: 4.387e-02 (&lt; 1.000e-08)
+Change in opt cost: 1.108e-01 (&lt; 1.000e-05)
 
  2. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 5.556e-10 (&lt; 1.000e-08)
-Change in opt cost: 3.210e-02 (&lt; 1.000e-05)
+Sum of slack: 5.159e-10 (&lt; 1.000e-08)
+Change in opt cost: 6.603e-02 (&lt; 1.000e-05)
 
  3. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 7.131e-10 (&lt; 1.000e-08)
-Change in opt cost: 3.231e-03 (&lt; 1.000e-05)
+Sum of slack: 5.859e-11 (&lt; 1.000e-08)
+Change in opt cost: 2.239e-02 (&lt; 1.000e-05)
 
  4. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 8.043e-11 (&lt; 1.000e-08)
-Change in opt cost: 2.123e-05 (&lt; 1.000e-05)
+Sum of slack: 8.143e-11 (&lt; 1.000e-08)
+Change in opt cost: 1.219e-03 (&lt; 1.000e-05)
 
  5. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 1.848e-11 (&lt; 1.000e-08)
-Change in opt cost: 1.966e-09 (&lt; 1.000e-05)
+Sum of slack: 4.482e-11 (&lt; 1.000e-08)
+Change in opt cost: 2.745e-06 (&lt; 1.000e-05)
 
 Completed spreading the vectors!
 Computing Lagragian over approximation
@@ -420,16 +538,16 @@ fprintf(<span class="string">'   Dynamic programming: %.3f\n'</span>, dynprog_ti
 </pre><pre class="codeoutput">Simulation times [seconds]:
  Lagrangian:
    Overapproximation   online  |  offline | Total
-(Ellipsoid,VFmethod)  1.13e+00 | 4.44e-03 | 1.14
-(Ellipsoid, support)  1.01e+01 | 6.67e+00 | 16.81
-(Polytope ,VFmethod)  1.27e+00 | 1.23e-02 | 1.28
-(Polytope , support)  8.24e+00 | 8.09e+00 | 16.33
+(Ellipsoid,VFmethod)  4.58e-01 | 1.95e-03 | 0.46
+(Ellipsoid, support)  9.15e+00 | 2.42e+01 | 33.38
+(Polytope ,VFmethod)  8.89e-01 | 6.02e-03 | 0.90
+(Polytope , support)  6.41e+00 | 8.85e+00 | 15.26
    Underapproximation  online  |  offline | Total
-(Ellipsoid,VFmethod)  1.06e+00 | 6.97e-03 | 1.07
-(Ellipsoid, support)  2.50e+00 | 1.49e+01 | 17.39
-(Polytope ,VFmethod)  1.25e+00 | 2.91e+00 | 4.16
-(Polytope , support)  2.91e+00 | 1.38e+01 | 16.75
-   Dynamic programming: 15.268
+(Ellipsoid,VFmethod)  4.77e-01 | 4.22e-03 | 0.48
+(Ellipsoid, support)  2.70e+00 | 2.74e+01 | 30.10
+(Polytope ,VFmethod)  9.27e-01 | 2.75e+00 | 3.68
+(Polytope , support)  3.51e+00 | 3.34e+01 | 36.89
+   Dynamic programming: 20.334
 </pre><h2 id="21">Plotting all the sets together</h2><p>As expected, the over-approximation and the under-approximation obtained via Lagrangian approach bounds the dynamic programming solution from "inside" and "outside".</p><pre class="codeinput">figure(2);
 clf
 plot(safe_set, <span class="string">'color'</span>, <span class="string">'k'</span>);
@@ -518,9 +636,13 @@ axis <span class="string">tight</span>;
 % recursion-free support method in overapproximation or vertex-complexity
 % preserving support vector method in underapproximation.
 %
+% All computations were performed using MATLAB on an Ubuntu OS running on a
+% laptop with Intel i7 CPU with 2.1GHz clock rate and 8 GB RAM. For sake of
+% clarity, all commands were asked to be verbose (via `SReachSetOptions`). In
+% practice, this can be turned off.
 
 % Prescript running: Initializing srtinit, if it already hasn't been initialized
-close all;clearvars;srtinit;srtinit REPLACE_WITH_DASH_DASHversion;
+close all;clearvars;srtinit;
 
 %% Problem Definition
 % In this example we will look at the viability problem for a double integrator. 

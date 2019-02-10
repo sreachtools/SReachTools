@@ -28,6 +28,9 @@
 % Gaussian disturbance to model the human patients. This script improves upon
 % the Figures 6 and 7 of Abate et. al, ARCH 2018 paper
 % (<https://doi.org/10.29007/7ks7 https://doi.org/10.29007/7ks7>).
+%
+% All computations were performed using MATLAB on an Intel Xeon CPU with 3.7GHz
+% clock rate and 16 GB RAM. 
 
 % Prescript running: Initializing srtinit, if it already hasn't been initialized
 close all;clearvars;srtinit;

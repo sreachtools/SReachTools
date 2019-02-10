@@ -39,6 +39,10 @@
 % recursion-free support method in overapproximation or vertex-complexity
 % preserving support vector method in underapproximation.
 %
+% All computations were performed using MATLAB on an Ubuntu OS running on a
+% laptop with Intel i7 CPU with 2.1GHz clock rate and 8 GB RAM. For sake of
+% clarity, all commands were asked to be verbose (via `SReachSetOptions`). In
+% practice, this can be turned off.
 
 % Prescript running: Initializing srtinit, if it already hasn't been initialized
 close all;clearvars;srtinit;

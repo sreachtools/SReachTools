@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>cwhSReachSet</title><meta name="generator" content="MATLAB 9.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-02-09"><meta name="DC.source" content="cwhSReachSet.m"><style type="text/css">
+      --><title>cwhSReachSet</title><meta name="generator" content="MATLAB 9.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-02-10"><meta name="DC.source" content="cwhSReachSet.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -66,9 +66,8 @@ table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px soli
 
 
 
-  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Verification of satellite rendezvous problem via SReachSet</a></li><li><a href="#2">Problem formulation: Spacecraft motion via CWH dynamics</a></li><li><a href="#4">Dynamics model for the deputy relative to the chief spacecraft</a></li><li><a href="#5">Target tube construction --- reach-avoid specification</a></li><li><a href="#6">Preparation for set computation</a></li><li><a href="#7">Verification via <tt>SReachSet</tt></a></li><li><a href="#8">Plotting the sets</a></li><li><a href="#9">Monte-Carlo based validation of the optimal controller</a></li><li><a href="#11">A helper function to plot a subset of the Monte-Carlo simulations</a></li></ul></div><h2 id="1">Verification of satellite rendezvous problem via SReachSet</h2><p>This example will demonstrate the use of <tt>SReachTools</tt> for controller synthesis in a terminal hitting-time stochastic reach-avoid problem. We consider a continuous-state discrete-time linear time-invariant (LTI) system. This example script is part of the <tt>SReachTools</tt> toolbox, which is licensed under GPL v3 or (at your option) any later version. A copy of this license is given in <a href="https://github.com/unm-hscl/SReachTools/blob/master/LICENSE">https://github.com/unm-hscl/SReachTools/blob/master/LICENSE</a>.</p><p>Specifically, we will discuss how SReachTools can use Fourier transforms (<a href="http://www.math.wsu.edu/faculty/genz/software/matlab/qsimvnv.m">Genz's algorithm</a> and MATLAB's patternsearch), convex chance constraints, and Lagrangian methods to construct underapproximative stochastic reach sets. Our approaches are grid-free and recursion-free, resulting in highly scalable solutions.</p><p>All computations were performed using MATLAB on an Intel Xeon CPU with 3.7GHz clock rate and 16 GB RAM. For sake of clarity, all commands were asked to be verbose (via SReachPointOptions). In practice, this can be turned off.</p><pre class="codeinput"><span class="comment">% Prescript running: Initializing srtinit, if it already hasn't been initialized</span>
-close <span class="string">all</span>;clearvars;srtinit;srtinit <span class="string">--version</span>;
-</pre><pre class="codeoutput">SReachTools version 1.2.31
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Verification of satellite rendezvous problem via SReachSet</a></li><li><a href="#2">Problem formulation: Spacecraft motion via CWH dynamics</a></li><li><a href="#4">Dynamics model for the deputy relative to the chief spacecraft</a></li><li><a href="#5">Target tube construction --- reach-avoid specification</a></li><li><a href="#6">Preparation for set computation</a></li><li><a href="#7">Verification via <tt>SReachSet</tt></a></li><li><a href="#11">Plotting the sets</a></li><li><a href="#12">Monte-Carlo based validation of the optimal controller</a></li><li><a href="#14">A helper function to plot a subset of the Monte-Carlo simulations</a></li></ul></div><h2 id="1">Verification of satellite rendezvous problem via SReachSet</h2><p>This example will demonstrate the use of <tt>SReachTools</tt> for controller synthesis in a terminal hitting-time stochastic reach-avoid problem. We consider a continuous-state discrete-time linear time-invariant (LTI) system. This example script is part of the <tt>SReachTools</tt> toolbox, which is licensed under GPL v3 or (at your option) any later version. A copy of this license is given in <a href="https://github.com/unm-hscl/SReachTools/blob/master/LICENSE">https://github.com/unm-hscl/SReachTools/blob/master/LICENSE</a>.</p><p>Specifically, we will discuss how SReachTools can use Fourier transforms (<a href="http://www.math.wsu.edu/faculty/genz/software/matlab/qsimvnv.m">Genz's algorithm</a> and MATLAB's patternsearch), convex chance constraints, and Lagrangian methods to construct underapproximative stochastic reach sets. Our approaches are grid-free and recursion-free, resulting in highly scalable solutions.</p><p>All computations were performed using MATLAB on an Ubuntu OS running on a laptop with Intel i7 CPU with 2.1GHz clock rate and 8 GB RAM. For sake of clarity, all commands were asked to be verbose (via `SReachSetOptions`). In practice, this can be turned off.</p><pre class="codeinput"><span class="comment">% Prescript running: Initializing srtinit, if it already hasn't been initialized</span>
+close <span class="string">all</span>;clearvars;srtinit;
 </pre><h2 id="2">Problem formulation: Spacecraft motion via CWH dynamics</h2><p>We consider both the spacecrafts, referred to as the deputy spacecraft and the chief spacecraft, to be in the same circular orbit. In this example, we will consider the problem of verification for the spacecraft rendezvous problem, i.e., identify all the initial states from which the deputy can can rendezvous with the chief while staying within the line-of-sight cone with a likelihood above a user-specified threshold.</p><p><img vspace="5" hspace="5" src="cwh_sketch.png" alt=""> </p><h2 id="4">Dynamics model for the deputy relative to the chief spacecraft</h2><p>The relative planar dynamics of the deputy with respect to the chief are described by the <a href="https://doi.org/10.1109/CDC.2013.6760626">Clohessy-Wiltshire-Hill (CWH) equations,</a></p><p><img src="cwhSReachSet_eq00898161790449768620.png" alt="$$\ddot{x} - 3 \omega x - 2 \omega \dot{y} = \frac{F_{x}}{m_{d}}$$"></p><p><img src="cwhSReachSet_eq15283232495949856112.png" alt="$$            \ddot{y} + 2 \omega \dot{x} = \frac{F_{y}}{m_{d}}$$"></p><p>where the position of the deputy relative to the chief is <img src="cwhSReachSet_eq15556242510480314522.png" alt="$x,y \in \mathbf{R}$">, <img src="cwhSReachSet_eq07285538383886324120.png" alt="$\omega = \sqrt{\frac{\mu}{R_{0}^{3}}}$"> is the orbital frequency, <img src="cwhSReachSet_eq05371638286043275527.png" alt="$\mu$"> is the gravitational constant, and <img src="cwhSReachSet_eq10871390185993502494.png" alt="$R_{0}$"> is the orbital radius of the chief spacecraft.  We define the state as <img src="cwhSReachSet_eq10872751811371042055.png" alt="$\overline{x} = {[x\ y\ \dot{x}\ \dot{y}]}^\top \in \mathbf{R}^{4}$"> which is the position and velocity of the deputy relative to the chief along <img src="cwhSReachSet_eq15238746908345155538.png" alt="$\mathrm{x}$">- and <img src="cwhSReachSet_eq06683332128004049953.png" alt="$\mathrm{y}$">- axes, and the input as <img src="cwhSReachSet_eq03681831066756660658.png" alt="$\overline{u} = {[F_{x}\ F_{y}]}^\top \in \mathcal{U}\subset\mathbf{R}^{2}$">.</p><p>We will discretize the CWH dynamics in time, via zero-order hold, to obtain the discrete-time linear time-invariant system and add a Gaussian disturbance to account for the modeling uncertainties and the disturbance forces,</p><p><img src="cwhSReachSet_eq17824561326300448854.png" alt="$$\overline{x}_{k+1} = A \overline{x}_{k} + B \overline{u}_{k} +&#xA;\overline{w}_{k}$$"></p><p>with <img src="cwhSReachSet_eq17592557756310175309.png" alt="$\overline{w}_{k} \in \mathbf{R}^{4}$"> as an IID Gaussian zero-mean random process with a known covariance matrix <img src="cwhSReachSet_eq13715931348400830039.png" alt="$\Sigma_{\overline{w}}$">.</p><pre class="codeinput">umax = 0.1;
 mean_disturbance = zeros(4,1);
 covariance_disturbance = diag([1e-4, 1e-4, 5e-8, 5e-8]);
@@ -77,7 +76,7 @@ covariance_disturbance = diag([1e-4, 1e-4, 5e-8, 5e-8]);
 sys = getCwhLtiSystem(4, Polyhedron(<span class="string">'lb'</span>, -umax*ones(2,1), <span class="keyword">...</span>
                                     <span class="string">'ub'</span>,  umax*ones(2,1)), <span class="keyword">...</span>
        RandomVector(<span class="string">'Gaussian'</span>, mean_disturbance,covariance_disturbance));
-</pre><h2 id="5">Target tube construction --- reach-avoid specification</h2><p>We define the target tube to be a collection of time-varying boxes <img src="cwhSReachSet_eq00703114625053978951.png" alt="$\{\mathcal{T}_k\}_{k=0}^N$"> where <img src="cwhSReachSet_eq03672095713503266041.png" alt="$N$"> is the time horizon.</p><p>In this problem, we define <img src="cwhSReachSet_eq02691184912030422800.png" alt="$\mathcal{T}_k$"> to be line-of-sight cone originating from origin (location of the chief spacecraft) for <img src="cwhSReachSet_eq05617489819370963802.png" alt="$k\in\{0,1,\ldots,N-1\}$"> and the terminal target set <img src="cwhSReachSet_eq16701108298818361320.png" alt="$\mathcal{T}_N$"> as a box around the origin. This special sequence of target sets allows us to impose a reach-avoid specification of safety.</p><pre class="codeinput">time_horizon = 5;          <span class="comment">% Stay within a line of sight cone for 4 time steps and</span>
+</pre><h2 id="5">Target tube construction --- reach-avoid specification</h2><p>We define the target tube to be a collection of time-varying boxes <img src="cwhSReachSet_eq00703114625053978951.png" alt="$\{\mathcal{T}_k\}_{k=0}^N$"> where <img src="cwhSReachSet_eq03672095713503266041.png" alt="$N$"> is the time horizon.</p><p>In this problem, we define <img src="cwhSReachSet_eq02691184912030422800.png" alt="$\mathcal{T}_k$"> to be line-of-sight cone originating from origin (location of the chief spacecraft) for <img src="cwhSReachSet_eq05617489819370963802.png" alt="$k\in\{0,1,\ldots,N-1\}$"> and the terminal target set <img src="cwhSReachSet_eq16701108298818361320.png" alt="$\mathcal{T}_N$"> as a box around the origin. This special sequence of target sets allows us to impose a reach-avoid specification of safety.</p><pre class="codeinput">time_horizon = 5;        <span class="comment">% Stay within a line of sight cone for 4 time steps and</span>
                          <span class="comment">% reach the target at t=5% Safe Set --- LoS cone</span>
 <span class="comment">% Safe set definition --- LoS cone |x|&lt;=y and y\in[0,ymax] and |vx|&lt;=vxmax and</span>
 <span class="comment">% |vy|&lt;=vymax</span>
@@ -99,6 +98,7 @@ b_safe_set = [0;
               vymax;
               vymax];
 safe_set = Polyhedron(A_safe_set, b_safe_set);
+
 <span class="comment">% Target set --- Box [-0.1,0.1]x[-0.1,0]x[-0.01,0.01]x[-0.01,0.01]</span>
 target_set = Polyhedron(<span class="string">'lb'</span>, [-0.1; -0.1; -0.01; -0.01], <span class="keyword">...</span>
                         <span class="string">'ub'</span>, [0.1; 0; 0.01; 0.01]);
@@ -124,7 +124,8 @@ ft_run = 1;
 cc_open_run = 1;
 lagunder_run = 1;
 lagover_run = 0;
-</pre><h2 id="7">Verification via <tt>SReachSet</tt></h2><p>These approaches utilizes the convexity and compactness guarantees of the stochastic reach set to the problem of stochastic reachability of a target tube as discussed in</p><div><ol><li>A. Vinod and M. Oishi, "Scalable underapproximative verification of stochastic LTI systems using convexity and compactness," In Proc. Hybrid Syst.: Comput. &amp; Ctrl., pages 1--10, 2018. HSCC 2018</li><li>A. Vinod and M. Oishi, "Stochastic reachability of a target tube: Theory and computation," IEEE Transactions in Automatic Control, 2018 (submitted) https://arxiv.org/pdf/1810.05217.pdf.</li></ol></div><p>The three different approaches explored in this example are</p><div><ol><li>Chance-constrained open-loop-based verification (Linear program approach)</li><li>Genz's algorithm+MATLAB's patternsearch+open-loop-based verification</li><li>Lagrangian-based underapproximation</li></ol></div><p>While the first two methods use ray-shooting and <tt>SReachPoint</tt> to compute a polytopic underapproximation, the third approach utilizes Lagrangian-based underapproximation as described in</p><div><ul><li>J. D. Gleason, A. P. Vinod, M. M. K. Oishi, "Underapproximation of   Reach-Avoid Sets for Discrete-Time Stochastic Systems via Lagrangian   Methods," in Proceedings of the IEEE Conference on Decision and Control,   2017.</li></ul></div><pre class="codeinput"><span class="keyword">if</span> cc_open_run
+</pre><h2 id="7">Verification via <tt>SReachSet</tt></h2><p>These approaches utilizes the convexity and compactness guarantees of the stochastic reach set to the problem of stochastic reachability of a target tube as discussed in</p><div><ol><li>A. Vinod and M. Oishi, "Scalable underapproximative verification of stochastic LTI systems using convexity and compactness," In Proc. Hybrid Syst.: Comput. &amp; Ctrl., pages 1--10, 2018. HSCC 2018</li><li>A. Vinod and M. Oishi, "Stochastic reachability of a target tube: Theory and computation," IEEE Transactions in Automatic Control, 2018 (submitted) https://arxiv.org/pdf/1810.05217.pdf.</li></ol></div><p>The three different approaches explored in this example are</p><div><ol><li>Chance-constrained open-loop-based verification (Linear program approach)</li><li>Genz's algorithm+MATLAB's patternsearch+open-loop-based verification</li><li>Lagrangian-based underapproximation</li></ol></div><p>While the first two methods use ray-shooting and <tt>SReachPoint</tt> to compute a polytopic underapproximation, the third approach utilizes Lagrangian-based underapproximation as described in</p><div><ul><li>J. D. Gleason, A. P. Vinod, M. M. K. Oishi, "Underapproximation of   Reach-Avoid Sets for Discrete-Time Stochastic Systems via Lagrangian   Methods," in Proceedings of the IEEE Conference on Decision and Control,   2017.</li></ul></div><pre class="codeinput"><span class="comment">% Convex chance constrained-based underapproximation</span>
+<span class="keyword">if</span> cc_open_run
     cc_options = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'chance-open'</span>, <span class="keyword">...</span>
         <span class="string">'set_of_dir_vecs'</span>, set_of_dir_vecs_cc_open, <span class="keyword">...</span>
         <span class="string">'init_safe_set_affine'</span>, init_safe_set_affine, <span class="keyword">...</span>
@@ -134,7 +135,11 @@ lagover_run = 0;
         prob_thresh, target_tube, cc_options);
     elapsed_time_cc_open = toc(timer_cc_open);
 <span class="keyword">end</span>
-
+</pre><pre class="codeoutput">Computing the polytope via a maximally safe initial state
+Analyzing direction :  40/  40
+Computing the polytope via the Chebyshev center
+Analyzing direction :  40/  40
+</pre><pre class="codeinput"><span class="comment">% Genz's algorithm + Patternsearch-based underapproximation</span>
 <span class="keyword">if</span> ft_run
     ft_options = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'genzps-open'</span>, <span class="keyword">...</span>
         <span class="string">'set_of_dir_vecs'</span>, set_of_dir_vecs_ft, <span class="keyword">...</span>
@@ -145,36 +150,7 @@ lagover_run = 0;
         target_tube, ft_options);
     elapsed_time_ft = toc(timer_ft);
 <span class="keyword">end</span>
-<span class="keyword">if</span> lagunder_run
-    n_dim = sys.state_dim + sys.input_dim;
-    lagunder_options = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'lag-under'</span>,<span class="keyword">...</span>
-        <span class="string">'bound_set_method'</span>, <span class="string">'ellipsoid'</span>, <span class="string">'compute_style'</span>,<span class="string">'support'</span>,<span class="keyword">...</span>
-        <span class="string">'system'</span>, sys, <span class="string">'vf_enum_method'</span>, <span class="string">'lrs'</span>, <span class="string">'verbose'</span>, 2,<span class="keyword">...</span>
-        <span class="string">'n_vertices'</span>, 2^n_dim * 6 + 2*n_dim);
-
-    timer_lagunder = tic;
-    [polytope_lagunder, extra_info_under] = SReachSet(<span class="string">'term'</span>, <span class="string">'lag-under'</span>, <span class="keyword">...</span>
-        sys, prob_thresh, target_tube, lagunder_options);
-    elapsed_time_lagunder = toc(timer_lagunder);
-<span class="keyword">end</span>
-<span class="comment">% Lagrangian-based overapproximation</span>
-<span class="keyword">if</span> lagover_run
-    n_dim = sys.state_dim;
-    lagover_options = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'lag-over'</span>, <span class="keyword">...</span>
-        <span class="string">'bound_set_method'</span>, <span class="string">'ellipsoid'</span>, <span class="string">'compute_style'</span>,<span class="string">'support'</span>, <span class="keyword">...</span>
-        <span class="string">'system'</span>, sys, <span class="string">'vf_enum_method'</span>, <span class="string">'lrs'</span>, <span class="string">'verbose'</span>, 1, <span class="keyword">...</span>
-        <span class="string">'n_vertices'</span>, 2^n_dim * 6 + 2*n_dim);
-
-    timer_lagover = tic;
-    polytope_lagover = SReachSet(<span class="string">'term'</span>, <span class="string">'lag-over'</span>, sys,  prob_thresh, <span class="keyword">...</span>
-        target_tube, lagover_options);
-    elapsed_time_lagover = toc(timer_lagover);
-<span class="keyword">end</span>
-</pre><pre class="codeoutput">Computing the polytope via a maximally safe initial state
-Analyzing direction :  40/  40
-Computing the polytope via the Chebyshev center
-Analyzing direction :  40/  40
-Compute an underapproximation of the set using chance constraints (SReachSetCcO)
+</pre><pre class="codeoutput">Compute an underapproximation of the set using chance constraints (SReachSetCcO)
 Computing the polytope via a maximally safe initial state
 Analyzing direction :  15/  15
 Computing the polytope via the Chebyshev center
@@ -197,7 +173,7 @@ Analyzing direction : 4/15 | Theta --- lower bound: 0.53 | upper bound: 0.54
 
 Analyzing direction : 5/15 | Theta --- lower bound: 0.51 | upper bound: 0.54
 OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
-  0.8000  |  5.23e-01  |  5.08e-01  |  5.38e-01  |  5.78e-02  | Feasible 
+  0.8000  |  5.23e-01  |  5.08e-01  |  5.38e-01  |  5.90e-02  | Feasible 
   0.8000  |  5.31e-01  |  5.23e-01  |  5.38e-01  |  5.90e-02  | Feasible 
 
 Analyzing direction : 6/15 | Theta --- lower bound: 0.46 | upper bound: 0.46
@@ -262,97 +238,123 @@ OptRAProb |  OptTheta  |  LB_theta  |  UB_theta  |  OptInp^2  | Exit reason
   0.8000  |  1.30e+00  |  1.30e+00  |  1.32e+00  |  8.21e-02  | Infeasible (0.750) 
 
 Analyzing direction :15/15 | Theta --- lower bound: 0.64 | upper bound: 0.64
-Spreading 396 unit-length vectors in 6-dim space
+</pre><pre class="codeinput"><span class="comment">% Lagrangian-based underapproximation</span>
+<span class="keyword">if</span> lagunder_run
+    n_dim = sys.state_dim + sys.input_dim;
+    lagunder_options = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'lag-under'</span>,<span class="keyword">...</span>
+        <span class="string">'bound_set_method'</span>, <span class="string">'ellipsoid'</span>, <span class="string">'compute_style'</span>,<span class="string">'support'</span>,<span class="keyword">...</span>
+        <span class="string">'system'</span>, sys, <span class="string">'vf_enum_method'</span>, <span class="string">'lrs'</span>, <span class="string">'verbose'</span>, 2,<span class="keyword">...</span>
+        <span class="string">'n_vertices'</span>, 2^n_dim * 6 + 2*n_dim);
+
+    timer_lagunder = tic;
+    [polytope_lagunder, extra_info_under] = SReachSet(<span class="string">'term'</span>, <span class="string">'lag-under'</span>, <span class="keyword">...</span>
+        sys, prob_thresh, target_tube, lagunder_options);
+    elapsed_time_lagunder = toc(timer_lagunder);
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">Spreading 396 unit-length vectors in 6-dim space
 Analyzing 6 unit-length vectors in first quadrant
  1. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 2.685e-11 (&lt; 1.000e-08)
-Change in opt cost: 4.646e-01 (&lt; 1.000e-05)
+Sum of slack: 1.344e-10 (&lt; 1.000e-08)
+Change in opt cost: 4.669e-01 (&lt; 1.000e-05)
 
  2. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 3.050e-10 (&lt; 1.000e-08)
-Change in opt cost: 9.233e-02 (&lt; 1.000e-05)
+Sum of slack: 2.901e-10 (&lt; 1.000e-08)
+Change in opt cost: 3.653e-02 (&lt; 1.000e-05)
 
  3. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 7.919e-10 (&lt; 1.000e-08)
-Change in opt cost: 4.181e-02 (&lt; 1.000e-05)
+Sum of slack: 9.508e-10 (&lt; 1.000e-08)
+Change in opt cost: 7.528e-03 (&lt; 1.000e-05)
 
  4. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 1.944e-10 (&lt; 1.000e-08)
-Change in opt cost: 8.901e-03 (&lt; 1.000e-05)
+Sum of slack: 2.893e-11 (&lt; 1.000e-08)
+Change in opt cost: 1.143e-03 (&lt; 1.000e-05)
 
  5. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 4.648e-10 (&lt; 1.000e-08)
-Change in opt cost: 9.522e-05 (&lt; 1.000e-05)
+Sum of slack: 1.599e-11 (&lt; 1.000e-08)
+Change in opt cost: 9.784e-05 (&lt; 1.000e-05)
 
  6. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 2.593e-12 (&lt; 1.000e-08)
-Change in opt cost: 7.685e-08 (&lt; 1.000e-05)
+Sum of slack: 3.307e-11 (&lt; 1.000e-08)
+Change in opt cost: 1.166e-07 (&lt; 1.000e-05)
 
 Completed spreading the vectors!
-Time to spread the vectors: 10.586 s
+Time to spread the vectors: 13.731 s
 
 Computing Lagragian under approximation
 
 Time_horizon: 5
 
 Computation for time step: 4
-Time to setup x_u_reaches_target_set: 0.007 s
-Time for MVE computation      : 0.698 s
-Time to get v-rep underapprox.: 0.028 s
-Time to get minimal v-rep     : 1.568 s
-Time to get inner min. H-rep  : 1.478 s
-Time for oneStepBack: 3.789 s
+Time to setup x_u_reaches_target_set: 0.005 s
+Time for MVE computation      : 0.782 s
+Time to get v-rep underapprox.: 0.044 s
+Time to get minimal v-rep     : 2.751 s
+Time to get inner min. H-rep  : 3.199 s
+Time for oneStepBack: 6.791 s
 
 Computation for time step: 3
 Time to setup x_u_reaches_target_set: 0.003 s
-Time for MVE computation      : 1.458 s
-Time to get v-rep underapprox.: 0.030 s
-Time to get minimal v-rep     : 1.533 s
-Time to get inner min. H-rep  : 1.451 s
-Time for oneStepBack: 4.509 s
+Time for MVE computation      : 2.170 s
+Time to get v-rep underapprox.: 0.042 s
+Time to get minimal v-rep     : 2.408 s
+Time to get inner min. H-rep  : 2.966 s
+Time for oneStepBack: 7.622 s
 
 Computation for time step: 2
 Time to setup x_u_reaches_target_set: 0.003 s
-Time for MVE computation      : 1.357 s
-Time to get v-rep underapprox.: 0.030 s
-Time to get minimal v-rep     : 1.562 s
-Time to get inner min. H-rep  : 1.748 s
-Time for oneStepBack: 4.732 s
+Time for MVE computation      : 1.862 s
+Time to get v-rep underapprox.: 0.036 s
+Time to get minimal v-rep     : 2.094 s
+Time to get inner min. H-rep  : 2.715 s
+Time for oneStepBack: 6.741 s
 
 Computation for time step: 1
 Time to setup x_u_reaches_target_set: 0.003 s
-Time for MVE computation      : 1.460 s
-Time to get v-rep underapprox.: 0.030 s
-Time to get minimal v-rep     : 1.803 s
-Time to get inner min. H-rep  : 1.794 s
-Time for oneStepBack: 5.121 s
+Time for MVE computation      : 2.163 s
+Time to get v-rep underapprox.: 0.043 s
+Time to get minimal v-rep     : 2.660 s
+Time to get inner min. H-rep  : 2.943 s
+Time for oneStepBack: 7.842 s
 
 Computation for time step: 0
-Time to setup x_u_reaches_target_set: 0.005 s
-Time for MVE computation      : 1.621 s
-Time to get v-rep underapprox.: 0.030 s
-Time to get minimal v-rep     : 1.735 s
-Time to get inner min. H-rep  : 1.778 s
-Time for oneStepBack: 5.205 s
-</pre><h2 id="8">Plotting the sets</h2><pre class="codeinput">figure(101);
+Time to setup x_u_reaches_target_set: 0.003 s
+Time for MVE computation      : 3.790 s
+Time to get v-rep underapprox.: 0.039 s
+Time to get minimal v-rep     : 2.487 s
+Time to get inner min. H-rep  : 3.533 s
+Time for oneStepBack: 9.882 s
+</pre><pre class="codeinput"><span class="comment">% Lagrangian-based overapproximation</span>
+<span class="keyword">if</span> lagover_run
+    n_dim = sys.state_dim;
+    lagover_options = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'lag-over'</span>, <span class="keyword">...</span>
+        <span class="string">'bound_set_method'</span>, <span class="string">'ellipsoid'</span>, <span class="string">'compute_style'</span>,<span class="string">'support'</span>, <span class="keyword">...</span>
+        <span class="string">'system'</span>, sys, <span class="string">'vf_enum_method'</span>, <span class="string">'lrs'</span>, <span class="string">'verbose'</span>, 1, <span class="keyword">...</span>
+        <span class="string">'n_vertices'</span>, 2^n_dim * 6 + 2*n_dim);
+
+    timer_lagover = tic;
+    polytope_lagover = SReachSet(<span class="string">'term'</span>, <span class="string">'lag-over'</span>, sys,  prob_thresh, <span class="keyword">...</span>
+        target_tube, lagover_options);
+    elapsed_time_lagover = toc(timer_lagover);
+<span class="keyword">end</span>
+</pre><h2 id="11">Plotting the sets</h2><pre class="codeinput">figure(101);
 clf
 box <span class="string">on</span>;
 hold <span class="string">on</span>;
@@ -360,6 +362,9 @@ plot(safe_set.slice([3,4], slice_at_vx_vy), <span class="string">'color'</span>,
 plot(target_set.slice([3,4], slice_at_vx_vy), <span class="string">'color'</span>, <span class="string">'g'</span>);
 legend_cell = {<span class="string">'Safe set'</span>,<span class="string">'Target set'</span>};
 <span class="keyword">if</span> cc_open_run &amp;&amp; ~isEmptySet(polytope_cc_open)
+    <span class="comment">% Since we specify the init_safe_set (polytope is already intersected by</span>
+    <span class="comment">% the constant vx and vy at t=0), we can simply throw out the</span>
+    <span class="comment">% states 3 and 4 to get the 2D set</span>
     plot(Polyhedron(<span class="string">'V'</span>,polytope_cc_open.V(:,1:2)), <span class="string">'color'</span>,<span class="string">'k'</span>,<span class="string">'alpha'</span>,0.5);
     legend_cell{end+1} = <span class="string">'Underapprox. polytope (chance-open)'</span>;
 <span class="keyword">else</span>
@@ -367,6 +372,9 @@ legend_cell = {<span class="string">'Safe set'</span>,<span class="string">'Targ
     elapsed_time_cc_open = NaN;
 <span class="keyword">end</span>
 <span class="keyword">if</span> ft_run &amp;&amp; ~isEmptySet(polytope_ft)
+    <span class="comment">% Since we specify the init_safe_set (polytope is already intersected by</span>
+    <span class="comment">% the constant vx and vy at t=0), we can simply throw out the</span>
+    <span class="comment">% states 3 and 4 to get the 2D set</span>
     plot(Polyhedron(<span class="string">'V'</span>,polytope_ft.V(:,1:2)), <span class="string">'color'</span>,<span class="string">'b'</span>,<span class="string">'alpha'</span>,0.5);
     legend_cell{end+1} = <span class="string">'Underapprox. polytope (genzps-open)'</span>;
 <span class="keyword">else</span>
@@ -374,20 +382,23 @@ legend_cell = {<span class="string">'Safe set'</span>,<span class="string">'Targ
     elapsed_time_ft = NaN;
 <span class="keyword">end</span>
 <span class="keyword">if</span> lagunder_run &amp;&amp; ~isEmptySet(polytope_lagunder)
-    plot(Polyhedron(<span class="string">'V'</span>,polytope_lagunder.V(:,1:2)), <span class="string">'color'</span>,<span class="string">'r'</span>,<span class="string">'alpha'</span>,0.5);
+    <span class="comment">% Since we specify the init_safe_set (polytope is already intersected by</span>
+    <span class="comment">% the constant vx and vy at t=0), we can simply throw out the</span>
+    <span class="comment">% states 3 and 4 to get the 2D set</span>
+    plot(polytope_lagunder.slice([3,4], slice_at_vx_vy), <span class="string">'color'</span>,<span class="string">'r'</span>,<span class="string">'alpha'</span>,1);
     legend_cell{end+1} = <span class="string">'Underapprox. polytope (lag-under)'</span>;
 <span class="keyword">else</span>
     polytope_lagunder = Polyhedron();
     elapsed_time_lagunder = NaN;
 <span class="keyword">end</span>
 <span class="keyword">if</span> lagover_run &amp;&amp; ~isEmptySet(polytope_lagover)
-    plot(Polyhedron(<span class="string">'V'</span>,polytope_lagover.V(:,1:2)), <span class="string">'color'</span>,<span class="string">'m'</span>,<span class="string">'alpha'</span>,0.5);
+    plot(polytope_lagover.slice([3,4], slice_at_vx_vy), <span class="string">'color'</span>,<span class="string">'m'</span>,<span class="string">'alpha'</span>,1);
     legend_cell{end+1} = <span class="string">'Overapprox. polytope (lag-over)'</span>;
 <span class="keyword">else</span>
     polytope_lagover = Polyhedron();
     elapsed_time_lagover = NaN;
 <span class="keyword">end</span>
-</pre><img vspace="5" hspace="5" src="cwhSReachSet_01.png" alt=""> <h2 id="9">Monte-Carlo based validation of the optimal controller</h2><pre class="codeinput"><span class="comment">% Monte-Carlo simulation parameters</span>
+</pre><img vspace="5" hspace="5" src="cwhSReachSet_01.png" alt=""> <h2 id="12">Monte-Carlo based validation of the optimal controller</h2><pre class="codeinput"><span class="comment">% Monte-Carlo simulation parameters</span>
 n_mcarlo_sims = 1e5;
 n_sims_to_plot = 5;
 direction_index_to_plot = 30;
@@ -422,7 +433,7 @@ fprintf([<span class="string">'Elapsed time: (genzps-open) %1.3f | (chance-open)
     <span class="string">' | (lag-under) %1.3f | (lag-over) %1.3f seconds\n'</span>], <span class="keyword">...</span>
     elapsed_time_ft, elapsed_time_cc_open, elapsed_time_lagunder,<span class="keyword">...</span>
     elapsed_time_lagover);
-</pre><h2 id="11">A helper function to plot a subset of the Monte-Carlo simulations</h2><pre class="codeinput"><span class="keyword">function</span> [legend_cell] = plotMonteCarlo(method_str, mcarlo_result, <span class="keyword">...</span>
+</pre><h2 id="14">A helper function to plot a subset of the Monte-Carlo simulations</h2><pre class="codeinput"><span class="keyword">function</span> [legend_cell] = plotMonteCarlo(method_str, mcarlo_result, <span class="keyword">...</span>
     concat_state_realization, n_mcarlo_sims, n_sims_to_plot, state_dim, <span class="keyword">...</span>
     initial_state, legend_cell)
     <span class="comment">% Plots a selection of Monte-Carlo simulations on top of the plot</span>
@@ -464,8 +475,8 @@ fprintf([<span class="string">'Elapsed time: (genzps-open) %1.3f | (chance-open)
         <span class="keyword">end</span>
     <span class="keyword">end</span>
 <span class="keyword">end</span>
-</pre><pre class="codeoutput">Expected probability: 0.800, Simulated probability: 0.810
-Elapsed time: (genzps-open) 325.643 | (chance-open) 26.160 | (lag-under) 23.523 | (lag-over) NaN seconds
+</pre><pre class="codeoutput">Expected probability: 0.800, Simulated probability: 0.812
+Elapsed time: (genzps-open) 479.174 | (chance-open) 23.108 | (lag-under) 38.924 | (lag-over) NaN seconds
 </pre><img vspace="5" hspace="5" src="cwhSReachSet_02.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2018b</a><br></p></div><!--
 ##### SOURCE BEGIN #####
 %% Verification of satellite rendezvous problem via SReachSet 
@@ -484,12 +495,13 @@ Elapsed time: (genzps-open) 325.643 | (chance-open) 26.160 | (lag-under) 23.523 
 % Our approaches are grid-free and recursion-free, resulting in highly scalable
 % solutions. 
 %
-% All computations were performed using MATLAB on an Intel Xeon CPU with 3.7GHz
-% clock rate and 16 GB RAM. For sake of clarity, all commands were asked to be
-% verbose (via SReachPointOptions). In practice, this can be turned off.
+% All computations were performed using MATLAB on an Ubuntu OS running on a
+% laptop with Intel i7 CPU with 2.1GHz clock rate and 8 GB RAM. For sake of
+% clarity, all commands were asked to be verbose (via `SReachSetOptions`). In
+% practice, this can be turned off.
 
 % Prescript running: Initializing srtinit, if it already hasn't been initialized
-close all;clearvars;srtinit;srtinit REPLACE_WITH_DASH_DASHversion;
+close all;clearvars;srtinit;
 
 %% Problem formulation: Spacecraft motion via CWH dynamics
 % We consider both the spacecrafts, referred to as the deputy spacecraft and 
@@ -547,7 +559,7 @@ sys = getCwhLtiSystem(4, Polyhedron('lb', -umax*ones(2,1), ...
 % box around the origin. This special sequence of target sets allows us to
 % impose a reach-avoid specification of safety.
 
-time_horizon = 5;          % Stay within a line of sight cone for 4 time steps and 
+time_horizon = 5;        % Stay within a line of sight cone for 4 time steps and 
                          % reach the target at t=5% Safe Set REPLACE_WITH_DASH_DASH- LoS cone
 % Safe set definition REPLACE_WITH_DASH_DASH- LoS cone |x|<=y and y\in[0,ymax] and |vx|<=vxmax and 
 % |vy|<=vymax
@@ -569,6 +581,7 @@ b_safe_set = [0;
               vymax;
               vymax];
 safe_set = Polyhedron(A_safe_set, b_safe_set);
+
 % Target set REPLACE_WITH_DASH_DASH- Box [-0.1,0.1]x[-0.1,0]x[-0.01,0.01]x[-0.01,0.01]
 target_set = Polyhedron('lb', [-0.1; -0.1; -0.01; -0.01], ...
                         'ub', [0.1; 0; 0.01; 0.01]);
@@ -625,6 +638,8 @@ lagover_run = 0;
 %   Reach-Avoid Sets for Discrete-Time Stochastic Systems via Lagrangian
 %   Methods," in Proceedings of the IEEE Conference on Decision and Control,
 %   2017.
+
+% Convex chance constrained-based underapproximation
 if cc_open_run
     cc_options = SReachSetOptions('term', 'chance-open', ...
         'set_of_dir_vecs', set_of_dir_vecs_cc_open, ...
@@ -635,7 +650,9 @@ if cc_open_run
         prob_thresh, target_tube, cc_options);  
     elapsed_time_cc_open = toc(timer_cc_open);
 end
+%%
 
+% Genz's algorithm + Patternsearch-based underapproximation
 if ft_run
     ft_options = SReachSetOptions('term', 'genzps-open', ...
         'set_of_dir_vecs', set_of_dir_vecs_ft, ...
@@ -646,6 +663,9 @@ if ft_run
         target_tube, ft_options);  
     elapsed_time_ft = toc(timer_ft);
 end
+%%
+
+% Lagrangian-based underapproximation
 if lagunder_run
     n_dim = sys.state_dim + sys.input_dim;
     lagunder_options = SReachSetOptions('term', 'lag-under',...
@@ -658,6 +678,8 @@ if lagunder_run
         sys, prob_thresh, target_tube, lagunder_options);
     elapsed_time_lagunder = toc(timer_lagunder);
 end
+%%
+
 % Lagrangian-based overapproximation
 if lagover_run
     n_dim = sys.state_dim;
@@ -672,7 +694,6 @@ if lagover_run
     elapsed_time_lagover = toc(timer_lagover);
 end
 
-
 %% Plotting the sets
 figure(101);
 clf
@@ -682,6 +703,9 @@ plot(safe_set.slice([3,4], slice_at_vx_vy), 'color', 'y');
 plot(target_set.slice([3,4], slice_at_vx_vy), 'color', 'g');
 legend_cell = {'Safe set','Target set'};
 if cc_open_run && ~isEmptySet(polytope_cc_open)
+    % Since we specify the init_safe_set (polytope is already intersected by 
+    % the constant vx and vy at t=0), we can simply throw out the
+    % states 3 and 4 to get the 2D set
     plot(Polyhedron('V',polytope_cc_open.V(:,1:2)), 'color','k','alpha',0.5);
     legend_cell{end+1} = 'Underapprox. polytope (chance-open)';
 else
@@ -689,6 +713,9 @@ else
     elapsed_time_cc_open = NaN;
 end
 if ft_run && ~isEmptySet(polytope_ft)
+    % Since we specify the init_safe_set (polytope is already intersected by 
+    % the constant vx and vy at t=0), we can simply throw out the
+    % states 3 and 4 to get the 2D set
     plot(Polyhedron('V',polytope_ft.V(:,1:2)), 'color','b','alpha',0.5);
     legend_cell{end+1} = 'Underapprox. polytope (genzps-open)';
 else
@@ -696,14 +723,17 @@ else
     elapsed_time_ft = NaN;
 end
 if lagunder_run && ~isEmptySet(polytope_lagunder)
-    plot(Polyhedron('V',polytope_lagunder.V(:,1:2)), 'color','r','alpha',0.5);    
+    % Since we specify the init_safe_set (polytope is already intersected by 
+    % the constant vx and vy at t=0), we can simply throw out the
+    % states 3 and 4 to get the 2D set
+    plot(polytope_lagunder.slice([3,4], slice_at_vx_vy), 'color','r','alpha',1);
     legend_cell{end+1} = 'Underapprox. polytope (lag-under)';
 else
     polytope_lagunder = Polyhedron();
     elapsed_time_lagunder = NaN;
 end
 if lagover_run && ~isEmptySet(polytope_lagover)
-    plot(Polyhedron('V',polytope_lagover.V(:,1:2)), 'color','m','alpha',0.5);    
+    plot(polytope_lagover.slice([3,4], slice_at_vx_vy), 'color','m','alpha',1);
     legend_cell{end+1} = 'Overapprox. polytope (lag-over)';
 else
     polytope_lagover = Polyhedron();

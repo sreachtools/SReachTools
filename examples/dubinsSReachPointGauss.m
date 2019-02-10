@@ -42,10 +42,10 @@
 %    programs. (See <http://hscl.unm.edu/affinecontrollersynthesis
 %    Vinod and Oishi, Conference in Decision and Control, 2019 (submitted)>)
 %
-% All computations were performed using MATLAB on an Intel Xeon CPU with 3.7GHz
-% clock rate and 16 GB RAM. For sake of clarity, all commands were asked to be
-% verbose (via SReachPointOptions). In practice, this can be turned off.
-%
+% All computations were performed using MATLAB on an Ubuntu OS running on a
+% laptop with Intel i7 CPU with 2.1GHz clock rate and 8 GB RAM. For sake of
+% clarity, all commands were asked to be verbose (via `SReachPointOptions`). In
+% practice, this can be turned off.
 
 % Prescript running: Initializing srtinit, if it already hasn't been initialized
 close all;clearvars;srtinit;
@@ -255,7 +255,7 @@ muW_gauss = sys_gauss.dist.concat(time_horizon).mean();
 if chance_open_run_gauss
     fprintf('\n\nSReachPoint with chance-open\n');
     % Set the maximum piecewise-affine overapproximation error to 1e-3
-    opts = SReachPointOptions('term', 'chance-open','pwa_accuracy',1e-3);
+    opts = SReachPointOptions('term', 'chance-open', 'pwa_accuracy', 1e-3);
     timerVal=tic;
     [prob_chance_open_gauss, opt_input_vec_chance_open_gauss] = SReachPoint('term', ...
         'chance-open', sys_gauss, init_state_chance_open_gauss, target_tube, opts);
@@ -431,7 +431,7 @@ end
 if chance_affine_run_gauss
     fprintf('\n\nSReachPoint with chance-affine\n');
     opts = SReachPointOptions('term', 'chance-affine',...
-        'max_input_viol_prob', 1e-2, 'verbose',2);
+        'max_input_viol_prob', 1e-2, 'verbose', 1);
     timerVal = tic;
     [prob_chance_affine_gauss, opt_input_vec_chance_affine_gauss,...
         opt_input_gain_chance_affine_gauss] = SReachPoint('term', ...

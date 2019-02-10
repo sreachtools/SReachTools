@@ -42,9 +42,10 @@
 %    programs. (See <http://hscl.unm.edu/affinecontrollersynthesis
 %    Vinod and Oishi, Conference in Decision and Control, 2019 (submitted)>)
 %
-% All computations were performed using MATLAB on an Intel Xeon CPU with 3.7GHz
-% clock rate and 16 GB RAM. For sake of clarity, all commands were asked to be
-% verbose (via SReachPointOptions). In practice, this can be turned off.
+% All computations were performed using MATLAB on an Ubuntu OS running on a
+% laptop with Intel i7 CPU with 2.1GHz clock rate and 8 GB RAM. For sake of
+% clarity, all commands were asked to be verbose (via `SReachPointOptions`). In
+% practice, this can be turned off.
 
 % Prescript running: Initializing srtinit, if it already hasn't been initialized
 close all;clearvars;srtinit;
@@ -417,7 +418,7 @@ end
 if chance_affine_run
     fprintf('\n\nSReachPoint with chance-affine\n');
     ccA_opts = SReachPointOptions('term', 'chance-affine',...
-        'max_input_viol_prob', 1e-2, 'verbose', 2);
+        'max_input_viol_prob', 1e-2, 'verbose', 1);
     tic
     [prob_chance_affine, opt_input_vec_chance_affine,...
         opt_input_gain_chance_affine] = SReachPoint('term', 'chance-affine',...
