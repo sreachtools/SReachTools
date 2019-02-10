@@ -48,7 +48,7 @@ title: SReachPointGpO.m
   --------
     lb_stoch_reach 
                 - Lower bound on the stochastic reachability of a target tube
-                    problem computed
+                    problem computed | Returns -1 if infeasible
     opt_input_vec
                 - Open-loop controller: column vector of dimension
                   (sys.input_dim*N) x 1
@@ -66,6 +66,17 @@ title: SReachPointGpO.m
     MATLAB's Statistics and Machine Learning Toolbox's mvncdf to compute the
     integral of the Gaussian over a polytope.
   * See @LtiSystem/getConcatMats for more information about the notation used.
+  * This code is also used internally by SReachSetGpO (stochastic reach set
+    underapproximation via genzps-open method). There are a few adjustments done 
+    for computational purposes:
+    1. Using options.thresh, an inner min operation is used that is
+       convexity-preserving. This is an attempt to ensure that the quasi
+       Monte-Carlo simulation-driven optimization:
+       - does report a safety probability that is above prob_thresh, and
+       - does not spend too much time looking for global optimality, when a 
+         certificate of exceeding a lower bound suffices. 
+    2. After the optimization, the optimal value is reevaluated using a fresh
+       set of particles for generality.
   
   ============================================================================
   

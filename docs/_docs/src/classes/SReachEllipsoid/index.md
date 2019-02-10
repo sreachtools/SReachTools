@@ -15,8 +15,10 @@ title: SReachEllipsoid.m
         </ul>
         <li>Methods</li>
         <ul class="doc-list">
+            <li class="doc-list"><a href="#SReachEllipsoid-method-contains">contains</a></li>
+            <li class="doc-list"><a href="#SReachEllipsoid-method-plus">plus</a></li>
             <li class="doc-list"><a href="#SReachEllipsoid-method-mtimes">mtimes</a></li>
-            <li class="doc-list"><a href="#SReachEllipsoid-method-support_fun">support_fun</a></li>
+            <li class="doc-list"><a href="#SReachEllipsoid-method-support">support</a></li>
         </ul>
     </ul>
 </ul>
@@ -25,6 +27,49 @@ title: SReachEllipsoid.m
 ### SReachEllipsoid
 ```
   Creates an ellipsoid (x - c)^T Q^{-1} (x-c) <= 1
+  =============================================================================
+  
+  Create an ellipsoid object defined by the equation
+  
+    E = { x \in R^{n} : (x - c)^{T} Q^{-1} (x - c) <= 1 }
+  
+  These ellipsoid objects are often used when creating bounded disturbances
+  for the SReachSet Lagrangian methods when using Gaussian disturbances
+  
+  Usage:
+  ------
+  % Create unit ellipsoid
+  sre = SReachEllipsoid([0;0], eye(2));
+  
+  =============================================================================
+ 
+  SReachEllipsoid Properties:
+  ---------------------------
+    center                          - Center of the ellipsoid (c)
+    shape_matrix                    - Shape matrix of the ellipsoid Q
+    dim                             - Dimension of the ellipsoid
+  
+  SReachEllipsoid Methods:
+  ------------------------
+    SReachEllipsoid/SReachEllipsoid - Constructor
+    support                         - Support function of the ellipsoid
+    contains                        - Checks if a point (column vector) or a
+                                      collection of points (matrix of column
+                                      vectors) is within the ellipsoid
+ 
+  Apart from these methods, the following commands work
+    disp                            - Displays critical info about the ellipsoid
+    F * ell | ell * F               - Multiplication of ellipsoid by a n x dim -
+                                      dimensional matrix or a scalar F
+    F + ell | ell + F | ell + poly  - Add a deterministic vector/scalar to an
+                                      ellipsoid | Overapproximate the Minkowski
+                                      sum of a polyhedron with ellipsoid
+  
+  Notes:
+  ------
+  * The ellipsoid can be full-dimensional (Q non-singular) or be a 
+    lower-dimensional ellipsoid embedded in a high dimensional space (Q 
+    singular)
  
   ===========================================================================
  
@@ -43,6 +88,49 @@ title: SReachEllipsoid.m
 ### Constructor
 ```
   Creates an ellipsoid (x - c)^T Q^{-1} (x-c) <= 1
+  =============================================================================
+  
+  Create an ellipsoid object defined by the equation
+  
+    E = { x \in R^{n} : (x - c)^{T} Q^{-1} (x - c) <= 1 }
+  
+  These ellipsoid objects are often used when creating bounded disturbances
+  for the SReachSet Lagrangian methods when using Gaussian disturbances
+  
+  Usage:
+  ------
+  % Create unit ellipsoid
+  sre = SReachEllipsoid([0;0], eye(2));
+  
+  =============================================================================
+ 
+  SReachEllipsoid Properties:
+  ---------------------------
+    center                          - Center of the ellipsoid (c)
+    shape_matrix                    - Shape matrix of the ellipsoid Q
+    dim                             - Dimension of the ellipsoid
+  
+  SReachEllipsoid Methods:
+  ------------------------
+    SReachEllipsoid/SReachEllipsoid - Constructor
+    support                         - Support function of the ellipsoid
+    contains                        - Checks if a point (column vector) or a
+                                      collection of points (matrix of column
+                                      vectors) is within the ellipsoid
+ 
+  Apart from these methods, the following commands work
+    disp                            - Displays critical info about the ellipsoid
+    F * ell | ell * F               - Multiplication of ellipsoid by a n x dim -
+                                      dimensional matrix or a scalar F
+    F + ell | ell + F | ell + poly  - Add a deterministic vector/scalar to an
+                                      ellipsoid | Overapproximate the Minkowski
+                                      sum of a polyhedron with ellipsoid
+  
+  Notes:
+  ------
+  * The ellipsoid can be full-dimensional (Q non-singular) or be a 
+    lower-dimensional ellipsoid embedded in a high dimensional space (Q 
+    singular)
  
   ===========================================================================
  
@@ -87,6 +175,67 @@ title: SReachEllipsoid.m
   
 ```
 
+### Method: contains
+{:#SReachEllipsoid-method-contains}
+```
+  Checks if a point (column vector) or a collection of points (matrix of
+  column vectors) is within the ellipsoid
+  ====================================================================
+  
+  Inputs:
+  -------
+    obj         - Ellipsoid object
+    test_points - Point (column vector) or a N collection of points
+                  (matrix of column vectors) is within the ellipsoid
+ 
+  Outputs:
+  --------
+    newobj      - Boolean vector Nx1 that describe the containment
+ 
+  Notes:
+  ------
+  * Requires CVX for vectorized norm.
+ 
+  ====================================================================
+  
+  This function is part of the Stochastic Reachability Toolbox.
+  License for the use of this function is given in
+       https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+  
+ 
+```
+
+### Method: plus
+{:#SReachEllipsoid-method-plus}
+```
+  Override of MATLAB plus command
+  ====================================================================
+  
+  Inputs:
+  -------
+    obj - Ellipsoid object
+    v   - Deterministic vector to be added to the random vector OR
+          a Polytope object
+ 
+  Outputs:
+  --------
+    newobj - Ellipsoid obj (obj + v) for deterministic vector/scalar v
+             Polyhedron obj (obj \oplus v) for polytopic v (overapprox)
+ 
+  Notes:
+  ------
+  * For a polytopic v, newobj is an (Polyhedron overapproximation of the
+    minkowski sum, computed via sampling the support function.
+ 
+  ====================================================================
+  
+  This function is part of the Stochastic Reachability Toolbox.
+  License for the use of this function is given in
+       https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+  
+ 
+```
+
 ### Method: mtimes
 {:#SReachEllipsoid-method-mtimes}
 ```
@@ -111,20 +260,20 @@ title: SReachEllipsoid.m
  
 ```
 
-### Method: support_fun
-{:#SReachEllipsoid-method-support_fun}
+### Method: support
+{:#SReachEllipsoid-method-support}
 ```
   Support function of the ellipsoid object
   ====================================================================
  
   Inputs:
   -------
-    l  - A query column vector or a collection of query vectors stacked 
-         as rows
+    l   - A query column vector or a collection of query vectors stacked 
+          as columns
  
   Outputs:
   --------
-    support_fun_val - max_{y \in ellipsoid} l'*y
+    val - max_{y \in ellipsoid} l'*y
  
   =====================================================================
   

@@ -31,13 +31,19 @@ title: SReachPointOptions.m
                       'genzps-open'  -- Genz's algorithm + Patternsearch
                                         1. desired_accuracy: Accuracy of
                                                 Gaussian integral => Accuracy of
-                                                the result [Default: 1e-3]
+                                                the result [Default: 1e-2]
                                         2. PSoptions: MATLAB struct generated
                                                 using psoptimset()
+                                        3. thresh: An upper bound on useful
+                                                reach probability. This can be 
+                                                used to specify reach_prob >= 
+                                                thresh \in (0,1] See notes 
+                                                [Default: 1]
                       'particle-open'-- Particle control approach that uses
                                         mixed-integer linear programming
                                         1. n_particles: Number of particles to
-                                                use [Default: 100]
+                                                use [Default: 100] | Must
+                                                be less than max_particles.
                                         2. bigM: A large positive constant value
                                                 that is used in the mixed
                                                 integer formulation [Default:
@@ -46,66 +52,38 @@ title: SReachPointOptions.m
                                                 implementation (feedback for the
                                                 user) | Takes values from 0 to 2
                                                 [Default: 0]
+                                        4. max_particles: Maximum particles
+                                                permitted. This bound is
+                                                used to throw a pre-emptive
+                                                error for very demanding
+                                                problem requirements
+                                                [Default: 200]
                       'voronoi-open' -- Voronoi-based undersampling of particle
                                         control approach to compute open loop
                                         1. failure_risk: Risk of the
                                                 probabilistic overapproximation
-                                                bound failing [Default: 1e-10]
+                                                bound failing [Default: 1e-4]
                                         2. max_overapprox_err: Maximum
                                                 overapproximation error
                                                 (probabilistically) tolerable up
                                                 to the failure_risk
-                                                [Default: 1e-4]
-                                        3. undersampling_fraction: Fraction of
-                                                the associated particles that
-                                                will be actually optimized for
-                                                (Number of kmeans cluster
-                                                points/ Voronoi centers)
-                                                [Default: 1e-3]
-                                        4. min_samples: Minimum number of
-                                                particles to be used for
-                                                approximation | Used when
-                                                undersampling_fraction is very
-                                                strict [Default: 30]
-                                        5. bigM: A large positive constant value
-                                                used in the mixed integer 
-                                                formulation [Default: 100]
-                                        6. verbose: Verbosity of the 
-                                                implementation (feedback for the
-                                                user) | Takes values from 0 to 2
-                                                [Default: 0]
-                     'voronoi-affine'-- Voronoi-based undersampling of particle
-                                        control approach to compute open loop
-                                        1. [MUST HAVE] max_input_viol_prob:
-                                                Probabilistic relaxation of the
-                                                hard input constraints 
                                                 [Default: 1e-2]
-                                        2. failure_risk: Risk of the
-                                                probabilistic overapproximation
-                                                bound failing [Default: 1e-10]
-                                        3. max_overapprox_err: Maximum
-                                                overapproximation error
-                                                (probabilistically) tolerable up
-                                                to the failure_risk
-                                                [Default: 1e-4]
-                                        4. undersampling_fraction: Fraction of
-                                                the associated particles that
-                                                will be actually optimized for
-                                                (Number of kmeans cluster
-                                                points/ Voronoi centers)
-                                                [Default: 1e-3]
-                                        5. min_samples: Minimum number of
-                                                particles to be used for
-                                                approximation | Used when
-                                                undersampling_fraction is very
-                                                strict [Default: 30]
-                                        5. bigM: A large positive constant value
+                                        3. n_kmeans: Number of kmeans cluster
+                                                points/ Voronoi centers
+                                                [Default: 30]
+                                        4. bigM: A large positive constant value
                                                 used in the mixed integer 
                                                 formulation [Default: 100]
-                                        7. verbose: Verbosity of the 
+                                        5. verbose: Verbosity of the 
                                                 implementation (feedback for the
                                                 user) | Takes values from 0 to 2
                                                 [Default: 0]
+                                        6. max_particles: Maximum particles
+                                                permitted. This bound is
+                                                used to throw a pre-emptive
+                                                error for very demanding
+                                                problem requirements
+                                                [Default: 1e5]
                       'chance-affine'-- Convex chance-constrained approach for
                                         an affine controller synthesis
                                         1. [MUST HAVE] max_input_viol_prob:
@@ -151,6 +129,16 @@ title: SReachPointOptions.m
   * To specify a desired set of samples V to use when undersampling in 
     voronoi-X, set the undersampling fraction to be very small (say 1e-4/1e-5) 
     and set min_samples to V.
+  * For sampling-based approaches, we impose a heuristic maximum allowed
+    particles. This bound is used to throw a pre-emptive error for very 
+    demanding problem requirements. The user MAY MODIFY it to allow the
+    computations beyond the limit.
+  * max_input_viol_prob has been left as addParameter instead of
+    addRequired, so that default values may be specified.
+  * For 'genzps-open', options.thresh permits early termination if instead
+    of maximal reach probability is of interest. While this function is for 
+    maximal reach probability, this optional feature permits the reuse of
+    code in SReachSet.
   ============================================================================
   
   This function is part of the Stochastic Reachability Toolbox.

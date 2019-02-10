@@ -16,13 +16,17 @@ title: RandomVector.m
         </ul>
         <li>Methods</li>
         <ul class="doc-list">
+            <li class="doc-list"><a href="#RandomVector-method-concat">concat</a></li>
+            <li class="doc-list"><a href="#RandomVector-method-vertcat">vertcat</a></li>
             <li class="doc-list"><a href="#RandomVector-method-getProbPolyhedron">getProbPolyhedron</a></li>
             <li class="doc-list"><a href="#RandomVector-method-cov">cov</a></li>
             <li class="doc-list"><a href="#RandomVector-method-mean">mean</a></li>
             <li class="doc-list"><a href="#RandomVector-method-pdf">pdf</a></li>
             <li class="doc-list"><a href="#RandomVector-method-getRealizations">getRealizations</a></li>
-            <li class="doc-list"><a href="#RandomVector-method-concat">concat</a></li>
+            <li class="doc-list"><a href="#RandomVector-method-plus">plus</a></li>
             <li class="doc-list"><a href="#RandomVector-method-mtimes">mtimes</a></li>
+            <li class="doc-list"><a href="#RandomVector-method-horzcat">horzcat</a></li>
+            <li class="doc-list"><a href="#RandomVector-method-uniform">uniform</a></li>
             <li class="doc-list"><a href="#RandomVector-method-gaussian">gaussian</a></li>
             <li class="doc-list"><a href="#RandomVector-method-exponential">exponential</a></li>
         </ul>
@@ -49,8 +53,8 @@ title: RandomVector.m
   % Define a Gaussian random vector of mean [0;2] and covariance matrix 
   % eye(2):
   GaussianRV = RandomVector('Gaussian', [0;2], eye(2));
-  OR
-  % GaussianRV = RandomVector.gaussian([0;2], eye(2));
+  % OR
+  GaussianRV = RandomVector.gaussian([0;2], eye(2));
  
   % Define a beta-distributed 3-dimensional random vector with parameters
   % A=B=10
@@ -93,12 +97,18 @@ title: RandomVector.m
     exponential               - Get an exponential random vector for a
                                 specified lambda vector
  
-    Apart from these methods, you can do disp(rv) as well as F*rv, where F
-    is an appropriately dimensioned matrix.
+    Apart from these methods, for a RandomVector object rv, you can do:
+    disp(rv)                  - Display information about rv
+    F*rv, rv*F                - Both work as F x rv (NO TRANSPOSE enforced)
+                                where F is an appropriately dimensioned matrix
+    rv + v                    - Add v, a deterministic vector of appropriate
+                                dimension, to rv
+    [rv1;rv2;rv3]             - Concatenate multiple random vectors
   
   Notes:
   ------
   * MATLAB DEPENDENCY: Uses MATLAB's Statistics and Machine Learning Toolbox.
+ 
   
   =========================================================================
   
@@ -133,8 +143,8 @@ title: RandomVector.m
   % Define a Gaussian random vector of mean [0;2] and covariance matrix 
   % eye(2):
   GaussianRV = RandomVector('Gaussian', [0;2], eye(2));
-  OR
-  % GaussianRV = RandomVector.gaussian([0;2], eye(2));
+  % OR
+  GaussianRV = RandomVector.gaussian([0;2], eye(2));
  
   % Define a beta-distributed 3-dimensional random vector with parameters
   % A=B=10
@@ -177,12 +187,18 @@ title: RandomVector.m
     exponential               - Get an exponential random vector for a
                                 specified lambda vector
  
-    Apart from these methods, you can do disp(rv) as well as F*rv, where F
-    is an appropriately dimensioned matrix.
+    Apart from these methods, for a RandomVector object rv, you can do:
+    disp(rv)                  - Display information about rv
+    F*rv, rv*F                - Both work as F x rv (NO TRANSPOSE enforced)
+                                where F is an appropriately dimensioned matrix
+    rv + v                    - Add v, a deterministic vector of appropriate
+                                dimension, to rv
+    [rv1;rv2;rv3]             - Concatenate multiple random vectors
   
   Notes:
   ------
   * MATLAB DEPENDENCY: Uses MATLAB's Statistics and Machine Learning Toolbox.
+ 
   
   =========================================================================
   
@@ -246,34 +262,118 @@ title: RandomVector.m
   
 ```
 
+### Method: concat
+{:#RandomVector-method-concat}
+```
+  Create a concatenated random vector of length time_horizon
+  ====================================================================
+  
+  Inputs:
+  -------
+    obj           - RandomVector object (typically disturbance w_k)
+    repeat_times  - The number of time steps of interest N
+ 
+  Outputs:
+  --------
+    newobj        - RandomVector object (for disturbance, it can be used 
+                    as W = [w_0^\top w_1^\top ... w_{N-1}^\top])
+ 
+  Notes:
+  ------
+  * We make the independent and identical assumption to obtain the
+    concatenated random vector
+ 
+  ====================================================================
+  
+  This function is part of the Stochastic Reachability Toolbox.
+  License for the use of this function is given in
+       https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+  
+ 
+```
+
+### Method: vertcat
+{:#RandomVector-method-vertcat}
+```
+  Vertical concatentation routine
+  ====================================================================
+  
+  Inputs:
+  -------
+    obj             - A collection of RandomVector objects
+ 
+  Outputs:
+  --------
+    newobj          - A RandomVector object that is the vertical
+                      concatenation of random vectors
+ 
+  Notes:
+  ------
+  * This function requires the objects that are being concatenated
+    be of same RandomVector.type.
+  * If the concatenation of a deterministic vector dv is desired with
+    a RandomVector object rv, please use the following affine
+    transformation-based command:
+ 
+    new_rv = [dv; zeros(rv.dim,1)] + [zeros(length(dv), rv.dim);
+                                      eye(rv.dim) ] * rv;
+  
+  ====================================================================
+  
+  This function is part of the Stochastic Reachability Toolbox.
+  License for the use of this function is given in
+       https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+  
+```
+
 ### Method: getProbPolyhedron
 {:#RandomVector-method-getProbPolyhedron}
 ```
-  Compute the probability of a random vector lying in the given
-  polyhedron
+  Compute the probability of a random vector lying in a polyhedron 
   ====================================================================
+  Probability computation is done via Monte-Carlo (quasi Monte-Carlo in
+  Gaussian case). A distribution-independent lower bound on the number
+  of particles needed is obtained via Hoeffding's inequality.
+ 
+  Hoeffding's inequality states that 
+ 
+        Prob{|X-E[X]|\geq \delta} \leq \beta, with
+         \beta = 2 * exp(-2 * n_particles * \delta^2). 
+ 
+  Here, X is a Bernoulli random variable, \delta is the
+  desired_accuracy, \beta is the failure risk (the probability of the
+  statement |X-E[X]|\geq \delta fails). 
+ 
+  In this case, X corresponds to the indicator function of the polytope
+  composed with the random vector. Given a failure risk \beta and
+  desired accuracy \delta, we backcompute the number of particles,
+  
+        n_particles = -ln(\beta/2) / (2 * delta^2) 
+  
+  enforces the condition that empirical mean does not deviate more than
+  delta from the true mean, by Hoeffding's inequality.
   
   Inputs:
   -------
     obj             - RandomVector object
     test_polyhedron - Polyhedron object (polytope whose probability of
                       occurrence is of interest)
-    n_particles     - [Optional] Number of particles to use in integration
-                      for UserDefined random vector [Default: 1e6]
+    desired_accuracy- [Optional] Maximum absolute deviation from the
+                      true probability estimate [Default: 1e-2]
  
   Outputs:
   --------
     covar           - Probability of the random vector lying in the
                       given polytope
- 
   Notes:
   ------
-  * For Random Vectors of type 'Gaussian', we use Genz's algorithm.
-    We enforce an accuracy of 1e-3 via iteratedQscvmnv or a maximum of
-    10 iterations.
-  * For Random Vectors of type 'UserDefined', we use a Monte-Carlo
-    simulation using n_particles
-  
+  * Due to the inverse-square dependence on the desired_accuracy, we
+    impose a hard lower bound of 1e-2 on the desired_accuracy. This
+    leads to the requirement of 2e5 particles.
+  * We set the default failure risk as 2e-15.
+  * Ill-formed (mean/cov has Inf/NaN) Gaussian random vectors return
+    zero probability.
+ 
   ====================================================================
   
   This function is part of the Stochastic Reachability Toolbox.
@@ -412,27 +512,28 @@ title: RandomVector.m
  
 ```
 
-### Method: concat
-{:#RandomVector-method-concat}
+### Method: plus
+{:#RandomVector-method-plus}
 ```
-  Create a concatenated random vector of length time_horizon
+  Override of MATLAB plus command
   ====================================================================
   
   Inputs:
   -------
-    obj           - RandomVector object (typically disturbance w_k)
-    time_horizon  - The number of time steps of interest N
+    obj - RandomVector object
+    v   - Deterministic vector to be added to the random vector OR
+          a RandomVector object
  
   Outputs:
   --------
-    newobj        - RandomVector object (for disturbance, it can be used 
-                    as W = [w_0^\top w_1^\top ... w_{N-1}^\top])
+    newobj - RandomVector object (obj + v)
  
   Notes:
   ------
-  * We make the independent and identical assumption to obtain the
-    concatenated random vector
- 
+  * While this function updates the generator for a UserDefined random
+    vector, it is HIGHLY RECOMMENDED to redefine the random vector
+    separately with an updated generator function to avoid nested
+    generator functions
   ====================================================================
   
   This function is part of the Stochastic Reachability Toolbox.
@@ -470,6 +571,33 @@ title: RandomVector.m
        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
   
  
+```
+
+### Method: horzcat
+{:#RandomVector-method-horzcat}
+```
+  Horizontal concatenation prevention routine!
+  ====================================================================
+  
+  Notes:
+  ------
+  * This function just throws an error since horizontal
+    concatenation produces random matrix!
+  
+  ====================================================================
+  
+  This function is part of the Stochastic Reachability Toolbox.
+  License for the use of this function is given in
+       https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+  
+ 
+```
+
+### Method: uniform
+{:#RandomVector-method-uniform}
+```
+RandomVector.uniform is a function.
+    rv = uniform(lb, ub)
 ```
 
 ### Method: gaussian

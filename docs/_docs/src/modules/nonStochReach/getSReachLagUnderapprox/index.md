@@ -25,7 +25,7 @@ title: getSReachLagUnderapprox.m
   -------
     sys              - LtiSystem object
     target_tube      - Tube object
-    disturbance_set  - Polyhedron/SReachEllipsoid object (bounded set) OR a
+    dist_set         - Polyhedron/SReachEllipsoid object (bounded set) OR a
                         collection of these objects which individually satisfy 
                         the probability bound(a convex hull of the individual 
                         results taken posteriori)

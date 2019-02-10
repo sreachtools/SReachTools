@@ -24,20 +24,18 @@ title: getBsetWithProb.m
     Stochastic Reachability of a Target Tube," 2018.
     https://arxiv.org/abs/1810.07118 TODO
  
-  Usage: See SReachSetLagBset.
+  Usage: See SReachSetLagBset, RandomVector/getProbPolyhedron.
   
   =============================================================================
   
-  bounded_set = getBsetWithProb(dist, polytope, prob_threshold, n_particles)
+  bounded_set = getBsetWithProb(dist, polytope, prob_threshold,desired_accuracy)
   
   Inputs:
   -------
     dist            - RandomVector object
     polytope        - Polyhedron object whose scaled version is the bounded_set                     
     prob_threshold  - Probability threshold (gamma)
-    n_particles     - Number of particles to use in the Monte-Carlo
-                      simulation estimation of the probability in 
-                      RandomVector/getProbPolyhedron
+    desired_accuracy- Maximum absolute deviation in the probability estimate
   
   Outputs:
   --------
@@ -46,7 +44,8 @@ title: getBsetWithProb.m
   Notes:
   ------
   * Prob{ w \in \theta Polytope(A,b) } is computed using
-    RandomVector/getProbPolyhedron
+    RandomVector/getProbPolyhedron.
+  * Requires the desired_accuracy to be at least 1e-2.
   
   ============================================================================
  

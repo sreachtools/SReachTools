@@ -15,6 +15,7 @@ title: Tube.m
         <ul class="doc-list">
             <li class="doc-list"><a href="#Tube-method-contains">contains</a></li>
             <li class="doc-list"><a href="#Tube-method-concat">concat</a></li>
+            <li class="doc-list"><a href="#Tube-method-polyArray2Tube">polyArray2Tube</a></li>
         </ul>
     </ul>
 </ul>
@@ -35,8 +36,8 @@ title: Tube.m
   % Viability Problem
   tt = Tube('viability', safe_set, time_horizon);
  
-  Note that both of the above mechanisms will yield a tube of length
-  time_horizon+1 --- T_0, T_1, ..., T_{time_horizon}.
+  % Note that both of the above mechanisms will yield a tube of length
+  % time_horizon+1 --- T_0, T_1, ..., T_{time_horizon}.
   
   % General tube
   % Can use general Polyhedron objects, for self-containment of the 
@@ -56,8 +57,18 @@ title: Tube.m
  
   Tube Methods:
   ---------------------
-    Tube/Tube - Class constructor
+    Tube/Tube       - Class constructor
+    concat          - Get concatenated tube (Cartesian product of the polytopes)
+    contains        - Check if a given concatenates state trajectory lies in the
+                      tube
+    polyArray2Tube  - Convert the array of polyhedra to a Tube object
   
+  Apart from these, the following MATLAB functions have been overloaded
+    disp            - Display the tube
+    length          - Provide the length of the tube 
+    end             - Indexing the end of the tube
+    subsref         - Permits use of indexing of tube
+ 
   Notes:
   ------
   * MATLAB DEPENDENCY: MPT 3.0
@@ -91,8 +102,8 @@ title: Tube.m
   % Viability Problem
   tt = Tube('viability', safe_set, time_horizon);
  
-  Note that both of the above mechanisms will yield a tube of length
-  time_horizon+1 --- T_0, T_1, ..., T_{time_horizon}.
+  % Note that both of the above mechanisms will yield a tube of length
+  % time_horizon+1 --- T_0, T_1, ..., T_{time_horizon}.
   
   % General tube
   % Can use general Polyhedron objects, for self-containment of the 
@@ -112,8 +123,18 @@ title: Tube.m
  
   Tube Methods:
   ---------------------
-    Tube/Tube - Class constructor
+    Tube/Tube       - Class constructor
+    concat          - Get concatenated tube (Cartesian product of the polytopes)
+    contains        - Check if a given concatenates state trajectory lies in the
+                      tube
+    polyArray2Tube  - Convert the array of polyhedra to a Tube object
   
+  Apart from these, the following MATLAB functions have been overloaded
+    disp            - Display the tube
+    length          - Provide the length of the tube 
+    end             - Indexing the end of the tube
+    subsref         - Permits use of indexing of tube
+ 
   Notes:
   ------
   * MATLAB DEPENDENCY: MPT 3.0
@@ -228,6 +249,28 @@ title: Tube.m
   ------
   * This function also serves as a delegatee for input handling.
   
+  ======================================================================
+  
+  This function is part of the Stochastic Optimal Control Toolbox.
+  License for the use of this function is given in
+       https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+ 
+ 
+```
+
+### Method: polyArray2Tube
+{:#Tube-method-polyArray2Tube}
+```
+  Convert the array of polyhedra to a Tube object
+  ======================================================================
+  Inputs:
+  -------
+    polyArray - Array of polyhedrons
+ 
+  Outputs:
+  --------
+    newobj    - Tube object
+ 
   ======================================================================
   
   This function is part of the Stochastic Optimal Control Toolbox.

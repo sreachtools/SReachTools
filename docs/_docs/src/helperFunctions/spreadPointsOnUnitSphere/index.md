@@ -29,7 +29,7 @@ title: spreadPointsOnUnitSphere.m
   using difference-of-convex approach. Specifically, constraints (2), (3), and
   (5), which are reverse-convex, are tightened to their first-order Taylor
   series (under)approximation and the resulting linear constraints are enforced
-  in their place. This method is discussed in: (TODO)
+  in their place. This method is discussed in:
  
        J. D. Gleason, A. P. Vinod, and M. M. K. Oishi. 2018. Lagrangian 
        Approximations for Stochastic Reachability of a Target Tube. 
@@ -57,7 +57,8 @@ title: spreadPointsOnUnitSphere.m
  
   Notes:
   ------
- 
+  * We enforce x_i^T x_i >= 0.8^2 instead of x_i^T x_i >= 1, so that the problem
+    converges faster.
   ============================================================================
  
   This function is part of the Stochastic Reachability Toolbox.

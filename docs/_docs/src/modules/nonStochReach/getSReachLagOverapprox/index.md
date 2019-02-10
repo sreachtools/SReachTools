@@ -4,7 +4,7 @@ title: getSReachLagOverapprox.m
 ---
 
 ```
-  Get the overapproximation of the stoch reach set
+  Get the overapproximation of the stochastic reach set
   ============================================================================
  
   This function will compute the overapproximation of the stochastic reach
@@ -25,21 +25,28 @@ title: getSReachLagOverapprox.m
   -------
     sys             - LtiSystem object
     target_tube     - Tube object 
-    disturbance_set - Polyhedron object (bounded disturbance set)
+    disturbance_set - Polyhedron or SReachEllipsoid object (bounded disturbance 
+                      set)
+    options         - Struct of reach set options, see SReachSetOptions
  
   Outputs:
   --------
     overapprox_set - Polyhedron object for the overapproximation of the 
                      stochastic reach set
-    overapprox_tube- [Optional] Tube comprising of an overapproximation of the
-                     stochastic reach sets across the time horizon
+    overapprox_tube- [Available for 'VHmethod' only] Tube comprising of an
+                     overapproximation of the stochastic reach sets across the
+                     time horizon
  
   Notes:
-  * From computational geometry, intersections and Minkowski differences are
-    best performed in facet representation and Minkowski sums are best
-    performed in vertex representation. However, since in this computation,
-    all three operations are required, scalability of the algorithm is severly
-    hampered, despite theoretical elgance.
+  * From polyhedral computation theory (implemented here when
+    options.compute_style is VHmethod), intersections and Minkowski differences
+    are best performed in facet representation and Minkowski sums are best
+    performed in vertex representation. However, since in this computation, all
+    three operations are required, scalability of the algorithm is severly
+    hampered, despite theoretical elegance.
+  * Using support functions, an arbitrarily tight polytopic overapproximation of
+    the set may be computed via convex optimization (linear or second order-cone
+    programs).
  
   ============================================================================
  

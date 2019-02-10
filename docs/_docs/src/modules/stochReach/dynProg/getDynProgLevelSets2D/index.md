@@ -24,7 +24,7 @@ title: getDynProgLevelSets2D.m
                  SReachDynProg
     prob_x     - Probability values at each grid point (M number of them) in
                  grid_X (Mx1 array)
-    prob_lvls  - A vector containing safety probability thresholds of interest |
+    prob_lvls  - A vector containing safety probability thresholds of interest
                  Each element needs to be within [0,1].
     safety_tube- Safety tube used for the dynamic programming solution
  

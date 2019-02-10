@@ -35,6 +35,17 @@ title: SReachSetLag.m
                  stochastic reach set
     approx_tube- [Optional] Tube comprising of an over-/under-approximation of
                  the stochastic reach sets across the time horizon
+    bounded_set- [Optional] Bounded disturbance set which was used to
+                 robustify the computation (lag-under) or 
+                 augment the input set (lag-over)
+ 
+  Notes:
+  ------
+  * compute_style of `support` and method of `lag-over` will return only the 
+    approx_set.
+  * While 'Gaussian' disturbance can have options.bound_set_method be 'polytope'
+    or 'ellipsoid', 'UserDefined' disturbance requires options.bound_set_method
+    to be 'polytope'.
   ============================================================================
   
     This function is part of the Stochastic Reachability Toolbox.

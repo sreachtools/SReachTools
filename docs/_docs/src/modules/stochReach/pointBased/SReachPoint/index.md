@@ -55,8 +55,8 @@ title: SReachPoint.m
                              motion," In Proc. IEEE Conf. Dec. & Ctrl., 2013.
                           b. A. Vinod and M. Oishi. Affine controller synthesis
                              for stochastic reachability via difference of
-                             convex programming. In Proc. Hybrid Syst.: Comput.
-                             & Ctrl., 2019. (submitted).
+                             convex programming. In Proc. Conf. of Dec. & Ctrl.,
+                             2019. (submitted).
                              https://hscl.unm.edu/affinecontrollersynthesis/
  
   2. Convex chance-constrained-based approach (chance-affine):
@@ -79,8 +79,8 @@ title: SReachPoint.m
      Dependency (EXT)   : CVX
      Paper              : A. Vinod and M. Oishi. Affine controller synthesis for
                           stochastic reachability via difference of convex
-                          programming. In Proc.  Hybrid Syst.: Comput.  & Ctrl.,
-                          2019. (submitted).
+                          programming. In Proc. Conf. of Dec. & Ctrl., 2019.
+                          (submitted).
                           https://hscl.unm.edu/affinecontrollersynthesis/
  
   3. Fourier transform + Patternsearch (genzps-open):
@@ -140,27 +140,6 @@ title: SReachPoint.m
                           Sampling-based Stochastic Reachability Computation of
                           LTI Systems", In Proc. Amer. Ctrl. Conf., 2019
  
-  6. Particle control-based approach with undersampling via Voronoi partitions 
-     (voronoi-affine):
- 
-     High-level desc.   : Sample particles based on the additive noise and solve
-                          a mixed-integer linear program to make the maximum
-                          number of particles satisfy the reachability objective
-                          In addition, we use Voronoi partition to
-                          drastically improve the tractability while
-                          preserving the underapproximation quality
-     Approximation      : Overapproximation bounded above (in probability) by a
-                          user-specified tolerance
-     Controller type    : A history-dependent affine controller that satisfies
-                          softened input constraints (controller satisfies the
-                          hard input bounds upto a user-specified probabilistic
-                          threshold)
-     Optimality         : Suboptimal (w.r.t particles drawn) affine disturbance
-                          feedback controller 
-     Dependency (EXT)   : CVX, Gurobi
-     SReachTool function: SReachPointVoA
-     Paper              : TODO
- 
   See also examples/cwhSReachPointDemo.m and examples/dubinsSReachPointDemo.m.
  
   =============================================================================
@@ -185,9 +164,6 @@ title: SReachPoint.m
                                          open-loop controller synthesis
                        'voronoi-open' -- Voronoi undersampling of Particle
                                          control-based approach for an open-loop
-                                         controller synthesis
-                      'voronoi-affine'-- Voronoi undersampling of Particle
-                                         control-based approach for an affine
                                          controller synthesis
     sys          - System description (LtvSystem/LtiSystem object)
     initial_state- Initial state for which the maximal reach probability must be

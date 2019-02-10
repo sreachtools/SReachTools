@@ -149,8 +149,8 @@ title: SReachSet.m
     extra_info  - A MATLAB struct containing additional info, like optimal
                   open-loop input vector from the vertices and the initial state
                   with maximum reach probability in case of
-                  'chance-open'/'genzps-open', and the effective_target_tube in
-                  case of 'lag-over/lag-under'.
+                  'chance-open'/'genzps-open', and the effective_target_tube and
+                  the bounded disturbance set in case of 'lag-over/lag-under'.
  
   Notes:
   * 'set_of_dirs' and 'init_safe_set_affine' needs to be provided to the options
@@ -171,6 +171,9 @@ title: SReachSet.m
         facet-based underapproximation of the Minkowski sum step (via
         vertex-based underapproximation, followed by projection, followed by
         convex hull operation)
+      - While 'Gaussian' disturbance can have options.bound_set_method be
+        'polytope' or 'ellipsoid', 'UserDefined' disturbance requires
+        options.bound_set_method to be 'polytope'.
  
   =============================================================================
   

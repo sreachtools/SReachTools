@@ -20,6 +20,8 @@ title: SReachSetGpO.m
   computation," IEEE Transactions in Automatic Control, 2018 (submitted)
   https://arxiv.org/pdf/1810.05217.pdf.
  
+  This computation involves an UNJUSTIFIED HEURISTIC. Please see the notes.
+ 
   =============================================================================
  
   [polytope, extra_info] = SReachSetGpO(method_str, sys, prob_thresh,...
@@ -73,7 +75,39 @@ title: SReachSetGpO.m
     while obtaining a non-trivial underapproximation
   * See @LtiSystem/getConcatMats for more information about the
       notation used.
-  
+  * We compute the set by ray-shooting algorithm that guarantees an
+    underapproximation due to the compactness and convexity of the stochastic
+    reach set. 
+    - Line search is done via bisection on theta, the scaling along the
+      direction vector of interest. 
+    - Internal computation is done using SReachPointGpO to maximize code
+      modularity and reuse.
+    - The bisection is guided by feasibility of finding an open-loop controller
+      at each value of theta that minimizes 
+ 
+          -log(min(Reach_prob, prob_thresh)) (1)
+ 
+      Reach_prob is a log-concave function over the open-loop and thus (1) is a
+      convex objective. 
+        1. Using options.thresh, an inner min operation is used that is
+           convexity-preserving. This is an attempt to ensure that the
+           Monte-Carlo simulation-driven optimization does not spend too much 
+           time looking for global optimality, when a certificate of exceeding a
+           lower bound suffices. 
+        2. After the optimization, the optimal value is reevaluated using a
+           fresh set of particles for generality.
+        3. At each value of theta, feasibility is determined if the optimal
+           value of the optimization is above prob_thresh. Note that this
+           is an UNJUSTIFIED HEURSITIC, since it is not clear with what
+           probability this will hold. However, by using a sufficiently low
+           desired_accuracy, it can be understood that we will not be too
+           off.
+      The first two adjustments are implemented in SReachPointGpO, the
+      point-based stochastic reachability computation using genzps-open
+      method. 
+  * Xmax computation is done with a heuristic of centering the initial
+    state with respect to the polytope obtained via SReachSet
+    (chance-open), followed by a patternsearch-based xmax computation
   =============================================================================
   
   This function is part of the Stochastic Reachability Toolbox.

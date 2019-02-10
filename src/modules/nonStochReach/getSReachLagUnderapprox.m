@@ -107,7 +107,6 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,dist_set, options)
     end
     
     if tube_length > 1
-        % TODO: Warn appropriately
         if options.verbose >= 1
             fprintf('Time_horizon: %d\n', tube_length-1);
         end

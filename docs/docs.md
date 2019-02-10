@@ -25,6 +25,7 @@ Do check out the [examples](../examples) for more detailed explanations of vario
             <li class="doc-list"><a href="src/classes/@LtvSystem/LtvSystem">@LtvSystem/</a></li>
             <li class="doc-list"><a href="src/classes/RandomVector">RandomVector.m</a></li>
             <li class="doc-list"><a href="src/classes/SReachEllipsoid">SReachEllipsoid.m</a></li>
+            <li class="doc-list"><a href="src/classes/SReachLagController">SReachLagController.m</a></li>
             <li class="doc-list"><a href="src/classes/Tube">Tube.m</a></li>
         </ul>
         <li>exceptions/</li>
@@ -33,6 +34,7 @@ Do check out the [examples](../examples) for more detailed explanations of vario
             <li class="doc-list"><a href="src/exceptions/SrtDevError">SrtDevError.m</a></li>
             <li class="doc-list"><a href="src/exceptions/SrtInternalError">SrtInternalError.m</a></li>
             <li class="doc-list"><a href="src/exceptions/SrtInvalidArgsError">SrtInvalidArgsError.m</a></li>
+            <li class="doc-list"><a href="src/exceptions/SrtRuntimeError">SrtRuntimeError.m</a></li>
             <li class="doc-list"><a href="src/exceptions/SrtSetupError">SrtSetupError.m</a></li>
             <li class="doc-list"><a href="src/exceptions/SrtTestError">SrtTestError.m</a></li>
         </ul>
@@ -43,8 +45,8 @@ Do check out the [examples](../examples) for more detailed explanations of vario
             <li class="doc-list"><a href="src/helperFunctions/generateMonteCarloSims">generateMonteCarloSims.m</a></li>
             <li class="doc-list"><a href="src/helperFunctions/getBsetWithProb">getBsetWithProb.m</a></li>
             <li class="doc-list"><a href="src/helperFunctions/getSrtWarning">getSrtWarning.m</a></li>
-            <li class="doc-list"><a href="src/helperFunctions/iteratedQscmvnv">iteratedQscmvnv.m</a></li>
             <li class="doc-list"><a href="src/helperFunctions/normalizeForParticleControl">normalizeForParticleControl.m</a></li>
+            <li class="doc-list"><a href="src/helperFunctions/polytopesFromMonteCarloSims">polytopesFromMonteCarloSims.m</a></li>
             <li class="doc-list"><a href="src/helperFunctions/qscmvnv">qscmvnv.m</a></li>
             <li class="doc-list"><a href="src/helperFunctions/setSrtWarning">setSrtWarning.m</a></li>
             <li class="doc-list"><a href="src/helperFunctions/spreadPointsOnUnitSphere">spreadPointsOnUnitSphere.m</a></li>
@@ -54,7 +56,6 @@ Do check out the [examples](../examples) for more detailed explanations of vario
             <li>fwdStochReach/</li>
             <ul class="doc-list">
                 <li class="doc-list"><a href="src/modules/fwdStochReach/SReachFwd">SReachFwd.m</a></li>
-                <li class="doc-list"><a href="src/modules/fwdStochReach/computeReachProb">computeReachProb.m</a></li>
             </ul>
             <li>nonStochReach/</li>
             <ul class="doc-list">
@@ -76,7 +77,6 @@ Do check out the [examples](../examples) for more detailed explanations of vario
                     <li class="doc-list"><a href="src/modules/stochReach/pointBased/SReachPointGpO">SReachPointGpO.m</a></li>
                     <li class="doc-list"><a href="src/modules/stochReach/pointBased/SReachPointOptions">SReachPointOptions.m</a></li>
                     <li class="doc-list"><a href="src/modules/stochReach/pointBased/SReachPointPaO">SReachPointPaO.m</a></li>
-                    <li class="doc-list"><a href="src/modules/stochReach/pointBased/SReachPointVoA">SReachPointVoA.m</a></li>
                     <li class="doc-list"><a href="src/modules/stochReach/pointBased/SReachPointVoO">SReachPointVoO.m</a></li>
                     <li class="doc-list"><a href="src/modules/stochReach/pointBased/computeNormCdfInvOverApprox">computeNormCdfInvOverApprox.m</a></li>
                 </ul>

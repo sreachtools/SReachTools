@@ -18,10 +18,10 @@ title: generateMonteCarloSims.m
   For an open-loop controller, only an concat_input_vector may be specified and
   dist_feedback_gain is set to zero. 
  
-  See also examples/forwardStochasticReachCWH.m, examples/cwhSReachPointDemo.m
+  See also examples/forwardStochasticReachCWH.m, examples/cwhSReachPoint.m
  
   =============================================================================
-  [concat_state_realization, concat_disturb_realizations] = ...
+  [concat_state_realization, concat_disturb_realizations, saturation_indx] = ...
      generateMonteCarloSims(n_monte_carlo_sims, sys, initial_state, ...
         time_horizon, optimal_input_vector, optimal_input_gain)
  
@@ -42,21 +42,31 @@ title: generateMonteCarloSims.m
                           disturbance feedback, and the gain matrix must be
                           lower block triangular (with zeros in its block
                           diagonal elements) for causality | See Notes
+    srlcontrol          - [Optional but no concat_input_vector and empty
+                          dist_feedback_gain] SReachLagController object
+                          describing an admissible state feedback controller
+                          corresponding to the Lagrangian-based
+                          underapproximation to the stochastic reach set
     verbose             - [Optional] Verbosity of this function when saturating
                           affine disturbance feedback controllers
  
   Outputs:
   --------
-    concat_state_realization  - Matrix of concatenate state (row) vectors
-                                stacked columnwise. Each row comprises of the
-                                state trajectory as [x_0; x_1; x_2; ...; x_N]
-    concat_disturb_realization- Matrix of concatenate disturbance (row) vectors
-                                stacked columnwise. Each row comprises of
-                                the state trajectory as [w_0; w_1; ...; w_{N-1}]
-    saturation_indx           - Binary vector that indicates which realizations
+    concat_state_realization  - Matrix of concatenated state (column) vectors
+                                stacked columnwise. Each column has the state 
+                                trajectory [x_0; x_1; x_2; ...; x_N]
+    concat_disturb_realization- Matrix of concatenated disturbance (column) 
+                                vectors stacked columnwise. Each column has the 
+                                disturbance realization [w_0; w_1; ...; w_{N-1}]
+    saturation_indx           - [Available only for affine feedback] 
+                                Binary vector that indicates which realizations
                                 had their associated affine disturbance feedback
                                 controller saturated. Potentially non-zero only
                                 if the input_gain is non-empty
+    concat_input_realization  - [Available only for SReachLagController object] 
+                                Matrix of concatenated input (column) vectors
+                                stacked columnwise. Each column has the state 
+                                trajectory [x_0; x_1; x_2; ...; x_N]
  
   Notes:
   ------
@@ -70,7 +80,7 @@ title: generateMonteCarloSims.m
     its block diagonal submatrices as zero matrices. This ensures that the
     affine disturbance feedback controller's value at any point of time depends
     only on the past disturbance values => causal controller. This function DOES
-    NOT check for this structure in the input gain. TODO
+    NOT check for this structure in the input gain.
   * Affine disturbance feedback controllers CAN NOT satisfy hard control bounds
     when the disturbance is unbounded (like Gaussian). Therefore, we will
     saturate the controller realization (associated with the disturbance
@@ -85,6 +95,18 @@ title: generateMonteCarloSims.m
     where U is the decision variable, \mathcal{U} is the input space, T is the
     time horizon, M is the affine disturbance feedback gain, and D is the affine
     disturbance feedback bias.
+  * When using SReachLagController, verbosity may be specified in the following
+    way:
+        % Create a controller based on the underapproximation
+        srlcontrol = SReachLagController(sys, ... 
+            extra_info_under.bounded_dist_set, ...
+            extra_info_under.stoch_reach_tube);
+        % Generate Monte-Carlo simulations using the srlcontrol and
+        % generateMonteCarloSims
+        timer_mcarlo = tic;
+        [X,U,W] = generateMonteCarloSims(n_mcarlo_sims, sys, ...
+            initial_state, time_horizon, srlcontrol, [], ...
+            lagunder_options.verbose);
  
   ============================================================================
   

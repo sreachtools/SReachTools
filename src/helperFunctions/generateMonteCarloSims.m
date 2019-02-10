@@ -76,7 +76,7 @@ function varargout= generateMonteCarloSims(n_monte_carlo_sims, sys, ...
 %   its block diagonal submatrices as zero matrices. This ensures that the
 %   affine disturbance feedback controller's value at any point of time depends
 %   only on the past disturbance values => causal controller. This function DOES
-%   NOT check for this structure in the input gain. TODO
+%   NOT check for this structure in the input gain.
 % * Affine disturbance feedback controllers CAN NOT satisfy hard control bounds
 %   when the disturbance is unbounded (like Gaussian). Therefore, we will
 %   saturate the controller realization (associated with the disturbance
@@ -179,6 +179,7 @@ function varargout= generateMonteCarloSims(n_monte_carlo_sims, sys, ...
                     {'nonempty','size',[time_horizon * sys.input_dim,...
                              time_horizon * sys.dist_dim]},...
                 'generateMonteCarloSims', 'input_concat_dist_gain');                
+                % TODO: Check for lower block triangular structure
                 if length(varargin) == 3
                     verbose = varargin{3};
                     validateattributes(verbose, {'numeric'},...
