@@ -210,3 +210,12 @@ BibTeX entry for use in LaTeX with `\usepackage{url}`:
     note      = {\url{https://unm-hscl.github.io/SReachTools/} (accepted)}
 }
 ```
+As seen from the installation instructions, this toolbox leverages several existing
+toolboxes:
+1. [MPT3](https://www.mpt3.org/) developed by M. Herceg, M. Kvasnica, C.N. Jones, and M. Morari, along with their dependencies.
+2. [CVX](http://cvxr.com/cvx/) developed by Michael Grant and Stephen Boyd
+3. [GeoCalcLib](http://worc4021.github.io/GeoCalcLib/) developed by Rainer Schaich.
+4. [An algorithm for numerical computation of multivariate normal distribution values](http://www.math.wsu.edu/faculty/genz/software/matlab/qscmvnv.m) developed by Alan Genz.
+5. [allcomb.m](https://www.mathworks.com/matlabcentral/fileexchange/10064-allcomb-varargin) developed by Jos van der Geest.
+
+Apart from these, we use commercial toolboxes from MATLAB and Gurobi, when available.
