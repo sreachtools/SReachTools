@@ -32,9 +32,9 @@ tube (a collection of time-varying safe sets).
 - *Controller synthesis problem*: We can use `SReachPoint` to compute the
   optimal (open-loop or affine) controller that maximizes the safety
   probability, the likelihood of staying with the target tube.
-- See [the table on the home
-  page](../index.html#summary-of-features-in-sreachtools) for how SReachTools
-  can solve these problems and the available approximation guarantees.
+- See [the table in the documentation page]({{ '/SReachTools/docs/#features-of-sreachtools' | relative link }}) 
+  for how SReachTools can solve these problems and the available approximation
+      guarantees.
 - In all of these examples, we will validate the optimal controllers using
   Monte-Carlo simulations.
 
@@ -52,9 +52,9 @@ We provide the following demonstration examples:
       [[cwhSReachSet.html](./publish/cwhSReachSet.html)]
 1. **Dubin's vehicle with a known turn rate**: Given a [Dubin's car](https://en.wikipedia.org/wiki/Dubins_path) with a known turning rate and additive disturbance in position, we wish to ascertain the set of initial states and its associated controllers from which the car can be steered to lie within a target tube. 
     - Application of `SReachPoint` from a given state
-      [[dubinsSReachPoint.html](./publish/dubinsSReachPoint.html)]
+      [[dubinsSReachPointGauss.html](./publish/dubinsSReachPointGauss.html)]
     - Application of `SReachSet` for a probability threshold
-      [[dubinsSReachSet.html](./publish/dubinsSReachSet.html)]
+      [[dubinsSReachSetGauss.html](./publish/dubinsSReachSetGauss.html)]
 1. **Automated anesthesia delivery system**: Given the dynamics for the sedation
    levels of a patient, we wish to design an automated anesthesia delivery
    system that maintains the probability of the depth of hypnosis to stay within
