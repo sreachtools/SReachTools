@@ -5,7 +5,9 @@ reachability. Currently, the toolbox can perform verification and (open-loop or
 affine disturbance-feedback) controller synthesis for linear
 (time-varying/time-invariant) systems with additive (Gaussian/non-Gaussian)
 disturbance. By verification, we are referring to the problem of [*stochastic
-reachability of a target tube*](https://arxiv.org/abs/1810.05217). 
+reachability of a target tube*](https://arxiv.org/abs/1810.05217). Our project
+website is at
+[https://unm-hscl.github.io/SReachTools/](https://unm-hscl.github.io/SReachTools/).
 
 This is an area of **active research**, and this toolbox will attempt to cater
 certain classes of problems.  
@@ -33,8 +35,6 @@ We aim to support the following problems:
       with chance constrained input bounds with maximum safety probability):
         - `chance-affine`: Chance constraint formulation solved via
           difference-of-convex programming
-        - `voronoi-affine`: Voronoi partition-based undersampled particle
-          control approach (mixed-integer linear program approach)
     - **Stochastic reach set computation** using `SReachSet` (set of initial
       states from which an admissible controller exists such that the
       probability of safety is above a given threshold):
@@ -183,13 +183,30 @@ questions and investigate any bug reports.
 
 ## Credits
 
-The authors of this toolbox are [Abraham P.
-Vinod](https://abyvinod.github.io/) (primary maintainer) and [Joseph D.
-Gleason](http://www.unm.edu/~gleasonj/).  Please cite their [relevant
-papers](https://scholar.google.com/citations?user=yb5Z7AwAAAAJ&hl=en) when using
-the toolbox.  The authors are PhD advisees of [Prof. Meeko
-Oishi](http://www.unm.edu/~oishi/).
+The authors of this toolbox are [Abraham P.  Vinod](https://abyvinod.github.io/)
+and [Joseph D.  Gleason](http://www.unm.edu/~gleasonj/). The authors are PhD
+advisees of [Prof. Meeko Oishi](http://www.unm.edu/~oishi/).
 
-We have submitted a tool paper to the 22nd ACM International Conference on
-Hybrid Systems: Computation and Control summarizing the features of SReachTools.
-A copy of this submission is [available in the repository](./SReachTools.pdf).
+If this toolbox comes handy in your research, please consider citing our
+work. A copy of this paper is [available in the
+repository](https://github.com/unm-hscl/SReachTools/raw/master/SReachTools.pdf).
+
+IEEE citation style:
+
+A. P. Vinod, J. D. Gleason, and M. M. K. Oishi. "SReachTools: A MATLAB
+Stochastic Reachability Toolbox," In Proceedings of the  International
+Conference on Hybrid Systems: Computation and Control, Montreal, Canada,
+April 16--18, 2019.  https://unm-hscl.github.io/SReachTools/ (accepted).
+    
+BibTeX entry for use in LaTeX with `\usepackage{url}`: 
+```
+@misc{SReachTools,
+    author    = {Vinod, Abraham P. and Gleason, Joseph D. and Oishi, Meeko M. K.},
+    title     = {{ '{' }}{S}{R}each{T}ools: A {MATLAB} {S}tochastic {R}eachability {T}oolbox},
+    booktitle = {Proceedings of the International Conference on Hybrid Systems: Computation and Control},
+    year      = {2019},
+    address   = {Montreal, Canada},
+    month     = {April 16--18},
+    note      = {\url{https://unm-hscl.github.io/SReachTools/} (accepted)}
+}
+```
