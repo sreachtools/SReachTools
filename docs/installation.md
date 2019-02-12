@@ -1,9 +1,12 @@
 ---
 layout: page
-title: "Installation Guide"
+title: "Dependencies & Installation"
 ---
 
-## Quick start guide
+<a name="posttop"></a>
+
+- [Dependencies](#dependencies)
+- [Installation](#installation)
 
 ### Dependencies
 
@@ -78,6 +81,8 @@ This will disable some of the features of SReachTools or hamper performance.
 addpath('/path/to/GeoCalcLib/mexfiles');
 ```
 
+[Go to top](#posttop)
+
 ### Installation
 
 1. Install the necessary dependencies listed above
@@ -96,3 +101,5 @@ addpath('/path/to/GeoCalcLib/mexfiles');
          check for recommended dependencies.  
        - Run `srtinit -x` to remove functions of SReachTools from MATLAB's path
          after use.  
+
+[Go to top](#posttop)
