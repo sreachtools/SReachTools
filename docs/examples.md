@@ -13,10 +13,11 @@ and LTV systems:
 
 Please feel free to add requests for more examples at
 [https://github.com/unm-hscl/SReachTools/issues](https://github.com/unm-hscl/SReachTools/issues).
-The code for `XYZ.html`. is available in `examples/XYZ.m`. These html pages were
+The code for `XYZ.html` is available in `examples/XYZ.m`. These html pages were
 created using MATLAB's publish command (see `examples/publish_examples.m`).
 
-{% include important-note.html content="HTML examples are not mobile friendly. We're working on it." %}
+{% include important-note.html content="HTML examples are not mobile friendly. 
+We're working on it." %}
 
 ## Backward stochastic reachability
 
@@ -32,7 +33,7 @@ tube (a collection of time-varying safe sets).
 - *Controller synthesis problem*: We can use `SReachPoint` to compute the
   optimal (open-loop or affine) controller that maximizes the safety
   probability, the likelihood of staying with the target tube.
-- See [the table in the documentation page]({{ '/SReachTools/docs/#features-of-sreachtools' | relative link }}) 
+- See [the table in the documentation page]({{ '/docs/#features-of-sreachtools' | relative_url }}) 
   for how SReachTools can solve these problems and the available approximation
       guarantees.
 - In all of these examples, we will validate the optimal controllers using

@@ -26,7 +26,7 @@ See [this page](long_description) for a detailed description of SReachTools.
 ## Can you show me some examples of SReachTools working? 
 
 See the [examples page](https://unm-hscl.github.io/SReachTools/examples/). They
-are also available in SReachTools code base, see `examples/*.m`. 
+are also available in SReachTools code base, see the `examples/` folder. 
 
 ## How do I install this toolbox? What are the dependencies?
 
@@ -43,25 +43,22 @@ our [License](license/).  Please cite our
 [toolpaper](https://github.com/unm-hscl/SReachTools/raw/master/SReachTools.pdf),
 if it helps you in your research. 
 - IEEE citation style
-```
-A. P. Vinod, J. D. Gleason, and M. M. K. Oishi. SReachTools: A MATLAB
-Stochastic Reachability Toolbox. In Proceedings of the  International
-Conference on Hybrid Systems: Computation and Control, Montreal, Canada,
-April 16--18, 2019.  https://unm-hscl.github.io/SReachTools/ (accepted).
-```
+
+  A. P. Vinod, J. D. Gleason, and M. M. K. Oishi. "SReachTools: A MATLAB
+  Stochastic Reachability Toolbox", In _Proceedings of the  International
+  Conference on Hybrid Systems: Computation and Control_, Montreal, Canada,
+  April 16--18, 2019. https://unm-hscl.github.io/SReachTools/ (accepted).
+
 - BibTeX entry for use in LaTeX with `\usepackage{url}`: 
 ```
 @misc{SReachTools,
-  author={Vinod, Abraham P. and Gleason, Joseph D. and Oishi, Meeko M.
-  K.},
-  title={ {S}{R}each{T}ools: A {MATLAB} {S}tochastic {R}eachability
-  {T}oolbox},
-  booktitle={Proceedings of the International Conference on Hybrid
-Systems: Computation and Control},
-  year={2019},
-  address={Montreal, Canada},
-  month={April 16--18},
-  note = {\url{https://unm-hscl.github.io/SReachTools/} (accepted)}
+    author    = {Vinod, Abraham P. and Gleason, Joseph D. and Oishi, Meeko M. K.},
+    title     = {{ '{' }}{S}{R}each{T}ools: A {MATLAB} {S}tochastic {R}eachability {T}oolbox},
+    booktitle = {Proceedings of the International Conference on Hybrid Systems: Computation and Control},
+    year      = {2019},
+    address   = {Montreal, Canada},
+    month     = {April 16--18},
+    note      = {\url{https://unm-hscl.github.io/SReachTools/} (accepted)}
 }
 ```
 
@@ -74,7 +71,7 @@ page](https://github.com/unm-hscl/SReachTools/issues).  Alternatively, see our
 
 ## Can I contribute to this toolbox?
 
-Of course, we welcome pull requests. See [Contributing guidelines](contributing/). 
+Of course, we welcome contributions. See [Contributing guidelines](contributing/). 
 
 ## Credits
 
