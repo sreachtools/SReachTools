@@ -21,6 +21,7 @@ transforms, and computational geometry to obtain scalable results.
     integrators.</b>
 </div>
 <br>
+See [this page](long_description) for a detailed description of SReachTools.
 
 ## Can you show me some examples of SReachTools working? 
 
