@@ -115,8 +115,7 @@ you can use:
 
 ## Features of SReachTools
 
-The following table[^table_ack] summarizes the features in SReachTools.  Do
-check out the [examples](../examples) to see these features in action.
+The following table[^table_ack] summarizes the features in SReachTools.
 
 
 |    Function   |   method-str  |                                                       Utility                                                       | Notes                                      |
