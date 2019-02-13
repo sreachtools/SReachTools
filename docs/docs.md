@@ -22,6 +22,8 @@ you can use:
 - `methods(CLASS_NAME)` to understand the details of a class
 - `<Ctrl+F1>` to get function hints for a given function
 
+<!-- DO NOT REMOVE: docs2md START FILE DUMP HERE -->
+
 <ul class="doc-list">
     <li>src/</li>
     <ul class="doc-list">
@@ -106,6 +108,8 @@ you can use:
         </ul>
     </ul>
 </ul>
+
+<!-- DO NOT REMOVE: docs2md END FILE DUMP HERE -->
 
 [Go to top](#posttop)
 

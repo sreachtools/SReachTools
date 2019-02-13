@@ -9,47 +9,67 @@
 function docs2md()
 
     global tabstr FUNCTION_BASE_PATH DOCS_ROOT_PATH
-    tabstr = '';
+    % Tab string
+    tabstr = '';                                    
+    % Where are we currently?
     FUNCTION_BASE_PATH = fileparts(mfilename('fullpath'));
+    % Location of the docs/_docs folder
     DOCS_ROOT_PATH = fullfile(FUNCTION_BASE_PATH, 'docs/_docs/');
 
+    %% Fetch data from the previous docs file - returns a cell of cell of cells
+    fid_prev = fopen(fullfile(DOCS_ROOT_PATH, '../docs.md'), 'r');
+    file_prevcontents_cell = textscan(fid_prev, '%s', 'Delimiter', '\n');    
+    fclose(fid_prev);
+    
+    %% Sanitize the file_prevcontents_cell for sprintf 
+    file_prevcontents = strrep(file_prevcontents_cell{1}, '\', '\\');
+    
+    start_indx = find(contains(file_prevcontents, ...
+        '<!-- DO NOT REMOVE: docs2md START FILE DUMP HERE -->')==1);
+    end_indx = find(contains(file_prevcontents, ...
+        '<!-- DO NOT REMOVE: docs2md END FILE DUMP HERE -->')==1);
+    
+    if length(start_indx) ~= 1 || length(end_indx) ~=1
+        % Insert the following two snippets in the docs.md to mark the beginning
+        % and end of file dump (excluding -----)
+        % ---------------------------------------------------------------------
+        %
+        % <!-- DO NOT REMOVE: docs2md START FILE DUMP HERE -->
+        %
+        % ---------------------------------------------------------------------
+        %
+        % <!-- DO NOT REMOVE: docs2md END FILE DUMP HERE -->
+        %
+        % ---------------------------------------------------------------------
+        error('Couldn''t find the start and end of the file dump!');
+    end
+    
+    %% Recursively delete all files in the docs folder
     rmdir(DOCS_ROOT_PATH, 's');
     checkAndMakeFolder(DOCS_ROOT_PATH);
 
-    % write the base docs index file
+    %% Write the base docs index file
+    % Open the file
     fid = fopen(fullfile(DOCS_ROOT_PATH, 'index.md'), 'w+');
-    fprintf(fid, '---\n');
-    fprintf(fid, 'layout: docs\n');
-    fprintf(fid, 'title: Documentation\n');
-    fprintf(fid, 'permalink: /docs/\n');
-    fprintf(fid, '---\n\n');
-
-    doc_webpage_header = [...
-    'This page lists all the functions included as part of SReachTools. ', ...
-    'This information is also available in the docstrings. Please use:\n\n', ...
-    '- `help FUNCTION_NAME` to understand the details of a function\n', ...
-    '- `methods(CLASS_NAME)` to understand the details of a class\n', ...
-    '- `<Ctrl+F1>` to get function hints for a given function\n\n', ...
-    '\n\nDo check out the [examples](../examples) for more detailed ', ...
-    'explanations of various functionalities of the toolbox.\n'];
-    fprintf(fid, doc_webpage_header);
+    % Copy the top content
+    fprintf(fid, strjoin(file_prevcontents(1:start_indx),'\n'));
+    % Add a new line and class list
+    fprintf(fid,'\n\n<ul class="doc-list">\n');
     fclose(fid);
-
+    % Write the list as well as create the corresponding help files
     checkAndMakeFolder(fullfile(DOCS_ROOT_PATH, 'src'));
-
-    fid = fopen(fullfile(DOCS_ROOT_PATH, 'index.md'), 'a');
-    fprintf(fid, sprintf('\n## Function list\n\n', tabstr));
-    fprintf(fid, sprintf('%s<ul class="doc-list">\n', tabstr));
-    fclose(fid);
-
     tabstr = [tabstr, '    '];
     listAllFilesRecursive('src', FUNCTION_BASE_PATH);
     tabstr = '';
-
+    % Add the finishing touches
     fid = fopen(fullfile(DOCS_ROOT_PATH, 'index.md'), 'a');
-    fprintf(fid, sprintf('%s</ul>\n', tabstr));
+    fprintf(fid, sprintf('%s</ul>\n\n', tabstr));
+    % Copy the bottom content
+    fprintf(fid, strjoin(file_prevcontents(end_indx:end),'\n'));
+    fprintf(fid,'\n');    
     fclose(fid);
     
+    % Overwrite the file to ../docs.md
     movefile([DOCS_ROOT_PATH 'index.md'],[DOCS_ROOT_PATH '../docs.md'])
 end
 
@@ -85,13 +105,12 @@ function listAllFilesRecursive(folder_name, base_dir)
             [cpath, cname, cext] = fileparts(const_name);
             
             fid = fopen(fullfile(DOCS_ROOT_PATH, 'index.md'), 'a');
-            md_file_path = functionPath2DocsPath(const_name);
             fprintf(fid, sprintf(['%s<li class="doc-list"><a href="%s">', ...
                 '%s/</a></li>\n'], ...
                 tabstr, getLocalPath(const_name, 'toolbox'), folder_name));
             fclose(fid);
 
-            wrtieClassPageDoc(const_name);
+            writeClassPageDoc(const_name);
         else
             warning('Class file %s not found. Skipping...', const_name);
         end
@@ -108,7 +127,7 @@ function listAllFilesRecursive(folder_name, base_dir)
         % if exist(fullfile(base_dir, folder_name, ...
         %     [folder_name(2:end) '.m']), 'file') == 2
 
-        %     wrtieClassPageDoc(fullfile(base_dir, folder_name, ...
+        %     writeClassPageDoc(fullfile(base_dir, folder_name, ...
         %         [folder_name(2:end) '.m']));
         % else
         %     warning('Class file %s not found. Skipping...', ...
@@ -209,7 +228,7 @@ function writeDocStringToFile(file_name)
     metaobj = meta.class.fromName(fname);
 
     if ~isempty(metaobj);
-        wrtieClassPageDoc(file_name);
+        writeClassPageDoc(file_name);
     else
         writeFunctionPageDoc(file_name);
         % hstr = help(file_name);
@@ -292,7 +311,7 @@ function writeFunctionPageDoc(file_name)
     fclose(fid);
 end
 
-function wrtieClassPageDoc(ffpath)
+function writeClassPageDoc(ffpath)
 
     [class_path, class_name, ext] = fileparts(ffpath);
 
