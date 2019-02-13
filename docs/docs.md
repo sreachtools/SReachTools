@@ -14,13 +14,14 @@ various functionalities of the toolbox.
 
 ## List of functions in SReachTools
 
-Click on any of the functions of SReachTools listed below to learn more
-information. This information is also available in the docstrings. In MATLAB,
-you can use:
+In MATLAB, you can use:
 
 - `help FUNCTION_NAME` to understand the details of a function
 - `methods(CLASS_NAME)` to understand the details of a class
 - `<Ctrl+F1>` to get function hints for a given function
+
+Click on any of the SReachTools functions listed below to learn more about it.
+This information is obtained from their docstrings. 
 
 <!-- DO NOT REMOVE: docs2md START FILE DUMP HERE -->
 
