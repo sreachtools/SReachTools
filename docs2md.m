@@ -131,7 +131,7 @@ function listAllFilesRecursive(folder_name, base_dir)
             continue;
         end
 
-        if dl(lv).isdir()
+        if dl(lv).isdir
             listAllFilesRecursive(dl(lv).name, dl(lv).folder);
         else
             fname = fullfile(dl(lv).folder, dl(lv).name);

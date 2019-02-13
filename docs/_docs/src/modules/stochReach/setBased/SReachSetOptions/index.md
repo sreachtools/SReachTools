@@ -74,7 +74,7 @@ title: SReachSetOptions.m
             5. desired_accuracy     - Accuracy expected for the integral of the
                                       Gaussian random vector X over the safety
                                       tube => Accuracy of the result [Default
-                                      1e-2] | This value can't be smaller
+                                      5e-2] | This value can't be smaller
                                       than 1e-2
             6. PSoptions            - MATLAB struct from psoptimset(), options
                                       for MATLAB's patternsearch 

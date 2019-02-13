@@ -9,6 +9,9 @@ permalink: /docs/
 - [List of functions in SReachTools](#list-of-functions-in-sreachtools)
 - [Features of SReachTools](#features-of-sreachtools)
 
+Do check out the [examples](../examples) for more detailed explanations of
+various functionalities of the toolbox.
+
 ## List of functions in SReachTools
 
 Click on any of the functions of SReachTools listed below to learn more

@@ -68,7 +68,12 @@ title: SReachSetGpO.m
                     7. vertices_underapprox_polytope
                             - Vertices of the polytope
                                 xmax + opt_theta_i * options.set_of_dir_vecs
- 
+                    8. polytope_cc_open
+                            - Polytope obtained by running SReachSet with
+                              'chance-open'
+                    9. extra_info_cco
+                            - Extra information obtained by running SReachSet 
+                              with 'chance-open'
   Notes:
   ------
   * extra_info.xmax_reach_prob is the highest prob_thresh that may be given
