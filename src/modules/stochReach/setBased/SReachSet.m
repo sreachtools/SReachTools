@@ -147,6 +147,7 @@ function [stoch_reach_set, varargout] = SReachSet(prob_str, method_str, sys, ...
 %                 with maximum reach probability in case of
 %                 'chance-open'/'genzps-open', and the effective_target_tube and
 %                 the bounded disturbance set in case of 'lag-over/lag-under'.
+%                 See the docstring of SReachSetXXX for more details.
 %
 % Notes:
 % * 'set_of_dirs' and 'init_safe_set_affine' needs to be provided to the options

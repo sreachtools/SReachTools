@@ -64,7 +64,12 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
 %                   7. vertices_underapprox_polytope
 %                           - Vertices of the polytope
 %                               xmax + opt_theta_i * options.set_of_dir_vecs
-%
+%                   8. polytope_cc_open
+%                           - Polytope obtained by running SReachSet with
+%                             'chance-open'
+%                   9. extra_info_cco
+%                           - Extra information obtained by running SReachSet 
+%                             with 'chance-open'
 % Notes:
 % ------
 % * extra_info.xmax_reach_prob is the highest prob_thresh that may be given
@@ -142,8 +147,15 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
     cc_options = SReachSetOptions('term', 'chance-open', 'verbose', ...
         options.verbose, 'set_of_dir_vecs', options.set_of_dir_vecs, ...
         'init_safe_set_affine', options.init_safe_set_affine);
-    polytope_cc_open = SReachSet('term','chance-open', sys, prob_thresh, ...
-        safety_tube, cc_options);  
+    if nargout > 1
+        % Require extra_info
+        [polytope_cc_open, extra_info_cco] = SReachSet('term','chance-open', ...
+            sys, prob_thresh, safety_tube, cc_options);  
+    else
+        % Skip extra_info
+        polytope_cc_open = SReachSet('term','chance-open', sys, prob_thresh, ...
+            safety_tube, cc_options);  
+    end
     
     % Construct the constrained initial safe set
     init_safe_set = Polyhedron('H', safety_tube(1).H, ...
@@ -210,6 +222,14 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
                 opt_reachAvoid_prob_so_far] = computeBisectionParms(dir_vec,...
                     init_safe_set, polytope_cc_open, xmax, sys, safety_tube, ...
                     options);
+            if opt_reachAvoid_prob_so_far < 0
+                % Chance-constrained based initialization failed
+                % Should happen only if lb_theta = 0 TODO: Check this
+                lb_theta = 0;
+                opt_theta_so_far = 0;
+                opt_inputs_so_far = Umax;
+                opt_reachAvoid_prob_so_far = xmax_reach_prob;
+            end
             
             if options.verbose >= 1  && ((ub_theta - lb_theta) > ... 
                     options.tol_bisect)
@@ -268,6 +288,7 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
     end
     varargout{1} = polytope;
     if nargout > 1
+        % Require extra_info
         extra_info.xmax = xmax;
         extra_info.Umax = Umax;
         extra_info.xmax_reach_prob = xmax_reach_prob;
@@ -275,6 +296,8 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
         extra_info.opt_input_vec_at_vertices = opt_input_vec_at_vertices;
         extra_info.opt_reach_prob_i = opt_reach_prob_i;
         extra_info.vertices_underapprox_polytope= vertices_underapprox_polytope;
+        extra_info.polytope_cc_open = polytope_cc_open;
+        extra_info.extra_info_cco = extra_info_cco;
         varargout{2} = extra_info;
     end    
 end
@@ -329,6 +352,15 @@ function [lb_theta, ub_theta, opt_theta_so_far, opt_inputs_so_far, ...
     % opt_inputs_so_far, opt_reachAvoid_prob_so_far
     %                  - Obtained via chance-constrained SReachPoint at
     %                    xmax + lb_theta * dir_vec
+    %
+    % Notes:
+    % ------
+    % - The reach probability this function provides utilizes SReachPoint with
+    %   chance-open for quick turnaround. For this reason, it is possible that
+    %   the reach probability returned is -1 (chance-open is infeasible).
+    % 
+
+
     %% Computation of the upper bound ub_theta using cvx optimization
     cvx_begin quiet
         variable theta(1) nonnegative;        
@@ -338,7 +370,7 @@ function [lb_theta, ub_theta, opt_theta_so_far, opt_inputs_so_far, ...
             % Define boundary point using theta
             safe_boundary_point == xmax + theta *  dir_vec;
             % Define boundary point as a convex combination of the vertices
-            % defining polytope_cc_open
+            % defining the initial safe set (upper bound on theta)
             init_safe_set.A * safe_boundary_point <= init_safe_set.b;
     cvx_end
     switch cvx_status
@@ -366,7 +398,7 @@ function [lb_theta, ub_theta, opt_theta_so_far, opt_inputs_so_far, ...
                 % Define boundary point using theta
                 ccc_boundary_point == xmax + theta * dir_vec;
                 % Define boundary point as a convex combination of the vertices
-                % defining polytope_cc_open
+                % defining polytope_cc_open (lower bound on theta)
                 polytope_cc_open.A * ccc_boundary_point <= polytope_cc_open.b;
         cvx_end
         switch cvx_status
@@ -419,7 +451,9 @@ function [xmax_reach_prob, Umax, xmax] = computeXmaxViaPatternsearch(...
     GW = G * sys.dist.concat(time_horizon);
        
     dual_norm_of_init_safe_set_A = norms(init_safe_set.A,2,2); 
-    dual_norm_of_polytope_cc_open_A = norms(polytope_cc_open.A,2,2); 
+    if ~polytope_cc_open.isEmptySet()
+        dual_norm_of_polytope_cc_open_A = norms(polytope_cc_open.A,2,2); 
+    end
     % maximize R - 0.01 |U| 
     % subject to
     %   X = Abar x_0 + H * U + G_matrix * \mu_W 
@@ -450,13 +484,13 @@ function [xmax_reach_prob, Umax, xmax] = computeXmaxViaPatternsearch(...
                             concat_safety_tube_b;
             init_safe_set.Ae * initial_x_for_xmax == ...
                                                    init_safe_set.be;
-            for i = 1:length(init_safe_set.A)
-                init_safe_set.A(i,:) * initial_x_for_xmax ...
-                     + R * dual_norm_of_init_safe_set_A(i) <= ...
-                        init_safe_set.b(i);
-                polytope_cc_open.A(i,:) * initial_x_for_xmax ...
-                     + R * dual_norm_of_polytope_cc_open_A(i) <= ...
-                        polytope_cc_open.b(i);
+            init_safe_set.A * initial_x_for_xmax ...
+                 + R * dual_norm_of_init_safe_set_A <= ...
+                    init_safe_set.b;
+            if ~polytope_cc_open.isEmptySet()
+                polytope_cc_open.A * initial_x_for_xmax ...
+                     + R * dual_norm_of_polytope_cc_open_A <= ...
+                        polytope_cc_open.b;
             end
     cvx_end
     switch cvx_status
