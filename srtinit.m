@@ -48,7 +48,14 @@ function varargout = srtinit(varargin)
     
     % Check if SReachTools has already been initialized
     current_path = pwd();
-    cd(userpath());
+    decoy_path = '';
+    if isempty(decoy_path)
+        % Go one step above
+        warning('No home folder to move away to.');
+        decoy_path = '..';
+    else
+        cd(decoy_path);
+    end
     try
         SRTINIT_PATH = fileparts(which('srtinit.m'));
         srtinit_prev_init = 1;
