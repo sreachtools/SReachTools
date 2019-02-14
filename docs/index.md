@@ -75,7 +75,7 @@ Of course, we welcome contributions. See [Contributing guidelines](contributing/
 
 ## Credits
 
-The authors of this toolbox are [Abraham P.  Vinod](https://abyvinod.github.io/)
+The authors of this toolbox are [Abraham P. Vinod](https://abyvinod.github.io/)
 and [Joseph D.  Gleason](http://www.unm.edu/~gleasonj/). The authors are PhD
 advisees of [Prof. Meeko Oishi](http://www.unm.edu/~oishi/).  SReachTools
 leverages several existing toolboxes:
@@ -83,6 +83,8 @@ leverages several existing toolboxes:
 2. [CVX](http://cvxr.com/cvx/) developed by Michael Grant and Stephen Boyd
 3. [GeoCalcLib](http://worc4021.github.io/GeoCalcLib/) developed by Rainer Schaich.
 4. [An algorithm for numerical computation of multivariate normal distribution values](http://www.math.wsu.edu/faculty/genz/software/matlab/qscmvnv.m) developed by Alan Genz.
-5. [allcomb.m](https://www.mathworks.com/matlabcentral/fileexchange/10064-allcomb-varargin) developed by Jos van der Geest.
+5. [allcomb.m](https://www.mathworks.com/matlabcentral/fileexchange/10064-allcomb-varargin)
+developed by Jos van der Geest. See [./src/helperFunctions/allcomb_license.txt]
+for license.
 
 When available, we also use commercial toolboxes from MATLAB and Gurobi.
