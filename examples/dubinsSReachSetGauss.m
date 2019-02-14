@@ -216,7 +216,8 @@ lagunder_options = SReachSetOptions('term', 'lag-under', ...
     sys_gauss, prob_thresh, target_tube, lagunder_options);
 elapsed_time_lagunder = toc(timer_lagunder);
 
-fprintf(['\n\nElapsed time: (chance-open) %1.3f | (lag-under) %1.3f |',...
+fprintf('\n\nProbability threshold requested: %1.2f\n', prob_thresh);
+fprintf(['Elapsed time: (chance-open) %1.3f | (lag-under) %1.3f |',...
     ' (lag-over) %1.3f seconds\n'], elapsed_time_polytope_ccc, ...
     elapsed_time_lagunder, elapsed_time_lagover);
 
@@ -283,6 +284,7 @@ for itt = 2:time_horizon
     % Define the target set at time itt
     plot(target_tube_cell{itt+1},'alpha',0.08,'LineStyle',':','color','y');
 end
+title(sprintf('Stochastic reach sets at \\alpha=%1.2f', prob_thresh));
 axis equal
 axis(axis_v);
 box on;

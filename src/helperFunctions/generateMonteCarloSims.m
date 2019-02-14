@@ -220,8 +220,7 @@ function varargout= generateMonteCarloSims(n_monte_carlo_sims, sys, ...
                 ' violates at a particular time instant... %6d/%6d'], 0, ...
                 n_monte_carlo_sims);
         end    
-        disturb_contains = zeros(time_horizon, n_monte_carlo_sims);
-
+        
         % determine which realizations are "good", i.e. they satisfy the set
         % constraints
         good_rlz = all(reshape(srlcontrol.dist_set.contains( ...
@@ -230,11 +229,11 @@ function varargout= generateMonteCarloSims(n_monte_carlo_sims, sys, ...
         
         % get the number of good trajectories and their indices in the
         % realization matrix
-        n_traj = sum(good_rlz);
+        n_traj = nnz(good_rlz);
         trajectory_indx = find(good_rlz);
         
         % initialization of state and input vectors
-        concat_state_realizations = nan(sys.state_dim * (time_horizon + 1),...
+        concat_state_realizations = nan(sys.state_dim * (time_horizon + 1), ...
             n_traj);
         concat_input_realizations = zeros(sys.input_dim * time_horizon, n_traj);
         concat_state_realizations(1:sys.state_dim, :) = repmat(initial_state,...

@@ -51,7 +51,7 @@ function varargout = srtinit(varargin)
     decoy_path = '';
     if isempty(decoy_path)
         % Go one step above
-        warning('No home folder to move away to.');
+        % warning('No home folder to move away to.');
         decoy_path = '..';
     else
         cd(decoy_path);

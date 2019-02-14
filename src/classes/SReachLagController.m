@@ -208,6 +208,9 @@ classdef SReachLagController
             tube_indx = current_time + 1;
             if any(isnan(current_state)) ||...
                 ~(obj.tube(tube_indx).contains(current_state))
+                disp(current_state);
+                disp(obj.tube(tube_indx));
+                disp(obj.tube(tube_indx).contains(current_state));
                 throwAsCaller(SrtInvalidArgsError('Invalid current state'));
             end
             
@@ -247,7 +250,7 @@ classdef SReachLagController
             % Compute a feasible action via MPT's interior point (Chebyshev
             % centering)
             if effective_input_set.isEmptySet()
-                throwAsCaller(SrtInvalidArgsError('Empty feasible input set'));
+                throw(SrtRuntimeError('Feasible input set is empty'));
             else
                 sol = effective_input_set.interiorPoint();
                 action = sol.x;

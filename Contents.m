@@ -1,5 +1,5 @@
 % Stochastic Reachability Toolbox (SReachTools)
-% Version 1.2.31 (R2017b) 25-December-2018
+% Version 1.1 (R2018a) 15-February-2018
 % 
 % The Stochastic Reachability Toolbox (SReachTools) is an open-source MATLAB 
 % toolbox for performing stochastic verification and reachability analysis.
@@ -27,7 +27,6 @@
 %               4. Voronoi-based undersampled particle control
 %           2. Affine controller synthesis
 %               1. Difference-of-convex chance constrained optimization
-%               2. Voronoi-based undersampled particle control
 %     - Dynamic programming methods for 'exact' computation of the reach
 %       probability using backward recursion
 %     - Forward stochastic reachability analysis via Gaussian random vector
