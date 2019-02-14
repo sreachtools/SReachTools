@@ -12,11 +12,23 @@ Given a discrete-time linear system with an additive stochastic disturbance,
 SReachTools constructs a set of safe initial states that satisfy some
 reachability/safety specification with at least a desired likelihood
 (*verification*). It can also *synthesize* controllers for these specifications
-under soft/hard control bounds. It exploits convex optimization, Fourier
-transforms, and computational geometry to obtain scalable results. 
+under soft/hard control bounds. 
 <div class="desc-figure">
-    <img src="{{ "/assets/scalability.png" | absolute_url }}" alt="Scalability
-    of the various set computation techniques"/>
+    <img src="{{ "/assets/stochTubeCartoon.png" | absolute_url }}"
+    alt="Illustration of stochastic reachability of a target tube problem"/>
+    <b>SReachTools can design controllers that maximize the probability of
+    staying within the target tube, and characterize the set of initial states
+    \(\mathcal{L}_\mathrm{SR}(\cdot)\) that satisfy a minimum reach
+    probability. Image licensed under a <a rel="license"
+    href="http://creativecommons.org/licenses/by-sa/4.0/">Creative Commons
+    Attribution-ShareAlike 4.0 International License</a>.</b>
+</div>
+<br>
+SReachTools exploits convex optimization, Fourier transforms, and computational
+geometry to obtain *scalable* results. 
+<div class="desc-figure">
+    <img src="{{ "/assets/scalability.png" | absolute_url }}" alt="Illustration
+    of the scalability of SReachTools"/>
     <b>Scalability of SReachTools for verification of a chain of
     integrators.</b>
 </div>
@@ -78,13 +90,14 @@ Of course, we welcome contributions. See [Contributing guidelines](contributing/
 The authors of this toolbox are [Abraham P. Vinod](https://abyvinod.github.io/)
 and [Joseph D.  Gleason](http://www.unm.edu/~gleasonj/). The authors are PhD
 advisees of [Prof. Meeko Oishi](http://www.unm.edu/~oishi/).  SReachTools
-leverages several existing toolboxes:
-1. [MPT3](https://www.mpt3.org/) developed by M. Herceg, M. Kvasnica, C.N. Jones, and M. Morari, along with their dependencies.
-2. [CVX](http://cvxr.com/cvx/) developed by Michael Grant and Stephen Boyd
-3. [GeoCalcLib](http://worc4021.github.io/GeoCalcLib/) developed by Rainer Schaich.
-4. [An algorithm for numerical computation of multivariate normal distribution values](http://www.math.wsu.edu/faculty/genz/software/matlab/qscmvnv.m) developed by Alan Genz.
+leverages several existing toolboxes and third-party codes:
+1. [MPT3](https://www.mpt3.org/) developed by M. Herceg, M. Kvasnica, C.N.
+   Jones, and M. Morari, along with their dependencies.
+2. [CVX](http://cvxr.com/cvx/) developed by Michael Grant and Stephen Boyd.
+3. [GeoCalcLib](http://worc4021.github.io/GeoCalcLib/) developed by Rainer
+   Schaich.
+4. [An algorithm for numerical computation of multivariate normal distribution values](http://www.math.wsu.edu/faculty/genz/software/matlab/qscmvnv.m) developed by Alan Genz (Distributed with SReachTools under the [license](https://unm-hscl.github.io/SReachTools/docs/src/helperFunctions/qscmvnv/)).
 5. [allcomb.m](https://www.mathworks.com/matlabcentral/fileexchange/10064-allcomb-varargin)
-developed by Jos van der Geest. See [./src/helperFunctions/allcomb_license.txt]
-for license.
+developed by Jos van der Geest (Distributed with SReachTools under the [license](https://unm-hscl.github.io/SReachTools/docs/src/helperFunctions/allcomb/#license)).
 
 When available, we also use commercial toolboxes from MATLAB and Gurobi.

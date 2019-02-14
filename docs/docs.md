@@ -49,14 +49,14 @@ This information is obtained from their docstrings.
         </ul>
         <li>helperFunctions/</li>
         <ul class="doc-list">
-            <li class="doc-list"><a href="src/helperFunctions/allcomb">allcomb.m</a></li>
+            <li class="doc-list"><a href="src/helperFunctions/allcomb">allcomb.m </a> (Third-party code distributed with license information)</li>
             <li class="doc-list"><a href="src/helperFunctions/ellipsoidsFromMonteCarloSims">ellipsoidsFromMonteCarloSims.m</a></li>
             <li class="doc-list"><a href="src/helperFunctions/generateMonteCarloSims">generateMonteCarloSims.m</a></li>
             <li class="doc-list"><a href="src/helperFunctions/getBsetWithProb">getBsetWithProb.m</a></li>
             <li class="doc-list"><a href="src/helperFunctions/getSrtWarning">getSrtWarning.m</a></li>
             <li class="doc-list"><a href="src/helperFunctions/normalizeForParticleControl">normalizeForParticleControl.m</a></li>
             <li class="doc-list"><a href="src/helperFunctions/polytopesFromMonteCarloSims">polytopesFromMonteCarloSims.m</a></li>
-            <li class="doc-list"><a href="src/helperFunctions/qscmvnv">qscmvnv.m</a></li>
+            <li class="doc-list"><a href="src/helperFunctions/qscmvnv">qscmvnv.m </a> (Third-party code distributed with license information)</li>
             <li class="doc-list"><a href="src/helperFunctions/setSrtWarning">setSrtWarning.m</a></li>
             <li class="doc-list"><a href="src/helperFunctions/spreadPointsOnUnitSphere">spreadPointsOnUnitSphere.m</a></li>
         </ul>

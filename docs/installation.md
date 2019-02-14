@@ -77,9 +77,9 @@ This will disable some of the features of SReachTools or hamper performance.
     1. Add `/path/to/GeoCalcLib/mexfiles` to MATLAB path. If you want to use
        this across sessions, we recommend adding the following command to
        your MATLAB startup.
-```
-addpath('/path/to/GeoCalcLib/mexfiles');
-```
+       ```
+       addpath('/path/to/GeoCalcLib/mexfiles');
+       ```
 
 [Go to top](#posttop)
 

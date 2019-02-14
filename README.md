@@ -124,9 +124,9 @@ This will disable some of the features of SReachTools or hamper performance.
     1. Add `/path/to/GeoCalcLib/mexfiles` to MATLAB path. If you want to use
        this across sessions, we recommend adding the following command to
        your MATLAB startup.
-```
-addpath('/path/to/GeoCalcLib/mexfiles');
-```
+        ```
+        addpath('/path/to/GeoCalcLib/mexfiles');
+        ```
 
 
 ### Installation
@@ -210,12 +210,13 @@ BibTeX entry for use in LaTeX with `\usepackage{url}`:
     note      = {\url{https://unm-hscl.github.io/SReachTools/} (accepted)}
 }
 ```
-As seen from the installation instructions, this toolbox leverages several existing
-toolboxes:
+As seen from the installation instructions, this toolbox leverages several
+existing toolboxes and third-party codes:
 1. [MPT3](https://www.mpt3.org/) developed by M. Herceg, M. Kvasnica, C.N. Jones, and M. Morari, along with their dependencies.
 2. [CVX](http://cvxr.com/cvx/) developed by Michael Grant and Stephen Boyd
 3. [GeoCalcLib](http://worc4021.github.io/GeoCalcLib/) developed by Rainer Schaich.
-4. [An algorithm for numerical computation of multivariate normal distribution values](http://www.math.wsu.edu/faculty/genz/software/matlab/qscmvnv.m) developed by Alan Genz.
-5. [allcomb.m](https://www.mathworks.com/matlabcentral/fileexchange/10064-allcomb-varargin) developed by Jos van der Geest. See [./src/helperFunctions/allcomb_license.txt] for license.
+4. [An algorithm for numerical computation of multivariate normal distribution values](http://www.math.wsu.edu/faculty/genz/software/matlab/qscmvnv.m) developed by Alan Genz (Distributed with SReachTools under its appropriate [license](https://unm-hscl.github.io/SReachTools/docs/src/helperFunctions/qscmvnv/)).
+5. [allcomb.m](https://www.mathworks.com/matlabcentral/fileexchange/10064-allcomb-varargin)
+developed by Jos van der Geest (Distributed with SReachTools under its appropriate [license](https://unm-hscl.github.io/SReachTools/docs/src/helperFunctions/allcomb/#license)).
 
-Apart from these, we use commercial toolboxes from MATLAB and Gurobi, when available.
+When available, we also use commercial toolboxes from MATLAB and Gurobi.

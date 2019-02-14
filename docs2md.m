@@ -157,8 +157,21 @@ function listAllFilesRecursive(folder_name, base_dir)
             [~, name, ext] = fileparts(fname);
             if any(strcmp(ext, {'.m', '.matlab'}))
                 fid = fopen(fullfile(DOCS_ROOT_PATH, 'index.md'), 'a');
-                fprintf(fid, sprintf(['%s<li class="doc-list"><a href="%s">%s</a></li>\n'], ...
-                    tabstr, getLocalPath(fname, 'toolbox'), [name, ext]));
+                switch name
+                    case {'allcomb','qscmvnv'}
+                        fprintf(fid, ...
+                            sprintf(['%s<li class="doc-list"><a href="%s">',...
+                                '%s </a> (Third-party code distributed with',...
+                                ' license information)</li>\n'], ...
+                            tabstr, getLocalPath(fname, 'toolbox'), ...
+                            [name, ext]));
+                    otherwise
+                        fprintf(fid, ...
+                            sprintf(['%s<li class="doc-list"><a href="%s">',...
+                                '%s</a></li>\n'], ...
+                            tabstr, getLocalPath(fname, 'toolbox'), ...
+                            [name, ext]));
+                end
                 fclose(fid);
 
                 writeDocStringToFile(fname);
@@ -171,28 +184,6 @@ function listAllFilesRecursive(folder_name, base_dir)
     fprintf(fid, sprintf('%s</ul>\n', tabstr));
     fclose(fid);
 %     movefile(strcat(DOCS_ROOT_PATH','index.md'),strcat(DOCS_ROOT_PATH','../docs.md'));
-end
-
-function bool = isclassfile(f)
-
-    bool = false;
-    return;
-
-    fid = fopen(f);
-
-    while ~eof(fid)
-        ln = fgetl(fid);
-        if regexp(ln, '^\s*%')
-            continue;
-        else
-            if regexp(ln, '^\s*classdef')
-                bool = true;
-            else
-                bool = false;
-            end
-            break;
-        end
-    end
 end
 
 function localpath = getLocalPath(file_name, opt)
@@ -231,32 +222,6 @@ function writeDocStringToFile(file_name)
         writeClassPageDoc(file_name);
     else
         writeFunctionPageDoc(file_name);
-        % hstr = help(file_name);
-
-        % [~, fun_name, ext] = fileparts(file_name);
-
-        % file_name = functionPath2DocsPath(file_name);
-
-        % % remove the file extension '.md'
-        % file_name = file_name(1:end-3);
-
-        % % create the base folder so that can write to /some/path/index.md
-        % if exist(file_name, 'dir') ~= 7
-        %     fprintf('Writing %s ...\n', fullfile(file_name, 'index.md'));
-        %     mkdir(file_name);
-        % end
-
-        % % write index.md
-        % fid = fopen(fullfile(file_name, 'index.md'), 'w+');
-        % fprintf(fid, '---\n');
-        % fprintf(fid, 'layout: docs\n');
-
-        % % function name with extension for title
-        % fprintf(fid, 'title: %s\n', [fun_name, ext]);
-        % fprintf(fid, '---\n\n');
-
-        % fprintf(fid, '```\n%s```\n', hstr);
-        % fclose(fid);
     end
 end
 
@@ -288,8 +253,6 @@ function docsPath = functionPath2DocsPath(file_name)
 end
 
 function writeFunctionPageDoc(file_name)
-    hstr = help(file_name);
-
     [fun_path, fun_name, ext] = fileparts(file_name);
 
     [md_path, md_name, ~] = fileparts(functionPath2DocsPath(file_name));
@@ -306,8 +269,28 @@ function writeFunctionPageDoc(file_name)
     % function name with extension for title
     fprintf(fid, 'title: %s\n', [fun_name, ext]);
     fprintf(fid, '---\n\n');
-
+    
+    % Copy over the help string
+    hstr = help(file_name);    
     fprintf(fid, '```\n%s```\n', hstr);
+    
+    switch fun_name
+        case 'allcomb'
+            % Get license info
+            flic = fopen(strcat(fun_path, '/allcomb_license.txt'),'r');
+            license_txt_cell = textscan(flic, '%s', 'Delimiter', '\n');
+            fclose(flic);
+            
+            % Add license
+            license_txt = strrep(license_txt_cell{1}, '\', '\\');
+            fprintf(fid, '\n\n\n## License\n');
+            fprintf(fid, ...
+                ['Available at ',...
+                 '`./src/helperFunctions/allcomb_license.txt`.\n\n']);
+            fprintf(fid, strjoin(license_txt,'\n'));
+        otherwise
+    end
+    % Close the filename
     fclose(fid);
 end
 
