@@ -4,8 +4,8 @@ function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc, ...
 % ============================================================================
 %
 % The function computes the probability of staying in a target tube defined
-% on a particular state stace grid. The dynamic programming recursion can be
-% found in 
+% on a particular state stace grid. SReachTools current REQUIRES the system to
+% be LINEAR TIME-INVARIANT. The dynamic programming recursion can be found in 
 %   
 % S. Summers and J. Lygeros, "Verification of discrete time stochastic hybrid 
 % systems: A stochastic reach-avoid decision problem," Automatica, vol. 46,
@@ -53,10 +53,27 @@ function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc, ...
 %   - Input space is an axis-aligned HYPERCUBOID.
 %   - State space is the smallest axis-aligned HYPERCUBOID that contains all the
 %     sets in the target-tube
-% * We impose uniform gridding across every dimension.
+% * We impose uniform gridding across every dimension for the state and the
+%   input.
 % * WARNING: Dynamic programming suffers from the curse of dimensionality!
 %   Using fine grids will increase the computation time.
-% 
+% * SReachDynProg has a hidden `memoryusage` and `verbose` options. In future
+%   versions, these will be handled via a `SReachDynProgOptions` struct.
+%   - memoryusage governs the interplay between runtime and memory requirements
+%     of dynamic programming
+%        - memoryusage = 'high'
+%            - Original behavior of SReachDynProg
+%            - Compute the entire transition probability for all
+%              (current_state, current_input, future_state) and then go
+%              through the recursions. While this will lead to insanely fast
+%              recursions, it will be memory intensive.
+%        - memoryusage = 'low'
+%            - Compute the entire transition probability for a given
+%              current_state at every time step again and again. This will
+%              lead to slower recursions, but it requires significantly
+%              lesser memory.
+%   - verbosity = {0,1} where verbose=0 implies quiet implementation and =1
+%     provides feedback on progress of the dynamic programming
 % ============================================================================
 % 
 %   This function is part of the Stochastic Reachability Toolbox.
@@ -85,12 +102,25 @@ function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc, ...
     end
 
     % 1. Ensure that the system is a Gaussian-perturbed LtiSystem
-    % 2. Ensure that the state dim, input_dim <=3
+    % 2. Ensure that the state dim, input_dim <=4
     % 3. Input space is an axis-aligned hypercuboid
     % 4. safety_tube is appropriate
     % 5. optional arguments (in case of prob_str = 'first') is appropriate
     otherInputHandling(sys, safety_tube, prob_str, varargin);
     
+    %% Hidden options for dynamic programming (TODO: create SReachDynOptions)
+    % Switch between two memory usage options
+    % low  - Recompute transition probability from every state to all
+    %        possible input and next state combinations | Low memory usage
+    % high - Compute all the transition probabilities at once => recursions
+    %        are insanely fast | High memory usage
+    memoryusage = 'low';   
+    % Verbosity
+    verbose = 0;
+    % Update status every v_freq indices
+    v_freq = 10;
+    
+    %% Compute the grid covering the target tube
     % n_targets is time_horizon + 1
     n_targets = length(safety_tube);    
 
@@ -103,7 +133,8 @@ function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc, ...
     end
     xmax = max(outerApproxVertices_target_sets);
     xmin = min(outerApproxVertices_target_sets);
-
+    
+    % Grid computation via allcomb
     if sys.state_dim == 1
         x1vec = xmin(1):x_inc:xmax(1);
         grid_x = x1vec';
@@ -119,18 +150,18 @@ function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc, ...
         x3vec = xmin(3):x_inc:xmax(3);
         grid_x = allcomb(x1vec,x2vec,x3vec);        
         cell_xvec = {x1vec,x2vec,x3vec};
+    elseif sys.state_dim == 4
+        x1vec = xmin(1):x_inc:xmax(1);
+        x2vec = xmin(2):x_inc:xmax(2);
+        x3vec = xmin(3):x_inc:xmax(3);
+        x4vec = xmin(4):x_inc:xmax(4);
+        grid_x = allcomb(x1vec,x2vec,x3vec,x4vec);        
+        cell_xvec = {x1vec,x2vec,x3vec,x4vec};
     end
-    
+    % No. of grid points
     n_grid_x = length(grid_x);
     
-    %% Invoking trapezoid rule, we need to penalize 1/2 per dimension for the
-    %% endpoints
-    % max to implement OR and sum to count how many active dimensions
-    n_active_dims = max(sum(grid_x == xmin,2),sum(grid_x == xmax,2));
-    fraction_at_grid = 2.^(-n_active_dims);        
-    delta_x_grid = (x_inc^sys.state_dim).* fraction_at_grid;
-    
-    % Input gridding
+    %% Input gridding
     umax = max(sys.input_space.V);
     umin = min(sys.input_space.V);
     if sys.input_dim == 1
@@ -142,15 +173,44 @@ function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc, ...
         grid_u = allcomb(umin(1):u_inc:umax(1), ...
                          umin(2):u_inc:umax(2), ...
                          umin(3):u_inc:umax(3));
+    elseif sys.input_dim == 4
+        grid_u = allcomb(umin(1):u_inc:umax(1), ...
+                         umin(2):u_inc:umax(2), ...
+                         umin(3):u_inc:umax(3), ...
+                         umin(4):u_inc:umax(4));
     end
     
-    % Initialize
+    %% For trapezoid rule, we penalize 1/2 per dimension at the endpoints
+    % Endpoint iff one of the dimensions is xmin or xmax
+    % Use max to implement OR and sum to count how many active dimensions
+    n_active_dims = max(sum(grid_x == xmin,2),sum(grid_x == xmax,2));
+    % Compute scaling for the trapezoidal rule
+    fraction_at_grid = 2.^(-n_active_dims);        
+    % Create dx with appropriate scaling based on where it is located
+    delta_x_grid = (x_inc^sys.state_dim).* fraction_at_grid;
+    
+    
+    %% Initialize a matrix to store the value functions
     mat_prob_x = zeros(n_targets, n_grid_x); 
     
-    % Compute transition probabilities
-    transition_prob_with_delta = computeTransProbWithDelta(sys, grid_x, ...
-        grid_u, delta_x_grid);
+    %% How do we compute the transition probability
+    switch memoryusage
+        case 'high'
+            % Compute transition probabilities for every x, u combination
+            transition_prob_with_delta_all = computeTransProbWithDelta(sys, ...
+                grid_x, grid_u, delta_x_grid, verbose, v_freq);
+            % Return a n_grid_x * n_grid_u matrix corresponding current state 
+            % grid_x(ix)
+            transition_prob_with_delta = @(ix) ...
+                transition_prob_with_delta_all{ix}';
+        case 'low'
+            % Compute the transition probability at every step
+            transition_prob_with_delta = @(ix) ...
+                computeTransProbWithDeltaAtX(sys, ix, grid_x, grid_u, ...
+                    delta_x_grid)';
+    end
     
+    %% Implement dynamic programming 
     switch prob_str
         case 'term'
             terminal_indicator_x = safety_tube(n_targets).contains(grid_x');
@@ -163,12 +223,36 @@ function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc, ...
                 old_prob_x = mat_prob_x(itt+1,:);
                 % Check which of the grid points need to be iterated over
                 current_indicator_x = safety_tube(itt).contains(grid_x');
+                % Verbosity: Initial display
+                if verbose 
+                    switch memoryusage
+                        case 'low'
+                            n_ix = nnz(current_indicator_x);
+                            fprintf(['Time t = %d | Computing V_t(x)....', ...
+                                '%3.2f%%'], itt - 1, round(0/n_ix*100,2));
+                        case 'high'
+                            fprintf('Recursion at t = %d\n', itt - 1);
+                    end
+                end
                 % Iterate over all these points and compute 
-                % max_u \int_X V_{t+1}(x_{t+1}(u))transitionProb(x_{t+1},u)dx_{t+1}
-                for ix = find(current_indicator_x==1)
+                % max_u \int_X V_{t+1}(x_{t+1}(u)) 
+                %                       * transitionProb(x_{t+1},u)dx_{t+1}                    
+                for ix = find(current_indicator_x==1)                    
                     mat_prob_x(itt,ix) = max(...
-                        old_prob_x*transition_prob_with_delta{ix}');
+                        old_prob_x*transition_prob_with_delta(ix));
+                    % Verbosity: continue_display
+                    if verbose && strcmpi(memoryusage,'low') && ~mod(ix, v_freq)
+                        percent_completed = round(ix/n_ix*100,2);
+                        if percent_completed < 10
+                            fprintf('\b\b\b\b\b%3.2f%%', percent_completed);
+                        else
+                            fprintf('\b\b\b\b\b\b%3.2f%%', percent_completed);
+                        end                        
+                    end                    
                 end        
+                if verbose && strcmpi(memoryusage,'low')
+                    fprintf('\b\b\b\b\b\b%3.2f%%\n', 100);
+                end
             end
         case 'first'    
             target_set = varargin{1};
@@ -202,72 +286,82 @@ function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc, ...
 end
 
 function transition_prob_with_delta = computeTransProbWithDelta(sys, grid_x, ...
-    grid_u, delta_x_grid)
+    grid_u, delta_x_grid, verbose, v_freq)
     % Internal function to compute the transition probability scaled by the
     % Delta_x term for integration
+    %
+    % Returns the transition probability as a cell array of n_grid_u * n_grid_x 
+    % matrices. Length of the cell array is n_grid_x (all possible current
+    % states).
+   
 
-    verbose = 0;
-    
     n_grid_x = length(grid_x);
+    
     % Define transition_prob as a cell array
-    transition_prob_with_delta = cell(n_grid_x,1);
-    
-    % Covariance matrix for x_k+1 is dist_mat * Sigma_dist * dist_mat'
-    dist_cov = sys.dist_mat * sys.dist.cov() * sys.dist_mat';            
+    transition_prob_with_delta = cell(n_grid_x,1);               
 
-    if verbose == 1
-        % For printing stuff --- Create fixed markers in the index space
-        fprintf('Compute transition probability...000%%');
-        if n_grid_x < 100
-            no_of_splits = 10;
-        else
-            no_of_splits = 100;
-        end
-        print_marker = linspace(1,n_grid_x,no_of_splits+1);
-        print_marker(end) = print_marker(end)-1;
-        print_marker_indx = 1;
-        print_marker_val = (print_marker(2)-print_marker(1))/n_grid_x*100;
+    if verbose
+        fprintf('Computing transition probability....%3.2f%%', ...
+            round(0/n_grid_x*100,2));
     end
-    
     for ix = 1:n_grid_x
-        transition_prob_with_delta{ix} = zeros(length(grid_u), n_grid_x);
-        for iu = 1:length(grid_u)
-            % Compute the mean from the point of interest
-            dist_mean = sys.state_mat * grid_x(ix,:)' + ...
-                sys.input_mat * grid_u(iu,:) + ...
-                sys.dist_mat * sys.dist.mean();
-            % Transition probability is the pdf times delta for integration
-            transition_prob_with_delta{ix}(iu,:) = mvnpdf(grid_x, ...
-                dist_mean', dist_cov)' .* delta_x_grid';
-        end
-        if verbose == 1 && ix > print_marker(print_marker_indx)
-            val = (print_marker_indx-1) * print_marker_val;
-            fprintf('\b\b\b\b%3d%%', round(val))
-            print_marker_indx = print_marker_indx + 1;
-        end
+        % Compute the transition probability at x(ix)
+        transition_prob_with_delta{ix} = computeTransProbWithDeltaAtX(sys, ...
+            ix, grid_x, grid_u, delta_x_grid);
+        if verbose && ~mod(ix, v_freq)
+            percent_completed = round(ix/n_grid_x*100,2);
+            if percent_completed < 10
+                fprintf('\b\b\b\b\b%3.2f%%', percent_completed);
+            else
+                fprintf('\b\b\b\b\b\b%3.2f%%', percent_completed);
+            end                        
+        end                    
     end
     if verbose == 1
-        fprintf('\b\b\b\b%3d%%', 100)
-        fprintf('\n');
+        fprintf('\b\b\b\b\b\b%3.2f%%\n', 100);
+    end
+end
+
+
+function transition_prob_with_delta_at_x = computeTransProbWithDeltaAtX(sys, ...
+    ix, grid_x, grid_u, delta_x_grid)
+
+    % Get transition probability for all points
+    transition_prob_with_delta_at_x = zeros(length(grid_u), length(grid_x));
+    
+    % Compute the random vector (x_{k+1} - B u_k), given by A x_k + F w_k
+    next_x_zi = sys.state_mat * grid_x(ix,:)' + sys.dist_mat * sys.dist;   
+    
+    for iu = 1:length(grid_u)
+        % Compute the random vector x_{k+1} under a specific u_k
+        next_x = next_x_zi + sys.input_mat * grid_u(iu,:);
+        % Transition probability is the pdf times delta for integration
+        transition_prob_with_delta_at_x(iu,:) = mvnpdf(grid_x, ...
+            next_x.mean()', next_x.cov())' .* delta_x_grid';
     end
 end
 
 function otherInputHandling(sys, safety_tube, prob_str, optional_args)
-
+    % 1. Ensure that the system is a Gaussian-perturbed LtiSystem
+    % 2. Ensure that the state dim, input_dim <=4
+    % 3. Input space is an axis-aligned hypercuboid
+    % 4. safety_tube is appropriate
+    % 5. optional arguments (in case of prob_str = 'first') is appropriate
+    
     % Ensure the system is a Gaussian-perturbed system
     if ~(isa(sys.dist,'RandomVector') && strcmpi(sys.dist.type, 'Gaussian'))
         throwAsCaller(SrtInvalidArgsError(['Expected a Gaussian-perturbed', ...
             ' LTI System']));
     end
     
-    % We can handle only 3-dim input space
-    if sys.input_dim >=4
-        throwAsCaller(SrtInvalidArgsError('System can have at most 3 inputs'));
+    % We can handle only 4-dim input space
+    if sys.input_dim >4
+        throwAsCaller(SrtInvalidArgsError('System can have at most 4 inputs'));
     end
     
-    % We can handle only 3-dim state space
-    if sys.state_dim >=4
-        throwAsCaller(SrtInvalidArgsError('System can have at most 3 states'));
+    % We can handle only 4-dim state space
+    if sys.state_dim >4
+        throwAsCaller(SrtInvalidArgsError('System can have at most 4 states'));
     end
     
     % In order to go to hypercuboid, we will have to identify the edges

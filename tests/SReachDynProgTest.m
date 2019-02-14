@@ -29,7 +29,7 @@ classdef SReachDynProgTest < matlab.unittest.TestCase
             sys = getChainOfIntegLtiSystem(2, 0.1, ...
                     Polyhedron('lb', -0.1, 'ub', 0.1), ...
                     RandomVector('Gaussian', zeros(2,1), 0.01*eye(2)));
-            xinc = 0.05;
+            xinc = 0.5;
             uinc = 0.1;
             safe_set = Polyhedron('lb', [-1, -1], 'ub', [1, 1]);
             safety_tube = Tube('viability', safe_set, 5);

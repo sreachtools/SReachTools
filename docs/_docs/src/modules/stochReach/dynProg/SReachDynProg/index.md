@@ -8,8 +8,8 @@ title: SReachDynProg.m
   ============================================================================
  
   The function computes the probability of staying in a target tube defined
-  on a particular state stace grid. The dynamic programming recursion can be
-  found in 
+  on a particular state stace grid. SReachTools current REQUIRES the system to
+  be LINEAR TIME-INVARIANT. The dynamic programming recursion can be found in 
     
   S. Summers and J. Lygeros, "Verification of discrete time stochastic hybrid 
   systems: A stochastic reach-avoid decision problem," Automatica, vol. 46,
@@ -57,10 +57,27 @@ title: SReachDynProg.m
     - Input space is an axis-aligned HYPERCUBOID.
     - State space is the smallest axis-aligned HYPERCUBOID that contains all the
       sets in the target-tube
-  * We impose uniform gridding across every dimension.
+  * We impose uniform gridding across every dimension for the state and the
+    input.
   * WARNING: Dynamic programming suffers from the curse of dimensionality!
     Using fine grids will increase the computation time.
-  
+  * SReachDynProg has a hidden `memoryusage` and `verbose` options. In future
+    versions, these will be handled via a `SReachDynProgOptions` struct.
+    - memoryusage governs the interplay between runtime and memory requirements
+      of dynamic programming
+         - memoryusage = 'high'
+             - Original behavior of SReachDynProg
+             - Compute the entire transition probability for all
+               (current_state, current_input, future_state) and then go
+               through the recursions. While this will lead to insanely fast
+               recursions, it will be memory intensive.
+         - memoryusage = 'low'
+             - Compute the entire transition probability for a given
+               current_state at every time step again and again. This will
+               lead to slower recursions, but it requires significantly
+               lesser memory.
+    - verbosity = {0,1} where verbose=0 implies quiet implementation and =1
+      provides feedback on progress of the dynamic programming
   ============================================================================
   
     This function is part of the Stochastic Reachability Toolbox.
