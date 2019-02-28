@@ -76,7 +76,7 @@ function [opt_locations, separation] = spreadPointsOnUnitSphere(n_dim,...
     n_points_first_quad = (n_points - 2*n_dim)/(2^n_dim);
     if n_points < 2*n_dim
         % Can't even allow standard vectors and their reflections? Unacceptable!
-        throw(SrtInvalidArgs('Expected n_points > 2*n_dim'));
+        throw(SrtInvalidArgsError('Expected n_points > 2*n_dim'));
     elseif mod(n_points - 2*n_dim,(2^n_dim)) > 0
         % Modify n_points such that it is 2^n_dim * k + 2*n_dim for some k> 0
         warning('SReachTools:runTime', sprintf(['Expected n_points = ',...
