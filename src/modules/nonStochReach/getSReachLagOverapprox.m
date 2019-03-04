@@ -364,9 +364,14 @@ function [val] = support(ell, sys, target_tube, dist_set, options)
             end
     cvx_end
     switch cvx_status
-        case {'Solved','Solved/Inaccurate'}
+        case 'Solved'
             val = cvx_optval;
+        case 'Inaccurate/Solved'
+            val = cvx_optval;
+            % TODO: Check if the solution is indeed accurate
         otherwise
-            throw(SrtRuntimeError('Support function computation failed.'));
+            err_mesg = sprintf(['Support function computation via CVX ',...
+                'failed. CVX status: %s'], cvx_status);
+            throw(SrtRuntimeError(err_mesg));
     end
 end
