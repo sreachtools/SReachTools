@@ -1,5 +1,13 @@
 %% Building automation system verification
 % See ARCH 2019
+%
+% Comparison of (chance-constraint+open-loop)-based underapproximation with
+% Lagrangian (set-theoretic)-based underapproximation to construct the
+% stochastic reach set at prob_thresh = 0.8
+%
+% In the interest of time, Genzps+patternsearch-based underapproximation has
+% been disabled. See should_we_run_genzps
+
 clear;clc;close all;srtinit;
 
 %% Problem setup
@@ -43,7 +51,7 @@ x4_init = 0;
 cc_n_dir_vecs = 16;
 genzps_n_dir_vecs = 16;
 lag_over_n_dir_vecs = 16;
-should_we_run_genzps = 0;   % It takes time for (slightly) better results
+should_we_run_genzps = 0; % DISABLED: It takes time for (slightly) better result
 
 %% Construction of the chance-open-based underapproximation
 disp('>>> Chance-constraint-based underapproximation');
@@ -114,18 +122,6 @@ else
     fprintf('\n\n\n>>> Skipping genzps-based computation.\n');
 end
 
-%% Disp
-if should_we_run_genzps
-    fprintf(['\n\n\n>>> Compute times\n Chance constraint-based ',...
-        'underapprox.: %1.2f\n Lagrangian-based underapprox.: %1.2f\n ', ...
-        'Genzps-based computation: %1.2f\n'], ...
-        elapsed_time_cc, elapsed_time_lag_under, elapsed_time_genzps);
-else
-    fprintf(['\n\n\n>>> Compute times\n Chance constraint-based ',...
-        'underapprox.: %1.2f\n Lagrangian-based underapprox.: %1.2f\n'], ...
-        elapsed_time_cc, elapsed_time_lag_under);
-end
-
 %% Plot the figures
 figure(1);
 clf
@@ -155,4 +151,17 @@ ylabel('$x_2$','interpreter','latex');
 % In general, increase the fontsize
 set(gca,'FontSize',20);
 % If code ocean, save the results
-% saveas(gcf, '../results/StochasticViabilitySet.png');
+% saveas(gcf, '../results/BAS_StochasticViabilitySet.png');
+
+%% Disp
+if should_we_run_genzps
+    fprintf(['\n\n\n>>> Compute times\n Chance constraint-based ',...
+        'underapprox.: %1.2f\n Lagrangian-based underapprox.: %1.2f\n ', ...
+        'Genzps-based computation: %1.2f\n'], ...
+        elapsed_time_cc, elapsed_time_lag_under, elapsed_time_genzps);
+else
+    fprintf(['\n\n\n>>> Compute times\n Chance constraint-based ',...
+        'underapprox.: %1.2f\n Lagrangian-based underapprox.: %1.2f\n'], ...
+        elapsed_time_cc, elapsed_time_lag_under);
+end
+

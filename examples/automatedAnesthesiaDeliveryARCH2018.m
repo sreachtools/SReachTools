@@ -71,7 +71,7 @@ disp(sys)
 % We desire that the state remains inside a set $\mathcal{K}=\{x\in
 % \mathbf{R}^3: 0\leq x_1 \leq 6, 0\leq x_2 \leq 10, 0\leq x_3 \leq 10 \}$.
 
-time_horizon = 5;
+time_horizon = 10;
 safe_set = Polyhedron('lb',[1, 0, 0], 'ub', [6, 10, 10]);
 safety_tube = Tube('viability',safe_set, time_horizon);
 
@@ -94,19 +94,19 @@ init_safe_set_affine = Polyhedron('He',[0, 0, 1, x3_initial_state]);
 % Definition of set of direction vectors
 % --------------------------------------
 no_of_dir_vecs = 32;
-theta_vec = linspace(0,2*pi, no_of_dir_vecs);
+theta_vec = linspace(0,2*pi, no_of_dir_vecs+1);
+theta_vec = theta_vec(1:end-1);
 set_of_dir_vecs = [cos(theta_vec);sin(theta_vec);zeros(1,no_of_dir_vecs)];
 % Use SReachSet to compute the underapproximative set
 % ---------------------------------------------------
 % Use Ctrl + F1 to get the hints                                             
-options = SReachSetOptions('term','chance-open', ...
+options = SReachSetOptions('term','chance-open', 'verbose', 1, ...
     'set_of_dir_vecs', set_of_dir_vecs, ...
     'init_safe_set_affine', init_safe_set_affine);
 timer_val = tic;
 [underapprox_stoch_viab_polytope, extra_info] = SReachSet('term', ...
     'chance-open', sys, prob_thresh, safety_tube, options); 
 elapsed_time = toc(timer_val);
-disp(elapsed_time)
 %% Plotting the stochastic viable set
 figure(1);
 hold on;
@@ -121,6 +121,8 @@ box on;
 grid on;
 view([0,90]);
 title('Open-loop underapproximative stochastic viability set');
+% If code ocean, save the results
+% saveas(gcf, '../results/Anesthesia_StochasticViabilitySet.png');
 
 %% Validate the underapproximative set and the controller using Monte-Carlo
 % We will now check how the optimal policy computed for one of the corners
@@ -149,13 +151,6 @@ if ~isEmptySet(underapprox_stoch_viab_polytope)
         initial_state, time_horizon, opt_input_vec);
     mcarlo_result = safety_tube.contains(concat_state_realization);
     stoch_viab_prob_mc_estim = sum(mcarlo_result)/n_mcarlo_sims;
-    % Display the results
-    % -------------------
-    fprintf(['Open-loop-based lower bound and Monte-Carlo simulation ', ...
-             '(%1.0e particles): %1.3f, %1.3f\n'], ...
-            n_mcarlo_sims, ...
-            stoch_viab_prob_lb, ...
-            stoch_viab_prob_mc_estim);    
     
     % Plotting
     % --------
@@ -188,3 +183,12 @@ if ~isEmptySet(underapprox_stoch_viab_polytope)
     xlabel('$x_1$','interpreter','latex')
     ylabel('$x_2$','interpreter','latex');   
 end
+% If code ocean, save the results
+% saveas(gcf, '../results/Anesthesia_StochasticViabControlDemo.png');
+
+% Display the results
+% -------------------
+fprintf('\n\nTime taken for the reach set computation: %1.2f\n', elapsed_time)
+fprintf(['Open-loop-based lower bound and Monte-Carlo ', ...
+         'simulation (%1.0e particles): %1.3f, %1.3f\n\n\n'], ...
+        n_mcarlo_sims, stoch_viab_prob_lb, stoch_viab_prob_mc_estim);    
