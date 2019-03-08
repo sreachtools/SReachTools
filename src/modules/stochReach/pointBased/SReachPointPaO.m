@@ -93,11 +93,18 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
 
     % Requires Gurobi since we are solving a MILP
     [default_solver, solvers_cvx] = cvx_solver;
-    if ~(contains(default_solver,'Gurobi') ||...
-        any(contains(solvers_cvx,'Gurobi')))
-        warning('SReachTools:setup',['SReachPointPaO returns a trivial ', ...
+    n_Gurobi_solver = nnz(contains(solvers_cvx,'Gurobi'));
+    if n_Gurobi_solver == 0
+        warning('SReachTools:runtime',['SReachPointVoO returns a trivial ', ...
             'result since Gurobi (a MILP solver) was not setup.']);
     else
+        if ~contains(default_solver, 'Gurobi') && n_Gurobi_solver >= 2
+            warning('SReachTools:runtime', sprintf(['SReachPointVoO ', ...
+                'requires a MILP solver. Found %d Gurobi solvers.\n', ...
+                'Choosing the Gurobi solver bundled with CVX.\nSet the ',...
+                'desired Gurobi solver, before calling this function.'], ...
+                n_Gurobi_solver));              
+        end
         % Ensure options is good
         otherInputHandling(options);
         
@@ -151,7 +158,9 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
             else
                 cvx_quiet true
             end
-            cvx_solver Gurobi
+            if ~contains(default_solver,'Gurobi')
+                cvx_solver Gurobi;
+            end
             variable U_vector(sys.input_dim * time_horizon,1);
             variable mean_X(sys.state_dim * time_horizon,options.n_particles);
             variable bin_x(1,options.n_particles) binary;            
