@@ -114,6 +114,4 @@ function varargout = ellipsoidsFromMonteCarloSims(...
         end
     end    
     varargout{1} = set_of_ellipsoids;
-    % Silently reevaluate cvx_setup to reset the solver
-    evalc('cvx_setup');
 end

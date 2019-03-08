@@ -282,25 +282,39 @@ function check_recommended_dependencies()
             'SReachPoint() function in SReachTools requires MATLAB''s ', ...
             'Global Optimization Toolbox.']);
     end    
-    %% Check for Gurobi and if not default, switch to it if found, else switch
-    %% to SDPT3 (default), and warn the user
-    [default_solver, solvers_cvx] = cvx_solver;
+
+    % Gather data about MPT3
     options_mpt = mptopt;
+
+    % Gather data about CVX
+    [default_solver, solvers_cvx] = cvx_solver;
+    n_Gurobi_solver = nnz(contains(solvers_cvx,'Gurobi'));
+
+    % Check for Gurobi and if not default, switch to it if found, and warn the
+    %user
     if ~(contains(default_solver,'Gurobi') && ...
         any(contains(options_mpt.solvers_list.MIQP,'GUROBI')))
-        warning('SReachTools:setup',['Gurobi is the recommended backend ', ...
-            'solver for MPT3 and CVX when using SReachTools.']);
-        if any(contains(solvers_cvx,'Gurobi'))
+        
+        if n_Gurobi_solver >= 1
+            % There is at least one Gurobi solver
+            warn_str = ['Switching CVX solver to the Gurobi solver bundled ',...
+                'with CVX.'];
+
+            if n_Gurobi_solver > 1
+                % Prepend to the warning string the fact that multiple Gurobi
+                % solvers were found!
+                warn_str = strcat(['Multiple Gurobi solvers ',...
+                    'found. Set your preferred Gurobi solver in CVX, ',...
+                    'before calling srtinit.m\n'], warn_str);
+            end
+            % Give the warning if verbose srtinit
+            warning('SReachTools:setup', strcat(['Gurobi is the ', ...
+                'recommended backend solver for MPT3 and CVX when using ',...
+                'SReachTools.\n', warn_str]));
+
             % Gurobi was found. So, switch it to default solver
-            warning('SReachTools:setup', ['Switching CVX backend default ',...
-                'solver to ''Gurobi''.']);
             cvx_solver Gurobi;
-            evalc('cvx_save_prefs();cvx_setup()');
         else
-            % warning('SReachTools:setup', ['Switching CVX backend default ',...
-            %     'solver to ''SeDuMi''.']);
-            % cvx_solver SeDuMi;
-            % evalc('cvx_save_prefs();cvx_setup()');
         end
     end
 end
