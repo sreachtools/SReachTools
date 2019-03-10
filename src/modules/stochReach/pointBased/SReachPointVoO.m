@@ -1,4 +1,4 @@
-function [approx_stoch_reach, opt_input_vec, kmeans_info] = SReachPointVoO(...
+function [approx_stoch_reach, opt_input_vec, varargout] = SReachPointVoO(...
     sys, initial_state, safety_tube, options)
 % Solve the problem of stochastic reachability of a target tube (a lower bound
 % on the maximal reach probability and an open-loop controller synthesis) using
@@ -21,8 +21,9 @@ function [approx_stoch_reach, opt_input_vec, kmeans_info] = SReachPointVoO(...
 % spacecraft relative motion," in IEEE Conference on Decision and Control (CDC),
 % 2013,
 %
-% SReachPointVoO permits a user-defined upper-bound on the overapproximation
-% error.
+% SReachPointVoO computes an underapproximation of the maximal reach probability
+% with the probabilistic guarantee that the risk of failure of this
+% underapproximation is no larger than the user-specified failure_risk. 
 %
 %    High-level desc.   : Sample scenarios based on the additive noise and solve
 %                         a mixed-integer linear program to make the maximum
@@ -39,8 +40,8 @@ function [approx_stoch_reach, opt_input_vec, kmeans_info] = SReachPointVoO(...
 %
 % =============================================================================
 %
-% [approx_stoch_reach, opt_input_vec] = SReachPointVoO(sys, initial_state,...
-%   safety_tube, options)
+% [approx_stoch_reach, opt_input_vec, varargout] = SReachPointVoO(sys, ...
+%   initial_state, safety_tube, options)
 %
 % Inputs:
 % -------
@@ -59,11 +60,15 @@ function [approx_stoch_reach, opt_input_vec, kmeans_info] = SReachPointVoO(...
 %                 tube problem computed using undersampled particle control
 %                 approach using kmeans. In contrast to `particle-open'
 %                 approach, this approximation permits a user-defined
-%                 upper-bound on the overapproximation error.                   
+%                 upper-bound on the overapproximation error. While it is
+%                 expected to lie in [0,1], it is set to -1 in cases where the
+%                 CVX optimization fails (cvx_status \not\in {Solved,
+%                 Inaccurate/Solved}) or if the optimal value is below
+%                 max_overapprox_err.  
 %   opt_input_vec
 %               - Open-loop controller: column vector of dimension
 %                 (sys.input_dim*N) x 1
-%   kmeans_info - A MATLAB struct containing the information about partitioning
+%   extra_info  - A MATLAB struct containing the information about partitioning
 %                 of GW space. The struct contains the following info:
 %                  n_particles - Number of particles based off Hoeffding's
 %                                inequality
@@ -71,6 +76,23 @@ function [approx_stoch_reach, opt_input_vec, kmeans_info] = SReachPointVoO(...
 %                  GW_centroids- Centroids obtained from kmeans clustering
 %                  GW_realizations
 %                              - Realizations for the random vector GW
+%                  kmeans_idx  - Output of MATLAB's kmeans function | Index
+%                                of the Voronoi centroids for each of the
+%                                samples
+%                  approx_voronoi_stoch_reach
+%                              - Optimal solution of the undersampled MILP,
+%                                before the reevaluation of the policy for
+%                                tightening
+%                  offline_compute_time
+%                              - Time taken for computing the minimum required 
+%                                samples, generating the samples, and computing
+%                                the Voronoi centers and buffers (the steps
+%                                that can be done independent of the
+%                                initial state or the open-loop control
+%                                vector => offline computable steps)
+%                  online_compute_time
+%                              - Time taken for solving the MILP and computing
+%                                the tightened underapproximation
 %
 % See also SReachPoint.
 %
@@ -80,6 +102,26 @@ function [approx_stoch_reach, opt_input_vec, kmeans_info] = SReachPointVoO(...
 % * This function requires kmeans function which is part of MATLAB's
 %   Statistical and Machine Learning toolbox.
 % * See @LtiSystem/getConcatMats for more information about the notation used.
+% * This function computes an approximate stochastic reach probability with a
+%   probabilistic guarantee of being an underapproximation. Specifically, it
+%   computes an underapproximation of the maximal reach probability with the
+%   probabilistic guarantee that the risk of failure of this underapproximation
+%   is no larger than the user-specified failure_risk. 
+% * The number of scenarios required to guarantee the above statement is:
+%       - directly proportional to the -log(failure_risk). 
+%       - inversely proportional to the square of maximum overapproximation
+%         error.
+%   The maximum overapproximation error is the correction term, the threshold
+%   that is removed from the optimal solution of the MILP to guarantee the
+%   underapproximation.
+% * Ideally, we should solve the MILP with the number of scenarios prescribed by
+%   the above note. However, this number is typically high rendering the MILP
+%   intractable.
+% * Therefore, we solve an undersampled MILP, where the user specifies the
+%   number of representative scenarios to consider (n_kmeans). Larger n_kmeans
+%   implies higher accuracy for the approx_stoch_reach. However, this comes at
+%   the computational cost of solving the MILP, which has n_kmeans binary
+%   variables.
 % 
 % ============================================================================
 % 
@@ -88,6 +130,9 @@ function [approx_stoch_reach, opt_input_vec, kmeans_info] = SReachPointVoO(...
 %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
 % 
 %
+
+    % Number of fixed outputs
+    n_fixed_output = 2;
 
     % Input parsing
     inpar = inputParser();
@@ -104,11 +149,6 @@ function [approx_stoch_reach, opt_input_vec, kmeans_info] = SReachPointVoO(...
         exc = SrtInvalidArgsError.withFunctionName();
         exc = exc.addCause(err);
         throwAsCaller(exc);
-    end
-
-    % Ensure that system is stochastic
-    if ~isa(sys.dist,'RandomVector')
-        throwAsCaller(SrtInvalidArgsError('Expected a stochastic system'));
     end
     
     % Target tubes has polyhedra T_0, T_1, ..., T_{time_horizon}
@@ -132,7 +172,7 @@ function [approx_stoch_reach, opt_input_vec, kmeans_info] = SReachPointVoO(...
                 n_Gurobi_solver));            
         end
         % Ensure options is good
-        otherInputHandling(options);
+        otherInputHandling(sys, options);
         
         % Get half space representation of the target tube and time horizon
         % skipping the first time step
@@ -155,6 +195,9 @@ function [approx_stoch_reach, opt_input_vec, kmeans_info] = SReachPointVoO(...
         % Compute M --- the number of polytopic halfspaces to worry about
         n_lin_state = size(concat_safety_tube_A,1);
 
+        if nargout >= n_fixed_output + 1
+            timerVal = tic;
+        end
         % Step 1: Compute the number of particles needed to meet the
         % specified tolerance
         n_particles = ceil(...
@@ -217,6 +260,10 @@ function [approx_stoch_reach, opt_input_vec, kmeans_info] = SReachPointVoO(...
                     voronoi_count(idx_indx)));
             buffers(:, idx_indx) = max(disp_from_centroid,[],2);
         end
+        if nargout >= n_fixed_output + 1
+            offline_compute_time = toc(timerVal);
+            timerVal = tic;
+        end
         % Solve the undersampled MILP and obtain a lower bound to the
         % original MILP
         % Step 4a: Solve the undersampled MILP
@@ -266,26 +313,46 @@ function [approx_stoch_reach, opt_input_vec, kmeans_info] = SReachPointVoO(...
                     concat_safety_tube_b);
                 approx_stoch_reach = sum(z_orig)/n_particles -...
                     options.max_overapprox_err;            
+                if approx_stoch_reach < 0
+                    approx_stoch_reach = -1;
+                end
                 if options.verbose >= 1
                     fprintf(...
                         ['Undersampled probability (with %d particles): ',...
                         '%1.3f\nUnderapproximation to the original MILP ',...
                         '(with %d particles): %1.3f\n'],...
                         options.n_kmeans, approx_voronoi_stoch_reach,...
-                        n_particles, approx_stoch_reach);
+                        n_particles, max(approx_stoch_reach, 0));
                 end
             otherwise
         end
-        kmeans_info.n_particles = n_particles;
-        kmeans_info.n_kmeans = options.n_kmeans;
-        kmeans_info.GW_centroids = GW_centroids;
-        kmeans_info.GW_realizations = GW_realizations;
+        
+        % Send out additional info if required
+        if nargout == n_fixed_output + 1
+            online_compute_time = toc(timerVal);
+            extra_info.n_particles = n_particles;
+            extra_info.n_kmeans = options.n_kmeans;
+            extra_info.GW_centroids = GW_centroids;
+            extra_info.GW_realizations = GW_realizations;
+            extra_info.kmeans_idx = idx;
+            extra_info.approx_voronoi_stoch_reach = approx_voronoi_stoch_reach;
+            extra_info.offline_compute_time = offline_compute_time;
+            extra_info.online_compute_time = online_compute_time;
+            varargout{1} = extra_info;
+        elseif nargout > n_fixed_output
+            throw(SrtRuntimeError('Too many output arguments'));
+        end
     end
 end
 
-function otherInputHandling(options)
+function otherInputHandling(sys, options)
+    % 1. Check if the options are correct
+    % 2. Ensure that system is stochastic
     if ~(strcmpi(options.prob_str, 'term') &&...
             strcmpi(options.method_str, 'voronoi-open'))
         throwAsCaller(SrtInvalidArgsError('Invalid options provided'));
+    end
+    if ~isa(sys.dist,'RandomVector')
+        throwAsCaller(SrtInvalidArgsError('Expected a stochastic system'));
     end
 end

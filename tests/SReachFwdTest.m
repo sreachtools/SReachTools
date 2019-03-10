@@ -309,9 +309,9 @@ classdef SReachFwdTest < matlab.unittest.TestCase
             %% Stochastic initial state
             init_state_rand = RandomVector('Gaussian',init_state,0.001*eye(4)); 
             % Return the initial state itself
-            rv = SReachFwd('concat-stoch', sys, init_state_rand, 0);
-            testCase.verifyLessThanOrEqual(max(abs(rv.mean() - init_state)), ...
-                1e-8);            
+            rv_at_t0 = SReachFwd('concat-stoch', sys, init_state_rand, 0);
+            testCase.verifyLessThanOrEqual(max(abs(rv_at_t0.mean() - ...
+                init_state)), 1e-8);            
             % Testing
             % Compute mean and cov
             rv = SReachFwd('concat-stoch', sys, init_state_rand, target_time);

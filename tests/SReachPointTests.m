@@ -4,8 +4,8 @@ classdef SReachPointTests < matlab.unittest.TestCase
         function testPointChanceOpen(test_case)
             [sys, safety_tube, initial_state] = test_case.getDI();
             
-            lb_stoch_prob = SReachPoint('term','chance-open', sys,...
-                initial_state, safety_tube);
+            [lb_stoch_prob, input_vec, risk_state, extra_info] = SReachPoint(...
+                'term','chance-open', sys, initial_state, safety_tube);
         end 
         
         function testPointParticleOpen(test_case)
@@ -14,19 +14,16 @@ classdef SReachPointTests < matlab.unittest.TestCase
             test_case.verifyError(@() SReachPointOptions(...
                     'term','particle-open','n_particles',300),...
                     'SReachTools:invalidArgs');
-            % Should throw no error
-            options = SReachPointOptions('term','particle-open',...
-                    'verbose', 0, 'n_particles',300, 'max_particles', 400);
             % Use default options
-            lb_stoch_prob = SReachPoint('term','particle-open', sys,...
-                initial_state, safety_tube);
+            [lb_stoch_prob, input_vec] = SReachPoint('term','particle-open', ...
+                sys, initial_state, safety_tube);
         end 
         
         function testPointGenzpsOpen(test_case)
             [sys, safety_tube, initial_state] = test_case.getDI();
             
-            lb_stoch_prob = SReachPoint('term','genzps-open', sys,...
-                initial_state, safety_tube);
+            [lb_stoch_prob, input_vec] = SReachPoint('term','genzps-open', ...
+                sys, initial_state, safety_tube);
         end 
         
         function testPointVoronoiOpen(test_case)
@@ -38,8 +35,9 @@ classdef SReachPointTests < matlab.unittest.TestCase
                 initial_state, safety_tube, options_bad),...
                 'SReachTools:invalidArgs');
             
-            lb_stoch_prob = SReachPoint('term','voronoi-open', sys,...
-                initial_state, safety_tube);
+            % Working three option
+            [lb_stoch_prob, input_vec, extra_info] = SReachPoint('term', ...
+                'voronoi-open', sys,initial_state, safety_tube);            
         end 
         
         function testPointChanceAffine(test_case)
@@ -54,8 +52,16 @@ classdef SReachPointTests < matlab.unittest.TestCase
             % Working example
             options = SReachPointOptions('term','chance-affine', ...
                 'max_input_viol_prob', 2e-1, 'verbose', 0);
-            lb_stoch_prob = SReachPoint('term','chance-affine', sys,...
-                initial_state, safety_tube, options);
+            [lb_stoch_prob, input_vec, input_gain, risk_state, risk_input] = ...
+                SReachPoint('term','chance-affine', sys, initial_state, ...
+                safety_tube, options);
+            
+            sys_bad = LtiSystem('StateMatrix', sys.state_mat, 'InputMatrix', ...
+                sys.input_mat, 'InputSpace', sys.input_space, 'Disturbance', ...
+                sys.dist, 'DisturbanceMatrix', magic(sys.dist_dim));
+            test_case.verifyError(@() SReachPoint('term','chance-affine', ...
+                sys_bad, initial_state, safety_tube),'SReachTools:invalidArgs');
+
         end  
         
 %         function testPointVoronoiAffine(test_case)

@@ -1,5 +1,5 @@
-function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state, ...
-    safety_tube, options)
+function [approx_stoch_reach, opt_input_vec] = SReachPointGpO(sys, ...
+    initial_state, safety_tube, options)
 % Solve the problem of stochastic reachability of a target tube (a lower bound
 % on the maximal reach probability and an open-loop controller synthesis) using
 % Genz's algorithm and MATLAB's patternsearch (a nonlinear, derivative-free,
@@ -27,7 +27,7 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state, ..
 %
 % =============================================================================
 %
-%  [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state, ...
+%  [approx_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state, ...
 %      safety_tube, options)
 %
 % Inputs:
@@ -42,9 +42,9 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state, ..
 %
 % Outputs:
 % --------
-%   lb_stoch_reach 
-%               - Lower bound on the stochastic reachability of a target tube
-%                   problem computed | Returns -1 if infeasible
+%   approx_stoch_reach 
+%               - Approximation of the stochastic reachability of a target tube
+%                 problem | Returns -1 if patternsearch fails (exitflag < 1)
 %   opt_input_vec
 %               - Open-loop controller: column vector of dimension
 %                 (sys.input_dim*N) x 1
@@ -85,18 +85,11 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state, ..
     % INPUT HANDLING as well as necessary data creation
     optionsCc = SReachPointOptions('term', 'chance-open');
     optionsCc.desired_accuracy = options.desired_accuracy;
-    [guess_lb_stoch_reach, guess_opt_input_vec, ~, extra_info] =...
+    [guess_approx_stoch_reach, guess_opt_input_vec, ~, extra_info] =...
         SReachPointCcO(sys, initial_state, safety_tube, optionsCc);
 
-    % Ensure that system is stochastic and has Gaussian disturbance 
-    if ~isa(sys.dist,'RandomVector')
-        throwAsCaller(SrtInvalidArgsError('Expected a stochastic system'));
-    end
-    if ~strcmpi(sys.dist.type,'Gaussian')
-        throw(SrtInvalidArgsError(['SReachPointGpO requires Gaussian-',...
-            'perturbed LTV/LTI system']));
-    end
-
+    otherInputHandling(sys, options);
+        
     % Unpack the other necessary data from SReachPointCcO
     concat_safety_tube_A = extra_info.concat_safety_tube_A;
     concat_safety_tube_b = extra_info.concat_safety_tube_b;
@@ -109,13 +102,10 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state, ..
         extra_info.cov_X_sans_input);
     poly_tube = Polyhedron('A', concat_safety_tube_A, 'b',concat_safety_tube_b);
     
-    % Ensure options is good
-    otherInputHandling(options);
-    
     % Time_horizon definition
     time_horizon = length(safety_tube) - 1;
     
-    if guess_lb_stoch_reach < 0
+    if guess_approx_stoch_reach < 0
         % Chance constrained approach failed to find an optimal open-loop
         % controller => Try just getting the mean to be as safe as possible
         % 
@@ -144,16 +134,16 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state, ..
         cvx_end
         if strcmpi(cvx_status,'Solved')
             % We have an initial solution to work with
-            guess_lb_stoch_reach = 0;
+            guess_approx_stoch_reach = 0;
         else
             % This should never be happening for a non-empty since it is a slack
             % variable relaxed problem
         end
     end
 
-    if guess_lb_stoch_reach < 0
+    if guess_approx_stoch_reach < 0
         %% No initial solution to work with
-        lb_stoch_reach = -1;
+        approx_stoch_reach = -1;
         opt_input_vec = nan(sys.input_dim * time_horizon, 1);
     else
         % Minimum saturated ReachProb(U)=\int_{safety_tube}\psi_{\bX}(Z;x_0,U)dZ
@@ -197,17 +187,28 @@ function [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state, ..
         % Compute the lower bound and the optimal open_loop_control_policy
         % using a fresh set of samples
         if exitflag >= 1
-            lb_stoch_reach = exp(-negLogReachProbGivenInputVec(opt_input_vec));
+            approx_stoch_reach = exp( ...
+                -negLogReachProbGivenInputVec(opt_input_vec));
         else
-            lb_stoch_reach = -1;
+            approx_stoch_reach = -1;
             opt_input_vec = nan(sys.input_dim * time_horizon, 1);
         end
     end
 end
 
-function otherInputHandling(options)
+function otherInputHandling(sys, options)
+    % 1. Get the correct options
+    % 2. Check if the system is stochastic
+    % 3. Check if the random vector is Gaussian    
     if ~(strcmpi(options.prob_str, 'term') &&...
             strcmpi(options.method_str, 'genzps-open'))
         throwAsCaller(SrtInvalidArgsError('Invalid options provided'));
+    end
+    if ~isa(sys.dist,'RandomVector')
+        throwAsCaller(SrtInvalidArgsError('Expected a stochastic system'));
+    end
+    if ~strcmpi(sys.dist.type,'Gaussian')
+        throw(SrtInvalidArgsError(['SReachPointGpO requires Gaussian-',...
+            'perturbed LTV/LTI system']));
     end
 end

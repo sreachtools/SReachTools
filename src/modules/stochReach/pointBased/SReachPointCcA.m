@@ -1,6 +1,5 @@
-function [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
-    risk_alloc_state, risk_alloc_input] = SReachPointCcA(sys, initial_state, ...
-        safety_tube, options)
+function [lb_stoch_reach, opt_input_vec, opt_input_gain, risk_alloc_state, ...
+    risk_alloc_input] = SReachPointCcA(sys, initial_state, safety_tube, options)
 % Solve the problem of stochastic reachability of a target tube (a lower bound
 % on the maximal reach probability and an affine controller synthesis) using
 % chance-constrained optimization and difference of convex programming
@@ -31,9 +30,8 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
 %
 % =============================================================================
 %
-%   [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
-%    risk_alloc_state, risk_alloc_input] = SReachPointCcA(sys,...
-%       initial_state, safety_tube, options)
+% [lb_stoch_reach, opt_input_vec, opt_input_gain, risk_alloc_state, ...
+%   risk_alloc_input] = SReachPointCcA(sys, initial_state, safety_tube, options)
 % 
 % Inputs:
 % -------
@@ -50,7 +48,9 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
 %   lb_stoch_reach 
 %               - Lower bound on the stochastic reachability of a target tube
 %                 problem computed using chance constraints and
-%                 difference-of-convex techniques
+%                 difference-of-convex techniques. While it is expected to lie
+%                 in [0,1], it is set to -1 in cases where the
+%                 difference-of-convex optimization fails to converge.
 %   opt_input_vec, 
 %     opt_input_gain
 %               - Controller U=MW+d for a concatenated input vector 
@@ -103,17 +103,7 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
         throwAsCaller(exc);
     end
 
-    % Ensure that system is stochastic and has Gaussian disturbance 
-    if ~isa(sys.dist,'RandomVector')
-        throwAsCaller(SrtInvalidArgsError('Expected a stochastic system'));
-    end
-    if ~strcmpi(sys.dist.type,'Gaussian')
-        throw(SrtInvalidArgsError(['SReachPointCcA requires Gaussian-',...
-            'perturbed LTV/LTI system']));
-    end
-    
-    % Ensure options is good
-    otherInputHandling(options);
+    otherInputHandling(sys, options);
 
     % Target tubes has polyhedra T_0, T_1, ..., T_{time_horizon}
     time_horizon = length(safety_tube) - 1;
@@ -368,9 +358,27 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
     end
 end
 
-function otherInputHandling(options)
+function otherInputHandling(sys, options)
+    % 1. Get the correct options
+    % 2. Check if the system is stochastic
+    % 3. Check if the random vector is Gaussian
+    % 4. Check if the disturbance matrix is identity (Theory requirement,
+    %    else this formulation is not practical as it is stronger than
+    %    state feedback control law)
     if ~(strcmpi(options.prob_str, 'term') &&...
             strcmpi(options.method_str, 'chance-affine'))
         throwAsCaller(SrtInvalidArgsError('Invalid options provided'));
+    end
+    if ~isa(sys.dist,'RandomVector')
+        throwAsCaller(SrtInvalidArgsError('Expected a stochastic system'));
+    end
+    if ~strcmpi(sys.dist.type,'Gaussian')
+        throw(SrtInvalidArgsError(['SReachPointCcA requires Gaussian-',...
+            'perturbed LTV/LTI system']));
+    end    
+    if ~isequal(sys.dist_mat, eye(sys.dist_dim))  % Check if F_k is I_k
+        throwAsCaller(SrtInvalidArgsError(['Disturbance matrix must be an', ...
+            ' identity matrix.\nIf you must have the disturbance matrix, ', ...
+            ' redefine the disturbance random vector.']));
     end
 end

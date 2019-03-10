@@ -43,7 +43,10 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
 % --------
 %   approx_stoch_reach 
 %               - An approximation of the stochastic reachability of a target
-%                   tube problem computed using particle control
+%                 tube problem computed using particle control. While it is
+%                 expected to lie in [0,1], it is set to -1 in cases where the
+%                 CVX optimization fails (cvx_status \not\in {Solved,
+%                 Inaccurate/Solved}).
 %   opt_input_vec
 %               - Open-loop controller: column vector of dimension
 %                 (sys.input_dim*N) x 1
@@ -80,11 +83,6 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
         throwAsCaller(exc);
     end
 
-    % Ensure that system is stochastic
-    if ~isa(sys.dist,'RandomVector')
-        throwAsCaller(SrtInvalidArgsError('Expected a stochastic system'));
-    end
-    
     % Target tubes has polyhedra T_0, T_1, ..., T_{time_horizon}
     time_horizon = length(safety_tube)-1;
 
@@ -105,8 +103,8 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
                 'desired Gurobi solver, before calling this function.'], ...
                 n_Gurobi_solver));              
         end
-        % Ensure options is good
-        otherInputHandling(options);
+        
+        otherInputHandling(sys, options);
         
         % Get half space representation of the target tube and time horizon
         % skipping the first time step
@@ -190,9 +188,14 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
     end
 end
 
-function otherInputHandling(options)
+function otherInputHandling(sys, options)
+    % 1. Get the correct options
+    % 2. Check if the system is stochastic
     if ~(strcmpi(options.prob_str, 'term') &&...
             strcmpi(options.method_str, 'particle-open'))
         throwAsCaller(SrtInvalidArgsError('Invalid options provided'));
+    end
+    if ~isa(sys.dist,'RandomVector')
+        throwAsCaller(SrtInvalidArgsError('Expected a stochastic system'));
     end
 end

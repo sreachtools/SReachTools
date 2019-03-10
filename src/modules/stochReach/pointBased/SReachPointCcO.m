@@ -1,4 +1,4 @@
-function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
+function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] = ...
     SReachPointCcO(sys, initial_state, safety_tube, options)
 % Solve the problem of stochastic reachability of a target tube (a lower bound
 % on the maximal reach probability and an open-loop controller synthesis) using
@@ -34,7 +34,7 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
 %
 % =============================================================================
 %
-% [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
+% [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] = ...
 %    SReachPointCcO(sys, initial_state, safety_tube, options)
 %
 % Inputs:
@@ -51,8 +51,10 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
 % --------
 %   lb_stoch_reach 
 %               - Lower bound on the stochastic reachability of a target tube
-%                   problem computed using convex chance constraints and
-%                   piecewise affine approximation
+%                 problem computed using convex chance constraints and
+%                 piecewise affine approximation. While it is expected to lie in
+%                 [0,1], it is set to -1 in cases where the CVX optimization
+%                 fails (cvx_status \neq Solved).
 %   opt_input_vec
 %               - Open-loop controller: column vector of dimension
 %                 (sys.input_dim*N) x 1
@@ -97,18 +99,8 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
         exc = exc.addCause(err);
         throwAsCaller(exc);
     end
-
-    % Ensure that system is stochastic and has Gaussian disturbance 
-    if ~isa(sys.dist,'RandomVector')
-        throwAsCaller(SrtInvalidArgsError('Expected a stochastic system'));
-    end
-    if ~strcmpi(sys.dist.type,'Gaussian')
-        throw(SrtInvalidArgsError(['SReachPointCcO requires Gaussian-',...
-            'perturbed LTV/LTI system']));
-    end
-
-    % Ensure options is good
-    otherInputHandling(options);
+    
+    otherInputHandling(sys, options);
     
     % Target tubes has polyhedra T_0, T_1, ..., T_{time_horizon}
     time_horizon = length(safety_tube)-1;
@@ -184,19 +176,34 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
     end
     
     %% Create the other info for use if necessary
-    extra_info.concat_safety_tube_A = concat_safety_tube_A;
-    extra_info.concat_safety_tube_b = concat_safety_tube_b;
-    extra_info.concat_input_space_A = concat_input_space_A;
-    extra_info.concat_input_space_b = concat_input_space_b;
-    extra_info.H = H;
-    extra_info.mean_X_sans_input = mean_X_sans_input;
-    extra_info.cov_X_sans_input = cov_X_sans_input;
-    varargout{1} = extra_info;
+    n_fixed_outputs = 3;
+    if nargout == n_fixed_outputs + 1
+        extra_info.concat_safety_tube_A = concat_safety_tube_A;
+        extra_info.concat_safety_tube_b = concat_safety_tube_b;
+        extra_info.concat_input_space_A = concat_input_space_A;
+        extra_info.concat_input_space_b = concat_input_space_b;
+        extra_info.H = H;
+        extra_info.mean_X_sans_input = mean_X_sans_input;
+        extra_info.cov_X_sans_input = cov_X_sans_input;
+        varargout{1} = extra_info;
+    elseif nargout > n_fixed_outputs 
+        throw(SrtRuntimeError('Too many output arguments'));
+    end
 end
 
-function otherInputHandling(options)
+function otherInputHandling(sys, options)
+    % 1. Get the correct options
+    % 2. Check if the system is stochastic
+    % 3. Check if the random vector is Gaussian    
     if ~(strcmpi(options.prob_str, 'term') &&...
             strcmpi(options.method_str, 'chance-open'))
         throwAsCaller(SrtInvalidArgsError('Invalid options provided'));
+    end
+    if ~isa(sys.dist,'RandomVector')
+        throwAsCaller(SrtInvalidArgsError('Expected a stochastic system'));
+    end
+    if ~strcmpi(sys.dist.type,'Gaussian')
+        throw(SrtInvalidArgsError(['SReachPointCcO requires Gaussian-',...
+            'perturbed LTV/LTI system']));
     end
 end

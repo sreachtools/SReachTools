@@ -192,9 +192,9 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %   risk_alloc_input
 %               - [Available only for 'chance-affine'] Risk allocation for the
 %                 input constraints
-%   kmeans_info - [Available only for 'voronoi-X'] MATLAB struct
-%                 containing info about the kmeans-based undersampling used for 
-%                 tractable particle control approach
+%   extra_info  - [Available only for 'voronoi-X'] MATLAB struct
+%                 containing additional info about the Voronoi partition-based 
+%                 undersampling used for tractable particle control approach
 %
 % Notes:
 % * SReachPoint() will call SReachPointOptions() internally if
@@ -270,10 +270,21 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
             case 'chance-open'
                 % Chance-constrained formulation with piecewise-linear 
                 % approximations to compute open-loop controller (LP)
-                [approx_reach_prob, opt_input_vec, risk_alloc_state] =...
-                    SReachPointCcO(sys, initial_state, safety_tube, options);
-                 opt_input_gain = [];
-                 varargout{1} = risk_alloc_state;
+                if nargout <= 4 % Four because opt_input_gain = []
+                    [approx_reach_prob, opt_input_vec, risk_alloc_state] = ...
+                        SReachPointCcO(sys, initial_state, safety_tube,options);
+                    opt_input_gain = [];
+                    varargout{1} = risk_alloc_state;
+                elseif nargout == 5
+                    [approx_reach_prob, opt_input_vec, risk_alloc_state, ...
+                        extra_info] = SReachPointCcO(sys, initial_state, ...
+                            safety_tube, options);
+                    opt_input_gain = [];
+                    varargout{1} = risk_alloc_state;
+                    varargout{2} = extra_info;
+                else
+                    throw(SrtRuntimeError('Too many output arguments'));
+                end
             case 'particle-open'
                 % Particle control-based approach to compute open-loop
                 % controller (MILP)
@@ -283,18 +294,31 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
             case 'voronoi-open'
                 % Undersampled particle control approach to compute
                 % open-loop controller (MILP)
-                [approx_reach_prob, opt_input_vec, kmeans_info] =...
-                    SReachPointVoO(sys, initial_state, safety_tube, options);
-                 opt_input_gain = [];
-                 varargout{1} = kmeans_info;
+                if nargout <= 3 % Three because opt_input_gain = []
+                    [approx_reach_prob, opt_input_vec] = SReachPointVoO(sys, ...
+                        initial_state, safety_tube, options);
+                    opt_input_gain = [];
+                elseif nargout == 4
+                    [approx_reach_prob, opt_input_vec, extra_info] =...
+                        SReachPointVoO(sys, initial_state, safety_tube, ...
+                        options);
+                     opt_input_gain = [];
+                     varargout{1} = extra_info;
+                else
+                    throw(SrtRuntimeError('Too many output arguments'));
+                end                
             case 'chance-affine'
                 % Chance-constrained formulation with piecewise-linear 
                 % approximations to compute affine-loop controller (SOC program)
-                [approx_reach_prob, opt_input_vec, opt_input_gain, ...
-                    risk_alloc_state, risk_alloc_input] = SReachPointCcA( ...
-                        sys, initial_state, safety_tube, options);
-                varargout{1} = risk_alloc_state;
-                varargout{2} = risk_alloc_input;
+                if nargout <= 5
+                    [approx_reach_prob, opt_input_vec, opt_input_gain, ...
+                        risk_alloc_state, risk_alloc_input] = SReachPointCcA(...
+                            sys, initial_state, safety_tube, options);
+                    varargout{1} = risk_alloc_state;
+                    varargout{2} = risk_alloc_input;
+                else
+                    throw(SrtRuntimeError('Too many output arguments'));
+                end                
             otherwise
                 throw(SrtInternalError('Internal function not setup!'));
         end
