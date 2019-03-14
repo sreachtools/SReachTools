@@ -152,6 +152,12 @@ classdef RandomVector
         %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
         % 
         % 
+
+            % Tolerances
+            % Maximum elementwise error tolerance when making a matrix symmetric
+            max_elem_err_tol = 1e-10;           
+            % Saturation for minimum eigenvalues
+            min_eig_val_saturation = 1e-10;
             
             % Check if the random vector type is a string 
             validatestring(rv_type, {'Gaussian', 'UserDefined'});
@@ -186,7 +192,7 @@ classdef RandomVector
                         % Max error element-wise
                         max_err = max(max(abs(obj.parameters.covariance -...
                             symm_cov_matrix)));
-                        if max_err > 1e-8
+                        if max_err > max_elem_err_tol
                             throwAsCaller(SrtInvalidArgsError(sprintf(...
                                 ['Non-symmetric covariance matrix provided ',...
                                  '(max element-wise error: %1.3e)'], max_err)));
@@ -202,19 +208,25 @@ classdef RandomVector
                     % Ensure that the covariance matrix has real
                     % nonnegative eigenvalues
                     % For some reason, -eps alone is not enough?
+                    % TODO: We can do better using eigs | However, there is a
+                    %       compatibility issue for MATLAB earlier than 2017a
+                    % min_eig_val = eigs(obj.parameters.covariance,1,'smallestreal');
                     min_eig_val = min(eig(obj.parameters.covariance));
                     if min_eig_val <= -2*eps
                         throwAsCaller(SrtInvalidArgsError(['Covariance ',...
                             'matrix can not have negative eigenvalues']));
-                    elseif min_eig_val <= eps
-                        %warning('SReachTools:runtime',['Creating a ',...
-                            %'Gaussian which might have a deterministic ',...
-                            %'component']);
+                    elseif min_eig_val < 0
+                        warning('SReachTools:runtime', sprintf(['Sanitized ', ...
+                            'covariance matrix since negative eigenvalues ',...
+                            '> -2*eps and <0 found!\nNew covariance matrix ',...
+                            'has all the eigenvalues below %1.0e set to 0.'],...
+                            min_eig_val_saturation));
                         [V, E] = eig(obj.parameters.covariance);
                         eig_vector = diag(E);
                         eig_vector_sanitized = zeros(size(eig_vector));
-                        eig_vector_sanitized(abs(eig_vector)>1e-6) = ...
-                            eig_vector(abs(eig_vector)>1e-6);
+                        nnz_eig_vector=(abs(eig_vector)>min_eig_val_saturation);
+                        eig_vector_sanitized(nnz_eig_vector) = ...
+                            eig_vector(nnz_eig_vector);
                         E_sanitized = diag(eig_vector_sanitized);
                         cov_temp = V * E_sanitized * V';                     
                         % Sometimes symmetricity is lost. So just to be

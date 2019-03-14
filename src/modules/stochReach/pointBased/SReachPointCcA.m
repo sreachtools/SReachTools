@@ -210,6 +210,8 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, ...
             subject to
                 % Causality constraints on M is automatically enforced by
                 % expression declaration (sets all other terms to zero)
+                % CVX expressions help us minimize the number of decision
+                % variables we must declare
                 for time_indx = 2:time_horizon
                     if time_indx == 2
                         blocks_start_indx = 1;
