@@ -103,10 +103,10 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, risk_alloc_state, ...
         throwAsCaller(exc);
     end
 
-    otherInputHandling(sys, options);
-
     % Target tubes has polyhedra T_0, T_1, ..., T_{time_horizon}
     time_horizon = length(safety_tube) - 1;
+
+    otherInputHandling(sys, options, time_horizon);
 
     % Get half space representation of the target tube and time horizon
     % skipping the first time step
@@ -122,26 +122,26 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, risk_alloc_state, ...
     % GUARANTEES: well-defined initial_state and time_horizon
     sysnoi = LtvSystem('StateMatrix',sys.state_mat,'DisturbanceMatrix', ...
         sys.dist_mat,'Disturbance',sys.dist);
-    X_sans_input_rv = SReachFwd('concat-stoch', sysnoi, initial_state, time_horizon);
-    mean_X_zi = X_sans_input_rv.mean();
-    mean_X_zi = mean_X_zi(sysnoi.state_dim + 1:end);
-    mean_W = kron(ones(time_horizon,1), sys.dist.mean());
-
+    X_sans_input_rv_with_init_state = SReachFwd('concat-stoch', sysnoi, ...
+        initial_state, time_horizon);
+    mean_X_zi_with_init_state = X_sans_input_rv_with_init_state.mean();
+    mean_X_zi = mean_X_zi_with_init_state(sysnoi.state_dim + 1:end);
+    
+    %% Concatenation of disturbance vector
+    W = sys.dist.concat(time_horizon);    
     
     %% Compute M --- the number of polytopic halfspaces to worry about
     n_lin_state = size(concat_safety_tube_A,1);
     n_lin_input = size(concat_input_space_A,1);
     
-    %% Covariance of W vector
-    cov_concat_disturb = kron(eye(time_horizon),sys.dist.cov());
     % Compute a sparse square root of a matrix: chol produces a sqrt such that
     % sqrt' * sqrt = M. Hence, whenever, we left multiply (inside a norm), we
     % must transpose.
-    [sqrt_cov_concat_disturb, p] = chol(cov_concat_disturb);    
+    [sqrt_cov_concat_disturb, p] = chol(W.cov());    
     if p > 0
         % Non-positive definite matrix can not use Cholesky's decomposition
         % Use sqrt to obtain a symmetric non-sparse square-root matrix
-        sqrt_cov_concat_disturb = sqrt(cov_concat_disturb);
+        sqrt_cov_concat_disturb = sqrt(W.cov());
     end
     
 
@@ -164,10 +164,6 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, risk_alloc_state, ...
     norminvgammai_iter = norminv(lb_risk * ones(n_lin_input,1));
     tau_iter = options.tau_initial;
 
-    % No. of non-zero blocks
-    n_blocks = (time_horizon - 1) * time_horizon/2;
-    blocks_indx_vec = cumsum(1:time_horizon-1);
-    
     continue_condition = 1;    
     % DC subproblems
     while continue_condition == 1
@@ -178,8 +174,7 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, risk_alloc_state, ...
         end
         % The iteration values are updated at the end of the problem
         cvx_begin quiet
-            expression M(sys.input_dim*time_horizon,sys.dist_dim*time_horizon);
-            variable M_vars(sys.input_dim * sys.dist_dim, n_blocks);
+            variable M(sys.input_dim*time_horizon,sys.dist_dim*time_horizon);
             variable d(sys.input_dim * time_horizon, 1);
             variable mean_X(sys.state_dim * time_horizon, 1);
             % State chance constraint
@@ -198,22 +193,11 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, risk_alloc_state, ...
                                         (sum(sum(slack_reverse_state)) + ...
                                             sum(sum(slack_reverse_input))));
             subject to
-                % Causality constraints on M is automatically enforced by
-                % expression declaration (sets all other terms to zero)
-                % CVX expressions help us minimize the number of decision
-                % variables we must declare
-                for time_indx = 2:time_horizon
-                    if time_indx == 2
-                        blocks_start_indx = 1;
-                    else
-                        blocks_start_indx = blocks_indx_vec(time_indx - 2)+1;
-                    end
-                    blocks_end_indx = blocks_indx_vec(time_indx - 1);
+                % Causality constraints on M_matrix
+                for time_indx = 1:time_horizon
                     M((time_indx-1)*sys.input_dim + 1:...
                         time_indx*sys.input_dim, ...
-                        1:(time_indx-1)*sys.dist_dim) =...
-                        reshape(M_vars(:,blocks_start_indx:blocks_end_indx),...
-                            sys.input_dim, []); 
+                        (time_indx-1)*sys.dist_dim+1:end) == 0; 
                 end
                 % slack variables
                 slack_reverse_state >= 0;
@@ -222,8 +206,8 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, risk_alloc_state, ...
                 norm_input_replace_slack >= 0;
                 norminvdeltai >= 0;
                 norminvgammai >= 0;
-                % Mean trajectory constraint
-                mean_X == mean_X_zi + H * (M * mean_W + d);
+                % Mean trajectory constraint (mean_X_zi already has Zx + GW)
+                mean_X == mean_X_zi + H * (M * W.mean() + d);
                 % Risk allocation bounds --- state
                 lb_risk <= deltai <= 0.5;
                 sum(deltai) <= 1 - options.max_input_viol_prob;
@@ -358,7 +342,7 @@ function [lb_stoch_reach, opt_input_vec, opt_input_gain, risk_alloc_state, ...
     end
 end
 
-function otherInputHandling(sys, options)
+function otherInputHandling(sys, options, time_horizon)
     % 1. Get the correct options
     % 2. Check if the system is stochastic
     % 3. Check if the random vector is Gaussian
@@ -376,9 +360,21 @@ function otherInputHandling(sys, options)
         throw(SrtInvalidArgsError(['SReachPointCcA requires Gaussian-',...
             'perturbed LTV/LTI system']));
     end    
-    if ~isequal(sys.dist_mat, eye(sys.dist_dim))  % Check if F_k is I_k
-        throwAsCaller(SrtInvalidArgsError(['Disturbance matrix must be an', ...
-            ' identity matrix.\nIf you must have the disturbance matrix, ', ...
-            ' redefine the disturbance random vector.']));
+    err_string = ['Disturbance matrix must be an identity matrix.\nIf you ',...
+        'must have the disturbance matrix, redefine the disturbance random ',...
+        'vector.'];
+    if sys.islti() && ~isequal(sys.dist_mat, eye(sys.dist_dim)) % Is F_k=I_k?
+        throwAsCaller(SrtInvalidArgsError(err_string));
+    elseif sys.isltv()
+        not_equal_to_identity_flag = 0;
+        for t=0:time_horizon
+            if ~isequal(sys.dist_mat(t), eye(sys.dist_dim))
+                not_equal_to_identity_flag = 1;
+                break;
+            end
+        end
+        if not_equal_to_identity_flag
+            throwAsCaller(SrtInvalidArgsError(err_string));
+        end    
     end
 end
