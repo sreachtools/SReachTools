@@ -131,6 +131,9 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
     %% Step 1: Find initial state (xmax) w/ max open-loop stochastic reach prob
     xmax_soln = computeWmax(sys, options, init_safe_set, prob_thresh, ...
                     safety_tube, mean_X_zizs, sigma_vec);
+    if options.verbose >= 1
+        fprintf('Maximum reach probability: %1.2f\n', xmax_soln.reach_prob);
+    end
     if ~strcmpi(xmax_soln.cvx_status, 'Solved') ||...
             xmax_soln.reach_prob < prob_thresh
         polytope = Polyhedron.emptySet(2);
