@@ -82,6 +82,7 @@ This information is obtained from their docstrings.
                 <ul class="doc-list">
                     <li class="doc-list"><a href="src/modules/stochReach/pointBased/SReachPoint">SReachPoint.m</a></li>
                     <li class="doc-list"><a href="src/modules/stochReach/pointBased/SReachPointCcA">SReachPointCcA.m</a></li>
+                    <li class="doc-list"><a href="src/modules/stochReach/pointBased/SReachPointCcAu">SReachPointCcAu.m</a></li>
                     <li class="doc-list"><a href="src/modules/stochReach/pointBased/SReachPointCcO">SReachPointCcO.m</a></li>
                     <li class="doc-list"><a href="src/modules/stochReach/pointBased/SReachPointGpO">SReachPointGpO.m</a></li>
                     <li class="doc-list"><a href="src/modules/stochReach/pointBased/SReachPointOptions">SReachPointOptions.m</a></li>

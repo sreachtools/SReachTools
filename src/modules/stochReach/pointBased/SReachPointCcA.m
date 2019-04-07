@@ -349,6 +349,7 @@ function otherInputHandling(sys, options, time_horizon)
     % 4. Check if the disturbance matrix is identity (Theory requirement,
     %    else this formulation is not practical as it is stronger than
     %    state feedback control law)
+    % NOTE: chance-affine-uni has an exact same structure
     if ~(strcmpi(options.prob_str, 'term') &&...
             strcmpi(options.method_str, 'chance-affine'))
         throwAsCaller(SrtInvalidArgsError('Invalid options provided'));
@@ -359,7 +360,8 @@ function otherInputHandling(sys, options, time_horizon)
     if ~strcmpi(sys.dist.type,'Gaussian')
         throw(SrtInvalidArgsError(['SReachPointCcA requires Gaussian-',...
             'perturbed LTV/LTI system']));
-    end    
+    end 
+    % Ensure that the disturbance matrix is identity
     err_string = ['Disturbance matrix must be an identity matrix.\nIf you ',...
         'must have the disturbance matrix, redefine the disturbance random ',...
         'vector.'];

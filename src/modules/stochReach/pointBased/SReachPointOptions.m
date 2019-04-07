@@ -79,8 +79,8 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 %                                               error for very demanding
 %                                               problem requirements
 %                                               [Default: 1e5]
-%                     'chance-affine'-- Convex chance-constrained approach for
-%                                       an affine controller synthesis
+%                     'chance-affine'-- Difference-of-convex chance-constrained 
+%                                       approach for affine controller synthesis
 %                                       1. [MUST HAVE] max_input_viol_prob:
 %                                               Probabilistic relaxation of the
 %                                               hard input constraints 
@@ -110,6 +110,23 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 %                                       9. slack_tol: Tolerance for the sum
 %                                               of slack vars for penalty DC
 %                                               [Default: 1e-8]
+%                     'chance-affine-uni'
+%                                    -- Uniform risk allocation for affine 
+%                                       controller synthesis
+%                                       1. [MUST HAVE] max_input_viol_prob:
+%                                               Probabilistic relaxation of the
+%                                               hard input constraints 
+%                                               [Default: 1e-2]
+%                                       2. verbose: Verbosity of the 
+%                                               implementation (feedback for the
+%                                               user) | Takes values from 0 to 2
+%                                               [Default: 0]
+%                                       3. state_bisect_tol: Bisection
+%                                               tolerance for the state 
+%                                               constraint [Default: 1e-3]
+%                                       4. input_bisect_tol: Bisection
+%                                               tolerance for the input 
+%                                               constraint [Default: 1e-3]
 %
 % Outputs:
 % --------
@@ -144,7 +161,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 
     valid_prob = {'term'};
     valid_method= {'chance-open','chance-affine','genzps-open',...
-        'particle-open','voronoi-open'};
+        'particle-open','voronoi-open','chance-affine-uni'};
     
     % Input parsing
     inpar = inputParser();
@@ -236,13 +253,27 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
             % Difference-of-convex: Slack tolerance requirements
             inpar.addParameter('slack_tol',1e-8, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0}));
+        case 'chance-affine-uni'
+            % Probabilistic relaxation of the hard input constraints
+            inpar.addParameter('max_input_viol_prob',1e-2, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0,'<',1}));
+            % Verbosity of the implementation
+            inpar.addParameter('verbose', 0, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar', 'integer', ...
+                    '>=',0,'<=',2}));            
+            % Bisection tolerance for the state chance constraints
+            inpar.addParameter('state_bisect_tol', 1e-3, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0,'<',1}));
+            % Bisection tolerance for the input chance constraints
+            inpar.addParameter('input_bisect_tol', 1e-3, @(x)...
+                validateattributes(x, {'numeric'}, {'scalar','>',0,'<',1}));           
     end
     inpar.parse(prob_str, method_str, varargin{:});
     options = inpar.Results;
  
     % Check for must-have parameters
     switch lower(method_str)
-        case 'chance-affine'
+        case {'chance-affine','chance-affine-uni'}
             if any(strcmpi(inpar.UsingDefaults, 'max_input_viol_prob'))
                  throwAsCaller(SrtInvalidArgsError(['Expected ', ...
                      'max_input_viol_prob, the maximum allowed likelihood ', ...
@@ -257,4 +288,3 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
             end
     end
 end
-

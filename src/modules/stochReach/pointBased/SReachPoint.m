@@ -55,7 +55,7 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %                            2019. (submitted).
 %                            https://hscl.unm.edu/affinecontrollersynthesis/
 %
-% 2. Convex chance-constrained-based approach (chance-affine):
+% 2. Difference-of-convex chance-constrained-based approach (chance-affine):
 %
 %    High-level desc.   : Use Boole's inequality, Gaussian random vector,
 %                         hyperbolic constraints-to-second order cone constraint
@@ -79,7 +79,33 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %                         (submitted).
 %                         https://hscl.unm.edu/affinecontrollersynthesis/
 %
-% 3. Fourier transform + Patternsearch (genzps-open):
+% 3. Uniform risk allocation-based approach (chance-affine-uni):
+%
+%    High-level desc.   : Use Boole's inequality, Gaussian random vector,
+%                         hyperbolic constraints-to-second order cone constraint
+%                         reformulation. By decoupling the risk allocation
+%                         from controller synthesis, this approach solves a
+%                         series of SOCP problems guided by a bisection on
+%                         the uniform risk allocation (See Notes)
+%    Controller type    : A history-dependent affine controller that satisfies
+%                         softened input constraints (controller satisfies the
+%                         hard input bounds upto a user-specified probabilistic
+%                         threshold)
+%    Optimality         : Suboptimal affine controller for the
+%                         underapproximation problem
+%    Approximation      : Guaranteed underapproximation
+%    SReachTool function: SReachPointCcAu
+%    Dependency (EXT)   : CVX
+%    Paper              : 1) M. Vitus and C. Tomlin, "On feedback design and 
+%                            risk allocation in chance constrained control", In 
+%                            Proc. Conf. Dec. & Ctrl., 2011.
+%                         2) A. Vinod and M. Oishi. Affine controller synthesis
+%                            for stochastic reachability via difference of 
+%                            convex programming. In Proc. Conf. of Dec. & Ctrl., 
+%                            2019 (submitted).
+%                            https://hscl.unm.edu/affinecontrollersynthesis/
+%
+% 4. Fourier transform + Patternsearch (genzps-open):
 %
 %    High-level desc.   : Maximize the multivariate Gaussian integral over a
 %                         polytope, evaluated using Genz's algorithm, and
@@ -97,7 +123,7 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %                         High-Dimensional LTI Systems using Fourier
 %                         Transforms," in IEEE Control Systems Letters, 2017.
 %
-% 4. Particle control approach (particle-open):
+% 5. Particle control approach (particle-open):
 %
 %    High-level desc.   : Sample particles based on the additive noise and solve
 %                         a mixed-integer linear program to make the maximum
@@ -114,7 +140,7 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %                         reachability for control of spacecraft relative
 %                         motion," In Proc. IEEE Conf. Dec. & Ctrl., 2013.
 %
-% 5. Particle control-based approach with undersampling via Voronoi partitions 
+% 6. Particle control-based approach with undersampling via Voronoi partitions 
 %    (voronoi-open):
 %
 %    High-level desc.   : Sample particles based on the additive noise and solve
@@ -151,9 +177,19 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %                      1. 'term' : Stay within the safety_tube
 %   method_str   - Solution technique to be used.
 %                      'chance-open'  -- Convex chance-constrained approach for
-%                                        an open-loop controller synthesis
-%                      'chance-affine'-- Convex chance-constrained approach for
-%                                        an affine controller synthesis
+%                                        an open-loop controller synthesis;
+%                                        performs risk allocation and
+%                                        controller synthesis
+%                                        simultaneously
+%                      'chance-affine'-- Difference-of-convex chance-constrained 
+%                                        approach for an affine controller 
+%                                        synthesis; Allocates risk and 
+%                                        synthesizes controller simultaneously
+%                      'chance-affine-uni'
+%                                     -- Uniform risk allocation approach for an 
+%                                        affine controller synthesis; Decouples
+%                                        the risk allocation problem from
+%                                        controller synthesis
 %                      'genzps-open'  -- Genz's algorithm + Patternsearch for an
 %                                        open-loop controller synthesis
 %                      'particle-open'-- Particle control-based approach for an
@@ -190,8 +226,8 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 %               - [Available only for 'chance-X'] Risk allocation for the
 %                 state constraints
 %   risk_alloc_input
-%               - [Available only for 'chance-affine'] Risk allocation for the
-%                 input constraints
+%               - [Available only for 'chance-affine(-X)'] Risk allocation for 
+%                 the input constraints
 %   extra_info  - [Available only for 'voronoi-X'] MATLAB struct
 %                 containing additional info about the Voronoi partition-based 
 %                 undersampling used for tractable particle control approach
@@ -200,9 +236,11 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 % * SReachPoint() will call SReachPointOptions() internally if
 %       SReachPointOptions()-based options is not explicitly provided to
 %       SReachPoint(). This will set the algorithm to default options.
-% * 'chance-affine' requires an explicit declaration of the options from
-%   SReachPointOptions() to specify the threshold on the chance-constraint
-%   relaxation of the input bounds.
+% * 'chance-affine' and 'chance-affine-uni' requires an explicit declaration of 
+%   the options from SReachPointOptions() to specify the threshold on the 
+%   chance-constraint relaxation of the input bounds.
+% * 'chance-affine' provides the best lower bound at the cost of additional
+%   compute time, when compared to 'chance-affine-uni'
 % * See @LtiSystem/getConcatMats for more information about the notation used.
 % * If an open_loop policy is desired arranged in increasing time columnwise,
 %   use the following command:
@@ -219,8 +257,8 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
 
     % Input parsing
     valid_prob = {'term'}; % TODO-first: 'first',
-    valid_method= {'chance-open','chance-affine','genzps-open',...
-        'particle-open','voronoi-open'};
+    valid_method= {'chance-open', 'chance-affine', 'genzps-open',...
+        'particle-open', 'voronoi-open', 'chance-affine-uni'};
 
     inpar = inputParser();
     inpar.addRequired('prob_str', @(x) any(validatestring(x,valid_prob)));
@@ -319,6 +357,19 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
                 else
                     throw(SrtRuntimeError('Too many output arguments'));
                 end                
+            case 'chance-affine-uni'
+                % Chance-constrained formulation with piecewise-linear 
+                % approximations to compute affine-loop controller (SOC program)
+                if nargout <= 5
+                    [approx_reach_prob, opt_input_vec, opt_input_gain, ...
+                        risk_alloc_state, risk_alloc_input] = ...
+                            SReachPointCcAu(sys, initial_state, safety_tube, ...
+                                options);
+                    varargout{1} = risk_alloc_state;
+                    varargout{2} = risk_alloc_input;
+                else
+                    throw(SrtRuntimeError('Too many output arguments'));
+                end                
             otherwise
                 throw(SrtInternalError('Internal function not setup!'));
         end
@@ -327,10 +378,13 @@ function [approx_reach_prob, opt_input_vec, opt_input_gain, varargout] =...
             opt_input_vec = nan(sys.input_dim * time_horizon, 1);
             opt_input_gain = [];
             if strcmpi(method_str,'chance-open') ||...
-                    strcmpi(method_str,'chance-affine')    %TODO: Do MILP
+                    strcmpi(method_str,'chance-affine')  %TODO: Do MILP
                 warn_str = sprintf(['Note that ''%s''', ...
                     'works only if all the individual hyperplanes is ', ...
                     'satisfied with a probability above 0.5.'], method_str);
+            elseif strcmpi(method_str,'chance-affine-uni')
+                warn_str = ['Uniform risk allocation is not possible. Try ', ...
+                    'using ''chance-affine''.'];
             else
                 warn_str = 'The problem may be infeasible';
             end
@@ -403,11 +457,13 @@ function [options, varargout] = otherInputHandling(prob_str,method_str, ...
     if strcmpi(prob_str,'term') && length(additional_args) <= 1        
         %% terminal time problem handling
         if isempty(additional_args) || isempty(additional_args{1})
-            if strcmpi(method_str, 'chance-affine')
-                throwAsCaller(SrtInvalidArgsError(['Default options for ', ...
-                    'chance-affine requires a user specified parameter.\n', ...
+            if strcmpi(method_str, 'chance-affine') || ...
+                    strcmpi(method_str, 'chance-affine-uni') 
+                throwAsCaller(SrtInvalidArgsError(sprintf(['Default options',...
+                    ' for %s requires a user specified parameter.\n', ...
                     'Expected max_input_viol_prob, the maximum allowed ', ...
-                    'likelihood of violating the input constraints.']));
+                    'likelihood of violating the input constraints.'], ...
+                    method_str)));
             else
                 % No options provided! Create one.
                 options = SReachPointOptions(prob_str,method_str);

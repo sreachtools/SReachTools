@@ -1,41 +1,41 @@
 ---
 layout: docs
-title: SReachPointCcA.m
+title: SReachPointCcAu.m
 ---
 
 ```
   Solve the problem of stochastic reachability of a target tube (a lower bound
   on the maximal reach probability and an affine controller synthesis) using
-  chance-constrained optimization and difference of convex programming
+  chance-constrained optimization and uniform risk allocation
   =============================================================================
  
-  SReachPointCcA implements the chance-constrained underapproximation to the
-  problem of stochastic reachability of a target tube to construct an affine
-  controller. This technique is discussed in detail in the paper,
+  SReachPointCcAuniform implements the chance-constrained underapproximation to
+  the problem of stochastic reachability of a target tube to construct an affine
+  controller. This technique is inspired from Algorithms 1 and 2 of 
+ 
+  M. Vitus and C. Tomlin, "On feedback design and risk allocation in chance
+  constrained control", In Proc. Conf. Dec. & Ctrl., 2011.
+ 
+  In contrast to their original algorithm, we have a chance constraint on
+  the input and the state. Further, the lower bound on the reachability (state 
+  constraint) depends on how high the input chance constraint satisfaction 
+  probability is. Therefore, we perform two levels of bisection
+  --- one to maximize the probability of constraint satisfaction for the
+  state, and the other to meet the chance constraint on the input.
+ 
+  Subsequently, the obtained solution is discounted for input constraint
+  violation using Theorem 1 of
  
   A. Vinod and M. Oishi. Affine controller synthesis for stochastic reachability
   via difference of convex programming. In Proc. Conf. Dec. & Ctrl., 2019.
   (submitted). https://hscl.unm.edu/affinecontrollersynthesis/
  
-     High-level desc.   : Use Boole's inequality, Gaussian random vector,
-                          hyperbolic constraints-to-second order cone constraint
-                          reformulation, and piecewise linear approximation of
-                          the inverse of the standard normal cumulative density
-                          function to create a second-order cone program-based
-                          difference-of-convex optimization problem
-     Controller type    : A history-dependent affine controller that satisfies
-                          softened input constraints (controller satisfies the
-                          hard input bounds upto a user-specified probabilistic
-                          threshold)
-     Optimality         : Suboptimal affine controller for the
-                          underapproximation problem due to non-convexity
-                          established by the difference of convex formulation
-     Approximation      : Guaranteed underapproximation
  
   =============================================================================
  
-  [lb_stoch_reach, opt_input_vec, opt_input_gain, risk_alloc_state, ...
-    risk_alloc_input] = SReachPointCcA(sys, initial_state, safety_tube, options)
+    [lb_stoch_reach, opt_input_vec, opt_input_gain, risk_alloc_state, ...
+        risk_alloc_input] = SReachPointCcAu(sys, initial_state, safety_tube, ...
+        options)
   
   Inputs:
   -------
@@ -44,7 +44,7 @@ title: SReachPointCcA.m
                    evaluated (A numeric vector of dimension sys.state_dim)
     safety_tube  - Collection of (potentially time-varying) safe sets that
                    define the safe states (Tube object)
-    options      - Collection of user-specified options for 'chance-affine'
+    options      - Collection of user-specified options for 'chance-affine-uni'
                    (Matlab struct created using SReachPointOptions)
  
   Outputs:
@@ -52,9 +52,7 @@ title: SReachPointCcA.m
     lb_stoch_reach 
                 - Lower bound on the stochastic reachability of a target tube
                   problem computed using chance constraints and
-                  difference-of-convex techniques. While it is expected to lie
-                  in [0,1], it is set to -1 in cases where the
-                  difference-of-convex optimization fails to converge.
+                  difference-of-convex techniques
     opt_input_vec, 
       opt_input_gain
                 - Controller U=MW+d for a concatenated input vector 
@@ -73,13 +71,6 @@ title: SReachPointCcA.m
   See also SReachPoint.
  
   Notes:
-  * We recommend using this function through SReachPoint.
-  * This function requires CVX to work.
-  * This function returns a **lower bound to the maximal reach probability under
-    hard input constraints**. This lower bound is obtained by a linear
-    transformation of the maximal reach probability associated with the
-    unsaturated affine controller using the user-specified likelihood threshold
-    on the hard input constraints. See Theorem 1 of the paper cited above.
   * See @LtiSystem/getConcatMats for more information about the notation used.
   
   ============================================================================

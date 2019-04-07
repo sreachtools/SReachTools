@@ -33,11 +33,14 @@ title: SReachSetOptions.m
                                       maximum reach probability to identify the
                                       vertices of the underapproximative
                                       polytope for the stochastic reach set
+                                      A (sys.state_dim x n_dir)-dimensional
+                                      matrix
             2. init_safe_set_affine - [MUST HAVE] Affine constraints (if any) on
                                       the initial state. Must include a
                                       translate of the affine hull of the
                                       set_of_dir_vecs | On intersection with the
-                                      safe set, it should result in a 2-D set
+                                      safe set at t=0, it should result in a 2-D 
+                                      set
             3. verbose              - Verbosity of the implementation {0,1}
                                         0 - No output 
                                         1 - Outputs the direction vector being

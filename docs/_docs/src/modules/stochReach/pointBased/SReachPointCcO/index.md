@@ -38,7 +38,7 @@ title: SReachPointCcO.m
  
   =============================================================================
  
-  [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] =...
+  [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] = ...
      SReachPointCcO(sys, initial_state, safety_tube, options)
  
   Inputs:
@@ -55,8 +55,10 @@ title: SReachPointCcO.m
   --------
     lb_stoch_reach 
                 - Lower bound on the stochastic reachability of a target tube
-                    problem computed using convex chance constraints and
-                    piecewise affine approximation
+                  problem computed using convex chance constraints and
+                  piecewise affine approximation. While it is expected to lie in
+                  [0,1], it is set to -1 in cases where the CVX optimization
+                  fails (cvx_status \neq Solved).
     opt_input_vec
                 - Open-loop controller: column vector of dimension
                   (sys.input_dim*N) x 1

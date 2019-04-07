@@ -47,7 +47,10 @@ title: SReachPointPaO.m
   --------
     approx_stoch_reach 
                 - An approximation of the stochastic reachability of a target
-                    tube problem computed using particle control
+                  tube problem computed using particle control. While it is
+                  expected to lie in [0,1], it is set to -1 in cases where the
+                  CVX optimization fails (cvx_status \not\in {Solved,
+                  Inaccurate/Solved}).
     opt_input_vec
                 - Open-loop controller: column vector of dimension
                   (sys.input_dim*N) x 1

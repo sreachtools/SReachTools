@@ -31,7 +31,7 @@ title: SReachPointGpO.m
  
   =============================================================================
  
-   [lb_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state, ...
+   [approx_stoch_reach, opt_input_vec] = SReachPointGpO(sys, initial_state, ...
        safety_tube, options)
  
   Inputs:
@@ -46,9 +46,9 @@ title: SReachPointGpO.m
  
   Outputs:
   --------
-    lb_stoch_reach 
-                - Lower bound on the stochastic reachability of a target tube
-                    problem computed | Returns -1 if infeasible
+    approx_stoch_reach 
+                - Approximation of the stochastic reachability of a target tube
+                  problem | Returns -1 if patternsearch fails (exitflag < 1)
     opt_input_vec
                 - Open-loop controller: column vector of dimension
                   (sys.input_dim*N) x 1
