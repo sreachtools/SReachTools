@@ -55,6 +55,10 @@ This will disable some of the features of SReachTools or hamper performance.
     and MAC OS.  SReachTools will gracefully switch back to CDD, if installation
     of GeoCalcLib is not correct." %}
 
+    1. Install [GMP](https://gmplib.org/)
+        1. Get the tar ball from [https://gmplib.org/#DOWNLOAD](https://gmplib.org/#DOWNLOAD)
+        1. Follow the installation instructions
+           [https://gmplib.org/manual/Installing-GMP.html#Installing-GMP](https://gmplib.org/manual/Installing-GMP.html#Installing-GMP)
     1. Download the zip file from
        [https://github.com/worc4021/GeoCalcLib/archive/master.zip](https://github.com/worc4021/GeoCalcLib/archive/master.zip).
     1. Extract the contents of this zip file to a desired location, whose full path is referred to here as `/path/to/GeoCalcLib`
