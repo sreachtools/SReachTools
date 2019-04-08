@@ -13,10 +13,10 @@ Then, we detail the procedure to set up a new capsule.
 
 ### Examples
 
-1. ARCH 2019: Automated anesthesia delivery
-1. ARCH 2019: Building automation system
-1. Dubins' car: `SReachSet` demonstration
-1. Spacecraft rendezvous problem: `SReachPoint` demonstration
+1. [Dubins' car: `SReachSet` demonstration](https://codeocean.com/capsule/9849812/tree) --- <2 min runtime.
+1. [ARCH 2019: Automated anesthesia delivery](https://codeocean.com/capsule/81dbdd67-83a4-4b7a-87eb-fbfc1fe72ef2/tree?ID=1763713383dc4aadaf77c4a8c9085b7f) --- <1 min runtime.
+1. [ARCH 2019: Building automation system](https://codeocean.com/capsule/ddfa8988-7061-4b9c-8cc8-0d3393a6bf02/tree?ID=64794d9f443f4fbc9ba1710cbd0e72c7) --- <1 min runtime.
+<!--1. Spacecraft rendezvous problem: `SReachPoint` demonstration-->
 
 ### Detailed procedure
 
