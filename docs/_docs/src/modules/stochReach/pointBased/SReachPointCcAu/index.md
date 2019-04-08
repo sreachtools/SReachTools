@@ -21,7 +21,8 @@ title: SReachPointCcAu.m
   constraint) depends on how high the input chance constraint satisfaction 
   probability is. Therefore, we perform two levels of bisection
   --- one to maximize the probability of constraint satisfaction for the
-  state, and the other to meet the chance constraint on the input.
+  state, and the other to meet the chance constraint on the input. However,
+  to save time, we check only for feasibility in the input bisection.
  
   Subsequently, the obtained solution is discounted for input constraint
   violation using Theorem 1 of

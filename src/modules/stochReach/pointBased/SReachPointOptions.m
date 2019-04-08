@@ -119,7 +119,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
 %                                               [Default: 1e-2]
 %                                       2. verbose: Verbosity of the 
 %                                               implementation (feedback for the
-%                                               user) | Takes values from 0 to 2
+%                                               user) | Takes values from 0 to 1
 %                                               [Default: 0]
 %                                       3. state_bisect_tol: Bisection
 %                                               tolerance for the state 
@@ -260,7 +260,7 @@ function options = SReachPointOptions(prob_str, method_str, varargin)
             % Verbosity of the implementation
             inpar.addParameter('verbose', 0, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar', 'integer', ...
-                    '>=',0,'<=',2}));            
+                    '>=',0,'<=',1}));            
             % Bisection tolerance for the state chance constraints
             inpar.addParameter('state_bisect_tol', 1e-3, @(x)...
                 validateattributes(x, {'numeric'}, {'scalar','>',0,'<',1}));

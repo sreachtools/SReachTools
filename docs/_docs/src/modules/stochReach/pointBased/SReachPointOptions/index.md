@@ -124,7 +124,7 @@ title: SReachPointOptions.m
                                                 [Default: 1e-2]
                                         2. verbose: Verbosity of the 
                                                 implementation (feedback for the
-                                                user) | Takes values from 0 to 2
+                                                user) | Takes values from 0 to 1
                                                 [Default: 0]
                                         3. state_bisect_tol: Bisection
                                                 tolerance for the state 
