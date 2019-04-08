@@ -41,6 +41,11 @@
 %    controller synthesis is done by solving a series of second-order cone
 %    programs. (See <http://hscl.unm.edu/affinecontrollersynthesis
 %    Vinod and Oishi, Conference in Decision and Control, 2019 (submitted)>)
+% * |chance-affine-uni|: Chance-constrained approach that uses uniform risk 
+%    allocation to synthesize a closed-loop (affine disturbance feedback) 
+%    controller. The controller synthesis is done by solving a series of 
+%    second-order cone programs. (See <http://hscl.unm.edu/affinecontrollersynthesis
+%    Vinod and Oishi, Conference in Decision and Control, 2019 (submitted)>)
 %
 % All computations were performed using MATLAB on an Ubuntu OS running on a
 % laptop with Intel i7 CPU with 2.1GHz clock rate and 8 GB RAM. For sake of
@@ -144,21 +149,20 @@ close all;clearvars;srtinit;
 % 0.005 I_2)$.
 
 n_mcarlo_sims = 1e5;                        % Monte-Carlo simulation particles
-n_mcarlo_sims_affine = 1e5;                 % For affine controllers
+n_mcarlo_sims_affine = 1e3;                 % For affine controllers
 sampling_time = 0.1;                        % Sampling time
 init_heading = pi/10;                       % Initial heading 
 % Known turning rate sequence
-time_horizon = 25;
+time_horizon = 50;
 omega = pi/time_horizon/sampling_time;
-half_time_horizon = round(time_horizon/2);
-turning_rate = [omega*ones(half_time_horizon,1);
-               -omega*ones(half_time_horizon,1)];
+turning_rate = omega*ones(time_horizon,1);
 % Input space definition
 umax = 10;
 input_space = Polyhedron('lb',0,'ub',umax);
 % Disturbance matrix and random vector definition
 dist_matrix = eye(2);
-eta_dist_gauss = RandomVector('Gaussian',zeros(2,1), 0.005 * eye(2));
+eta_dist_gauss = RandomVector('Gaussian',zeros(2,1), 0.001 * eye(2));
+prob_thresh = 0.9;
 
 sys_gauss = getDubinsCarLtv('add-dist', turning_rate, init_heading, ...
     sampling_time, input_space, dist_matrix, eta_dist_gauss);
@@ -220,13 +224,23 @@ genzps_open_run_gauss = 1;
 particle_open_run_gauss = 1;
 voronoi_open_run_gauss = 1;
 chance_affine_run_gauss = 1;
+chance_affine_uni_run_gauss = 1;
 
 % Initial states for each of the method
-init_state_chance_open_gauss = [2;2] + [-1;-1];
-init_state_genzps_open_gauss = [2;2] + [1;-1];
-init_state_particle_open_gauss = [2;2] + [0;1];
-init_state_voronoi_open_gauss = [2;2] + [1.5;1.5];
-init_state_chance_affine_gauss = [2;2] + [2;-1];
+init_state_open = [-1.5;1.5];
+init_state_chance_open_gauss = init_state_open;
+init_state_genzps_open_gauss = init_state_open;
+init_state_particle_open_gauss = init_state_open;
+init_state_voronoi_open_gauss = init_state_open;
+% init_state_chance_open_gauss = [2;2] + [-1;-1];
+% init_state_genzps_open_gauss = [2;2] + [1;-1];
+% init_state_particle_open_gauss = [2;2] + [0;1];
+% init_state_voronoi_open_gauss = [2;2] + [1.5;1.5];
+init_state_affine = init_state_open; %[-2;0];
+init_state_chance_affine_gauss = init_state_affine;
+init_state_chance_affine_uni_gauss = init_state_affine;
+% init_state_chance_affine_gauss = [2;2] + [2;-1];
+% init_state_chance_affine_uni_gauss = [2;2] + [2;-1];
 
 
 %% Quantities needed to compute the optimal mean trajectory 
@@ -431,7 +445,7 @@ end
 if chance_affine_run_gauss
     fprintf('\n\nSReachPoint with chance-affine\n');
     opts = SReachPointOptions('term', 'chance-affine',...
-        'max_input_viol_prob', 1e-2, 'verbose', 1);
+        'max_input_viol_prob', 1e-2, 'verbose', 2);
     timerVal = tic;
     [prob_chance_affine_gauss, opt_input_vec_chance_affine_gauss,...
         opt_input_gain_chance_affine_gauss] = SReachPoint('term', ...
@@ -461,6 +475,50 @@ if chance_affine_run_gauss
     fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
         prob_chance_affine_gauss, simulated_prob_chance_affine_gauss);
     fprintf('Computation time: %1.3f\n', elapsed_time_chance_affine_gauss);
+end
+
+
+%% |SReachPoint|: |chance-affine-uni|
+% This method is inspired from Vitus and Tomlin, CDC 2011 paper. It attacks the 
+% affine controller synthesis problem using convex optimization by decoupling 
+% risk allocation from controller synthesis. A uniform risk allocation is 
+% assumed, and a bisection is performed with controller synthesis done for 
+% intermediate risk allocations. However, this decoupling might be too 
+% conservative, as discussed in <http://hscl.unm.edu/affinecontrollersynthesis
+% Vinod and Oishi, Hybrid Systems: Computation and Control, 2019 (submitted)>.
+if chance_affine_uni_run_gauss
+    fprintf('\n\nSReachPoint with chance-affine-uni\n');
+    opts = SReachPointOptions('term', 'chance-affine-uni',...
+        'max_input_viol_prob', 1e-2, 'verbose', 1);
+    timerVal = tic;
+    [prob_chance_affine_uni_gauss, opt_input_vec_chance_affine_uni_gauss,...
+        opt_input_gain_chance_affine_uni_gauss] = SReachPoint('term', ...
+            'chance-affine-uni', sys_gauss, ...
+            init_state_chance_affine_uni_gauss, target_tube, opts);
+    elapsed_time_chance_affine_uni_gauss = toc(timerVal);
+    fprintf('Computation time: %1.3f\n', elapsed_time_chance_affine_uni_gauss);
+    if prob_chance_affine_uni_gauss > 0
+        % mean_X = Z * x_0 + H * (M \mu_W + d) + G * \mu_W
+        opt_mean_X_chance_affine_uni_gauss = Z * ...
+            init_state_chance_affine_uni_gauss + H * ...
+            opt_input_vec_chance_affine_uni_gauss + ...
+            (H * opt_input_gain_chance_affine_uni_gauss + G) * muW_gauss;
+        % Optimal mean trajectory construction
+        opt_mean_traj_chance_affine_uni_gauss = reshape(...
+            opt_mean_X_chance_affine_uni_gauss, sys_gauss.state_dim,[]);
+        % Check via Monte-Carlo simulation
+        concat_state_realization_cca_gauss = generateMonteCarloSims(...
+            n_mcarlo_sims, sys_gauss, init_state_chance_affine_uni_gauss, ...
+            time_horizon, opt_input_vec_chance_affine_uni_gauss,...
+            opt_input_gain_chance_affine_uni_gauss, 1);
+        mcarlo_result = target_tube.contains(concat_state_realization_cca_gauss);
+        simulated_prob_chance_affine_uni_gauss = sum(mcarlo_result) / n_mcarlo_sims;
+    else
+        simulated_prob_chance_affine_uni_gauss = NaN;
+    end
+    fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
+        prob_chance_affine_uni_gauss, simulated_prob_chance_affine_uni_gauss);
+    fprintf('Computation time: %1.3f\n', elapsed_time_chance_affine_uni_gauss);
 end
 
 %% Summary of results
@@ -556,9 +614,56 @@ if chance_affine_run_gauss
         prob_chance_affine_gauss, simulated_prob_chance_affine_gauss);
     fprintf('Computation time: %1.3f\n', elapsed_time_chance_affine_gauss);    
 end
+if chance_affine_uni_run_gauss
+    h_opt_mean_chance_affine_uni_gauss = scatter(...
+        [init_state_chance_affine_uni_gauss(1), ...
+            opt_mean_traj_chance_affine_uni_gauss(1,:)], ...
+        [init_state_chance_affine_uni_gauss(2), ...
+            opt_mean_traj_chance_affine_uni_gauss(2,:)], ...
+        30, 'ms', 'filled','DisplayName', 'Mean trajectory (chance-affine-uni)');
+    legend_cell{end+1} = 'Mean trajectory (chance-affine-uni)';
+    h_vec(end+1) = h_opt_mean_chance_affine_uni_gauss;
+%     polytopesFromMonteCarloSims(...
+%             concat_state_realization_cca_gauss(sys_gauss.state_dim+1:end,:), sys_gauss.state_dim,...
+%             [1,2], {'color','m','edgecolor','m','linewidth',2,'alpha',0.15,'LineStyle',':'});
+    disp('>>> SReachPoint with chance-affine-uni')
+    fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
+        prob_chance_affine_uni_gauss, simulated_prob_chance_affine_uni_gauss);
+    fprintf('Computation time: %1.3f\n', elapsed_time_chance_affine_uni_gauss);    
+end
 legend(h_vec, legend_cell, 'Location','EastOutside', 'interpreter','latex');
 xlabel('x');
 ylabel('y');
 axis equal
 box on;
 drawnow;
+
+%% Bar plot
+prob_val = [prob_chance_open_gauss, ...
+prob_genzps_open_gauss, ...
+prob_particle_open_gauss, ...
+prob_voronoi_open_gauss, ... 
+prob_chance_affine_uni_gauss, ... 
+prob_chance_affine_gauss];
+simulated_prob_val = [simulated_prob_chance_open_gauss, ...
+simulated_prob_genzps_open_gauss, ...
+simulated_prob_particle_open_gauss, ...
+simulated_prob_voronoi_open_gauss, ... 
+simulated_prob_chance_affine_uni_gauss, ... 
+simulated_prob_chance_affine_gauss];
+elapsed_time_val = [elapsed_time_chance_open_gauss, ...
+elapsed_time_genzps_gauss, ...
+elapsed_time_particle_gauss, ...
+elapsed_time_voronoi_gauss, ... 
+elapsed_time_chance_affine_uni_gauss, ... 
+elapsed_time_chance_affine_gauss];
+figure(4);
+clf
+c = {'chance-open','genzps-open','particle-open','voronoi-open','chance-affine-uni','chance-affine'};
+bar([prob_val; simulated_prob_val; elapsed_time_val./1000]');
+xticklabels(c)
+legend('Estimated reach probability', 'Simulated reach probability', 'Compute time ($\times$ 1000s)','Location','Best','interpreter','latex');
+set(gca,'FontSize',20);
+box on;
+grid on;
+%title('Performance and compute times');
