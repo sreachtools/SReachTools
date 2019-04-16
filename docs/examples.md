@@ -55,14 +55,14 @@ We provide the following demonstration examples:
     - Application of `SReachPoint` from a given state
       [[dubinsSReachPointGauss.html](./publish/dubinsSReachPointGauss.html)]
     - Application of `SReachSet` for a probability threshold [![Open in Code
-      Ocean](https://codeocean.com/codeocean-assets/badge/open-in-code-ocean.svg)](https://codeocean.com/capsule/9849812/tree)
+      Ocean](https://codeocean.com/codeocean-assets/badge/open-in-code-ocean.svg)](https://doi.org/10.24433/CO.9849812.v1)
       [[dubinsSReachSetGauss.html](./publish/dubinsSReachSetGauss.html)] 
 1. **Automated anesthesia delivery system**: Given the dynamics for the sedation
    levels of a patient, we wish to design an automated anesthesia delivery
    system that maintains the probability of the depth of hypnosis to stay within
    pre-specified bounds, above 0.99. 
    [![Open in Code
-      Ocean](https://codeocean.com/codeocean-assets/badge/open-in-code-ocean.svg)](https://codeocean.com/capsule/81dbdd67-83a4-4b7a-87eb-fbfc1fe72ef2/tree?ID=1763713383dc4aadaf77c4a8c9085b7f)
+      Ocean](https://codeocean.com/codeocean-assets/badge/open-in-code-ocean.svg)](https://doi.org/10.24433/CO.3325937.v1)
     - Application of `SReachSet` for a probability threshold. [[automatedAnesthesiaDeliveryARCH2018.html](./publish/automatedAnesthesiaDeliveryARCH2018.html)]
    <!--This script serves as a repeatability-->
    <!--evaluation of SReachTools code in [Abate et. al, ARCH-->
@@ -74,7 +74,8 @@ We provide the following demonstration examples:
     - Application of `SReachSet` for a probability threshold via Lagrangian options. [[dIntSReachSetLag.html](./publish/dIntSReachSetLag.html)]
 1. **Building Automation System**: For assuring probabilistic safety in a
    multi-room building automation system. [![Open in Code
-   Ocean](https://codeocean.com/codeocean-assets/badge/open-in-code-ocean.svg)](https://codeocean.com/capsule/ddfa8988-7061-4b9c-8cc8-0d3393a6bf02/tree?ID=64794d9f443f4fbc9ba1710cbd0e72c7)
+   Ocean](https://codeocean.com/codeocean-assets/badge/open-in-code-ocean.svg)](
+https://doi.org/10.24433/CO.8093142.v1)
 
 {% include important-note.html content="Examples 1,2, and 3 can not be
 implemented using dynamic programming! <\br> SReachTools provides verification of
