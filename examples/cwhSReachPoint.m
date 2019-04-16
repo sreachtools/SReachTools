@@ -41,6 +41,14 @@
 %    controller synthesis is done by solving a series of second-order cone
 %    programs. (See <http://hscl.unm.edu/affinecontrollersynthesis
 %    Vinod and Oishi, Conference in Decision and Control, 2019 (submitted)>)
+% * |chance-affine-uni|: Chance-constrained approach that uses uniform risk 
+%    allocation to formulate a series of second order cone programs to 
+%    synthesize a closed-loop (affine disturbance feedback) controller. In 
+%    contrast to |chance-affine|, this approach is much faster but can fail
+%    in certain configurations. The controller synthesis is done by solving a 
+%    series of second-order cone programs. (See 
+%    <https://doi-org/10.1109/CDC.2011.6160721
+%    Vitus and Tomlin, Conference in Decision and Control, 2011>)
 %
 % All computations were performed using MATLAB on an Ubuntu OS running on a
 % laptop with Intel i7 CPU with 2.1GHz clock rate and 8 GB RAM. For sake of
@@ -201,6 +209,7 @@ genzps_open_run = 1;
 particle_open_run = 1;
 voronoi_open_run = 1;
 chance_affine_run = 1;
+chance_affine_uni_run = 1;
 % Initial state definition
 initial_state = [-0.75;         % Initial x relative position
                  -0.75;         % Initial y relative position
@@ -213,6 +222,7 @@ init_state_genzps_open = initial_state;
 init_state_particle_open = initial_state;
 init_state_voronoi_open = initial_state;
 init_state_chance_affine = initial_state;
+init_state_chance_affine_uni = initial_state;
 
 
 %% Quantities needed to compute the optimal mean trajectory and Monte-Carlo sims
@@ -447,6 +457,61 @@ if chance_affine_run
         prob_chance_affine, simulated_prob_chance_affine);
 end
 
+%% |SReachPoint|: |chance-affine-uni|
+% This method is adapted from <https://doi-org/10.1109/CDC.2011.6160721
+% Vitus and Tomlin, Conference in Decision and Control, 2011>.
+%
+% This approach implements the chance-constrained approach to compute a locally
+% optimal affine disturbance feedback controller. In contrast to |chance-open|,
+% this approach optimizes for an affine feedback gain for the concatenated
+% disturbance vector as well as a bias. The resulting optimization problem is
+% non-convex. In contrast to |chance-affine|, risk allocation is assumed to
+% be uniform. A bisection is performed at over possible risk allocations. The 
+% bisection is guided by the feasibility of the resulting second-order cone
+% program, which can be solved efficiently. This solution converges to a local 
+% optimum. It is faster than |chance-affine|, but can fail in some cases. Since 
+% affine disturbance feedback controllers can not satisfy hard control bounds, 
+% we relax the control bounds to be probabilistically violated with at most a 
+% probability of 0.01. After obtaining the affine feedback controller, we 
+% compute a lower bound to the maximal reach probability in the event saturation
+% is applied to satisfy the hard control bounds. Due to its incorporation of 
+% state-feedback, this approach typically permits the construction of the 
+% highest underapproximative probability guarantee.  
+if chance_affine_uni_run
+    fprintf('\n\nSReachPoint with chance-affine-uni\n');
+    ccAu_opts = SReachPointOptions('term', 'chance-affine-uni',...
+        'max_input_viol_prob', 1e-2, 'verbose', 1);
+    tic
+    [prob_chance_affine_uni, opt_input_vec_chance_affine_uni,...
+        opt_input_gain_chance_affine_uni] = SReachPoint('term', ...
+            'chance-affine-uni', sys, init_state_chance_affine_uni, ...
+            target_tube, ccAu_opts);
+    elapsed_time_chance_affine_uni = toc;
+    fprintf('Computation time (s): %1.3f\n', elapsed_time_chance_affine_uni);
+    if prob_chance_affine_uni > 0
+        % mean_X = Z * x_0 + H * (M \mu_W + d) + G * \mu_W
+        opt_mean_X_chance_affine_uni = Z * init_state_chance_affine_uni +...
+            H * opt_input_vec_chance_affine_uni + ...
+            (H * opt_input_gain_chance_affine_uni + G) * muW;
+        % Optimal mean trajectory construction
+        opt_mean_traj_chance_affine_uni = reshape(opt_mean_X_chance_affine_uni, ...
+            sys.state_dim,[]);
+        % Check via Monte-Carlo simulation
+        concat_state_realization_cca_uni = generateMonteCarloSims(...
+            n_mcarlo_sims_affine, sys, init_state_chance_affine_uni, ...
+            time_horizon, opt_input_vec_chance_affine_uni,...
+            opt_input_gain_chance_affine_uni, 1);
+        mcarlo_result = target_tube.contains(concat_state_realization_cca_uni);
+        simulated_prob_chance_affine_uni = ...
+            sum(mcarlo_result)/n_mcarlo_sims_affine;
+    else
+        simulated_prob_chance_affine_uni = NaN;
+    end
+    fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
+        prob_chance_affine_uni, simulated_prob_chance_affine_uni);
+end
+
+
 %% Summary of results
 % For ease of comparison, we list the probability estimates, the
 % Monte-Carlo simulation validations, and the computation times once again.
@@ -536,6 +601,21 @@ if chance_affine_run && prob_chance_affine > 0
     fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
         prob_chance_affine, simulated_prob_chance_affine);
     fprintf('Computation time (s): %1.3f\n', elapsed_time_chance_affine);    
+end
+if chance_affine_uni_run && prob_chance_affine_uni > 0
+    h_opt_mean_chance_affine_uni = scatter(...
+          [init_state_chance_affine_uni(1), opt_mean_traj_chance_affine_uni(1,:)], ...
+          [init_state_chance_affine_uni(2), opt_mean_traj_chance_affine_uni(2,:)], ...
+          30, 'kd', 'filled','DisplayName', 'Mean trajectory (chance-affine-uni)');
+    legend_cell{end+1} = 'Mean trajectory (chance-affine-uni)';
+    h_vec(end+1) = h_opt_mean_chance_affine_uni;
+    ellipsoidsFromMonteCarloSims(...
+        concat_state_realization_cca_uni(sys.state_dim+1:end,:), sys.state_dim,...
+        dims_to_consider, {'k'});
+    disp('>>> SReachPoint with chance-affine-uni')
+    fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
+        prob_chance_affine_uni, simulated_prob_chance_affine_uni);
+    fprintf('Computation time (s): %1.3f\n', elapsed_time_chance_affine_uni);    
 end
 legend(h_vec, legend_cell, 'Location','EastOutside', 'interpreter','latex');
 title(['Ellipsoids fit 100 random Monte-Carlo sims.']);

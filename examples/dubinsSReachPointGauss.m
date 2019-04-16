@@ -537,9 +537,11 @@ for itt = 0:time_horizon
     end            
 end
 axis equal        
-h_nominal_traj = scatter(center_box(1,:), center_box(2,:), 50,'ks','filled');        
-h_vec = [h_target_tube, h_nominal_traj];
-legend_cell = {'Target tube', 'Nominal trajectory'};
+%h_nominal_traj = scatter(center_box(1,:), center_box(2,:), 50,'ks','filled');        
+%h_vec = [h_target_tube, h_nominal_traj];
+%legend_cell = {'Target tube', 'Nominal trajectory'};
+h_vec = h_target_tube;
+legend_cell = {'Target tube'};
 % Plot the optimal mean trajectory from the vertex under study
 if chance_open_run_gauss
     h_opt_mean_ccc_gauss = scatter(...
@@ -636,34 +638,63 @@ xlabel('x');
 ylabel('y');
 axis equal
 box on;
+set(gca,'FontSize',20);
 drawnow;
 
 %% Bar plot
-prob_val = [prob_chance_open_gauss, ...
-prob_genzps_open_gauss, ...
-prob_particle_open_gauss, ...
-prob_voronoi_open_gauss, ... 
-prob_chance_affine_uni_gauss, ... 
-prob_chance_affine_gauss];
-simulated_prob_val = [simulated_prob_chance_open_gauss, ...
-simulated_prob_genzps_open_gauss, ...
-simulated_prob_particle_open_gauss, ...
-simulated_prob_voronoi_open_gauss, ... 
-simulated_prob_chance_affine_uni_gauss, ... 
-simulated_prob_chance_affine_gauss];
-elapsed_time_val = [elapsed_time_chance_open_gauss, ...
-elapsed_time_genzps_gauss, ...
-elapsed_time_particle_gauss, ...
-elapsed_time_voronoi_gauss, ... 
-elapsed_time_chance_affine_uni_gauss, ... 
-elapsed_time_chance_affine_gauss];
-figure(4);
+elapsed_time_vec = [elapsed_time_chance_open_gauss;
+                    elapsed_time_genzps_gauss;
+                    elapsed_time_particle_gauss;
+                    elapsed_time_voronoi_gauss;
+                    elapsed_time_chance_affine_uni_gauss;
+                    elapsed_time_chance_affine_gauss];
+prob_lb = [prob_chance_open_gauss;
+           prob_genzps_open_gauss;
+           prob_particle_open_gauss;
+           prob_voronoi_open_gauss;
+           prob_chance_affine_uni_gauss;
+           prob_chance_affine_gauss];
+sim_prob = [simulated_prob_chance_open_gauss;
+            simulated_prob_genzps_open_gauss;
+            simulated_prob_particle_open_gauss;
+            simulated_prob_voronoi_open_gauss;
+            simulated_prob_chance_affine_uni_gauss;
+            simulated_prob_chance_affine_gauss];
+
+figure(105);
 clf
-c = {'chance-open','genzps-open','particle-open','voronoi-open','chance-affine-uni','chance-affine'};
-bar([prob_val; simulated_prob_val; elapsed_time_val./1000]');
-xticklabels(c)
-legend('Estimated reach probability', 'Simulated reach probability', 'Compute time ($\times$ 1000s)','Location','Best','interpreter','latex');
+a=subplot(2,1,1);
+bar([prob_lb, sim_prob]);
+ylim([0.7 1]);
+xticklabels({'chance-open','genzps-open', 'particle-open', 'voronoi-open', 'chance-affine-uni', 'chance-affine'});
+yticks(0.7:0.1:1);
+ylabel('Reach probability');
 set(gca,'FontSize',20);
-box on;
+legend('Estimated', 'Simulated ($10^5$ particles)','interpreter','latex','location','southeast','FontSize',25);
+xlimits_sub1 = xlim;
 grid on;
-%title('Performance and compute times');
+box on;
+ax = subplot(2,1,2);
+hold on;
+xvec = xlimits_sub1(1):xlimits_sub1(2)+1;
+plot(xvec,10*ones(size(xvec)),'k--')
+plot(xvec,60*ones(size(xvec)),'k--')
+plot(xvec,600*ones(size(xvec)),'k--')
+% text(0.6,85,'1 minute','FontSize',20);
+% text(0.6,425,'10 minutes','FontSize',20);
+ylabel('Computation time (s)');
+bar(elapsed_time_vec,0.4,'k');
+set(gca,'YScale','log');
+xlim(xlimits_sub1)
+xticks(1:6)
+xticklabels({'chance-open','genzps-open', 'particle-open', 'voronoi-open', 'chance-affine-uni', 'chance-affine'});
+set(gca,'FontSize',20);
+grid on;
+box on;
+ylimits_sub2 = ylim;
+yyaxis right;
+set(gca,'YScale','log');
+ylim(ylimits_sub2);
+yticks([10,60,600]);
+yticklabels({'10 sec.', '1 min.','10 mins.'});
+ax.YAxis(2).Color = 'k';

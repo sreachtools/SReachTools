@@ -1,0 +1,423 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>automatedAnesthesiaDeliveryARCH2018</title><meta name="generator" content="MATLAB 9.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-04-15"><meta name="DC.source" content="automatedAnesthesiaDeliveryARCH2018.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Underapproximative verification of an automated anesthesia delivery system</a></li><li><a href="#2">Problem Formulation</a></li><li><a href="#3">Safety specifications</a></li><li><a href="#4">Computation of the underapproximation of the stochastic viability set</a></li><li><a href="#5">Plotting the stochastic viable set</a></li><li><a href="#6">Validate the underapproximative set and the controller using Monte-Carlo</a></li></ul></div><h2 id="1">Underapproximative verification of an automated anesthesia delivery system</h2><p>This example will demonstrate the use of <tt>SReachTools</tt> for controller synthesis and verification of a stochastic continuous-state discrete-time linear time-invariant (LTI) systems. This example script is part of the <tt>SReachTools</tt> toolbox, which is licensed under GPL v3 or (at your option) any later version. A copy of this license is given in <a href="https://github.com/unm-hscl/SReachTools/blob/master/LICENSE">https://github.com/unm-hscl/SReachTools/blob/master/LICENSE</a>.</p><p>In this example script, we discuss how to use <tt>SReachSet</tt> to synthesize open-loop controllers and verification for the problem of stochastic reachability of a target tube. Here, by verification, we wish to characterize a set of safe initial states with probabilistic safety above a threshold. We consider the verification of an automated anesthesia delivery model.</p><p>Automated anesthesia delivery systems have the potential to significantly reduce medical operation costs by allowing a single human-anestheologist to monitor multiple operations and delegate the low-level regulation of the patient's sedation level to the automation. Naturally, this system is safety critical, and we wish to ascertain the set of initial states (patient sedation levels) from which the automated anesthesia delivery system can continue to maintain within pre-specified safe bounds. If the patient sedation levels go outside these bounds, the patient may suffer from serious health consequences. This problem has been characterized as a benchmark problem in Abate et. al, ARCH 2018 paper (<a href="https://doi.org/10.29007/7ks7">https://doi.org/10.29007/7ks7</a>). To obtain a LTI system description, we consider Problem 2.1.1 with no anestheologist-in-the-loop, but an additive Gaussian disturbance to model the human patients. This script improves upon the Figures 6 and 7 of Abate et. al, ARCH 2018 paper (<a href="https://doi.org/10.29007/7ks7">https://doi.org/10.29007/7ks7</a>).</p><p>All computations were performed using MATLAB on an Intel Xeon CPU with 3.7GHz clock rate and 16 GB RAM.</p><pre class="codeinput"><span class="comment">% Prescript running: Initializing srtinit, if it already hasn't been initialized</span>
+close <span class="string">all</span>;clearvars;srtinit;
+</pre><h2 id="2">Problem Formulation</h2><p>We first define a <tt>LtiSystem</tt> object corresponding to the discrete-time approximation of the three-compartment pharmacokinetic system model.</p><p>We bound the anesthesia the automation can deliver to <img src="automatedAnesthesiaDeliveryARCH2018_eq14614078222077133723.png" alt="$[0,7]$"> mg/dL and account for patient model mismatch via an additive Gaussian noise.</p><pre class="codeinput"><span class="comment">% System matrices: State matrix and input matrix</span>
+<span class="comment">% ----------------------------------------------</span>
+systemMatrix = [0.8192, 0.03412, 0.01265;
+                0.01646, 0.9822, 0.0001;
+                0.0009, 0.00002, 0.9989];
+inputMatrix = [0.01883;
+               0.0002;
+               0.00001];
+<span class="comment">% Input bounds</span>
+<span class="comment">% ------------</span>
+auto_input_max = 7;
+
+<span class="comment">% Process disturbance with a specified mean and variance</span>
+<span class="comment">% ------------------------------------------------------</span>
+dist_mean = 0;
+dist_var = 5;
+process_disturbance = RandomVector(<span class="string">'Gaussian'</span>,dist_mean, dist_var);
+
+<span class="comment">% LtiSystem definition</span>
+sys = LtiSystem(<span class="string">'StateMatrix'</span>, systemMatrix, <span class="keyword">...</span>
+                <span class="string">'InputMatrix'</span>, inputMatrix, <span class="keyword">...</span>
+                <span class="string">'DisturbanceMatrix'</span>, inputMatrix, <span class="keyword">...</span>
+                <span class="string">'InputSpace'</span>, Polyhedron(<span class="string">'lb'</span>, 0, <span class="string">'ub'</span>, auto_input_max), <span class="keyword">...</span>
+                <span class="string">'Disturbance'</span>, process_disturbance);
+disp(sys)
+</pre><pre class="codeoutput">Linear time invariant system with 3 states, 1 inputs, and 1 disturbances.
+</pre><h2 id="3">Safety specifications</h2><p>We desire that the state remains inside a set <img src="automatedAnesthesiaDeliveryARCH2018_eq13886633771416718936.png" alt="$\mathcal{K}=\{x\in \mathbf{R}^3: 0\leq x_1 \leq 6, 0\leq x_2 \leq 10, 0\leq x_3 \leq 10 \}$">.</p><pre class="codeinput">time_horizon = 10;
+safe_set = Polyhedron(<span class="string">'lb'</span>,[1, 0, 0], <span class="string">'ub'</span>, [6, 10, 10]);
+safety_tube = Tube(<span class="string">'viability'</span>,safe_set, time_horizon);
+</pre><h2 id="4">Computation of the underapproximation of the stochastic viability set</h2><p>We are interested in computing the stochastic viability set at probability 0.99.</p><p>For using <tt>SReachSet</tt> with <tt>chance-open</tt> option, we need a set of direction vectors and an affine hull (n-2 dimensional) intersecting the initial state. Since <img src="automatedAnesthesiaDeliveryARCH2018_eq14660336936512934444.png" alt="$x_3$"> of the dynamics is slow, we fix it <img src="automatedAnesthesiaDeliveryARCH2018_eq18379816359921005976.png" alt="$x_3=5$"> and analyze the rest of the system.</p><pre class="codeinput"><span class="comment">% Safety probability threshold of interest</span>
+<span class="comment">% ----------------------------------------</span>
+prob_thresh = 0.99;     <span class="comment">% Stochastic reach-avoid 'level' of interest</span>
+<span class="comment">% Definition of the affine hull</span>
+<span class="comment">% -----------------------------</span>
+x3_initial_state = 5;
+init_safe_set_affine = Polyhedron(<span class="string">'He'</span>,[0, 0, 1, x3_initial_state]);
+<span class="comment">% Definition of set of direction vectors</span>
+<span class="comment">% --------------------------------------</span>
+no_of_dir_vecs = 32;
+theta_vec = linspace(0,2*pi, no_of_dir_vecs+1);
+theta_vec = theta_vec(1:end-1);
+set_of_dir_vecs = [cos(theta_vec);sin(theta_vec);zeros(1,no_of_dir_vecs)];
+<span class="comment">% Use SReachSet to compute the underapproximative set</span>
+<span class="comment">% ---------------------------------------------------</span>
+<span class="comment">% Use Ctrl + F1 to get the hints</span>
+options = SReachSetOptions(<span class="string">'term'</span>,<span class="string">'chance-open'</span>, <span class="string">'verbose'</span>, 1, <span class="keyword">...</span>
+    <span class="string">'set_of_dir_vecs'</span>, set_of_dir_vecs, <span class="keyword">...</span>
+    <span class="string">'init_safe_set_affine'</span>, init_safe_set_affine);
+timer_val = tic;
+[underapprox_stoch_viab_polytope, extra_info] = SReachSet(<span class="string">'term'</span>, <span class="keyword">...</span>
+    <span class="string">'chance-open'</span>, sys, prob_thresh, safety_tube, options);
+elapsed_time = toc(timer_val);
+</pre><pre class="codeoutput">Warning: Sanitized covariance matrix since negative eigenvalues &gt; -2*eps and &lt;0
+found!
+New covariance matrix has all the eigenvalues below 1e-10 set to 0. 
+Warning: A non-empty cvx problem already exists in this scope.
+   It is being overwritten. 
+Maximum reach probability: 1.00
+Computing the polytope via a maximally safe initial state
+Analyzing direction :  32/  32
+Computing the polytope via the Chebyshev center
+Analyzing direction :  32/  32
+</pre><h2 id="5">Plotting the stochastic viable set</h2><pre class="codeinput">figure(1);
+hold <span class="string">on</span>;
+safe_set_2D = safe_set.intersect(init_safe_set_affine);
+plot(safe_set_2D, <span class="string">'color'</span>, <span class="string">'y'</span>);
+plot(underapprox_stoch_viab_polytope, <span class="string">'color'</span>, <span class="string">'m'</span>, <span class="string">'alpha'</span>, 0.5);
+leg=legend({<span class="string">'Safe set'</span>,<span class="string">'Underapproximative polytope'</span>});
+set(leg,<span class="string">'Location'</span>,<span class="string">'SouthEast'</span>);
+xlabel(<span class="string">'$x_1$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>)
+ylabel(<span class="string">'$x_2$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>)
+box <span class="string">on</span>;
+grid <span class="string">on</span>;
+view([0,90]);
+title(<span class="string">'Open-loop underapproximative stochastic viability set'</span>);
+<span class="comment">% If code ocean, save the results</span>
+<span class="comment">% saveas(gcf, '../results/Anesthesia_StochasticViabilitySet.png');</span>
+</pre><img vspace="5" hspace="5" src="automatedAnesthesiaDeliveryARCH2018_01.png" alt=""> <h2 id="6">Validate the underapproximative set and the controller using Monte-Carlo</h2><p>We will now check how the optimal policy computed for one of the corners perform in Monte-Carlo simulations.</p><p>Note that we fail to obtain tight bounding ellipsoids in the initial time steps due to lack of spread in the trajectory.</p><pre class="codeinput">n_mcarlo_sims = 1e5;            <span class="comment">% How many Monte-Carlo simulations to use</span>
+vertex_indx = 8;                <span class="comment">% Index of the vertex corner of interest</span>
+<span class="keyword">if</span> ~isEmptySet(underapprox_stoch_viab_polytope)
+    <span class="comment">% Obtain info about the vertices from extra_info struct given by SReachSet</span>
+    <span class="comment">% ------------------------------------------------------------------------</span>
+    initial_state = extra_info(1).vertices_underapprox_polytope(:,vertex_indx);
+    opt_input_vec = extra_info(1).opt_input_vec_at_vertices(:,vertex_indx);
+    stoch_viab_prob_lb = extra_info(1).opt_reach_prob_i(vertex_indx);
+    <span class="comment">% Optimal mean trajectory generation</span>
+    <span class="comment">% ----------------------------------</span>
+    [Z, H, G] = sys.getConcatMats(time_horizon);
+    W = sys.dist.concat(time_horizon);
+    optimal_X = (Z * initial_state + H * opt_input_vec) + G * W;
+    optimal_mean_X = reshape(optimal_X.mean(), sys.state_dim,[]);
+    <span class="comment">% Monte-Carlo estimate of the safety probability</span>
+    <span class="comment">% ----------------------------------------------</span>
+    concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, sys, <span class="keyword">...</span>
+        initial_state, time_horizon, opt_input_vec);
+    mcarlo_result = safety_tube.contains(concat_state_realization);
+    stoch_viab_prob_mc_estim = sum(mcarlo_result)/n_mcarlo_sims;
+
+    <span class="comment">% Plotting</span>
+    <span class="comment">% --------</span>
+    figure(2);
+    hold <span class="string">on</span>;
+    <span class="comment">% Plot the safe set at the fixed x_3</span>
+    plot(safe_set_2D.slice(3,x3_initial_state), <span class="string">'color'</span>, <span class="string">'y'</span>);
+    <span class="comment">% Plot the underapproximation of the stochastic reach set at the fixed x_3</span>
+    plot(underapprox_stoch_viab_polytope.slice(3,x3_initial_state), <span class="keyword">...</span>
+        <span class="string">'color'</span>,<span class="string">'m'</span>,<span class="string">'alpha'</span>,0.5);
+    <span class="comment">% Plot the initial state (vertex) under test</span>
+    scatter(initial_state(1),initial_state(2), 300,<span class="string">'k^'</span>,<span class="string">'filled'</span>);
+    <span class="comment">% Plot the optimal mean trajectory from the initial state (vertex) under</span>
+    <span class="comment">% test</span>
+    scatter([initial_state(1), optimal_mean_X(1,:)], <span class="keyword">...</span>
+            [initial_state(2), optimal_mean_X(2,:)], <span class="keyword">...</span>
+          30, <span class="string">'bo'</span>, <span class="string">'filled'</span>);
+    legend_cell = {<span class="string">'Safe set'</span>, <span class="string">'Underapproximation set'</span>, <span class="string">'A vertex'</span>, <span class="keyword">...</span>
+        <span class="string">'Mean trajectory'</span>};
+    leg = legend(legend_cell,<span class="string">'Location'</span>,<span class="string">'EastOutside'</span>);
+    <span class="comment">% Plot ellipsoids that tightly cover 100 randomly chosen realizations</span>
+    ellipsoidsFromMonteCarloSims(concat_state_realization, sys.state_dim, <span class="keyword">...</span>
+        [1,2], {<span class="string">'b'</span>});
+    title(sprintf([<span class="string">'Open-loop-based lower bound: %1.3f\n Monte-Carlo '</span>, <span class="keyword">...</span>
+                   <span class="string">'simulation: %1.3f\nEllipsoids tightly fit 100\n'</span>,<span class="keyword">...</span>
+                   <span class="string">'randomly chosen Monte-Carlo sims.'</span>], stoch_viab_prob_lb, <span class="keyword">...</span>
+                    stoch_viab_prob_mc_estim));
+    box <span class="string">on</span>;
+    grid <span class="string">on</span>;
+    xlabel(<span class="string">'$x_1$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>)
+    ylabel(<span class="string">'$x_2$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+<span class="keyword">end</span>
+<span class="comment">% If code ocean, save the results</span>
+<span class="comment">% saveas(gcf, '../results/Anesthesia_StochasticViabControlDemo.png');</span>
+
+<span class="comment">% Display the results</span>
+<span class="comment">% -------------------</span>
+fprintf(<span class="string">'\n\nTime taken for the reach set computation: %1.2f\n'</span>, elapsed_time)
+fprintf([<span class="string">'Open-loop-based lower bound and Monte-Carlo '</span>, <span class="keyword">...</span>
+         <span class="string">'simulation (%1.0e particles): %1.3f, %1.3f\n\n\n'</span>], <span class="keyword">...</span>
+        n_mcarlo_sims, stoch_viab_prob_lb, stoch_viab_prob_mc_estim);
+</pre><pre class="codeoutput">Warning: Sanitized covariance matrix since negative eigenvalues &gt; -2*eps and &lt;0
+found!
+New covariance matrix has all the eigenvalues below 1e-10 set to 0. 
+Warning: Sanitized covariance matrix since negative eigenvalues &gt; -2*eps and &lt;0
+found!
+New covariance matrix has all the eigenvalues below 1e-10 set to 0. 
+Warning: CVX failed to obtain the ellipsoid at 1, potentially due to numerical
+issues. 
+Warning: CVX failed to obtain the ellipsoid at 2, potentially due to numerical
+issues. 
+
+
+Time taken for the reach set computation: 23.86
+Open-loop-based lower bound and Monte-Carlo simulation (1e+05 particles): 0.990, 1.000
+
+
+</pre><img vspace="5" hspace="5" src="automatedAnesthesiaDeliveryARCH2018_02.png" alt=""> <p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2018b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Underapproximative verification of an automated anesthesia delivery system
+% This example will demonstrate the use of |SReachTools| for controller
+% synthesis and verification of a stochastic continuous-state discrete-time
+% linear time-invariant (LTI) systems. This example script is part of the
+% |SReachTools| toolbox, which is licensed under GPL v3 or (at your option) any
+% later version. A copy of this license is given in
+% <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+% https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
+% 
+% In this example script, we discuss how to use |SReachSet| to synthesize
+% open-loop controllers and verification for the problem of stochastic
+% reachability of a target tube. Here, by verification, we wish to characterize
+% a set of safe initial states with probabilistic safety above a threshold. We
+% consider the verification of an automated anesthesia delivery model.
+%
+% Automated anesthesia delivery systems have the potential to significantly
+% reduce medical operation costs by allowing a single human-anestheologist to
+% monitor multiple operations and delegate the low-level regulation of the
+% patient's sedation level to the automation. Naturally, this system is safety
+% critical, and we wish to ascertain the set of initial states (patient sedation
+% levels) from which the automated anesthesia delivery system can continue to
+% maintain within pre-specified safe bounds. If the patient sedation levels go
+% outside these bounds, the patient may suffer from serious health consequences.
+% This problem has been characterized as a benchmark problem in Abate et. al,
+% ARCH 2018 paper (<https://doi.org/10.29007/7ks7
+% https://doi.org/10.29007/7ks7>). To obtain a LTI system description, we
+% consider Problem 2.1.1 with no anestheologist-in-the-loop, but an additive
+% Gaussian disturbance to model the human patients. This script improves upon
+% the Figures 6 and 7 of Abate et. al, ARCH 2018 paper
+% (<https://doi.org/10.29007/7ks7 https://doi.org/10.29007/7ks7>).
+%
+% All computations were performed using MATLAB on an Intel Xeon CPU with 3.7GHz
+% clock rate and 16 GB RAM. 
+
+% Prescript running: Initializing srtinit, if it already hasn't been initialized
+close all;clearvars;srtinit;
+
+%% Problem Formulation
+% We first define a |LtiSystem| object corresponding to the discrete-time 
+% approximation of the three-compartment pharmacokinetic system model.
+%
+% We bound the anesthesia the automation can deliver to $[0,7]$ mg/dL and
+% account for patient model mismatch via an additive Gaussian noise.
+
+% System matrices: State matrix and input matrix
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+systemMatrix = [0.8192, 0.03412, 0.01265;
+                0.01646, 0.9822, 0.0001;
+                0.0009, 0.00002, 0.9989];
+inputMatrix = [0.01883;
+               0.0002;
+               0.00001];
+% Input bounds
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+auto_input_max = 7;  
+
+% Process disturbance with a specified mean and variance
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+dist_mean = 0;
+dist_var = 5;
+process_disturbance = RandomVector('Gaussian',dist_mean, dist_var);
+
+% LtiSystem definition                                        
+sys = LtiSystem('StateMatrix', systemMatrix, ...
+                'InputMatrix', inputMatrix, ...
+                'DisturbanceMatrix', inputMatrix, ...
+                'InputSpace', Polyhedron('lb', 0, 'ub', auto_input_max), ...
+                'Disturbance', process_disturbance);
+disp(sys)            
+%% Safety specifications
+% We desire that the state remains inside a set $\mathcal{K}=\{x\in
+% \mathbf{R}^3: 0\leq x_1 \leq 6, 0\leq x_2 \leq 10, 0\leq x_3 \leq 10 \}$.
+
+time_horizon = 10;
+safe_set = Polyhedron('lb',[1, 0, 0], 'ub', [6, 10, 10]);
+safety_tube = Tube('viability',safe_set, time_horizon);
+
+%% Computation of the underapproximation of the stochastic viability set
+% We are interested in computing the stochastic viability set at
+% probability 0.99.
+%
+% For using |SReachSet| with |chance-open| option, we need a set of direction 
+% vectors and an affine hull (n-2 dimensional) intersecting the initial
+% state. Since $x_3$ of the dynamics is slow, we fix it $x_3=5$ and analyze
+% the rest of the system.
+
+% Safety probability threshold of interest
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+prob_thresh = 0.99;     % Stochastic reach-avoid 'level' of interest
+% Definition of the affine hull
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+x3_initial_state = 5;
+init_safe_set_affine = Polyhedron('He',[0, 0, 1, x3_initial_state]);
+% Definition of set of direction vectors
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+no_of_dir_vecs = 32;
+theta_vec = linspace(0,2*pi, no_of_dir_vecs+1);
+theta_vec = theta_vec(1:end-1);
+set_of_dir_vecs = [cos(theta_vec);sin(theta_vec);zeros(1,no_of_dir_vecs)];
+% Use SReachSet to compute the underapproximative set
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+% Use Ctrl + F1 to get the hints                                             
+options = SReachSetOptions('term','chance-open', 'verbose', 1, ...
+    'set_of_dir_vecs', set_of_dir_vecs, ...
+    'init_safe_set_affine', init_safe_set_affine);
+timer_val = tic;
+[underapprox_stoch_viab_polytope, extra_info] = SReachSet('term', ...
+    'chance-open', sys, prob_thresh, safety_tube, options); 
+elapsed_time = toc(timer_val);
+%% Plotting the stochastic viable set
+figure(1);
+hold on;
+safe_set_2D = safe_set.intersect(init_safe_set_affine);
+plot(safe_set_2D, 'color', 'y');
+plot(underapprox_stoch_viab_polytope, 'color', 'm', 'alpha', 0.5);
+leg=legend({'Safe set','Underapproximative polytope'});
+set(leg,'Location','SouthEast');
+xlabel('$x_1$','interpreter','latex')
+ylabel('$x_2$','interpreter','latex')
+box on;
+grid on;
+view([0,90]);
+title('Open-loop underapproximative stochastic viability set');
+% If code ocean, save the results
+% saveas(gcf, '../results/Anesthesia_StochasticViabilitySet.png');
+
+%% Validate the underapproximative set and the controller using Monte-Carlo
+% We will now check how the optimal policy computed for one of the corners
+% perform in Monte-Carlo simulations.
+%
+% Note that we fail to obtain tight bounding ellipsoids in the initial time
+% steps due to lack of spread in the trajectory.
+%
+n_mcarlo_sims = 1e5;            % How many Monte-Carlo simulations to use
+vertex_indx = 8;                % Index of the vertex corner of interest
+if ~isEmptySet(underapprox_stoch_viab_polytope)
+    % Obtain info about the vertices from extra_info struct given by SReachSet
+    % REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+    initial_state = extra_info(1).vertices_underapprox_polytope(:,vertex_indx);
+    opt_input_vec = extra_info(1).opt_input_vec_at_vertices(:,vertex_indx);
+    stoch_viab_prob_lb = extra_info(1).opt_reach_prob_i(vertex_indx);
+    % Optimal mean trajectory generation 
+    % REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+    [Z, H, G] = sys.getConcatMats(time_horizon);
+    W = sys.dist.concat(time_horizon);
+    optimal_X = (Z * initial_state + H * opt_input_vec) + G * W;
+    optimal_mean_X = reshape(optimal_X.mean(), sys.state_dim,[]);
+    % Monte-Carlo estimate of the safety probability
+    % REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+    concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, sys, ...
+        initial_state, time_horizon, opt_input_vec);
+    mcarlo_result = safety_tube.contains(concat_state_realization);
+    stoch_viab_prob_mc_estim = sum(mcarlo_result)/n_mcarlo_sims;
+    
+    % Plotting
+    % REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH
+    figure(2);
+    hold on;
+    % Plot the safe set at the fixed x_3
+    plot(safe_set_2D.slice(3,x3_initial_state), 'color', 'y');
+    % Plot the underapproximation of the stochastic reach set at the fixed x_3
+    plot(underapprox_stoch_viab_polytope.slice(3,x3_initial_state), ...
+        'color','m','alpha',0.5);
+    % Plot the initial state (vertex) under test
+    scatter(initial_state(1),initial_state(2), 300,'k^','filled');
+    % Plot the optimal mean trajectory from the initial state (vertex) under
+    % test
+    scatter([initial_state(1), optimal_mean_X(1,:)], ...
+            [initial_state(2), optimal_mean_X(2,:)], ...
+          30, 'bo', 'filled');
+    legend_cell = {'Safe set', 'Underapproximation set', 'A vertex', ...
+        'Mean trajectory'};
+    leg = legend(legend_cell,'Location','EastOutside');
+    % Plot ellipsoids that tightly cover 100 randomly chosen realizations
+    ellipsoidsFromMonteCarloSims(concat_state_realization, sys.state_dim, ...
+        [1,2], {'b'});
+    title(sprintf(['Open-loop-based lower bound: %1.3f\n Monte-Carlo ', ...
+                   'simulation: %1.3f\nEllipsoids tightly fit 100\n',...
+                   'randomly chosen Monte-Carlo sims.'], stoch_viab_prob_lb, ...
+                    stoch_viab_prob_mc_estim));
+    box on;
+    grid on;
+    xlabel('$x_1$','interpreter','latex')
+    ylabel('$x_2$','interpreter','latex');   
+end
+% If code ocean, save the results
+% saveas(gcf, '../results/Anesthesia_StochasticViabControlDemo.png');
+
+% Display the results
+% REPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASHREPLACE_WITH_DASH_DASH-
+fprintf('\n\nTime taken for the reach set computation: %1.2f\n', elapsed_time)
+fprintf(['Open-loop-based lower bound and Monte-Carlo ', ...
+         'simulation (%1.0e particles): %1.3f, %1.3f\n\n\n'], ...
+        n_mcarlo_sims, stoch_viab_prob_lb, stoch_viab_prob_mc_estim);    
+
+##### SOURCE END #####
+--></body></html>

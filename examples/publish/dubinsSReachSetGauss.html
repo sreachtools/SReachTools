@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>dubinsSReachSetGauss</title><meta name="generator" content="MATLAB 9.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-02-10"><meta name="DC.source" content="dubinsSReachSetGauss.m"><style type="text/css">
+      --><title>dubinsSReachSetGauss</title><meta name="generator" content="MATLAB 9.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-04-15"><meta name="DC.source" content="dubinsSReachSetGauss.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -148,11 +148,12 @@ fprintf(<span class="string">'Time taken for computing the polytope (CCC): %1.3f
 
 Convex chance-constrained approach
 
+Maximum reach probability: 1.00
 Computing the polytope via a maximally safe initial state
 Analyzing direction :  16/  16
 Computing the polytope via the Chebyshev center
 Analyzing direction :  16/  16
-Time taken for computing the polytope (CCC): 24.011 s
+Time taken for computing the polytope (CCC): 25.715 s
 </pre><h2 id="7">Lagrangian over approximation</h2><pre class="codeinput">fprintf(<span class="string">'\n\nLagrangian-based approach for overapproximation\n\nSet options\n'</span>);
 timer_lagover = tic;
 n_dim = sys_gauss.state_dim;
@@ -175,36 +176,106 @@ Analyzing 7 unit-length vectors in first quadrant
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 3.386e-02 (&lt; 1.000e-08)
-Change in opt cost: 1.320e-01 (&lt; 1.000e-05)
+Sum of slack: 2.847e-02 (&lt; 1.000e-08)
+Change in opt cost: 1.401e-01 (&lt; 1.000e-05)
 
  2. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 5.289e-10 (&lt; 1.000e-08)
-Change in opt cost: 5.425e-02 (&lt; 1.000e-05)
+Sum of slack: 4.770e-02 (&lt; 1.000e-08)
+Change in opt cost: 2.866e-02 (&lt; 1.000e-05)
 
  3. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 2.730e-10 (&lt; 1.000e-08)
-Change in opt cost: 1.215e-02 (&lt; 1.000e-05)
+Sum of slack: 5.012e-02 (&lt; 1.000e-08)
+Change in opt cost: 2.559e-03 (&lt; 1.000e-05)
 
  4. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 2.132e-11 (&lt; 1.000e-08)
-Change in opt cost: 9.896e-04 (&lt; 1.000e-05)
+Sum of slack: 5.014e-02 (&lt; 1.000e-08)
+Change in opt cost: 2.230e-05 (&lt; 1.000e-05)
 
  5. Setting up the CVX problem...
   1 |  2 |  3 |  4 |  5 |  6 |  7 |
 Solving the CVX problem...done
 Status: Solved
-Sum of slack: 4.554e-11 (&lt; 1.000e-08)
-Change in opt cost: 6.016e-06 (&lt; 1.000e-05)
+Sum of slack: 5.014e-02 (&lt; 1.000e-08)
+Change in opt cost: 2.809e-09 (&lt; 1.000e-05)
+
+ 6. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 5.014e-02 (&lt; 1.000e-08)
+Change in opt cost: 9.471e-09 (&lt; 1.000e-05)
+
+ 7. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 5.014e-02 (&lt; 1.000e-08)
+Change in opt cost: 1.211e-09 (&lt; 1.000e-05)
+
+ 8. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 5.014e-02 (&lt; 1.000e-08)
+Change in opt cost: 1.303e-08 (&lt; 1.000e-05)
+
+ 9. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 5.014e-02 (&lt; 1.000e-08)
+Change in opt cost: 4.355e-09 (&lt; 1.000e-05)
+
+10. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 4.496e-02 (&lt; 1.000e-08)
+Change in opt cost: 3.328e-04 (&lt; 1.000e-05)
+
+11. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 3.710e-02 (&lt; 1.000e-08)
+Change in opt cost: 1.117e-03 (&lt; 1.000e-05)
+
+12. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 2.977e-12 (&lt; 1.000e-08)
+Change in opt cost: 1.329e-01 (&lt; 1.000e-05)
+
+13. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 4.101e-11 (&lt; 1.000e-08)
+Change in opt cost: 3.859e-03 (&lt; 1.000e-05)
+
+14. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 2.625e-12 (&lt; 1.000e-08)
+Change in opt cost: 1.613e-04 (&lt; 1.000e-05)
+
+15. Setting up the CVX problem...
+  1 |  2 |  3 |  4 |  5 |  6 |  7 |
+Solving the CVX problem...done
+Status: Solved
+Sum of slack: 3.546e-11 (&lt; 1.000e-08)
+Change in opt cost: 6.136e-07 (&lt; 1.000e-05)
 
 Completed spreading the vectors!
 Computing Lagragian over approximation
@@ -220,7 +291,8 @@ lagunder_options = SReachSetOptions(<span class="string">'term'</span>, <span cl
     sys_gauss, prob_thresh, target_tube, lagunder_options);
 elapsed_time_lagunder = toc(timer_lagunder);
 
-fprintf([<span class="string">'\n\nElapsed time: (chance-open) %1.3f | (lag-under) %1.3f |'</span>,<span class="keyword">...</span>
+fprintf(<span class="string">'\n\nProbability threshold requested: %1.2f\n'</span>, prob_thresh);
+fprintf([<span class="string">'Elapsed time: (chance-open) %1.3f | (lag-under) %1.3f |'</span>,<span class="keyword">...</span>
     <span class="string">' (lag-over) %1.3f seconds\n'</span>], elapsed_time_polytope_ccc, <span class="keyword">...</span>
     elapsed_time_lagunder, elapsed_time_lagover);
 </pre><pre class="codeoutput">
@@ -257,7 +329,8 @@ Computation for time step: 1
 Computation for time step: 0
 
 
-Elapsed time: (chance-open) 24.011 | (lag-under) 0.305 | (lag-over) 36.460 seconds
+Probability threshold requested: 0.80
+Elapsed time: (chance-open) 25.715 | (lag-under) 0.366 | (lag-over) 57.722 seconds
 </pre><h2 id="9">Testing the controller using a far-away (from target) safe initial</h2><pre class="codeinput">fprintf([<span class="string">'\n\nTesting the controller for some initial point in lag-under '</span>,<span class="keyword">...</span>
     <span class="string">'polytope\n\n'</span>]);
 cvx_begin <span class="string">quiet</span>
@@ -312,9 +385,9 @@ Testing initial state:    -1.5154   -1.6927
 Getting 100 realizations...Done
 Pruning infeasible disturbance trajectories,
 when it violates at a particular time instant... Done.
-Found 81 feasible disturbance trajectories (~ 0.8100 success probability)
+Found 85 feasible disturbance trajectories (~ 0.8500 success probability)
 Rearranging realizations...
-Analyzing particles:     81/    81
+Analyzing particles:     85/    85
 </pre><img vspace="5" hspace="5" src="dubinsSReachSetGauss_02.png" alt=""> <h2 id="10">Plot the set</h2><pre class="codeinput">axis_v = axis();
 figure(101);
 clf
@@ -329,6 +402,7 @@ legend(<span class="string">'Target set at t=0'</span>,<span class="string">'lag
     <span class="comment">% Define the target set at time itt</span>
     plot(target_tube_cell{itt+1},<span class="string">'alpha'</span>,0.08,<span class="string">'LineStyle'</span>,<span class="string">':'</span>,<span class="string">'color'</span>,<span class="string">'y'</span>);
 <span class="keyword">end</span>
+title(sprintf(<span class="string">'Stochastic reach sets at \\alpha=%1.2f'</span>, prob_thresh));
 axis <span class="string">equal</span>
 axis(axis_v);
 box <span class="string">on</span>;
@@ -552,7 +626,8 @@ lagunder_options = SReachSetOptions('term', 'lag-under', ...
     sys_gauss, prob_thresh, target_tube, lagunder_options);
 elapsed_time_lagunder = toc(timer_lagunder);
 
-fprintf(['\n\nElapsed time: (chance-open) %1.3f | (lag-under) %1.3f |',...
+fprintf('\n\nProbability threshold requested: %1.2f\n', prob_thresh);
+fprintf(['Elapsed time: (chance-open) %1.3f | (lag-under) %1.3f |',...
     ' (lag-over) %1.3f seconds\n'], elapsed_time_polytope_ccc, ...
     elapsed_time_lagunder, elapsed_time_lagover);
 
@@ -619,6 +694,7 @@ for itt = 2:time_horizon
     % Define the target set at time itt
     plot(target_tube_cell{itt+1},'alpha',0.08,'LineStyle',':','color','y');
 end
+title(sprintf('Stochastic reach sets at \\alpha=%1.2f', prob_thresh));
 axis equal
 axis(axis_v);
 box on;

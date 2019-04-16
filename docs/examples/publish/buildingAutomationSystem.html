@@ -1,0 +1,412 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>buildingAutomationSystem</title><meta name="generator" content="MATLAB 9.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-04-15"><meta name="DC.source" content="buildingAutomationSystem.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><h2>Contents</h2><div><ul><li><a href="#1">Building automation system verification</a></li><li><a href="#2">Problem setup</a></li><li><a href="#3">Construction of the chance-open-based underapproximation</a></li><li><a href="#4">Construction of the lagrangian-based underapproximation</a></li><li><a href="#5">Construction of the Genz+patternsearch-based underapproximation</a></li><li><a href="#6">Plot the figures</a></li><li><a href="#7">Disp</a></li></ul></div><h2 id="1">Building automation system verification</h2><p>See ARCH 2019</p><p>Comparison of (chance-constraint+open-loop)-based underapproximation with Lagrangian (set-theoretic)-based underapproximation to construct the stochastic reach set at prob_thresh = 0.8</p><p>In the interest of time, Genzps+patternsearch-based underapproximation has been disabled. See should_we_run_genzps</p><pre class="codeinput">close <span class="string">all</span>;srtinit;
+</pre><h2 id="2">Problem setup</h2><p>System matrices</p><pre class="codeinput">state_matrix = <span class="keyword">...</span>
+   [ 0.9096   , -0.0106  , -0.0019   ,        0;
+    -0.0097   , 0.9152  ,       0   , -0.0015;
+    -0.0133   , 0        ,  0.9625  ,      0;
+    0         , -0.0133  ,       0   , 0.9625];
+input_matrix = [0.0779;0.0779;0;0];
+dist_matrix = eye(4);
+
+<span class="comment">% Input space</span>
+input_space = Polyhedron(<span class="string">'lb'</span>,19,<span class="string">'ub'</span>,20);
+
+<span class="comment">% Disturbance definition</span>
+dist_mu = [0.0622;0.0561;1.8094;1.8094];
+dist_sigma = diag([0.2,0.2,0.1,0.1]);
+dist_rv = RandomVector.gaussian(dist_mu, dist_sigma);
+
+<span class="comment">% System definition</span>
+sys = LtiSystem(<span class="string">'StateMatrix'</span>,state_matrix, <span class="string">'InputMatrix'</span>,input_matrix, <span class="keyword">...</span>
+    <span class="string">'DisturbanceMatrix'</span>,dist_matrix, <span class="string">'InputSpace'</span>, input_space, <span class="keyword">...</span>
+    <span class="string">'Disturbance'</span>, dist_rv);
+
+<span class="comment">% Time steps</span>
+time_horizon = 6;
+
+<span class="comment">% Safety specification --- Constraints are present only the first two states</span>
+safe_set = Polyhedron(<span class="string">'lb'</span>, [-19.5;-19.5;-Inf;-Inf], <span class="string">'ub'</span>, [20.5;20.5;Inf;Inf]);
+safety_tube = Tube(<span class="string">'viability'</span>, safe_set, time_horizon);
+
+<span class="comment">% Stochastic viability threshold: Compute the set of initial states which</span>
+<span class="comment">% have the probability of safety above this threshold</span>
+prob_thresh = 0.8;
+<span class="comment">% Slice of the stochastic viability set of interest</span>
+x3_init = 0;
+x4_init = 0;
+
+<span class="comment">% How many directions to explore for chance-open and genzps</span>
+cc_n_dir_vecs = 16;
+genzps_n_dir_vecs = 16;
+lag_over_n_dir_vecs = 16;
+should_we_run_genzps = 0; <span class="comment">% DISABLED: It takes time for (slightly) better result</span>
+</pre><h2 id="3">Construction of the chance-open-based underapproximation</h2><pre class="codeinput">disp(<span class="string">'&gt;&gt;&gt; Chance-constraint-based underapproximation'</span>);
+timerVal = tic;
+<span class="comment">% Directions to explore</span>
+theta_vec = linspace(0, 2*pi, cc_n_dir_vecs + 1);
+theta_vec = theta_vec(1:end-1);
+set_of_dir_vecs = [cos(theta_vec);sin(theta_vec);zeros(2,cc_n_dir_vecs)];
+<span class="comment">% Slice of the stochastic viability set of interest</span>
+init_safe_set_affine = Polyhedron(<span class="string">'He'</span>,[0,0,1,0,x3_init;0,0,0,1,x4_init]);
+<span class="comment">% SReachSet options preparation</span>
+cco_options = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'chance-open'</span>, <span class="keyword">...</span>
+    <span class="string">'init_safe_set_affine'</span>, init_safe_set_affine, <span class="string">'set_of_dir_vecs'</span>, <span class="keyword">...</span>
+    set_of_dir_vecs, <span class="string">'verbose'</span>, 1);
+cco_stoch_viab_set = SReachSet(<span class="string">'term'</span>,<span class="string">'chance-open'</span>,sys, prob_thresh, <span class="keyword">...</span>
+    safety_tube, cco_options);
+elapsed_time_cc = toc(timerVal);
+<span class="comment">% For plotting, construct the slice</span>
+cco_stoch_viab_set_2D =  cco_stoch_viab_set.slice([3,4], [x3_init;x4_init]);
+</pre><pre class="codeoutput">&gt;&gt;&gt; Chance-constraint-based underapproximation
+Maximum reach probability: 1.00
+Computing the polytope via a maximally safe initial state
+Analyzing direction :  16/  16
+Computing the polytope via the Chebyshev center
+Analyzing direction :  16/  16
+</pre><h2 id="4">Construction of the lagrangian-based underapproximation</h2><pre class="codeinput">fprintf(<span class="string">'\n\n\n &gt;&gt;&gt; Lagrangian-based underapproximation\n'</span>);
+timerVal = tic;
+lag_under_options = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'lag-under'</span>, <span class="keyword">...</span>
+    <span class="string">'bound_set_method'</span>, <span class="string">'ellipsoid'</span>, <span class="string">'compute_style'</span>, <span class="string">'vfmethod'</span>, <span class="string">'verbose'</span>, 1);
+lag_under_stoch_viab_set = SReachSet(<span class="string">'term'</span>,<span class="string">'lag-under'</span>,sys, prob_thresh, <span class="keyword">...</span>
+    safety_tube, lag_under_options);
+elapsed_time_lag_under = toc(timerVal);
+<span class="comment">% For plotting, construct the slice</span>
+lag_under_stoch_viab_set_2D = lag_under_stoch_viab_set.slice([3,4], <span class="keyword">...</span>
+    [x3_init;x4_init]);
+
+<span class="comment">% %% Construction of the lagrangian-based overapproximation</span>
+<span class="comment">% fprintf('\n\n\n &gt;&gt;&gt; Lagrangian-based overapproximation\n');</span>
+<span class="comment">% timerVal = tic;</span>
+<span class="comment">% lag_over_options = SReachSetOptions('term', 'lag-over', ...</span>
+<span class="comment">%     'bound_set_method', 'ellipsoid', 'compute_style', 'support', ...</span>
+<span class="comment">%     'verbose', 1, 'system', sys, 'n_vertices', lag_over_n_dir_vecs);</span>
+<span class="comment">% lag_over_stoch_viab_set = SReachSet('term','lag-over',sys, prob_thresh, ...</span>
+<span class="comment">%     safety_tube, lag_over_options);</span>
+<span class="comment">% elapsed_time_lag_over = toc(timerVal);</span>
+<span class="comment">% % For plotting, construct the slice</span>
+<span class="comment">% lag_over_stoch_viab_set_2D = lag_over_stoch_viab_set.slice([3,4], ...</span>
+<span class="comment">%     [x3_init;x4_init]);</span>
+</pre><pre class="codeoutput">
+
+
+ &gt;&gt;&gt; Lagrangian-based underapproximation
+Computing Lagragian under approximation
+
+Time_horizon: 6
+Computation for time step: 5
+Computation for time step: 4
+Computation for time step: 3
+Computation for time step: 2
+Computation for time step: 1
+Computation for time step: 0
+</pre><h2 id="5">Construction of the Genz+patternsearch-based underapproximation</h2><pre class="codeinput"><span class="keyword">if</span> should_we_run_genzps
+    fprintf(<span class="string">'\n\n\n &gt;&gt;&gt; Genz+patternsearch-based underapproximation\n'</span>);
+    timerVal = tic;
+    <span class="comment">% Directions to explore</span>
+    theta_vec = linspace(0, 2*pi, genzps_n_dir_vecs + 1);
+    theta_vec = theta_vec(1:end-1);
+    set_of_dir_vecs = [cos(theta_vec);sin(theta_vec);
+                       zeros(2,genzps_n_dir_vecs)];
+    <span class="comment">% Slice of the stochastic viability set of interest</span>
+    init_safe_set_affine = Polyhedron(<span class="string">'He'</span>,[0,0,1,0,x3_init;0,0,0,1,x4_init]);
+    <span class="comment">% SReachSet options preparation</span>
+    genzps_options = SReachSetOptions(<span class="string">'term'</span>, <span class="string">'genzps-open'</span>, <span class="keyword">...</span>
+        <span class="string">'init_safe_set_affine'</span>, init_safe_set_affine, <span class="string">'set_of_dir_vecs'</span>, <span class="keyword">...</span>
+        set_of_dir_vecs,<span class="string">'verbose'</span>,1);
+    genzps_stoch_viab_set = SReachSet(<span class="string">'term'</span>,<span class="string">'genzps-open'</span>,sys, prob_thresh, <span class="keyword">...</span>
+        safety_tube, genzps_options);
+    elapsed_time_genzps = toc(timerVal);
+    <span class="comment">% For plotting, construct the slice</span>
+    genzps_stoch_viab_set_2D =  genzps_stoch_viab_set.slice([3,4], <span class="keyword">...</span>
+        [x3_init; x4_init]);
+<span class="keyword">else</span>
+    fprintf(<span class="string">'\n\n\n&gt;&gt;&gt; Skipping genzps-based computation.\n'</span>);
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">
+
+
+&gt;&gt;&gt; Skipping genzps-based computation.
+</pre><h2 id="6">Plot the figures</h2><pre class="codeinput">figure(1);
+clf
+plot(Polyhedron(<span class="string">'V'</span>,safe_set.V(:,1:2)),<span class="string">'color'</span>,<span class="string">'y'</span>);
+hold <span class="string">on</span>;
+<span class="keyword">if</span> should_we_run_genzps
+    plot(genzps_stoch_viab_set_2D, <span class="string">'color'</span>,<span class="string">'g'</span>);
+<span class="keyword">end</span>
+plot(cco_stoch_viab_set_2D, <span class="string">'color'</span>,<span class="string">'m'</span>);
+plot(lag_under_stoch_viab_set_2D, <span class="string">'color'</span>,<span class="string">'b'</span>);
+<span class="keyword">if</span> should_we_run_genzps
+    leg=legend(<span class="string">'Safe set'</span>, <span class="string">'Stochastic viability set (genzps-open)'</span>, <span class="keyword">...</span>
+        <span class="string">'Stochastic viability set (chance-open)'</span>, <span class="keyword">...</span>
+        <span class="string">'Stochastic viability set (lag-under)'</span>);
+<span class="keyword">else</span>
+    leg=legend(<span class="string">'Safe set'</span>, <span class="string">'Stochastic viability set (chance-open)'</span>, <span class="keyword">...</span>
+        <span class="string">'Stochastic viability set (lag-under)'</span>);
+<span class="keyword">end</span>
+set(leg,<span class="string">'Location'</span>,<span class="string">'EastOutside'</span>);
+title(sprintf(<span class="string">'Safety analysis for $x_3[0]=$%1.2f, $x_4[0]=$%1.2f'</span>, x3_init, <span class="keyword">...</span>
+    x4_init), <span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+box <span class="string">on</span>;
+grid <span class="string">on</span>;
+axis <span class="string">equal</span>;
+xlabel(<span class="string">'$x_1$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+ylabel(<span class="string">'$x_2$'</span>,<span class="string">'interpreter'</span>,<span class="string">'latex'</span>);
+<span class="comment">% In general, increase the fontsize</span>
+<span class="comment">% set(gca,'FontSize',20);</span>
+<span class="comment">% If code ocean, save the results</span>
+<span class="comment">% saveas(gcf, '../results/BAS_StochasticViabilitySet.png');</span>
+</pre><img vspace="5" hspace="5" src="buildingAutomationSystem_01.png" alt=""> <h2 id="7">Disp</h2><pre class="codeinput"><span class="keyword">if</span> should_we_run_genzps
+    fprintf([<span class="string">'\n\n\n&gt;&gt;&gt; Compute times\n Chance constraint-based '</span>,<span class="keyword">...</span>
+        <span class="string">'underapprox.: %1.2f\n Lagrangian-based underapprox.: %1.2f\n '</span>, <span class="keyword">...</span>
+        <span class="string">'Genzps-based computation: %1.2f\n'</span>], <span class="keyword">...</span>
+        elapsed_time_cc, elapsed_time_lag_under, elapsed_time_genzps);
+<span class="keyword">else</span>
+    fprintf([<span class="string">'\n\n\n&gt;&gt;&gt; Compute times\n Chance constraint-based '</span>,<span class="keyword">...</span>
+        <span class="string">'underapprox.: %1.2f\n Lagrangian-based underapprox.: %1.2f\n'</span>], <span class="keyword">...</span>
+        elapsed_time_cc, elapsed_time_lag_under);
+<span class="keyword">end</span>
+</pre><pre class="codeoutput">
+
+
+&gt;&gt;&gt; Compute times
+ Chance constraint-based underapprox.: 14.42
+ Lagrangian-based underapprox.: 0.91
+</pre><p class="footer"><br><a href="https://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2018b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+%% Building automation system verification
+% See ARCH 2019
+%
+% Comparison of (chance-constraint+open-loop)-based underapproximation with
+% Lagrangian (set-theoretic)-based underapproximation to construct the
+% stochastic reach set at prob_thresh = 0.8
+%
+% In the interest of time, Genzps+patternsearch-based underapproximation has
+% been disabled. See should_we_run_genzps
+
+close all;srtinit;
+
+%% Problem setup
+% System matrices
+state_matrix = ...
+   [ 0.9096   , -0.0106  , -0.0019   ,        0;
+    -0.0097   , 0.9152  ,       0   , -0.0015;
+    -0.0133   , 0        ,  0.9625  ,      0;
+    0         , -0.0133  ,       0   , 0.9625];
+input_matrix = [0.0779;0.0779;0;0];
+dist_matrix = eye(4);
+
+% Input space
+input_space = Polyhedron('lb',19,'ub',20);
+
+% Disturbance definition
+dist_mu = [0.0622;0.0561;1.8094;1.8094];
+dist_sigma = diag([0.2,0.2,0.1,0.1]);
+dist_rv = RandomVector.gaussian(dist_mu, dist_sigma);
+
+% System definition
+sys = LtiSystem('StateMatrix',state_matrix, 'InputMatrix',input_matrix, ...
+    'DisturbanceMatrix',dist_matrix, 'InputSpace', input_space, ...
+    'Disturbance', dist_rv);
+
+% Time steps
+time_horizon = 6;
+
+% Safety specification REPLACE_WITH_DASH_DASH- Constraints are present only the first two states
+safe_set = Polyhedron('lb', [-19.5;-19.5;-Inf;-Inf], 'ub', [20.5;20.5;Inf;Inf]);
+safety_tube = Tube('viability', safe_set, time_horizon);
+
+% Stochastic viability threshold: Compute the set of initial states which
+% have the probability of safety above this threshold
+prob_thresh = 0.8;
+% Slice of the stochastic viability set of interest
+x3_init = 0;
+x4_init = 0;
+
+% How many directions to explore for chance-open and genzps
+cc_n_dir_vecs = 16;
+genzps_n_dir_vecs = 16;
+lag_over_n_dir_vecs = 16;
+should_we_run_genzps = 0; % DISABLED: It takes time for (slightly) better result
+
+%% Construction of the chance-open-based underapproximation
+disp('>>> Chance-constraint-based underapproximation');
+timerVal = tic;
+% Directions to explore
+theta_vec = linspace(0, 2*pi, cc_n_dir_vecs + 1);
+theta_vec = theta_vec(1:end-1);
+set_of_dir_vecs = [cos(theta_vec);sin(theta_vec);zeros(2,cc_n_dir_vecs)];
+% Slice of the stochastic viability set of interest
+init_safe_set_affine = Polyhedron('He',[0,0,1,0,x3_init;0,0,0,1,x4_init]);
+% SReachSet options preparation
+cco_options = SReachSetOptions('term', 'chance-open', ...
+    'init_safe_set_affine', init_safe_set_affine, 'set_of_dir_vecs', ...
+    set_of_dir_vecs, 'verbose', 1);
+cco_stoch_viab_set = SReachSet('term','chance-open',sys, prob_thresh, ...
+    safety_tube, cco_options);
+elapsed_time_cc = toc(timerVal);
+% For plotting, construct the slice
+cco_stoch_viab_set_2D =  cco_stoch_viab_set.slice([3,4], [x3_init;x4_init]);
+
+%% Construction of the lagrangian-based underapproximation
+fprintf('\n\n\n >>> Lagrangian-based underapproximation\n');
+timerVal = tic;
+lag_under_options = SReachSetOptions('term', 'lag-under', ...
+    'bound_set_method', 'ellipsoid', 'compute_style', 'vfmethod', 'verbose', 1);
+lag_under_stoch_viab_set = SReachSet('term','lag-under',sys, prob_thresh, ...
+    safety_tube, lag_under_options);
+elapsed_time_lag_under = toc(timerVal);
+% For plotting, construct the slice
+lag_under_stoch_viab_set_2D = lag_under_stoch_viab_set.slice([3,4], ...
+    [x3_init;x4_init]);
+
+% %% Construction of the lagrangian-based overapproximation
+% fprintf('\n\n\n >>> Lagrangian-based overapproximation\n');
+% timerVal = tic;
+% lag_over_options = SReachSetOptions('term', 'lag-over', ...
+%     'bound_set_method', 'ellipsoid', 'compute_style', 'support', ...
+%     'verbose', 1, 'system', sys, 'n_vertices', lag_over_n_dir_vecs);
+% lag_over_stoch_viab_set = SReachSet('term','lag-over',sys, prob_thresh, ...
+%     safety_tube, lag_over_options);
+% elapsed_time_lag_over = toc(timerVal);
+% % For plotting, construct the slice
+% lag_over_stoch_viab_set_2D = lag_over_stoch_viab_set.slice([3,4], ...
+%     [x3_init;x4_init]);
+
+%% Construction of the Genz+patternsearch-based underapproximation
+if should_we_run_genzps
+    fprintf('\n\n\n >>> Genz+patternsearch-based underapproximation\n');
+    timerVal = tic;
+    % Directions to explore
+    theta_vec = linspace(0, 2*pi, genzps_n_dir_vecs + 1);
+    theta_vec = theta_vec(1:end-1);
+    set_of_dir_vecs = [cos(theta_vec);sin(theta_vec);
+                       zeros(2,genzps_n_dir_vecs)];
+    % Slice of the stochastic viability set of interest
+    init_safe_set_affine = Polyhedron('He',[0,0,1,0,x3_init;0,0,0,1,x4_init]);
+    % SReachSet options preparation
+    genzps_options = SReachSetOptions('term', 'genzps-open', ...
+        'init_safe_set_affine', init_safe_set_affine, 'set_of_dir_vecs', ...
+        set_of_dir_vecs,'verbose',1);
+    genzps_stoch_viab_set = SReachSet('term','genzps-open',sys, prob_thresh, ...
+        safety_tube, genzps_options);
+    elapsed_time_genzps = toc(timerVal);
+    % For plotting, construct the slice
+    genzps_stoch_viab_set_2D =  genzps_stoch_viab_set.slice([3,4], ...
+        [x3_init; x4_init]);
+else
+    fprintf('\n\n\n>>> Skipping genzps-based computation.\n');
+end
+
+%% Plot the figures
+figure(1);
+clf
+plot(Polyhedron('V',safe_set.V(:,1:2)),'color','y');
+hold on;
+if should_we_run_genzps
+    plot(genzps_stoch_viab_set_2D, 'color','g');
+end
+plot(cco_stoch_viab_set_2D, 'color','m');
+plot(lag_under_stoch_viab_set_2D, 'color','b');
+if should_we_run_genzps
+    leg=legend('Safe set', 'Stochastic viability set (genzps-open)', ...
+        'Stochastic viability set (chance-open)', ...
+        'Stochastic viability set (lag-under)');
+else
+    leg=legend('Safe set', 'Stochastic viability set (chance-open)', ...
+        'Stochastic viability set (lag-under)');
+end
+set(leg,'Location','EastOutside');
+title(sprintf('Safety analysis for $x_3[0]=$%1.2f, $x_4[0]=$%1.2f', x3_init, ...
+    x4_init), 'interpreter','latex');
+box on;
+grid on;
+axis equal;
+xlabel('$x_1$','interpreter','latex');
+ylabel('$x_2$','interpreter','latex');
+% In general, increase the fontsize
+% set(gca,'FontSize',20);
+% If code ocean, save the results
+% saveas(gcf, '../results/BAS_StochasticViabilitySet.png');
+
+%% Disp
+if should_we_run_genzps
+    fprintf(['\n\n\n>>> Compute times\n Chance constraint-based ',...
+        'underapprox.: %1.2f\n Lagrangian-based underapprox.: %1.2f\n ', ...
+        'Genzps-based computation: %1.2f\n'], ...
+        elapsed_time_cc, elapsed_time_lag_under, elapsed_time_genzps);
+else
+    fprintf(['\n\n\n>>> Compute times\n Chance constraint-based ',...
+        'underapprox.: %1.2f\n Lagrangian-based underapprox.: %1.2f\n'], ...
+        elapsed_time_cc, elapsed_time_lag_under);
+end
+
+
+##### SOURCE END #####
+--></body></html>

@@ -6,7 +6,7 @@
    <!--
 This HTML was auto-generated from MATLAB code.
 To make changes, update the MATLAB code and republish this document.
-      --><title>cwhSReachFwd</title><meta name="generator" content="MATLAB 9.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-02-10"><meta name="DC.source" content="cwhSReachFwd.m"><style type="text/css">
+      --><title>cwhSReachFwd</title><meta name="generator" content="MATLAB 9.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-04-15"><meta name="DC.source" content="cwhSReachFwd.m"><style type="text/css">
 html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
 
 html { min-height:100%; margin-bottom:1px; }
@@ -142,7 +142,7 @@ mcarlo_result = target_set.contains(end_locations);
 fprintf(<span class="string">'Monte-Carlo simulation using %1.0e particles: %1.3f\n'</span>, <span class="keyword">...</span>
         n_mcarlo_sims, <span class="keyword">...</span>
         sum(mcarlo_result)/n_mcarlo_sims);
-</pre><pre class="codeoutput">Monte-Carlo simulation using 1e+05 particles: 0.861
+</pre><pre class="codeoutput">Monte-Carlo simulation using 1e+05 particles: 0.862
 </pre><pre class="codeinput"><span class="comment">% Problem 1b: Initial state is a Gaussian random vector</span>
 <span class="comment">% ------------------------------------------------------</span>
 <span class="comment">% Initial state definition</span>
@@ -191,7 +191,7 @@ mcarlo_result = target_set.contains(end_locations);
 fprintf(<span class="string">'Monte-Carlo simulation using %1.0e particles: %1.3f\n'</span>, <span class="keyword">...</span>
         n_mcarlo_sims, <span class="keyword">...</span>
         sum(mcarlo_result)/n_mcarlo_sims);
-</pre><pre class="codeoutput">Monte-Carlo simulation using 1e+05 particles: 0.711
+</pre><pre class="codeoutput">Monte-Carlo simulation using 1e+05 particles: 0.710
 </pre><h2 id="15">P2. Probability that the deputy (safely) rendezvous with the chief?</h2><p>Since the chief is located at the origin in this coordinate frame (<tt>sys</tt> describes the relative dynamics of the deputy), we define the target set to be a small box centered at the origin (<tt>target_set</tt> is a box axis-aligned with side <img src="cwhSReachFwd_eq02555199365942447413.png" alt="$0.2$">). We are interested in the probability that the deputy will meet the chief at <tt>target_time</tt> time steps in future. <b>Additionally</b>, we desire that the deputy satellite stays within a line-of-sight cone for accurate sensing.</p><pre class="codeinput">target_time = 10;                                        <span class="comment">% Time of interest</span>
 target_set = Polyhedron(<span class="string">'lb'</span>,-0.05 * ones(4,1), <span class="keyword">...</span>
                         <span class="string">'ub'</span>, 0.05 * ones(4,1));         <span class="comment">% Target set definition</span>
@@ -272,7 +272,7 @@ prob_mc_estim = sum(mcarlo_result)/n_mcarlo_sims;
 fprintf(<span class="string">'Monte-Carlo simulation using %1.0e particles: %1.3f\n'</span>, <span class="keyword">...</span>
         n_mcarlo_sims, <span class="keyword">...</span>
         sum(mcarlo_result)/n_mcarlo_sims);
-</pre><pre class="codeoutput">Monte-Carlo simulation using 1e+05 particles: 0.312
+</pre><pre class="codeoutput">Monte-Carlo simulation using 1e+05 particles: 0.311
 </pre><pre class="codeinput"><span class="comment">% Problem 2b: Initial state is a Gaussian random vector</span>
 <span class="comment">% -----------------------------------------------------</span>
 
@@ -289,7 +289,10 @@ mean_X = X_target_time_rv.mean();
 cov_X = X_target_time_rv.cov();
 mean_X_trajectory = reshape(mean_X,4,[]);
 disp(mean_X_trajectory);
-</pre><pre class="codeoutput">  Columns 1 through 7
+</pre><pre class="codeoutput">Warning: Sanitized covariance matrix since negative eigenvalues &gt; -2*eps and &lt;0
+found!
+New covariance matrix has all the eigenvalues below 1e-10 set to 0. 
+  Columns 1 through 7
 
          0   -0.0034   -0.0098   -0.0145   -0.0159   -0.0142   -0.0102
    -1.0000   -0.9486   -0.8201   -0.6587   -0.4943   -0.3451   -0.2204
@@ -310,7 +313,10 @@ prob = SReachFwd(<span class="string">'concat-prob'</span>, sys, initial_state_r
     safety_tube, desired_accuracy);
 fprintf([<span class="string">'Probability of x_{target_time} lying in target_set while '</span>, <span class="keyword">...</span>
     <span class="string">'staying inside line-of-sight cone: %1.4f\n'</span>], prob);
-</pre><pre class="codeoutput">Probability of x_{target_time} lying in target_set while staying inside line-of-sight cone: 0.0700
+</pre><pre class="codeoutput">Warning: Sanitized covariance matrix since negative eigenvalues &gt; -2*eps and &lt;0
+found!
+New covariance matrix has all the eigenvalues below 1e-10 set to 0. 
+Probability of x_{target_time} lying in target_set while staying inside line-of-sight cone: 0.0700
 </pre><pre class="codeinput"><span class="comment">% However, the probability decreases drastically since the initial state</span>
 <span class="comment">% is now random.</span>
 
