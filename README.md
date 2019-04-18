@@ -6,8 +6,7 @@ affine disturbance-feedback) controller synthesis for linear
 (time-varying/time-invariant) systems with additive (Gaussian/non-Gaussian)
 disturbance. By verification, we are referring to the problem of [*stochastic
 reachability of a target tube*](https://arxiv.org/abs/1810.05217). Our project
-website is at
-[https://unm-hscl.github.io/SReachTools/](https://unm-hscl.github.io/SReachTools/).
+website is at [https://sreachtools.github.io](https://sreachtools.github.io).
 
 This is an area of **active research**, and this toolbox will attempt to cater
 certain classes of problems.  
@@ -49,7 +48,7 @@ We aim to support the following problems:
       - `state-prob/concat-prob`: Probability of the state or the concatenated
           state vector lying in a target set or a tube respectively
 
-Do check our [project blog](https://unm-hscl.github.io/SReachTools/blog/) for
+Do check our [project blog](https://sreachtools.github.io/blog/) for
 updates!
 
 ## Installation, documentation, and examples
@@ -137,7 +136,7 @@ This will disable some of the features of SReachTools or hamper performance.
 
 1. Install the necessary dependencies listed above
 1. Clone the SReachTools repository (or download the latest zip file from
-   [Releases](https://github.com/unm-hscl/SReachTools/releases))
+   [Releases](https://github.com/sreachtools/SReachTools/releases))
 1. Change the MATLAB current working directory to where SReachTools was
    downloaded. **WARNING**: Please do not add the folder to the MATLAB path
    manually.
@@ -155,7 +154,7 @@ This will disable some of the features of SReachTools or hamper performance.
 ### Examples
 
 For easy start, we have cataloged in our [project
-webpage](https://unm-hscl.github.io/SReachTools/examples/) a number of relevant,
+webpage](https://sreachtools.github.io/examples/) a number of relevant,
 easy-to-follow examples. These are also part of the repository (see
 `examples/*.m`). 
 
@@ -193,14 +192,14 @@ advisees of [Prof. Meeko Oishi](http://www.unm.edu/~oishi/).
 
 If this toolbox comes handy in your research, please consider citing our
 work. A copy of this paper is [available in the
-repository](https://github.com/unm-hscl/SReachTools/raw/master/SReachTools.pdf).
+repository](https://github.com/sreachtools/SReachTools/raw/master/SReachTools.pdf).
 
 IEEE citation style:
 
 A. P. Vinod, J. D. Gleason, and M. M. K. Oishi. "SReachTools: A MATLAB
 Stochastic Reachability Toolbox," In Proceedings of the  International
 Conference on Hybrid Systems: Computation and Control, Montreal, Canada,
-April 16--18, 2019.  https://unm-hscl.github.io/SReachTools/ (accepted).
+April 16--18, 2019.  https://sreachtools.github.io.
     
 BibTeX entry for use in LaTeX with `\usepackage{url}`: 
 ```
@@ -211,7 +210,7 @@ BibTeX entry for use in LaTeX with `\usepackage{url}`:
     year      = {2019},
     address   = {Montreal, Canada},
     month     = {April 16--18},
-    note      = {\url{https://unm-hscl.github.io/SReachTools/} (accepted)}
+    note      = {\url{https://sreachtools.github.io}}
 }
 ```
 As seen from the installation instructions, this toolbox leverages several
@@ -219,8 +218,8 @@ existing toolboxes and third-party codes:
 1. [MPT3](https://www.mpt3.org/) developed by M. Herceg, M. Kvasnica, C.N. Jones, and M. Morari, along with their dependencies.
 2. [CVX](http://cvxr.com/cvx/) developed by Michael Grant and Stephen Boyd
 3. [GeoCalcLib](http://worc4021.github.io/GeoCalcLib/) developed by Rainer Schaich.
-4. [An algorithm for numerical computation of multivariate normal distribution values](http://www.math.wsu.edu/faculty/genz/software/matlab/qscmvnv.m) developed by Alan Genz (Distributed with SReachTools under its appropriate [license](https://unm-hscl.github.io/SReachTools/docs/src/helperFunctions/qscmvnv/)).
+4. [An algorithm for numerical computation of multivariate normal distribution values](http://www.math.wsu.edu/faculty/genz/software/matlab/qscmvnv.m) developed by Alan Genz (Distributed with SReachTools under its appropriate [license](https://sreachtools.github.io/docs/src/helperFunctions/qscmvnv/)).
 5. [allcomb.m](https://www.mathworks.com/matlabcentral/fileexchange/10064-allcomb-varargin)
-developed by Jos van der Geest (Distributed with SReachTools under its appropriate [license](https://unm-hscl.github.io/SReachTools/docs/src/helperFunctions/allcomb/#license)).
+developed by Jos van der Geest (Distributed with SReachTools under its appropriate [license](https://sreachtools.github.io/docs/src/helperFunctions/allcomb/#license)).
 
 When available, we also use commercial toolboxes from MATLAB and Gurobi.
