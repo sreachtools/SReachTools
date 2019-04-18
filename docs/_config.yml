@@ -16,8 +16,7 @@
 title: SReachTools
 email: aby.vinod@gmail.com
 description: >- # this means to ignore newlines until "baseurl:"
-  SReachTools: A MATLAB toolbox for stochastic reachability methods.
-baseurl: "" # the subpath of your site, e.g. /blog
+  SReachTools: A MATLAB toolbox for stochastic reachability
 url: "https://sreachtools.github.io" # the base hostname & protocol for your site, e.g. http://example.com
 # twitter_username: jekyllrb
 github_username:  sreachtools
