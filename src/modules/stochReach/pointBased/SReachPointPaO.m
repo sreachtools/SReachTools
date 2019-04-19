@@ -62,7 +62,7 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
 % 
 % This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
-%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+%      https://sreachtools.github.io/license/
 % 
 %
 

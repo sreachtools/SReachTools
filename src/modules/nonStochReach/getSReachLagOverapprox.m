@@ -48,7 +48,7 @@ function varargout = getSReachLagOverapprox(sys, target_tube,...
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+%        https://sreachtools.github.io/license/
 %
 
     inpar = inputParser();
@@ -105,7 +105,7 @@ function [effective_target_tube] = computeViaRecursion(sys, target_tube,...
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+%        https://sreachtools.github.io/license/
 %
 
     tube_length = length(target_tube);
@@ -168,7 +168,7 @@ function [effective_target_set] = computeViaSupportFn(sys, target_tube,...
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+%        https://sreachtools.github.io/license/
 %
 
     if isempty(options.equi_dir_vecs)
@@ -244,7 +244,7 @@ function [val] = support(ell, sys, target_tube, dist_set, options)
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+%        https://sreachtools.github.io/license/
 %
 
     % Time horizon

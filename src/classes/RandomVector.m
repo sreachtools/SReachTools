@@ -77,7 +77,7 @@ classdef RandomVector
 % 
 % This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
-%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+%      https://sreachtools.github.io/license/
 % 
 % 
 
@@ -149,7 +149,7 @@ classdef RandomVector
         % 
         % This function is part of the Stochastic Reachability Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %      https://sreachtools.github.io/license/
         % 
         % 
 
@@ -316,7 +316,7 @@ classdef RandomVector
         % 
         % This function is part of the Stochastic Reachability Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %      https://sreachtools.github.io/license/
         % 
         %
             
@@ -346,7 +346,7 @@ classdef RandomVector
         % 
         % This function is part of the Stochastic Reachability Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %      https://sreachtools.github.io/license/
         % 
         %
             
@@ -407,7 +407,7 @@ classdef RandomVector
         % 
         % This function is part of the Stochastic Reachability Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %      https://sreachtools.github.io/license/
         % 
         %
             
@@ -509,7 +509,7 @@ classdef RandomVector
         % 
         % This function is part of the Stochastic Reachability Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %      https://sreachtools.github.io/license/
         % 
         %
 
@@ -548,7 +548,7 @@ classdef RandomVector
         % 
         % This function is part of the Stochastic Reachability Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %      https://sreachtools.github.io/license/
         % 
         %
 
@@ -589,7 +589,7 @@ classdef RandomVector
         % 
         % This function is part of the Stochastic Reachability Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %      https://sreachtools.github.io/license/
         % 
         %
 
@@ -641,7 +641,7 @@ classdef RandomVector
         % 
         % This function is part of the Stochastic Reachability Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %      https://sreachtools.github.io/license/
         % 
         %
 
@@ -718,7 +718,7 @@ classdef RandomVector
         % 
         % This function is part of the Stochastic Reachability Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %      https://sreachtools.github.io/license/
         % 
         %
 
@@ -821,7 +821,7 @@ classdef RandomVector
         % 
         % This function is part of the Stochastic Reachability Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %      https://sreachtools.github.io/license/
         % 
     
             if nargin == 0
@@ -899,7 +899,7 @@ classdef RandomVector
         % 
         % This function is part of the Stochastic Reachability Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %      https://sreachtools.github.io/license/
         % 
         %
             
@@ -935,7 +935,7 @@ classdef RandomVector
         % 
         % This function is part of the Stochastic Reachability Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %      https://sreachtools.github.io/license/
         % 
         %
 
@@ -964,7 +964,7 @@ classdef RandomVector
         % 
         % This function is part of the Stochastic Reachability Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %      https://sreachtools.github.io/license/
         % 
         %
 
@@ -1004,7 +1004,7 @@ classdef RandomVector
         % 
         % This function is part of the Stochastic Reachability Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %      https://sreachtools.github.io/license/
         % 
         %
             throwAsCaller(SrtInvalidArgsError(['Horizontal concatentation ',...

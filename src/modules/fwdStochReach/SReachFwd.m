@@ -82,7 +82,7 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time, ...
 %
 % This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
-%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+%      https://sreachtools.github.io/license/
 %
 %
 

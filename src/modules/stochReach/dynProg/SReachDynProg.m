@@ -78,7 +78,7 @@ function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc, ...
 % 
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+%        https://sreachtools.github.io/license/
 
     % Input parsing
     valid_prob_str = {'term'}; %TODO: 'first'

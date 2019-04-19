@@ -97,7 +97,7 @@ function sys = getCwhLtiSystem(dim, inputSpace, dist, varargin)
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+%        https://sreachtools.github.io/license/
 % 
 
     % Input handling
@@ -193,7 +193,7 @@ function [state_matrix, input_matrix] = get6dCwhStateAndInputMatrices(params)
 %
 %   This function is part of the Stochastic Reachability Toolbox.
 %   License for the use of this function is given in
-%        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+%        https://sreachtools.github.io/license/
 % 
 
     % redefine important variable for simplicity

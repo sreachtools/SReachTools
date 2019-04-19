@@ -4,8 +4,8 @@
 % discrete-time linear time-varying (LTV) system. This example script is part
 % of the |SReachTools| toolbox, which is licensed under GPL v3 or (at your
 % option) any later version. A copy of this license is given in
-% <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
-% https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
+% <https://sreachtools.github.io/license/
+% https://sreachtools.github.io/license/>.
 % 
 % Specifically, we will discuss how SReachTools can use convex chance 
 % constraints, and Lagrangian methods to construct underapproximative stochastic 

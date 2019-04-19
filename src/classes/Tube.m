@@ -53,7 +53,7 @@ classdef Tube
 % 
 % This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
-%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+%      https://sreachtools.github.io/license/
 % 
 % 
     properties (Access = private)
@@ -122,7 +122,7 @@ classdef Tube
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %        https://sreachtools.github.io/license/
         %   
 
             if isempty(varargin)
@@ -239,7 +239,7 @@ classdef Tube
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %        https://sreachtools.github.io/license/
         % 
 
             if strcmp(s(1).type, '()')
@@ -269,7 +269,7 @@ classdef Tube
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %        https://sreachtools.github.io/license/
         % 
 
             n_tubes = length(obj.tube);
@@ -294,7 +294,7 @@ classdef Tube
         %
         %   This function is part of the Stochastic Optimal Control Toolbox.
         %   License for the use of this function is given in
-        %        https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %        https://sreachtools.github.io/license/
         % 
 
             fprintf('Tube of %d sets\n', length(obj));
@@ -351,7 +351,7 @@ classdef Tube
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %      https://sreachtools.github.io/license/
         %
         %
 
@@ -423,7 +423,7 @@ classdef Tube
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %      https://sreachtools.github.io/license/
         %
         %  
 
@@ -475,7 +475,7 @@ classdef Tube
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %      https://sreachtools.github.io/license/
         %
         %
           
@@ -500,7 +500,7 @@ classdef Tube
         % 
         % This function is part of the Stochastic Optimal Control Toolbox.
         % License for the use of this function is given in
-        %      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+        %      https://sreachtools.github.io/license/
         %
         %
             cellPolyArray = num2cell(polyArray);

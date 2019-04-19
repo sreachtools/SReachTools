@@ -176,7 +176,7 @@ function [stoch_reach_set, varargout] = SReachSet(prob_str, method_str, sys, ...
 % 
 % This function is part of the Stochastic Reachability Toolbox.
 % License for the use of this function is given in
-%      https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
+%      https://sreachtools.github.io/license/
 %
 %
 

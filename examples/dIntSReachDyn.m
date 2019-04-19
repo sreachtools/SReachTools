@@ -6,8 +6,8 @@
 % (LTI) system. This example script is part of the |SReachTools| toolbox, which
 % is licensed under GPL v3 or (at your option) any later version. A copy of this
 % license is given in
-% <https://github.com/unm-hscl/SReachTools/blob/master/LICENSE
-% https://github.com/unm-hscl/SReachTools/blob/master/LICENSE>.
+% <https://sreachtools.github.io/license/
+% https://sreachtools.github.io/license/>.
 % 
 % In this example, we analyze the following problems via dynamic programming 
 % for a stochastic system with known dynamics:
