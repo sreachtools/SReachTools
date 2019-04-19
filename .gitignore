@@ -6,7 +6,5 @@ examples/figs/
 *.todo
 _site/
 .sass-cache/
-_site/
-docs/.sass-cache/
-docs/_site
+docs/
 .jekyll-metadata

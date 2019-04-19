@@ -33,7 +33,12 @@ We aim to support the following problems:
     - **Affine controller synthesis** using `SReachPoint` (admissible controller
       with chance constrained input bounds with maximum safety probability):
         - `chance-affine`: Chance constraint formulation solved via
-          difference-of-convex programming
+          difference-of-convex programming (risk allocation and controller
+          synthesis performed simultaneously)
+        - `chance-affine-uni`: Chance constraint formulation solved via
+          bisection for uniform risk allocation and second order cone programs
+          for controller synthesis (risk allocation and controller synthesis
+          performed separately)
     - **Stochastic reach set computation** using `SReachSet` (set of initial
       states from which an admissible controller exists such that the
       probability of safety is above a given threshold):
@@ -51,7 +56,18 @@ We aim to support the following problems:
 Do check our [project blog](https://sreachtools.github.io/blog/) for
 updates!
 
-## Installation, documentation, and examples
+## Examples
+
+For easy start, we have cataloged in our [project
+webpage](https://sreachtools.github.io/examples/) a number of relevant,
+easy-to-follow examples. These are also part of the repository (see
+`examples/*.m`). 
+
+Further, you can see SReachTools in action at Code Ocean. Check out
+[https://codeocean.com/explore/capsules/?query=SReachTools](https://codeocean.com/explore/capsules/?query=SReachTools).
+
+
+## Installation
 
 ### Dependencies
 
@@ -131,7 +147,6 @@ This will disable some of the features of SReachTools or hamper performance.
         addpath('/path/to/GeoCalcLib/mexfiles');
         ```
 
-
 ### Installation
 
 1. Install the necessary dependencies listed above
@@ -150,13 +165,6 @@ This will disable some of the features of SReachTools or hamper performance.
          check for recommended dependencies.  
        - Run `srtinit -x` to remove functions of SReachTools from MATLAB's path
          after use.  
-
-### Examples
-
-For easy start, we have cataloged in our [project
-webpage](https://sreachtools.github.io/examples/) a number of relevant,
-easy-to-follow examples. These are also part of the repository (see
-`examples/*.m`). 
 
 ## Contributions
 
@@ -186,9 +194,9 @@ questions and investigate any bug reports.
 
 ## Credits
 
-The authors of this toolbox are [Abraham P.  Vinod](https://abyvinod.github.io/)
-and [Joseph D.  Gleason](http://www.unm.edu/~gleasonj/). The authors are PhD
-advisees of [Prof. Meeko Oishi](http://www.unm.edu/~oishi/).
+This toolbox was developed by [Abraham P. Vinod](https://abyvinod.github.io/)
+and [Joseph D. Gleason](http://www.unm.edu/~gleasonj/), under the supervision
+of [Prof. Meeko Oishi](http://www.unm.edu/~oishi/).
 
 If this toolbox comes handy in your research, please consider citing our
 work. A copy of this paper is [available in the

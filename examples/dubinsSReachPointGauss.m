@@ -44,8 +44,9 @@
 % * |chance-affine-uni|: Chance-constrained approach that uses uniform risk 
 %    allocation to synthesize a closed-loop (affine disturbance feedback) 
 %    controller. The controller synthesis is done by solving a series of 
-%    second-order cone programs. (See <http://hscl.unm.edu/affinecontrollersynthesis
-%    Vinod and Oishi, Conference in Decision and Control, 2019 (submitted)>)
+%    second-order cone programs. (See <
+%    http://hscl.unm.edu/affinecontrollersynthesis Vinod and Oishi, Conference 
+%    in Decision and Control, 2019 (submitted)>)
 %
 % All computations were performed using MATLAB on an Ubuntu OS running on a
 % laptop with Intel i7 CPU with 2.1GHz clock rate and 8 GB RAM. For sake of
@@ -271,16 +272,17 @@ if chance_open_run_gauss
     % Set the maximum piecewise-affine overapproximation error to 1e-3
     opts = SReachPointOptions('term', 'chance-open', 'pwa_accuracy', 1e-3);
     timerVal=tic;
-    [prob_chance_open_gauss, opt_input_vec_chance_open_gauss] = SReachPoint('term', ...
-        'chance-open', sys_gauss, init_state_chance_open_gauss, target_tube, opts);
+    [prob_chance_open_gauss, opt_input_vec_chance_open_gauss] = SReachPoint( ...
+        'term', 'chance-open', sys_gauss, init_state_chance_open_gauss, ...
+        target_tube, opts);
     elapsed_time_chance_open_gauss = toc(timerVal);
     if prob_chance_open_gauss
         % Optimal mean trajectory construction
         % mean_X = Z * x_0 + H * U + G * \mu_W
         opt_mean_X_chance_open_gauss = Z * init_state_chance_open_gauss + ...
             H * opt_input_vec_chance_open_gauss + G * muW_gauss;
-        opt_mean_traj_chance_open_gauss = reshape(opt_mean_X_chance_open_gauss, ...
-            sys_gauss.state_dim,[]);
+        opt_mean_traj_chance_open_gauss = reshape( ...
+            opt_mean_X_chance_open_gauss, sys_gauss.state_dim,[]);
         % Check via Monte-Carlo simulation
         concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, ...
             sys_gauss, init_state_chance_open_gauss, time_horizon,...
@@ -467,7 +469,8 @@ if chance_affine_run_gauss
             n_mcarlo_sims, sys_gauss, init_state_chance_affine_gauss, ...
             time_horizon, opt_input_vec_chance_affine_gauss,...
             opt_input_gain_chance_affine_gauss, 1);
-        mcarlo_result = target_tube.contains(concat_state_realization_cca_gauss);
+        mcarlo_result = target_tube.contains( ...
+            concat_state_realization_cca_gauss);
         simulated_prob_chance_affine_gauss = sum(mcarlo_result) / n_mcarlo_sims;
     else
         simulated_prob_chance_affine_gauss = NaN;
@@ -511,8 +514,10 @@ if chance_affine_uni_run_gauss
             n_mcarlo_sims, sys_gauss, init_state_chance_affine_uni_gauss, ...
             time_horizon, opt_input_vec_chance_affine_uni_gauss,...
             opt_input_gain_chance_affine_uni_gauss, 1);
-        mcarlo_result = target_tube.contains(concat_state_realization_cca_gauss);
-        simulated_prob_chance_affine_uni_gauss = sum(mcarlo_result) / n_mcarlo_sims;
+        mcarlo_result = target_tube.contains( ...
+            concat_state_realization_cca_gauss);
+        simulated_prob_chance_affine_uni_gauss = sum(mcarlo_result) / ...
+            n_mcarlo_sims;
     else
         simulated_prob_chance_affine_uni_gauss = NaN;
     end
@@ -609,8 +614,10 @@ if chance_affine_run_gauss
     legend_cell{end+1} = 'Mean trajectory (chance-affine)';
     h_vec(end+1) = h_opt_mean_chance_affine_gauss;
 %     polytopesFromMonteCarloSims(...
-%             concat_state_realization_cca_gauss(sys_gauss.state_dim+1:end,:), sys_gauss.state_dim,...
-%             [1,2], {'color','m','edgecolor','m','linewidth',2,'alpha',0.15,'LineStyle',':'});
+%             concat_state_realization_cca_gauss( ...
+%                   sys_gauss.state_dim+1:end,:), sys_gauss.state_dim, ...
+%                   [1,2], {'color','m','edgecolor','m','linewidth',2, ... 
+%                   'alpha', 0.15,'LineStyle',':'});
     disp('>>> SReachPoint with chance-affine')
     fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
         prob_chance_affine_gauss, simulated_prob_chance_affine_gauss);
@@ -622,12 +629,10 @@ if chance_affine_uni_run_gauss
             opt_mean_traj_chance_affine_uni_gauss(1,:)], ...
         [init_state_chance_affine_uni_gauss(2), ...
             opt_mean_traj_chance_affine_uni_gauss(2,:)], ...
-        30, 'ms', 'filled','DisplayName', 'Mean trajectory (chance-affine-uni)');
+            30, 'ms', 'filled','DisplayName', ...
+            'Mean trajectory (chance-affine-uni)');
     legend_cell{end+1} = 'Mean trajectory (chance-affine-uni)';
     h_vec(end+1) = h_opt_mean_chance_affine_uni_gauss;
-%     polytopesFromMonteCarloSims(...
-%             concat_state_realization_cca_gauss(sys_gauss.state_dim+1:end,:), sys_gauss.state_dim,...
-%             [1,2], {'color','m','edgecolor','m','linewidth',2,'alpha',0.15,'LineStyle',':'});
     disp('>>> SReachPoint with chance-affine-uni')
     fprintf('SReachPoint underapprox. prob: %1.2f | Simulated prob: %1.2f\n',...
         prob_chance_affine_uni_gauss, simulated_prob_chance_affine_uni_gauss);
@@ -638,8 +643,10 @@ xlabel('x');
 ylabel('y');
 axis equal
 box on;
-set(gca,'FontSize',20);
-drawnow;
+% set(gca,'FontSize',20);
+hf = gcf;
+hf.Units = 'inches';
+hf.Position = [0    0.4167   18.0000   10.0313];
 
 %% Bar plot
 elapsed_time_vec = [elapsed_time_chance_open_gauss;
@@ -666,11 +673,13 @@ clf
 a=subplot(2,1,1);
 bar([prob_lb, sim_prob]);
 ylim([0.7 1]);
-xticklabels({'chance-open','genzps-open', 'particle-open', 'voronoi-open', 'chance-affine-uni', 'chance-affine'});
+xticklabels({'chance-open','genzps-open', 'particle-open', 'voronoi-open', ...
+    'chance-affine-uni', 'chance-affine'});
 yticks(0.7:0.1:1);
 ylabel('Reach probability');
-set(gca,'FontSize',20);
-legend('Estimated', 'Simulated ($10^5$ particles)','interpreter','latex','location','southeast','FontSize',25);
+%set(gca,'FontSize',20);
+legend('Estimated', 'Simulated ($10^5$ particles)','interpreter','latex', ...
+    'location','southeast'); %,'FontSize',25);
 xlimits_sub1 = xlim;
 grid on;
 box on;
@@ -687,8 +696,8 @@ bar(elapsed_time_vec,0.4,'k');
 set(gca,'YScale','log');
 xlim(xlimits_sub1)
 xticks(1:6)
-xticklabels({'chance-open','genzps-open', 'particle-open', 'voronoi-open', 'chance-affine-uni', 'chance-affine'});
-set(gca,'FontSize',20);
+xticklabels({'chance-open','genzps-open', 'particle-open', 'voronoi-open', ...
+    'chance-affine-uni', 'chance-affine'});
 grid on;
 box on;
 ylimits_sub2 = ylim;
@@ -698,3 +707,6 @@ ylim(ylimits_sub2);
 yticks([10,60,600]);
 yticklabels({'10 sec.', '1 min.','10 mins.'});
 ax.YAxis(2).Color = 'k';
+hf = gcf;
+hf.Units = 'inches';
+hf.Position = [0    0.4167   18.0000   10.0313];
