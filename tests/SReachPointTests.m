@@ -63,7 +63,31 @@ classdef SReachPointTests < matlab.unittest.TestCase
                 sys_bad, initial_state, safety_tube),'SReachTools:invalidArgs');
 
         end  
-        
+
+        function testPointChanceAffineUni(test_case)
+            [sys, safety_tube, initial_state] = test_case.getDI();
+            
+            % Forgotten max_input_viol_prob for chance-affine
+            test_case.verifyError(@() SReachPointOptions(...
+                'term','chance-affine-uni'),'SReachTools:invalidArgs');
+            test_case.verifyError(@() SReachPoint('term','chance-affine-uni',...
+                sys, initial_state, safety_tube),'SReachTools:invalidArgs');
+            
+            % Working example --- Had to set to [0;0] to avoid a trivial bound
+            options = SReachPointOptions('term','chance-affine-uni', ...
+                'max_input_viol_prob', 2e-1, 'verbose', 0);
+            [lb_stoch_prob, input_vec, input_gain, risk_state, risk_input] = ...
+                SReachPoint('term','chance-affine-uni', sys, [0;0], ...
+                safety_tube, options);
+            
+            sys_bad = LtiSystem('StateMatrix', sys.state_mat, 'InputMatrix', ...
+                sys.input_mat, 'InputSpace', sys.input_space, 'Disturbance', ...
+                sys.dist, 'DisturbanceMatrix', magic(sys.dist_dim));
+            test_case.verifyError(@() SReachPoint('term','chance-affine-uni', ...
+                sys_bad, initial_state, safety_tube),'SReachTools:invalidArgs');
+
+        end  
+
 %         function testPointVoronoiAffine(test_case)
 %             [sys, safety_tube, initial_state] = test_case.getDI();
 %             
