@@ -522,5 +522,45 @@ classdef LtvSystemTest < matlab.unittest.TestCase
                 'ub',  umax * ones(time_horizon,1));
             testCase.verifyTrue(obtained_polyhedron == expected_polyhedron);
         end
+        
+        function testDisp(testCase)
+        % Test display
+        % We use evalc to skip stdout printing, but it will throw errors
+        % We will use getChainOfIntegLtiSystem as the system generator
+        % 
+        % THIS MEANS WE CAN NOT TEST FOR WARNINGS
+        %
+        
+            % Known turning rate sequence
+            sampling_time = 0.1;                        % Sampling time
+            time_horizon = 50;                          % Max number of time 
+                                                        % steps in simulation
+            init_heading = pi/10;                       % Initial heading 
+            % Create a constant turning rate sequence
+            omega = pi/time_horizon/sampling_time;      
+            turning_rate = omega*ones(time_horizon,1);   
+            % Input space definition
+            umax = 6;
+            input_space = Polyhedron('lb',0,'ub',umax);
+            % Disturbance matrix and random vector definition
+            dist_matrix = eye(2);
+            eta_dist = RandomVector('Gaussian',zeros(2,1), 0.001 * eye(2));
+
+            [sys, ~] = getDubinsCarLtv('add-dist', turning_rate, ...
+              init_heading, sampling_time, input_space, dist_matrix, eta_dist);
+            evalc('disp(sys)');
+            evalc('disp(sys,''verbose'',true)');
+            sysNoInpNoDist = LtvSystem('StateMatrix',sys.state_mat);
+            evalc('disp(sysNoInpNoDist)');
+            evalc('disp(sysNoInpNoDist,''verbose'',true)');
+            sysNoDist = LtvSystem('StateMatrix',sys.state_mat, ...
+                'InputMatrix',sys.input_mat, 'InputSpace', sys.input_space);
+            evalc('disp(sysNoDist)');
+            evalc('disp(sysNoDist,''verbose'',true)');
+            sysNoInp = LtvSystem('StateMatrix',sys.state_mat, ...
+                'DisturbanceMatrix',sys.dist_mat, 'Disturbance', sys.dist);
+            evalc('disp(sysNoInp)');
+            evalc('disp(sysNoInp,''verbose'',true)');
+        end
     end
 end

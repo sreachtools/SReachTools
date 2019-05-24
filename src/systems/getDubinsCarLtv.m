@@ -7,11 +7,13 @@ function [sys, heading_vec] = getDubinsCarLtv(type, turning_rate_seq, ...
 % Usage:
 % ------
 % % Known turning rate sequence
-% time_horizon = 50;
-% omega = pi/time_horizon/sampling_time;
-% turning_rate = omega*ones(time_horizon,1);
-% init_heading = pi/10;                       % Initial heading 
 % sampling_time = 0.1;                        % Sampling time
+% time_horizon = 50;                          % Max number of time steps in
+%                                             % simulation
+% init_heading = pi/10;                       % Initial heading 
+% % Create a constant turning rate sequence
+% omega = pi/time_horizon/sampling_time;      
+% turning_rate = omega*ones(time_horizon,1);   
 % % Input space definition
 % umax = 6;
 % input_space = Polyhedron('lb',0,'ub',umax);

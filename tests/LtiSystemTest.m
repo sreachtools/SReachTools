@@ -33,6 +33,7 @@ classdef LtiSystemTest < matlab.unittest.TestCase
 %   testCorrectDoubleIntegratorGaussianNoInput
 %   testgetConcatMats
 %   testgetConcatInputSpace
+%   testDisp
 %   
 % ============================================================================
 % 
@@ -485,6 +486,29 @@ classdef LtiSystemTest < matlab.unittest.TestCase
                 'lb', -umax * ones(time_horizon,1), ...
                'ub',  umax * ones(time_horizon,1));
             testCase.verifyTrue(obtained_polyhedron == expected_polyhedron);
+        end
+        
+        function testDisp(testCase)
+        % Test display
+        % We use evalc to skip stdout printing, but it will throw errors
+        % We will use getChainOfIntegLtiSystem as the system generator
+        % 
+        % THIS MEANS WE CAN NOT TEST FOR WARNINGS
+        %
+            sys = getChainOfIntegLtiSystem(2,2, Polyhedron());
+            evalc('disp(sys)');
+            evalc('disp(sys,''verbose'',true)');
+            sys = getChainOfIntegLtiSystem(2,2, Polyhedron(), ...
+                RandomVector('gaussian',[0;0],eye(2)));
+            evalc('disp(sys)');
+            evalc('disp(sys,''verbose'',true)');
+            sys = getChainOfIntegLtiSystem(2,2, Polyhedron('lb',-1,'ub',1));
+            evalc('disp(sys)');
+            evalc('disp(sys,''verbose'',true)');
+            sys = getChainOfIntegLtiSystem(2,2, Polyhedron('lb',-1,'ub',1), ...
+                RandomVector('gaussian',[0;0],eye(2)));
+            evalc('disp(sys)');
+            evalc('disp(sys,''verbose'',true)');
         end
     end
 end
