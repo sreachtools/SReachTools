@@ -139,7 +139,7 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] = ...
         sqrt_cov_X_sans_input = sqrt(cov_X_sans_input);
     end
     % Hence, we need the transpose on sqrt_cov_X
-    sigma_vector = norms(concat_safety_tube_A * sqrt_cov_X_sans_input', 2, 2);
+    scaled_sigma_vec = norms(concat_safety_tube_A * sqrt_cov_X_sans_input',2,2);
 
 
     %% Obtain the piecewise linear overapproximation of norminvcdf in [0,0.5]
@@ -160,7 +160,7 @@ function [lb_stoch_reach, opt_input_vec, risk_alloc_state, varargout] = ...
                 norminvover(deltai_indx) >= invcdf_approx_m.* ...
                     deltai(deltai_indx) + invcdf_approx_c; 
             end
-            concat_safety_tube_A * mean_X + sigma_vector.* norminvover ...
+            concat_safety_tube_A * mean_X + scaled_sigma_vec.* norminvover ...
                 <= concat_safety_tube_b;
             deltai >= lb_deltai;
             deltai <= 0.5;

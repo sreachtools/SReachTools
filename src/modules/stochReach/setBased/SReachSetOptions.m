@@ -47,6 +47,27 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %                                     overapproximation of the inverse of the
 %                                     standard normal cumulative density
 %                                     function
+%           5. compute_style        - Approach used for obtaining the origin of
+%                                     the rays (referred to as anchor)
+%                                     'max_safe_init' 
+%                                         - Choose the anchor such that the
+%                                           corresponding open-loop controller
+%                                           provides maximum safety
+%                                     'cheby' 
+%                                         - Choose the anchor which is the 
+%                                           Chebyshev center of the safe set at
+%                                           t=0, that also admits an open-loop
+%                                           stochastic reach probability, above
+%                                           the prescribed probability
+%                                           threshold.
+%                                     'all' 
+%                                         - The underapproximative set is
+%                                           computed via the convex hull of the
+%                                           union of the polytopes obtained from
+%                                           the methods above. This polytope
+%                                           will have a maximum of twice the
+%                                           number of given direction vectors as
+%                                           vertices
 % 
 %       'genzps-open' : Genz's algorithm + Patternsearch
 %           1. set_of_dir_vecs      - [MUST HAVE] Set of direction vectors shot
@@ -234,7 +255,8 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
     valid_prob = {'term'};
     valid_method= {'chance-open','genzps-open','lag-under','lag-over'};
     valid_bound_method = {'load','polytope','ellipsoid'};
-    valid_compute_style = {'vfmethod','support'};
+    valid_compute_style_lag = {'vfmethod','support'};
+    valid_compute_style_ccc = {'max_safe_init','cheby','all'};
     valid_vf_enum_method = {'cdd','lrs'};
     % Input parsing
     inpar = inputParser();
@@ -272,7 +294,7 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
             {'scalar','>=','1e-2','<=',1}));
         % compute_style
         inpar.addParameter('compute_style', 'vfmethod',...
-            @(x) any(validatestring(x,valid_compute_style)));
+            @(x) any(validatestring(x,valid_compute_style_lag)));
         inpar.addParameter('vf_enum_method', 'cdd',...
             @(x) any(validatestring(x,valid_vf_enum_method)));
     elseif nargin >= 2
@@ -310,6 +332,8 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
                 % Accuracy of piecewise-affine approximation of norminvcdf
                 inpar.addParameter('pwa_accuracy',1e-3, @(x)...
                     validateattributes(x, {'numeric'}, {'scalar','>',0}));
+                inpar.addParameter('compute_style', 'all',...
+                    @(x) any(validatestring(x,valid_compute_style_ccc)));
         end
     else
         throwAsCaller(SrtInvalidArgsError('Too few arguments given'));

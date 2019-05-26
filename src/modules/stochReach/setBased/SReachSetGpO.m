@@ -69,7 +69,8 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
 %                             'chance-open'
 %                   9. extra_info_cco
 %                           - Extra information obtained by running SReachSet 
-%                             with 'chance-open'
+%                             with 'chance-open'. See SReachSetCcO for more
+%                             details.
 % Notes:
 % ------
 % * extra_info.xmax_reach_prob is the highest prob_thresh that may be given
