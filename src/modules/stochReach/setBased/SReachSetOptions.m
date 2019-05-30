@@ -37,6 +37,7 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %                                     safe set at t=0, it should result in a 2-D 
 %                                     set
 %           3. verbose              - Verbosity of the implementation {0,1}
+%                                     [Default 0]
 %                                       0 - No output 
 %                                       1 - Outputs the direction vector being
 %                                           analyzed and the method used to
@@ -46,9 +47,10 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %           4. pwa_accuracy         - Accuracy of the piecewise affine
 %                                     overapproximation of the inverse of the
 %                                     standard normal cumulative density
-%                                     function
+%                                     function [Default 1e-3]
 %           5. compute_style        - Approach used for obtaining the origin of
 %                                     the rays (referred to as anchor)
+%                                     [Default 'all']
 %                                     'max_safe_init' 
 %                                         - Choose the anchor such that the
 %                                           corresponding open-loop controller
@@ -60,7 +62,7 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %                                           stochastic reach probability, above
 %                                           the prescribed probability
 %                                           threshold.
-%                                     'all' 
+%                                     'all'
 %                                         - The underapproximative set is
 %                                           computed via the convex hull of the
 %                                           union of the polytopes obtained from
@@ -98,6 +100,12 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %           6. PSoptions            - MATLAB struct from psoptimset(), options
 %                                     for MATLAB's patternsearch 
 %                                     [Default psoptimset('Display', 'off')]
+%           7. compute_style_ccc    - Compute style option specification to use
+%                                     for the function call
+%                                     SReachSet('chance-open') for
+%                                     initialization [Default: 'all'] | See
+%                                     'compute_style' option in 'chance-open' 
+%                                     for more details
 % 
 %       'lag-over'/'lag-under' : Lagrangian-based over- and underapproximation
 %            1. bound_set_method        - Method for obtaining the bounded set
@@ -335,6 +343,10 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
                     '>=',1e-2, '<', 1}));
                 % Patternsearch options
                 inpar.addParameter('PSoptions',psoptimset('display','off'));
+                % Compute style options for SReachSet('chance-open')
+                % function call
+                inpar.addParameter('compute_style_ccc', 'all',...
+                    @(x) any(validatestring(x,valid_compute_style_ccc)));
             case 'chance-open'
                 % Accuracy of piecewise-affine approximation of norminvcdf
                 inpar.addParameter('pwa_accuracy',1e-3, @(x)...

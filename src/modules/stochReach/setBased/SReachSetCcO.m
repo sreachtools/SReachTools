@@ -68,6 +68,11 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
 %
 % Notes:
 % ------
+% * extra_info(1).xmax_reach_prob is the highest prob_thresh that may be given
+%   while obtaining a non-trivial underapproximation
+% * We compute the set by ray-shooting algorithm that guarantees an
+%   underapproximation due to the compactness and convexity of the stochastic
+%   reach set. 
 % * SReachSetCcO has the following approaches (specified via
 %   options.compute_style) for computing the origin of the rays (referred to as
 %   anchor):
@@ -84,8 +89,6 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
 %   underapproximation, due to the convexity of the open-loop stochastic reach
 %   set.  However, this approach can result in twice the number of direction
 %   vectors or vertices in the underapproximative polytope.
-% * extra_info(1).xmax_reach_prob is the highest prob_thresh that may be given
-%   while obtaining a non-trivial underapproximation
 % * See @LtiSystem/getConcatMats for more information about the
 %     notation used.
 % 

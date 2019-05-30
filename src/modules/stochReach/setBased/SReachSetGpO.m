@@ -16,8 +16,6 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
 % computation," IEEE Transactions in Automatic Control, 2018 (submitted)
 % https://arxiv.org/pdf/1810.05217.pdf.
 %
-% This computation involves an UNJUSTIFIED HEURISTIC. Please see the notes.
-%
 % =============================================================================
 %
 % [polytope, extra_info] = SReachSetGpO(method_str, sys, prob_thresh,...
@@ -75,13 +73,21 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
 % ------
 % * extra_info.xmax_reach_prob is the highest prob_thresh that may be given
 %   while obtaining a non-trivial underapproximation
-% * See @LtiSystem/getConcatMats for more information about the
-%     notation used.
+% * This function calls SReachSet (chance-open) for the purposes of
+%   initialization of the nonlinear solver as well as constructing bounds on the
+%   line search.
 % * We compute the set by ray-shooting algorithm that guarantees an
 %   underapproximation due to the compactness and convexity of the stochastic
 %   reach set. 
+%   - Xmax computation is done with a heuristic of centering the initial
+%     state with respect to the polytope obtained via SReachSet (chance-open),
+%     followed by a patternsearch-based xmax computation
 %   - Line search is done via bisection on theta, the scaling along the
 %     direction vector of interest. 
+%       - The underapproximative polytope returned by SReachSet (chance-open) is
+%         utilized to compute a lower bound on theta
+%       - The upper bound on the theta is obtained by the support vector of
+%         the target tube at t=0.
 %   - Internal computation is done using SReachPointGpO to maximize code
 %     modularity and reuse.
 %   - The bisection is guided by feasibility of finding an open-loop controller
@@ -99,11 +105,10 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
 %       2. After the optimization, the optimal value is reevaluated using a
 %          fresh set of particles for generality.
 %       3. At each value of theta, feasibility is determined if the optimal
-%          value of the optimization is above prob_thresh. Note that this
-%          is an UNJUSTIFIED HEURSITIC, since it is not clear with what
-%          probability this will hold. However, by using a sufficiently low
-%          desired_accuracy, it can be understood that we will not be too
-%          off.
+%          value of the optimization is above prob_thresh. However, by using a
+%          sufficiently low desired_accuracy in Genz's algorithm, it can be seen
+%          that we will not be too off. Moreover, Hoeffding's inequality can be
+%          utilized to bound the overapproximation.
 %     The first two adjustments are implemented in SReachPointGpO, the
 %     point-based stochastic reachability computation using genzps-open
 %     method. 
@@ -116,6 +121,8 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
 %   yield an underapproximation. For higher desired_accuracy, the result may be
 %   more conservative but faster. For lower desired_accuracy, the result may
 %   take more time.
+% * See @LtiSystem/getConcatMats for more information about the
+%     notation used.
 %
 % =============================================================================
 % 
@@ -154,7 +161,8 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
     end
     cc_options = SReachSetOptions('term', 'chance-open', 'verbose', ...
         options.verbose, 'set_of_dir_vecs', options.set_of_dir_vecs, ...
-        'init_safe_set_affine', options.init_safe_set_affine);
+        'init_safe_set_affine', options.init_safe_set_affine, ...
+        'compute_style', options.compute_style_ccc);
     if nargout > 1
         % Require extra_info
         [polytope_cc_open, extra_info_cco] = SReachSet('term','chance-open', ...
@@ -170,13 +178,12 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
                       'He',[safety_tube(1).He;options.init_safe_set_affine.He]);
     
     if options.verbose >= 1 
-        disp(' ');
         disp('Compute an initial guess for the xmax');
     end
     % Compute the chebyshev center of the initial safe set and seek the
     % optimal xmax that maximizes the open-loop safety from there
     [xmax_reach_prob, Umax, xmax] = computeXmaxViaPatternsearch( ...
-        init_safe_set, polytope_cc_open, sys, time_horizon, safety_tube, ... 
+        init_safe_set, extra_info_cco, sys, time_horizon, safety_tube, ... 
         options);
     
     % No. of directions
@@ -187,7 +194,7 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
         % Stochastic reach underapproximation is empty and no
         % admissible open-loop policy exists
         if options.verbose >= 1
-            fprintf(['\nPolytopic underapproximation does not exist for ', ...
+            fprintf(['Polytopic underapproximation does not exist for ', ...
                  'alpha = %1.2f since W(x_max) = %1.3f.\n\n'], ...
                  prob_thresh, xmax_reach_prob);
         end
@@ -201,7 +208,7 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
     else
         if options.verbose >= 1
             % Stochastic reach underapproximation is non-trivial
-            fprintf(['\nPolytopic underapproximation exists for alpha = ', ...
+            fprintf(['Polytopic underapproximation exists for alpha = ', ...
                      '%1.2f since W(x_max) = %1.3f.\n'], ...
                      prob_thresh, xmax_reach_prob);
         end
@@ -210,9 +217,9 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
         opt_theta_i = zeros(1, n_dir_vecs);
         opt_reach_prob_i = zeros(1, n_dir_vecs);
         opt_input_vec_at_vertices =nan(sys.input_dim * time_horizon,n_dir_vecs);
-        optionsGpO = SReachPointOptions('term', 'genzps-open', 'thresh',...
-            prob_thresh, 'desired_accuracy', options.desired_accuracy, ...
-            'PSOptions', options.PSoptions);
+        optionsGpO = SReachPointOptions('term', 'genzps-open', ...
+            'thresh', prob_thresh, 'PSOptions', options.PSoptions, ...
+            'desired_accuracy', options.desired_accuracy);
         
         %% Iterate over all direction vectors + xmax and perform a line search 
         %% via bisection
@@ -221,7 +228,7 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
             dir_vec = options.set_of_dir_vecs(:,dir_index);
             
             if options.verbose >= 1
-                fprintf('\nAnalyzing direction :%2d/%2d\n',dir_index, ...
+                fprintf('\nAnalyzing direction: %2d/%2d\n',dir_index, ...
                     n_dir_vecs);
             end
 
@@ -290,8 +297,10 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
             opt_input_vec_at_vertices(:,dir_index) = opt_inputs_so_far;
             opt_reach_prob_i(dir_index) = opt_reachAvoid_prob_so_far;
         end
-        vertices_underapprox_polytope=xmax+opt_theta_i.*options.set_of_dir_vecs;
         %% Construction of underapprox_stoch_reach_avoid_polytope
+        % Convex hull of the boundary points 
+        vertices_underapprox_polytope = xmax + ...
+            opt_theta_i.*options.set_of_dir_vecs;
         polytope = Polyhedron('V', vertices_underapprox_polytope');
     end
     varargout{1} = polytope;
@@ -423,17 +432,17 @@ function [lb_theta, ub_theta, opt_theta_so_far, opt_inputs_so_far, ...
         end
     end
     if options.verbose >= 1
-        fprintf(['\b | Theta --- lower bound: %1.2f | upper bound: ',...
+        fprintf(['\b | Theta --- lower bound: %1.2f, upper bound: ',...
             '%1.2f\n'], lb_theta, ub_theta);
     end
-    % Initialize the solution
+    % Initialize the solution --- use default options
     optionsCcO = SReachPointOptions('term', 'chance-open');
     [opt_reachAvoid_prob_so_far, opt_inputs_so_far] = SReachPointCcO(...
         sys, ccc_boundary_point, safety_tube, optionsCcO);       
 end
 
 function [xmax_reach_prob, Umax, xmax] = computeXmaxViaPatternsearch(...
-    init_safe_set, polytope_cc_open, sys, time_horizon, safety_tube, options)
+    init_safe_set, extra_info_ccc, sys, time_horizon, safety_tube, options)
     %
     % Compute the xmax for the patternsearch
     % 1. Compute a chebyshev center for the polytope_cc_open such that a
@@ -458,63 +467,41 @@ function [xmax_reach_prob, Umax, xmax] = computeXmaxViaPatternsearch(...
     % Compute the mean of G*W vector --- mean of concatenated state vector
     % under zero input and zero state conditions
     GW = G * sys.dist.concat(time_horizon);
-       
-    dual_norm_of_init_safe_set_A = norms(init_safe_set.A,2,2); 
-    if ~polytope_cc_open.isEmptySet()
-        dual_norm_of_polytope_cc_open_A = norms(polytope_cc_open.A,2,2); 
-    end
-    % maximize R - 0.01 |U| 
-    % subject to
-    %   X = Abar x_0 + H * U + G_matrix * \mu_W 
-    %   U \in \mathcal{U}^N
-    %   X \in concatenated_safety_tube
-    %   x_0\in AffineHull
-    %   init_safe_set.A_i * x_0 + R* || init_safe_set.A_i || 
-    %                               \leq init_safe_set.b_i 
-    %   polytope_cc_open.A_i * x_0 + R* || polytope_cc_open.A_i || 
-    %                               \leq polytope_cc_open.b_i 
-    %                                      (see Boyd's CVX textbook, pg. 418,
-    %                                       Chebyshev centering for a polytope)
-    cvx_begin quiet
-        variable resulting_X_for_xmax(sys.state_dim * time_horizon);
-        variable guess_concatentated_input_vector(sys.input_dim * time_horizon);
-        variable initial_x_for_xmax(sys.state_dim);
-        variable R nonnegative;
-
-        maximize R - 0.01 * norm(guess_concatentated_input_vector)
-
-        subject to
-            resulting_X_for_xmax == (Z * initial_x_for_xmax ...
-                            + H * guess_concatentated_input_vector...
-                            + GW.mean());
-            concat_input_space_A * guess_concatentated_input_vector <= ...
-                                                      concat_input_space_b;
-            concat_safety_tube_A * resulting_X_for_xmax <= ...
-                            concat_safety_tube_b;
-            init_safe_set.Ae * initial_x_for_xmax == ...
-                                                   init_safe_set.be;
-            init_safe_set.A * initial_x_for_xmax ...
-                 + R * dual_norm_of_init_safe_set_A <= ...
-                    init_safe_set.b;
-            if ~polytope_cc_open.isEmptySet()
-                polytope_cc_open.A * initial_x_for_xmax ...
-                     + R * dual_norm_of_polytope_cc_open_A <= ...
-                        polytope_cc_open.b;
-            end
-    cvx_end
-    switch cvx_status
-        case 'Solved'
-            initial_guess_input_vector_and_xmax =...
-                [guess_concatentated_input_vector; initial_x_for_xmax];
-        otherwise
-            throw(SrtInvalidArgsError('CVX failed to obtain the ',...
-                'Chebyshev center, potentially due to numerical issues.'));
-    end
     
+    if options.verbose >= 1 
+        fprintf(['Compute an initialization for patternsearch using ',...
+            'the results from chance-open computation\n']);
+    end       
+    switch options.compute_style_ccc
+        case 'max_safe_init'
+            initial_guess_input_vector_and_xmax = [extra_info_ccc(1).Umax;
+                                                   extra_info_ccc(1).xmax];
+        case 'cheby'
+            initial_guess_input_vector_and_xmax = [extra_info_ccc(2).Umax;
+                                                   extra_info_ccc(2).xmax];
+        case 'all'
+            % Compute the average of the above two methods for the initial state
+            % Convexity ensures that xmax guess is ok to begin with
+            initial_guess_state_vector = (extra_info_ccc(1).xmax + ...
+                                          extra_info_ccc(2).xmax)/2;
+            initial_guess_input_vector = (extra_info_ccc(1).Umax + ...
+                                          extra_info_ccc(2).Umax)/2;
+            initial_guess_input_vector_and_xmax = [initial_guess_input_vector;
+                                                   initial_guess_state_vector];
+    end
+    if isempty(initial_guess_input_vector_and_xmax)
+        % In case, it is empty, set it to zero
+        centered_input = Polyhedron('A', concat_input_space_A, ...
+            'b', concat_input_space_b).chebyCenter();
+        centered_state = init_safe_set.chebyCenter();
+        initial_guess_input_vector_and_xmax = [centered_input.x;
+                                               centered_state.x];
+    end
     % Construct the reach cost function: 
     %   -log( max( options.desired_accuracy, ReachAvoidProbability(x_0,U)))
     % input_vector_and_xmax has first the unrolled input vector followed by
-    % the initial state that is optimized
+    % the initial state that is optimized | RandomVector/getProbPolyhedron
+    % returns an underapproximation of the true reach probability
     negLogReachProbGivenInputVecInitState = @(input_vector_and_xmax)...
       -log( max(options.desired_accuracy, getProbPolyhedron(...
         Z * input_vector_and_xmax(sys.input_dim * time_horizon + 1: end) +...
@@ -523,9 +510,8 @@ function [xmax_reach_prob, Umax, xmax] = computeXmaxViaPatternsearch(...
     
     % Constraint generation --- decision variable [input_vector;xmax]
     input_vector_augmented_affine_hull_Aeq = ...
-        [zeros(size(init_safe_set.Ae,1), ...
-                            sys.input_dim * time_horizon), ...
-                                                 init_safe_set.Ae];
+        [zeros(size(init_safe_set.Ae,1), sys.input_dim * time_horizon), ...
+         init_safe_set.Ae];
     input_vector_augmented_affine_hull_beq = init_safe_set.be;
     input_vector_augmented_safe_Aineq = blkdiag(concat_input_space_A, ...
                                                 init_safe_set.A);
@@ -534,7 +520,7 @@ function [xmax_reach_prob, Umax, xmax] = computeXmaxViaPatternsearch(...
 
     % Compute xmax, the input policy, and the max reach probability
     if options.verbose >= 1 
-        fprintf('\n\nCompute the xmax via patternsearch\n');
+        fprintf('Compute the xmax via patternsearch\n');
     end
     opt_input_vec_and_xmax = patternsearch(...
         negLogReachProbGivenInputVecInitState, ...
