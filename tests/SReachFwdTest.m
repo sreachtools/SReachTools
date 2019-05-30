@@ -178,9 +178,8 @@ classdef SReachFwdTest < matlab.unittest.TestCase
             mcarlo_result = target_set.contains(end_locations);
             mean_end_locations = mean(end_locations,2);
             % Checking values
-            testCase.verifyLessThanOrEqual(...
-                abs(sum(mcarlo_result) / n_mcarlo_sims - prob), ...
-                desired_accuracy);            
+            testCase.verifyLessThanOrEqual(prob, ...
+                sum(mcarlo_result)/n_mcarlo_sims);            
             testCase.verifyLessThanOrEqual( ...
                 max(abs(mean_vec - mean_end_locations)), 1e-2);            
             %% Stochastic initial state
@@ -206,8 +205,8 @@ classdef SReachFwdTest < matlab.unittest.TestCase
             mcarlo_result = target_set.contains(end_locations);
             mean_end_locations = mean(end_locations,2);
             % Checking values
-            testCase.verifyLessThanOrEqual( ...
-                abs(sum(mcarlo_result)/n_mcarlo_sims - prob), desired_accuracy);            
+            testCase.verifyLessThanOrEqual(prob, ...
+                sum(mcarlo_result)/n_mcarlo_sims);            
             testCase.verifyLessThanOrEqual( ...
                 max(abs(mean_vec - mean_end_locations)), 1e-2);                    
         end
@@ -304,8 +303,8 @@ classdef SReachFwdTest < matlab.unittest.TestCase
             
             % Check if the location is within the target_set or not
             mcarlo_result = target_tube.contains(concat_state_realization);
-            testCase.verifyLessThanOrEqual(abs(sum(...
-                mcarlo_result)/n_mcarlo_sims - prob), desired_accuracy);            
+            testCase.verifyLessThanOrEqual(prob, ...
+                sum(mcarlo_result)/n_mcarlo_sims);            
             %% Stochastic initial state
             init_state_rand = RandomVector('Gaussian',init_state,0.001*eye(4)); 
             % Return the initial state itself
@@ -339,8 +338,8 @@ classdef SReachFwdTest < matlab.unittest.TestCase
             mcarlo_result = target_tube.contains(concat_state_realization);
             mean_concat_state = mean(concat_state_realization,2);
             % Checking values
-            testCase.verifyLessThanOrEqual(abs(sum(...
-                mcarlo_result)/n_mcarlo_sims - prob), desired_accuracy);            
+            testCase.verifyLessThanOrEqual(prob, ...
+                sum(mcarlo_result)/n_mcarlo_sims);            
             testCase.verifyLessThanOrEqual(max(abs(mean_vec -...
                 mean_concat_state)), 1e-2);            
         end

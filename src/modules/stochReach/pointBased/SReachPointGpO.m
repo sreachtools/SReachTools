@@ -73,6 +73,8 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointGpO(sys, ...
 %        certificate of exceeding a lower bound suffices. 
 %   2. After the optimization, the optimal value is reevaluated using a fresh
 %      set of particles for generality.
+% * A probabilistic bound on the overapproximation error between the provided
+%   estimate and the true estimate may be found using Hoeffding's inequality.
 % 
 % ============================================================================
 % 
@@ -149,19 +151,25 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointGpO(sys, ...
         % Minimum saturated ReachProb(U)=\int_{safety_tube}\psi_{\bX}(Z;x_0,U)dZ
         % Specifically, we saturate the reach probability from below by 
         % options.desired_accuracy => max(options.desired_accuracy,ReachProb(U))
+        % in order to be able to log | RandomVector/getProbPolyhedron returns an
+        % underapproximation of the reach probability
         MinSatReachProbGivenInputVec = @(input_vec) max( ...
             options.desired_accuracy, ...
             getProbPolyhedron(X_sans_input + H * input_vec, poly_tube, ...
                 options.desired_accuracy));
-        %% Got an initial solution to work with
         % Construct the reach cost function
+        % Default value for options.thresh is 1
         if 1 - options.thresh > options.desired_accuracy
-            % Since we do not care about feasibility beyond options.thresh,
-            % we saturate it by consider min(ReachProb(U), options.thresh)
             if options.thresh < options.desired_accuracy
+                % Complain
                 throw(SrtInvalidArgsError(['Threshold can not be smaller ', ...
                     'than the desired accuracy']));
             else
+                % For options.thresh < 1, we do not care about feasibility beyond
+                % options.thresh. Therefore, we maximize
+                %           min(ReachProb(U), options.thresh)
+                % instead of ReachProb(U). Therefore, we wish to minimize
+                %          -log(min(ReachProb(U), options.thresh)).
                 negLogReachProbGivenInputVec= @(input_vec) -log( min( ...
                     options.thresh, MinSatReachProbGivenInputVec(input_vec)));
             end

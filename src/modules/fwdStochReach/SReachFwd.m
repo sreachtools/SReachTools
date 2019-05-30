@@ -75,7 +75,8 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time, ...
 %   constraints on the initial state).
 % * For XXX-prob, the random vector is provided as the second output.
 % * Prob{ w \in \theta Polytope(A,b) } is computed using
-%   RandomVector/getProbPolyhedron.
+%   RandomVector/getProbPolyhedron. Note that this is an underapproximation of
+%   the true probability
 % * Requires the desired_accuracy to be at least 1e-2.
 %
 % ============================================================================

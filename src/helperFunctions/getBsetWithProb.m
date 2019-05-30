@@ -13,6 +13,10 @@ function bounded_set = getBsetWithProb(dist, polytope, prob_threshold,...
 % threshold [0,1] that the optimal bounded set (\theta^\ast Polytope(A,b))
 % must have the probability of occurence.
 %
+% The polytope computed is guaranteed to have a probability no smaller than
+% the specified threshold. The guarantee is probabilistic (via Hoeffding
+% inequality or a confidence interval estimate).
+%
 % This problem is solved using an equivalent single-variable convex 
 % optimization problem in
 %
@@ -73,6 +77,7 @@ function bounded_set = getBsetWithProb(dist, polytope, prob_threshold,...
     bisection_lb = 0;
     bisection_ub = 1;
     
+    % getProbPolyhedron returns an underapproximation of the probability
     prob_theta = @(theta) dist.getProbPolyhedron(theta * polytope, ...
         desired_accuracy);
     

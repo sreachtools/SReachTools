@@ -244,6 +244,13 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 % * While 'Gaussian' disturbance can have options.bound_set_method be 'polytope'
 %   or 'ellipsoid', 'UserDefined' disturbance requires options.bound_set_method
 %   to be 'polytope'.
+% * In 'genzps-open', desired accuracy is the farthest lower bound on the
+%   confidence interval acceptable. In order to remain conservative,
+%   RandomVector/getProbPolyhedron subtracts desired_accuracy from the result to
+%   yield an underapproximation. For higher desired_accuracy, the result may be
+%   more conservative but faster. For lower desired_accuracy, the result may
+%   take more time.
+%
 % ============================================================================
 % 
 % This function is part of the Stochastic Reachability Toolbox.

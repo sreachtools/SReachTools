@@ -176,6 +176,7 @@ classdef RandomVectorTests < matlab.unittest.TestCase
         function getProbPolyhedronTest(test_case)        
             % Test probability of set
             
+            desired_accuracy = 1e-2;
             % Gaussian case            
             mean_vec = [3;4];
             temp_mat = rand(2,2);
@@ -187,12 +188,10 @@ classdef RandomVectorTests < matlab.unittest.TestCase
             
             test_polyhedron = Polyhedron('lb', lb_polytope,...
                 'ub', ub_polytope);
-            prob = r.getProbPolyhedron(test_polyhedron, 1e-2);
+            prob = r.getProbPolyhedron(test_polyhedron, desired_accuracy);
             prob_mvncdf = mvncdf(lb_polytope', ub_polytope', mean_vec',...
                 cov_matrix);
-            test_case.verifyTrue(abs(prob - prob_mvncdf) <= 1e-2,...
-                sprintf('Mismatch in probability MC: %1.3e expected: %1.3f',...
-                prob, prob_mvncdf));            
+            test_case.verifyLessThanOrEqual(prob, prob_mvncdf);
             
             
             % Exponential case
@@ -205,12 +204,10 @@ classdef RandomVectorTests < matlab.unittest.TestCase
             
             test_polyhedron = Polyhedron('lb', lb_polytope,...
                 'ub', ub_polytope);
-            prob = r.getProbPolyhedron(test_polyhedron, 1e-2);            
+            prob = r.getProbPolyhedron(test_polyhedron, desired_accuracy);            
             prob_expcdf = prod(expcdf(max_corner, mean_vec));            
             % Comparing monte carlo to true value
-            test_case.verifyTrue(abs(prob - prob_expcdf) <= 1e-2,...
-                sprintf('Mismatch in probability MC: %1.3e expected: %1.3f',...
-                prob, prob_expcdf));
+            test_case.verifyLessThanOrEqual(prob, prob_expcdf);
         end
         
         function vertCatTest(testCase)        

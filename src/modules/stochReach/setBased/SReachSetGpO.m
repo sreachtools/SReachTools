@@ -110,6 +110,13 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
 % * Xmax computation is done with a heuristic of centering the initial
 %   state with respect to the polytope obtained via SReachSet
 %   (chance-open), followed by a patternsearch-based xmax computation
+% * In 'genzps-open', desired accuracy is the farthest lower bound on the
+%   confidence interval acceptable. In order to remain conservative,
+%   RandomVector/getProbPolyhedron subtracts desired_accuracy from the result to
+%   yield an underapproximation. For higher desired_accuracy, the result may be
+%   more conservative but faster. For lower desired_accuracy, the result may
+%   take more time.
+%
 % =============================================================================
 % 
 % This function is part of the Stochastic Reachability Toolbox.

@@ -103,11 +103,12 @@ function bounded_set = SReachSetLagBset(sys, onestep_prob_thresh, options)
             bounded_set = SReachEllipsoid(disturbance.mean(),ellipse_shape_mat);
             
         case 'polytope'
-            % Use RandomVector/getProbPolyhedron to compute the bounded set as a
-            % scaled version of a polytope
             validateattributes(options.template_polytope, {'Polyhedron'},...
                 {'nonempty'}, 'SReachSetLagBset', ...
                 'options.template_polytope for polytope option');
+            % Use RandomVector/getProbPolyhedron to compute the bounded set as a
+            % scaled version of a polytope | Returns a bounded_set that is
+            % guaranteed to have probability > onestep_prob_thresh
             bounded_set = getBsetWithProb(disturbance,...
                 options.template_polytope, onestep_prob_thresh,...
                 options.desired_accuracy, options.verbose);

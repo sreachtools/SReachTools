@@ -72,16 +72,16 @@ classdef SReachSetTests < matlab.unittest.TestCase
             onestep_prob_thresh = 0.8^(1/(length(safety_tube)-1));
             
             % Test getBsetWithProb explicitly
-            
+            desired_accuracy = 1e-2;
             bounded_set = getBsetWithProb(dist, temp_polytope,...
-                onestep_prob_thresh, 1e-2, 0);
+                onestep_prob_thresh, desired_accuracy, 0);
             n_particles_test = 1e6;
             mcarlo_sims = dist.getRealizations(n_particles_test);
             count_contains = bounded_set.contains(mcarlo_sims);
             prob_test = sum(count_contains)/n_particles_test;
-            test_case.verifyTrue(abs(prob_test - onestep_prob_thresh) < 1e-2,...
-                sprintf('Mismatch in prob: MC: %1.3e expected: %1.3f',...
-                    prob_test, onestep_prob_thresh));          
+            % The polytope returned must have a probability no smaller than
+            % the requested threshold
+            test_case.verifyLessThanOrEqual(onestep_prob_thresh,prob_test);          
         end                        
         function testSReachSetGpOEmpty(test_case)
             T = 0.25;
