@@ -30,6 +30,7 @@ function varargout = polytopesFromMonteCarloSims(...
 % Outputs:
 % --------
 %   set_of_polytopes  - Set of polytopes comprised of the points. (Array)
+%   hpoly             - Handle of the MPT3 plot for one of the polytopes
 %
 % See also generateMonteCarloSims
 %
@@ -58,7 +59,7 @@ function varargout = polytopesFromMonteCarloSims(...
     else
         relv_mc_indx = 1:n_mcarlo_sims;
     end
-    
+
     % Relevant states out of the trajectory
     relv_indx = reshape([relv_states(1):state_dim:state_dim * time_horizon;
                          relv_states(2):state_dim:state_dim * time_horizon], ...
@@ -76,8 +77,9 @@ function varargout = polytopesFromMonteCarloSims(...
         set_of_polytopes(tindx) = poly_at_tindx;
 
         if ~isempty(plot_options)
-            h=plot(poly_at_tindx, plot_options{:});
+            hpoly = plot(poly_at_tindx, plot_options{:});
         end
     end    
     varargout{1} = set_of_polytopes;
+    varargout{2} = hpoly;
 end
