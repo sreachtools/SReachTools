@@ -213,7 +213,7 @@ BibTeX entry for use in LaTeX with `\usepackage{url}`:
 ```
 @misc{SReachTools,
     author    = {Vinod, Abraham P. and Gleason, Joseph D. and Oishi, Meeko M. K.},
-    title     = {{ '{' }}{S}{R}each{T}ools: A {MATLAB} {S}tochastic {R}eachability {T}oolbox},
+    title     = {{S}{R}each{T}ools: A {MATLAB} {S}tochastic {R}eachability {T}oolbox},
     booktitle = {Proceedings of the International Conference on Hybrid Systems: Computation and Control},
     year      = {2019},
     address   = {Montreal, Canada},
