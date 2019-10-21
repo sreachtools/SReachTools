@@ -31,12 +31,16 @@ function [sys, heading_vec] = getDubinsCarLtv(type, turning_rate_seq, ...
 %
 % Inputs:
 % -------
-%   type        - 
+%   type                - String describing the type of Dubins' vehicle
+%                         dynamics ('add-dist'/'vel-dist'). Based on type,
+%                         additional arguments are required (See below)
 %   turning_rate_seq    - Known turning rate sequence (column vector of length
 %                         time_horizon) 
 %   initial_heading     - Initial heading angle
 %   sampling_time       - Sampling time for the system
-%   Required additional arguments for different types:
+%
+%   Required additional arguments based on type:
+%
 %   type: 'add-dist' (Additive disturbance with velocity as input)
 %       velocity_input  - Bounds on the velocity (1-dimensional Polyhedron
 %                         object)
@@ -74,6 +78,10 @@ function [sys, heading_vec] = getDubinsCarLtv(type, turning_rate_seq, ...
     switch(lower(type))
         case 'add-dist'
             if length(varargin) < 3
+                throwAsCaller(SrtInvalidArgsError(['Too few arguments. ', ...
+                    'Expected a polyhedron for velocity, a disturbance ', ...
+                    'matrix for the additive disturbance, and a random ', ...
+                    'vector/polyhedron for the additive disturbance.']));
                 throwAsCaller(SrtInvalidArgsError('Too few arguments'));
             end
             velocity_input = varargin{1};
@@ -101,7 +109,8 @@ function [sys, heading_vec] = getDubinsCarLtv(type, turning_rate_seq, ...
                 'DisturbanceMatrix', dist_matrix);
         case 'vel-dist'
             if isempty(varargin)
-                throwAsCaller(SrtInvalidArgsError('Too few arguments'));
+                throwAsCaller(SrtInvalidArgsError(['Too few arguments. ', ...
+                    'Expected a random vector/polyhedron for velocity.']));
             end
             velocity_dist = varargin{1};
             validateattributes(velocity_dist, {'RandomVector', 'Polyhedron'},...
