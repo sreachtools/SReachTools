@@ -37,9 +37,12 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
 %   polytope   - Underapproximative polytope of dimension sys.state_dim which
 %                underapproximates the stochastic reach set
 %   extra_info - A list of Matlab structs that comprises of auxillary
-%                information from the set computation. It has two members
-%                extra_info_wmax and extra_info_cheby.  The individual structs
-%                contain the following information:
+%                information from the set computation. It has three
+%                members:
+%                   1. extra_info_wmax,
+%                   2. extra_info_cheby, and
+%                   3. extra_info_mve. 
+%                The individual structs contain the following information:
 %                   1. xmax - Initial state that has the maximum reach
 %                             probability to stay with the safety tube using an
 %                             open-loop controller (via the method in use)
@@ -65,6 +68,8 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
 %                   7. vertices_underapprox_polytope
 %                           - Vertices of the polytope
 %                               xmax + opt_theta_i * options.set_of_dir_vecs
+%                When the corresponding method is not invoked, the
+%                structure is an empty set.
 %
 % Notes:
 % ------
@@ -140,7 +145,12 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
                                    'He',[safety_tube(1).He;
                                          options.init_safe_set_affine.He]);
     end
-    
+
+    % Default values for extra_info --- They will be overwritten when the
+    % the corresponding method is called
+    extra_info_cheby = create_dummy_extra_info_empty();
+    extra_info_wmax = create_dummy_extra_info_empty();
+    extra_info_mve = create_dummy_extra_info_empty();
     
     % Compute mean_X_zizs, cov_X_sans_input
     time_horizon = length(safety_tube)-1;
@@ -168,10 +178,6 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
     end
     xmax_soln = computeWmax(sys, options, init_safe_set, prob_thresh, ...
                     safety_tube, mean_X_zizs, scaled_sigma_vec);
-    % Default values for extra_info
-    extra_info_cheby = create_dummy_extra_info_empty();
-    extra_info_wmax = create_dummy_extra_info_empty();
-    extra_info_mve = create_dummy_extra_info_empty();
 
     % Check if the maximally safe initial state is above the probability
     % threshold
@@ -195,7 +201,7 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
         else
             % CVX could not solve the problem --- reuse dummy extra_info_wmax
         end
-        varargout{2} = [extra_info_wmax, extra_info_cheby];
+        varargout{2} = [extra_info_wmax, extra_info_cheby, extra_info_wmax];
     else
         if options.verbose >= 1
             fprintf(['Maximum reach probability: %1.2f > %1.2f (given ', ...

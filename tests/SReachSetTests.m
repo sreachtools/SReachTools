@@ -117,7 +117,7 @@ classdef SReachSetTests < matlab.unittest.TestCase
             test_case.verifyInstanceOf(level_set, 'Polyhedron');
             test_case.verifyTrue(level_set.isEmptySet(), ...
                 'Expected empty stochastic reach set');
-            test_case.verifyEqual(length(extra_info.extra_info_cco), 2);
+            test_case.verifyEqual(length(extra_info.extra_info_cco), 3);
             test_case.verifyTrue(abs(extra_info(1).xmax_reach_prob-0.1) <0.1,...
                 'Expected extra_info(1).xmax_reach_prob to be close to 0.1');
         end
@@ -154,7 +154,7 @@ classdef SReachSetTests < matlab.unittest.TestCase
             test_case.verifyInstanceOf(level_set, 'Polyhedron');
             test_case.verifyTrue(level_set.isEmptySet(), ...
                 'Expected empty stochastic reach set');
-            test_case.verifyEqual(length(extra_info), 2);
+            test_case.verifyEqual(length(extra_info), 3);
             test_case.verifyTrue(extra_info(1).xmax_reach_prob < 0.999, ...
                 'Expected non-trivial extra_info(1).xmax_reach_prob');
 
@@ -168,7 +168,7 @@ classdef SReachSetTests < matlab.unittest.TestCase
             test_case.verifyInstanceOf(level_set, 'Polyhedron');
             test_case.verifyTrue(~level_set.isEmptySet(), ...
                 'Expected non-empty stochastic reach set');
-            test_case.verifyEqual(length(extra_info), 2);
+            test_case.verifyEqual(length(extra_info), 3);
             test_case.verifyTrue(extra_info(1).xmax_reach_prob > 0.8, ...
                 'Expected non-trivial extra_info(1).xmax_reach_prob');
 
@@ -182,10 +182,25 @@ classdef SReachSetTests < matlab.unittest.TestCase
             test_case.verifyInstanceOf(level_set, 'Polyhedron');
             test_case.verifyTrue(~level_set.isEmptySet(), ...
                 'Expected non-empty stochastic reach set');
-            test_case.verifyEqual(length(extra_info), 2);
+            test_case.verifyEqual(length(extra_info), 3);
             test_case.verifyTrue(extra_info(1).xmax_reach_prob > 0.8, ...
                 'Expected non-trivial extra_info(1).xmax_reach_prob');
 
+            
+            %% Non-empty case - chance-open (mve only)
+            options = SReachSetOptions('term','chance-open', ...
+                'set_of_dir_vecs',[cos(theta);sin(theta)], ...
+                'init_safe_set_affine',Polyhedron(), 'verbose', 0, ...
+                'compute_style','mve');
+            [level_set, extra_info] = SReachSet('term','chance-open', sys, ...
+                0.8, safety_tube, options);
+            test_case.verifyInstanceOf(level_set, 'Polyhedron');
+            test_case.verifyTrue(~level_set.isEmptySet(), ...
+                'Expected non-empty stochastic reach set');
+            test_case.verifyEqual(length(extra_info), 3);
+            test_case.verifyTrue(extra_info(1).xmax_reach_prob > 0.8, ...
+                'Expected non-trivial extra_info(1).xmax_reach_prob');
+            
             %% Non-empty case - chance-open (all)
             options = SReachSetOptions('term','chance-open', ...
                 'set_of_dir_vecs',[cos(theta);sin(theta)], ...
@@ -196,7 +211,7 @@ classdef SReachSetTests < matlab.unittest.TestCase
             test_case.verifyInstanceOf(level_set, 'Polyhedron');
             test_case.verifyTrue(~level_set.isEmptySet(), ...
                 'Expected non-empty stochastic reach set');
-            test_case.verifyEqual(length(extra_info), 2);
+            test_case.verifyEqual(length(extra_info), 3);
             
             %% Empty case: 0.999 => emptyset for high stochastic system and Wmax
             %% is trival
@@ -216,7 +231,7 @@ classdef SReachSetTests < matlab.unittest.TestCase
             test_case.verifyInstanceOf(level_set, 'Polyhedron');
             test_case.verifyTrue(level_set.isEmptySet(), ...
                 'Expected empty stochastic reach set');
-            test_case.verifyEqual(length(extra_info), 2);
+            test_case.verifyEqual(length(extra_info), 3);
             test_case.verifyTrue(isempty(extra_info(1).xmax_reach_prob), ...
                 'Expected extra_info(1).xmax_reach_prob to be empty');
         end
