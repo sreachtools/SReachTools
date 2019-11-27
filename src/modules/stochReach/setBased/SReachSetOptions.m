@@ -61,13 +61,28 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %                                           t=0, that also admits an open-loop
 %                                           stochastic reach probability, above
 %                                           the prescribed probability
-%                                           threshold.
+%                                           threshold. This requires the
+%                                           safe set at t=0 to be
+%                                           full-dimensional
+%                                     'mve' 
+%                                         - Choose the anchor which is the 
+%                                           maximum volume inscribed ellipsoid
+%                                           of the safe set at t=0 | This does 
+%                                           not require the safe set at t=0 to 
+%                                           be full-dimensional | We also
+%                                           use bisection to maximize the 
+%                                           open-loop stochastic reach 
+%                                           probability, above the prescribed 
+%                                           probability threshold | This method
+%                                           also uses an affine translation of
+%                                           the provided direction vectors based
+%                                           on the computed ellipsoid.
 %                                     'all'
 %                                         - The underapproximative set is
 %                                           computed via the convex hull of the
 %                                           union of the polytopes obtained from
 %                                           the methods above. This polytope
-%                                           will have a maximum of twice the
+%                                           will have a maximum of 3x the
 %                                           number of given direction vectors as
 %                                           vertices
 % 
@@ -271,7 +286,7 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
     valid_method= {'chance-open','genzps-open','lag-under','lag-over'};
     valid_bound_method = {'load','polytope','ellipsoid'};
     valid_compute_style_lag = {'vfmethod','support'};
-    valid_compute_style_ccc = {'max_safe_init','cheby','all'};
+    valid_compute_style_ccc = {'max_safe_init','cheby','mve','all'};
     valid_vf_enum_method = {'cdd','lrs'};
     % Input parsing
     inpar = inputParser();
@@ -321,7 +336,7 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
             {'numeric'}, {'nonempty'}));
         % Verbosity
         inpar.addParameter('verbose',0, @(x) validateattributes(x, ...
-            {'numeric'}, {'scalar','>=',0,'<=',1}));
+            {'numeric'}, {'scalar','>=',0,'<=',2}));
 
         switch lower(method_str)
             case 'genzps-open'  

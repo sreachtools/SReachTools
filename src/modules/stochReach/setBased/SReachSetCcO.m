@@ -83,11 +83,19 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
 %                       safe set at t=0, that also admits an open-loop 
 %                       stochastic reach probability, above the prescribed
 %                       probability threshold.
+%   'mve'           --- Choose the anchor which is the maximum volume inscribed
+%                       ellipsoid of the safe set at t=0 | This does not require
+%                       the safe set at t=0 to be full-dimensional | We also use
+%                       bisection to maximize the open-loop stochastic reach
+%                       probability, above the prescribed probability threshold.
+%                       This method also uses an affine translation of the
+%                       provided direction vectors based on the computed
+%                       ellipsoid.
 % * SReachSetCcO also admits a options.compute_style = 'all' to perform the
 %   polytope computation from all of the above methods, and compute the convex
 %   hull of the union. This approach is also guaranteed to be an
 %   underapproximation, due to the convexity of the open-loop stochastic reach
-%   set.  However, this approach can result in twice the number of direction
+%   set.  However, this approach can result in much more number of direction
 %   vectors or vertices in the underapproximative polytope.
 % * See @LtiSystem/getConcatMats for more information about the
 %     notation used.
@@ -157,6 +165,7 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
     % Default values for extra_info
     extra_info_cheby = create_dummy_extra_info_empty();
     extra_info_wmax = create_dummy_extra_info_empty();
+    extra_info_mve = create_dummy_extra_info_empty();
 
     % Check if the maximally safe initial state is above the probability
     % threshold
@@ -187,20 +196,10 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
                 'threshold) | Polytope exists \n'], ...
                 xmax_soln.reach_prob, prob_thresh);
         end
-        % Step 2: Check if user-provided set_of_dir_vecs are in affine hull  
-        % Step 2a: Compute xmax + directions \forall directions
-        n_dir_vecs = size(options.set_of_dir_vecs,2);
-        check_set_of_dir_vecs = repmat(xmax_soln.xmax,1,n_dir_vecs) + ...
-            options.set_of_dir_vecs;
-        % Step 2b: Does it satisfy the equality constraints of init_safe_set
-        xmaxPlusdirs_within_init_safe_set_eq = abs(init_safe_set.Ae * ...
-            check_set_of_dir_vecs - init_safe_set.be) < myeps;
-        % Step 2c: If they don't, throw error
-        if ~all(all(xmaxPlusdirs_within_init_safe_set_eq))
-            throw(SrtInvalidArgsError(['set_of_dir_vecs+xmax does ', ... 
-                'not lie in the affine hull intersecting safe_set.']));
-        end
-
+        
+        %% Step 2: Check if set_of_dir_vecs in init_safe_set_affine
+        % Relegated to otherInputHandling()
+        
         %% Step 3: Compute convex hull of rel. boundary points by ray-shooting        
         if any(strcmpi(options.compute_style, {'all', 'max_safe_init'}))
             % Step 3a: Obtain the polytope from max safe init
@@ -243,30 +242,62 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
                     mean_X_zizs, scaled_sigma_vec);
             end
         end
+        if any(strcmpi(options.compute_style, {'all', 'mve'}))
+            % Step 3c: Shoot rays from MaximumVolumeInscribedEllipsoid of 
+            % init_safe_set with W_0^\ast(x_cheby) maximized
+            % Step 3b-i: Find the center
+            if options.verbose >= 1
+                disp(['Computing the Maximum Volume Inscribed Ellipsoid ', ...
+                    'center of initial safe set with max. safety probability']);
+            end
+            mve_soln = computeMVE(sys, options, init_safe_set, ...
+                           prob_thresh, safety_tube, mean_X_zizs, ...
+                           scaled_sigma_vec);
+            % Step 3b-ii: Find the polytope                           
+            if options.verbose >= 1
+                disp('Computing the polytope via the MVE center');
+            end
+            if nargout > 1
+                [polytope_mve, extra_info_mve] = ...
+                    computePolytopeFromAnchor(mve_soln, sys, options, ...
+                        init_safe_set, prob_thresh, safety_tube, mean_X_zizs,...
+                        scaled_sigma_vec);
+            else
+                polytope_mve = computePolytopeFromAnchor(mve_soln, sys, ....
+                    options,init_safe_set, prob_thresh, safety_tube, ...
+                    mean_X_zizs, scaled_sigma_vec);
+            end
+        end
+
         % Step 4: Convex hull of the vertices
         switch options.compute_style
             case 'max_safe_init'
                 varargout{1} = polytope_wmax;                
             case 'cheby'
-                varargout{1} = polytope_cheby;                
+                varargout{1} = polytope_cheby;              
+            case 'mve'
+                varargout{1} = polytope_mve; 
             case 'all'
                 varargout{1} = Polyhedron('V',[polytope_cheby.V;
-                                               polytope_wmax.V]);                
+                                               polytope_wmax.V;
+                                               polytope_mve.V;]);                
         end
         
         % Populate varargout if extra_info is requested
         if nargout > 1
-            if strcmpi(options.compute_style, 'cheby') 
+            if strcmpi(options.compute_style, 'cheby') || ...
+                    strcmpi(options.compute_style, 'mve') 
                 % extra_info_wmax is still []. Updated it with dummy with
                 % appropriate fields filled
                 varargout{2} = [create_dummy_extra_info_wmax(xmax_soln), ...
-                    extra_info_cheby];
+                    extra_info_cheby, extra_info_mve];
             else
-                % Cheby either is either
-                %  not required (compute_style = 'max_safe_init'; reuse dummmy) 
+                % Cheby is either not required (compute_style = 'max_safe_init'; 
+                % reuse dummmy defined in the initialization) 
                 % OR
-                %  computed (compute_style = 'all'; extra_info_cheby populated)
-                varargout{2} = [extra_info_wmax, extra_info_cheby];
+                % has been computed (compute_style = 'all')
+                varargout{2} = [extra_info_wmax, extra_info_cheby, ...
+                    extra_info_mve];
             end
         end
     end
@@ -402,12 +433,24 @@ function [polytope, extra_info] = computePolytopeFromAnchor(x_anchor, sys, ...
         unsolved_directions = [];
         fprintf('Analyzing direction :%4d/%4d', 0, n_dir_vecs);
     end
+    
+    if strcmpi(options.compute_style, 'mve')
+        set_of_directions_unnorm = x_anchor.mve_shape * options.set_of_dir_vecs;
+        set_of_directions = set_of_directions_unnorm ./ ...
+            norm(set_of_directions_unnorm, 2);
+    else
+        set_of_directions = options.set_of_dir_vecs;
+    end
+    
     for direction_index = 1: n_dir_vecs
         % Get direction_index-th direction in the hyperplane
-        direction = options.set_of_dir_vecs(:,direction_index);
+        direction = set_of_directions(:, direction_index);
         
-        if options.verbose >= 1
+        if options.verbose == 1
             fprintf('\b\b\b\b\b\b\b\b\b%4d/%4d', direction_index, n_dir_vecs);
+        elseif options.verbose == 2
+            fprintf('\nAnalyzing direction :%4d/%4d', direction_index, ...
+                n_dir_vecs);
         end
     
         %% Compute the boundary point
@@ -455,6 +498,10 @@ function [polytope, extra_info] = computePolytopeFromAnchor(x_anchor, sys, ...
                 opt_reach_prob_i(direction_index) = 1 - sum(deltai);
                 vertices_underapprox_polytope(:, direction_index) =...
                     boundary_point;
+                if options.verbose == 2
+                    fprintf(' | Sign: %s | Magnification: %1.2f', ...
+                        num2str(sign(direction')),opt_theta_i(direction_index));
+                end
             otherwise
                 % Compute the inequality slack
                 inside_slack = max(init_safe_set.A * boundary_point -...
@@ -665,9 +712,9 @@ function cheby_soln = computeChebyshev(sys, options, init_safe_set, ...
             % (6) W_0(x,U) >= prob_thresh
             1-sum(deltai) >= prob_thresh
             % (7) Chebyshev-centering constraints-based safety
-            init_safe_set.A * xmax + R * dual_norm_of_init_safe_set_A...
-                        <= init_safe_set.b
-            init_safe_set.Ae * xmax == init_safe_set.be
+            init_safe_set.A * xmax + ...
+                R * dual_norm_of_init_safe_set_A <= init_safe_set.b;
+            init_safe_set.Ae * xmax == init_safe_set.be;
             % (8) Input constraints
             concat_input_space_A * Umax <= concat_input_space_b;
     cvx_end
@@ -681,5 +728,113 @@ function cheby_soln = computeChebyshev(sys, options, init_safe_set, ...
         otherwise
             throw(SrtInvalidArgsError('CVX failed to obtain the ',...
                 'Chebyshev center, potentially due to numerical issues.'));
+    end
+end
+
+function mve_soln = computeMVE(sys, options, init_safe_set, prob_thresh, ...
+    safety_tube, mean_X_zizs, scaled_sigma_vec)
+    % Solve the following optimization problem
+    %
+    % maximize R
+    % subject to
+    %       W_0(xmax, Umax) >= alpha
+    %       (xmax + d)\in TargetTube(0) for every n-dim. vector d, ||d|| <= R
+    %       xmax\in Init_Safe_Set_Affine 
+    %       Umax \in U^N
+    %
+    % Note that second and third constraints together imply 
+    %       xmax \in TargetTube(0) \cap Init_Safe_Set_Affine
+    %
+    % Using the same notation as above, we maximize (1-sum(delta_i)) with 
+    % W_0(boundary_point, U)>= (1-sum(delta_i)), provided
+    %
+    %      norminv >= c_j * delta_i + d_j                            
+    %      mu_X(U) = Z xmax + H Umax + G mu_W
+    %      a_i^T * mu_X(U) + scaled_sigma_vec * norminv <= b_i
+    %      lb_delta <= delta_i 
+    %      delta_i <= 0.5
+    %      1 - sum(delta_i) >= alpha
+    % 
+    
+    %% Repeat of above lines --- get time_horizon, concat_XXX_A, concat_XXX_b, 
+    %% n_lin_const, Z, H, invcdf_approx_{m,c}, lb_deltai
+    % This entire section evaluation took only 0.05 seconds on a 2.10 GHz
+    % i7 laptop
+    time_horizon = length(safety_tube)-1;
+    [concat_safety_tube_A, concat_safety_tube_b] =...
+        safety_tube.concat([1 time_horizon]+1);
+    n_lin_const = size(concat_safety_tube_A,1);
+    [concat_input_space_A, concat_input_space_b] = getConcatInputSpace(sys, ...
+        time_horizon);
+    [Z, H, ~] = getConcatMats(sys, time_horizon);    
+
+    % Dual norm of a_i in init_safe_set for chebyshev-centering constraint
+    dual_norm_of_init_safe_set_A = norms(init_safe_set.A,2,2); 
+    
+    %% Maximum volume inscribed set since no restricton
+    prob_thresh_ub = 1;
+    prob_thresh_lb = prob_thresh;
+    bisect_tol = 1e-2;
+    while true                  % Do-While
+        prob_thresh_bisect = (prob_thresh_lb + prob_thresh_ub)/2;
+        [invcdf_approx_m, invcdf_approx_c, lb_deltai] =...
+            computeNormCdfInvOverApprox(1-prob_thresh_bisect, ...
+                options.pwa_accuracy, n_lin_const);
+        cvx_begin quiet
+            variable mean_X(sys.state_dim * time_horizon, 1);
+            variable deltai(n_lin_const, 1);
+            variable norminvover(n_lin_const, 1);
+            variable xmax(sys.state_dim, 1);
+            variable Umax(sys.input_dim * time_horizon,1);
+
+            cvx_solver SDPT3;
+            variable mve_shape(sys.state_dim, sys.state_dim) symmetric;
+            maximize( det_rootn( mve_shape ) )
+            subject to
+                % Chance-constraint reformulation of safety prob
+                % (1) Slack variables that are bounded below by the
+                % piecewise linear approximation of \phi^{-1}(1-\delta)
+                for deltai_indx = 1:n_lin_const
+                    norminvover(deltai_indx) >= invcdf_approx_m.* ...
+                        deltai(deltai_indx) + invcdf_approx_c; 
+                end
+                % (2) Trajectory
+                mean_X == Z * xmax + H * Umax + mean_X_zizs;
+                % (3) Ono's type of reformulation of chance constraints
+                concat_safety_tube_A* mean_X + scaled_sigma_vec .* norminvover...
+                        <= concat_safety_tube_b;
+                % (4) Lower bound on delta due to pwl's domain
+                deltai >= lb_deltai;
+                % (5) Upper bound on delta to make \phi^{-1}(1-\delta) concave
+                %     and within the PWA approximation of CDF
+                deltai <= 1 - prob_thresh_bisect;
+                % (6) W_0(x,U) >= prob_thresh
+                1-sum(deltai) >= prob_thresh_bisect
+                % (7) Maximum volume-centering constraints-based safety
+                % Second equality constraint is coming from the fact that
+                % init_safe_set.Ae * xmax + norms(mve_shape * init_safe_set.Ae',
+                %               2)' == init_safe_set.be;
+                init_safe_set.A * xmax + ...
+                    norms(mve_shape * init_safe_set.A', 2)' <= init_safe_set.b;
+                norms(mve_shape * init_safe_set.Ae', 2)' <= 0;
+                init_safe_set.Ae * xmax == init_safe_set.be;
+                % (8) Input constraints
+                concat_input_space_A * Umax <= concat_input_space_b;
+        cvx_end
+        switch cvx_status
+            case {'Solved','Inaccurate/Solved'}
+                mve_soln.reach_prob = 1-sum(deltai);
+                mve_soln.xmax = xmax;
+                mve_soln.Umax = Umax; 
+                mve_soln.mve_shape = mve_shape;
+                mve_soln.cvx_status = cvx_status;
+                prob_thresh_lb = prob_thresh_bisect;   % Raise the lower bar
+            otherwise
+                prob_thresh_ub = prob_thresh_bisect;   % Reduce the upper bar
+        end
+        % Should we stop?
+        if prob_thresh_ub - prob_thresh_lb < bisect_tol
+            break
+        end
     end
 end
