@@ -97,6 +97,7 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
 %   underapproximation, due to the convexity of the open-loop stochastic reach
 %   set.  However, this approach can result in much more number of direction
 %   vectors or vertices in the underapproximative polytope.
+% * If init_safe_set_affine = Polyhedron(), then we interpret it as R^n
 % * See @LtiSystem/getConcatMats for more information about the
 %     notation used.
 % 
@@ -108,7 +109,6 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
 %
 %
 
-    myeps = 1e-10; % Proxy for 0. Ideally, must be eps but MPT needs slack
     validatestring(method_str,{'chance-open'});
     
     inpar = inputParser();
@@ -132,9 +132,15 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
 
 
     % Construct the constrained initial safe set
-    init_safe_set = Polyhedron('H', safety_tube(1).H, ...
-                               'He',[safety_tube(1).He;
-                                     options.init_safe_set_affine.He]);
+    if options.init_safe_set_affine.isEmptySet()
+        % Treat init_safe_set_affine to be R^n
+        init_safe_set = safety_tube(1);
+    else
+        init_safe_set = Polyhedron('H', safety_tube(1).H, ...
+                                   'He',[safety_tube(1).He;
+                                         options.init_safe_set_affine.He]);
+    end
+    
     
     % Compute mean_X_zizs, cov_X_sans_input
     time_horizon = length(safety_tube)-1;
@@ -327,15 +333,15 @@ function extra_info = create_dummy_extra_info_empty()
 end
 
 function otherInputHandling(method_str, sys, options)
+    myeps = 1e-10; % Proxy for 0. Ideally, must be eps but MPT needs slack
+    
     % Input handling for SReachSetCcO
     
     % Consider updating SReachSetGpO.m if any changes are made here
     
     % Ensure Gaussian-perturbed system
-    validateattributes(sys.dist, {'RandomVector'}, {'nonempty'},...
-        'SReachSetCcO/otherInputHandling', 'sys.dist');
-    validatestring(sys.dist.type, {'Gaussian'}, {'nonempty'},...;
-        'SReachSetCcO/otherInputHandling', 'sys.dist.type');
+    validateattributes(sys.dist, {'RandomVector'}, {'nonempty'});
+    validatestring(sys.dist.type, {'Gaussian'}, {'nonempty'});
     
     % Check if prob_str and method_str are consistent        
     if ~strcmpi(options.prob_str,'term')
@@ -359,10 +365,21 @@ function otherInputHandling(method_str, sys, options)
     end
     % Make sure the user specified init_safe_set_affine is of the correct
     % dimension
-    if options.init_safe_set_affine.Dim ~= sys.state_dim &&...
-            ~isempty(options.init_safe_set_affine.H)
-        throwAsCaller(SrtInvalidArgsError(['init_safe_set_affine must be ', ...
-            'an sys.state_dim-dimensional affine set']));
+    if ~options.init_safe_set_affine.isEmptySet()
+        if options.init_safe_set_affine.Dim ~= sys.state_dim ||...
+                ~isempty(options.init_safe_set_affine.H)
+            throwAsCaller(SrtInvalidArgsError(['init_safe_set_affine must', ...
+                ' be an sys.state_dim-dimensional affine set (Polyhedron.H', ...
+                ' must be empty)']));
+        end
+        % Step 2: Check if user-provided set_of_dir_vecs in init_safe_set_affine
+        xmaxPlusdirs_within_init_safe_set_eq = ...
+            abs(options.init_safe_set_affine.Ae * options.set_of_dir_vecs - ...
+                options.init_safe_set_affine.be) < myeps;
+        if ~all(all(xmaxPlusdirs_within_init_safe_set_eq))
+            throwAsCaller(SrtInvalidArgsError(['set_of_dir_vecs+xmax does ', ... 
+                'not lie in the affine hull intersecting safe_set.']));
+        end
     end    
 end
 
@@ -507,8 +524,12 @@ function [polytope, extra_info] = computePolytopeFromAnchor(x_anchor, sys, ...
                 inside_slack = max(init_safe_set.A * boundary_point -...
                     init_safe_set.b);
                 % Compute the equality slack
-                inplane_slack = max(init_safe_set.Ae * boundary_point -...
+                if isempty(init_safe_set.Ae)
+                    inplane_slack = 0;
+                else
+                    inplane_slack = max(init_safe_set.Ae * boundary_point -...
                     init_safe_set.be);
+                end
                 if inside_slack <= eps && abs(inplane_slack) < eps
                     % All constraints satisfied
                     opt_theta_i(direction_index) = theta;

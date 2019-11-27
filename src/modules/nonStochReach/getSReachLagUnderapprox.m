@@ -229,6 +229,8 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
     % {(x,u) \in X x U: F*(Ax + Bu)<=g}, and then projecting this set to X.
     % Here, X is the state space and U is the input space
 
+    my_eps = 1e-8;
+    
     if isempty(options.equi_dir_vecs)
         throwAsCaller(SrtInvalidArgsError(['Expected non-empty ',...
             'equi_dir_vecs. Faulty options structure provided!']));
@@ -337,9 +339,9 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
         % OPTION 2: Bisection
         boundary_point = @(theta) center_point + theta * dir_vec;
         contains_check = @(theta) all(x_u_reaches_target_set_A *...
-             boundary_point(theta) <= x_u_reaches_target_set_b);
+             boundary_point(theta) <= x_u_reaches_target_set_b + my_eps);
         if any(abs(x_u_reaches_target_set_Ae * (center_point + dir_vec) -...
-                x_u_reaches_target_set_be) > 1e-10)
+                x_u_reaches_target_set_be) > my_eps)
             % Skipping the direction vector since it does not satisfy the
             % equality constraint
             warning('SReachTools:runTime', ['Given vector did not satisfy ',...

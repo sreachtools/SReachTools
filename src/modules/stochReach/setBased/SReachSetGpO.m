@@ -174,8 +174,14 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
     end
     
     % Construct the constrained initial safe set
-    init_safe_set = Polyhedron('H', safety_tube(1).H, ...
-                      'He',[safety_tube(1).He;options.init_safe_set_affine.He]);
+    if options.init_safe_set_affine.isEmptySet()
+        % Treat init_safe_set_affine to be R^n
+        init_safe_set = safety_tube(1);
+    else
+        init_safe_set = Polyhedron('H', safety_tube(1).H, ...
+                               'He',[safety_tube(1).He;
+                                     options.init_safe_set_affine.He]);
+    end
     
     if options.verbose >= 1 
         disp('Compute an initial guess for the xmax');
@@ -320,6 +326,8 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
 end
 
 function otherInputHandling(method_str, sys, options)
+    myeps = 1e-10; % Proxy for 0. Ideally, must be eps but MPT needs slack
+    
     % Input handling for SReachSetGpO
     
     % Consider updating SReachSetCcO.m if any changes are made here
@@ -350,10 +358,21 @@ function otherInputHandling(method_str, sys, options)
     end
     % Make sure the user specified init_safe_set_affine is of the correct
     % dimension
-    if options.init_safe_set_affine.Dim ~= sys.state_dim &&...
-            ~isempty(options.init_safe_set_affine.H)
-        throwAsCaller(SrtInvalidArgsError(sprintf(['init_safe_set_affine ', ...
-            'must be a %d-dimensional affine set'], sys.state_dim)));
+    if ~options.init_safe_set_affine.isEmptySet()
+        if options.init_safe_set_affine.Dim ~= sys.state_dim ||...
+                ~isempty(options.init_safe_set_affine.H)
+            throwAsCaller(SrtInvalidArgsError(['init_safe_set_affine must', ...
+                ' be an sys.state_dim-dimensional affine set (Polyhedron.H', ...
+                ' must be empty)']));
+        end
+        % Step 2: Check if user-provided set_of_dir_vecs in init_safe_set_affine
+        xmaxPlusdirs_within_init_safe_set_eq = ...
+            abs(options.init_safe_set_affine.Ae * options.set_of_dir_vecs - ...
+                options.init_safe_set_affine.be) < myeps;
+        if ~all(all(xmaxPlusdirs_within_init_safe_set_eq))
+            throw(SrtInvalidArgsError(['set_of_dir_vecs+xmax does ', ... 
+                'not lie in the affine hull intersecting safe_set.']));
+        end
     end    
 end
 

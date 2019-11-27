@@ -30,12 +30,11 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %                                     polytope for the stochastic reach set
 %                                     A (sys.state_dim x n_dir)-dimensional
 %                                     matrix
-%           2. init_safe_set_affine - [MUST HAVE] Affine constraints (if any) on
-%                                     the initial state. Must include a
-%                                     translate of the affine hull of the
-%                                     set_of_dir_vecs | On intersection with the
-%                                     safe set at t=0, it should result in a 2-D 
-%                                     set
+%           2. init_safe_set_affine - Affine constraints (if any) on the initial 
+%                                     state. Must include any translate of the 
+%                                     affine hull of the set_of_dir_vecs
+%                                     [Default: Polyhedron(), which is 
+%                                     interpreted as the entire R]
 %           3. verbose              - Verbosity of the implementation {0,1}
 %                                     [Default 0]
 %                                       0 - No output 
@@ -44,6 +43,7 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %                                           obtain xmax under study (maximizing
 %                                           the reach probability or the
 %                                           Chebyshev centering)
+%                                     [Default 0]
 %           4. pwa_accuracy         - Accuracy of the piecewise affine
 %                                     overapproximation of the inverse of the
 %                                     standard normal cumulative density
@@ -92,11 +92,12 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 %                                     maximum reach probability to identify the
 %                                     vertices of the underapproximative
 %                                     polytope for the stochastic reach set
-%           2. init_safe_set_affine - [MUST HAVE] Affine constraints (if any) on
-%                                     the initial state. Must include a
+%           2. init_safe_set_affine - Affine constraints (if any) on
+%                                     the initial state. Must include any
 %                                     translate of the affine hull of the
-%                                     set_of_dir_vecs | On intersection with the
-%                                     safe set, it should result in a 2-D set
+%                                     set_of_dir_vecs
+%                                     [Default: Polyhedron(), which is 
+%                                     interpreted as the entire R]
 %           3. verbose              - Verbosity of the implementation {0,1}
 %                                       0 - No output 
 %                                       1 - Outputs the direction vector being
@@ -446,13 +447,10 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
             case 'ellipsoid'
                 % Nothing to enforce                
         end        
-    elseif strcmpi(method_str,'chance-open') || ...
-           strcmpi(method_str,'genzps-open')
+    elseif strcmpi(method_str,'chance-open')||strcmpi(method_str,'genzps-open')
         % Must have for non-lag options: init_safe_set_affine, set_of_dir_vecs
-        if any(strcmp(inpar.UsingDefaults, 'init_safe_set_affine')) || ...
-                any(strcmp(inpar.UsingDefaults, 'set_of_dir_vecs'))
-             throw(SrtInvalidArgsError(['Expected init_safe_set_affine ', ...
-                'and set_of_dir_vecs']));
-        end            
+        if any(strcmp(inpar.UsingDefaults, 'set_of_dir_vecs'))
+             throw(SrtInvalidArgsError('Expected set_of_dir_vecs'));
+        end
     end
 end
