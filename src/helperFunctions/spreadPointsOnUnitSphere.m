@@ -104,7 +104,11 @@ function [opt_locations, separation] = spreadPointsOnUnitSphere(n_dim,...
 
         %% Count the number of slack constraints (each category): 
         % Pairwise separation (2)
-        n_pairwise_const = nchoosek(n_points_first_quad,2);
+        if n_points_first_quad > 1
+            n_pairwise_const = nchoosek(n_points_first_quad,2);
+        else
+            n_pairwise_const = 0;
+        end
         % Pairwise separation from standard vectors (3)
         n_pairwise_const_plus_standard = n_pairwise_const + n_dim;
         % Norm reverse equality constraint (5)

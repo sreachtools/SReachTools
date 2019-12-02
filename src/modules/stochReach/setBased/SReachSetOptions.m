@@ -201,8 +201,7 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
 % See also SReachSet.
 %
 % Notes:
-% * Requires init_safe_set_affine and set_of_dir_vecs for the methods 
-%   'chance-open' and 'genzps-open'.
+% * Requires set_of_dir_vecs for the methods 'chance-open' and 'genzps-open'.
 % * Requires load_str for the method lag-under with bound_set_method 'load'
 % * Requires template_polytope for the method lag-under with
 %   bound_set_method 'polytope'
