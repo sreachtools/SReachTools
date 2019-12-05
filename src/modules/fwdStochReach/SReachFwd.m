@@ -155,7 +155,7 @@ function varargout = SReachFwd(prob_str, sys, initial_state, target_time, ...
         if length(varargin) == 2
             desired_accuracy = varargin{2};
             validateattributes(desired_accuracy, {'numeric'}, {'scalar', ...
-                '>=', 1e-2, '<', 1});
+                '>=', 1e-2, '<', 1}, 'SReachFwd', 'desired_accuracy');
         elseif length(varargin) == 1
             desired_accuracy = 1e-2;
         else
