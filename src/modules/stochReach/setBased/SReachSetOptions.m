@@ -333,7 +333,7 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
             @(x) validateattributes(x, {'Polyhedron'}, {'nonempty'}));
         % Direction vectors to be used for line-search for vertices
         inpar.addParameter('set_of_dir_vecs', [], @(x) validateattributes(x, ...
-            {'numeric'}, {'nonempty'}));
+            {'numeric'}, {}));
         % Verbosity
         inpar.addParameter('verbose',0, @(x) validateattributes(x, ...
             {'numeric'}, {'scalar','>=',0,'<=',2}));
@@ -446,10 +446,5 @@ function options = SReachSetOptions(prob_str, method_str, varargin)
             case 'ellipsoid'
                 % Nothing to enforce                
         end        
-    elseif strcmpi(method_str,'chance-open')||strcmpi(method_str,'genzps-open')
-        % Must have for non-lag options: init_safe_set_affine, set_of_dir_vecs
-        if any(strcmp(inpar.UsingDefaults, 'set_of_dir_vecs'))
-             throw(SrtInvalidArgsError('Expected set_of_dir_vecs'));
-        end
     end
 end

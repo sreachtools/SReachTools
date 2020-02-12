@@ -219,6 +219,27 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
                      prob_thresh, xmax_reach_prob);
         end
 
+        %% Step 2: Check if xmax + set_of_dir_vecs in init_safe_set_affine
+        if options.init_safe_set_affine.Dim > 0
+            % Check if Ae * (xmax + dir_vecs) == be
+            myeps = 1e-10; % Proxy for 0. Ideally eps, but MPT needs slack    
+            xmaxPlusdirs = options.set_of_dir_vecs + xmax;
+            % Check if Ae * (xmax + dir_vecs) == be
+            xmaxPlusdirs_within_init_safe_set_eq = ...
+                abs(options.init_safe_set_affine.Ae * xmaxPlusdirs ...
+                     - options.init_safe_set_affine.be) < myeps;
+            % Even if one component of one direction vector violates
+            % equality, set to true
+            invalid_dir_vecs = ~all(all(xmaxPlusdirs_within_init_safe_set_eq));
+        else
+            % Empty affine set set so, dir_vecs is valid
+            invalid_dir_vecs = false;
+        end
+        if invalid_dir_vecs
+            throwAsCaller(SrtInvalidArgsError(['set_of_dir_vecs+xmax does ', ... 
+                'not lie in the affine hull intersecting safe_set.']));
+        end
+        
         % For storing boundary points
         opt_theta_i = zeros(1, n_dir_vecs);
         opt_reach_prob_i = zeros(1, n_dir_vecs);
@@ -326,8 +347,6 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
 end
 
 function otherInputHandling(method_str, sys, options)
-    myeps = 1e-10; % Proxy for 0. Ideally, must be eps but MPT needs slack
-    
     % Input handling for SReachSetGpO
     
     % Consider updating SReachSetCcO.m if any changes are made here
@@ -364,14 +383,6 @@ function otherInputHandling(method_str, sys, options)
             throwAsCaller(SrtInvalidArgsError(['init_safe_set_affine must', ...
                 ' be an sys.state_dim-dimensional affine set (Polyhedron.H', ...
                 ' must be empty)']));
-        end
-        % Step 2: Check if user-provided set_of_dir_vecs in init_safe_set_affine
-        xmaxPlusdirs_within_init_safe_set_eq = ...
-            abs(options.init_safe_set_affine.Ae * options.set_of_dir_vecs - ...
-                options.init_safe_set_affine.be) < myeps;
-        if ~all(all(xmaxPlusdirs_within_init_safe_set_eq))
-            throw(SrtInvalidArgsError(['set_of_dir_vecs+xmax does ', ... 
-                'not lie in the affine hull intersecting safe_set.']));
         end
     end    
 end
