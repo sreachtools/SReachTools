@@ -114,7 +114,7 @@ function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc, ...
     %        possible input and next state combinations | Low memory usage
     % high - Compute all the transition probabilities at once => recursions
     %        are insanely fast | High memory usage
-    memoryusage = 'low';   
+    memoryusage = 'high';   
     % Verbosity
     verbose = 0;
     % Update status every v_freq indices
@@ -164,7 +164,10 @@ function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc, ...
     %% Input gridding
     umax = max(sys.input_space.V);
     umin = min(sys.input_space.V);
-    if sys.input_dim == 1
+    if sys.input_dim == 0
+        % Only input provided is zero
+        grid_u = zeros(1,1);    
+    elseif sys.input_dim == 1
         grid_u = allcomb(umin(1):u_inc:umax(1));
     elseif sys.input_dim == 2
         grid_u = allcomb(umin(1):u_inc:umax(1), ...
@@ -332,12 +335,20 @@ function transition_prob_with_delta_at_x = computeTransProbWithDeltaAtX(sys, ...
     % Compute the random vector (x_{k+1} - B u_k), given by A x_k + F w_k
     next_x_zi = sys.state_mat * grid_x(ix,:)' + sys.dist_mat * sys.dist;   
     
-    for iu = 1:length(grid_u)
-        % Compute the random vector x_{k+1} under a specific u_k
-        next_x = next_x_zi + sys.input_mat * grid_u(iu,:);
+    if length(grid_u) == 1 && sys.input_dim == 0
+        % Compute the random vector x_{k+1} for u == 0
+        next_x = next_x_zi;
         % Transition probability is the pdf times delta for integration
-        transition_prob_with_delta_at_x(iu,:) = mvnpdf(grid_x, ...
+        transition_prob_with_delta_at_x(1,:) = mvnpdf(grid_x, ...
             next_x.mean()', next_x.cov())' .* delta_x_grid';
+    else
+        for iu = 1:length(grid_u)
+            % Compute the random vector x_{k+1} under a specific u_k
+            next_x = next_x_zi + sys.input_mat * grid_u(iu,:);
+            % Transition probability is the pdf times delta for integration
+            transition_prob_with_delta_at_x(iu,:) = mvnpdf(grid_x, ...
+                next_x.mean()', next_x.cov())' .* delta_x_grid';
+        end
     end
 end
 
