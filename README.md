@@ -114,10 +114,8 @@ This will disable some of the features of SReachTools or hamper performance.
    preferred approach for vertex-facet enumeration,
    [CDD](https://www.inf.ethz.ch/personal/fukudak/cdd_home/index.html).
 
-    1. **NOTE**: GeoCalcLib currently works only Unix
-    and MAC OS.  SReachTools will gracefully switch back to CDD, if installation
-    of GeoCalcLib is not correct.
-    1. Install [GMP](https://gmplib.org/)
+   > :warning: GeoCalcLib currently works only in Unix and MAC OS.  SReachTools will gracefully switch back to CDD, if GeoCalcLib is installed incorrectly.
+    1. Install [GMP](https://gmplib.org/) ---  a free library for arbitrary precision arithmetic, operating on signed integers, rational numbers, and floating-point numbers.
         1. Get the tar ball from [https://gmplib.org/#DOWNLOAD](https://gmplib.org/#DOWNLOAD)
         1. Follow the installation instructions
            [https://gmplib.org/manual/Installing-GMP.html#Installing-GMP](https://gmplib.org/manual/Installing-GMP.html#Installing-GMP)
@@ -153,8 +151,8 @@ This will disable some of the features of SReachTools or hamper performance.
 1. Clone the SReachTools repository (or download the latest zip file from
    [Releases](https://github.com/sreachtools/SReachTools/releases))
 1. Change the MATLAB current working directory to where SReachTools was
-   downloaded. **WARNING**: Please do not add the folder to the MATLAB path
-   manually.
+   downloaded. 
+   > :warning: Please do not add the folder to the MATLAB path manually.
 1. Run `srtinit` in MATLAB to add the toolbox to the paths and ensure all
    must-have dependencies are properly installed.
    - You can add `cd <path_to_sreachtools_repo>;srtinit` to your MATLAB's
@@ -204,10 +202,7 @@ repository](https://github.com/sreachtools/SReachTools/raw/master/SReachTools.pd
 
 IEEE citation style:
 
-A. P. Vinod, J. D. Gleason, and M. M. K. Oishi. "SReachTools: A MATLAB
-Stochastic Reachability Toolbox," In Proceedings of the  International
-Conference on Hybrid Systems: Computation and Control, Montreal, Canada,
-April 16--18, 2019.  https://sreachtools.github.io.
+> A. P. Vinod, J. D. Gleason, and M. M. K. Oishi.  "SReachTools: A MATLAB Stochastic Reachability Toolbox," In Proceedings of the International Conference on Hybrid Systems: Computation and Control, Montreal, Canada, April 16--18, 2019.  https://sreachtools.github.io.
     
 BibTeX entry for use in LaTeX with `\usepackage{url}`: 
 ```
