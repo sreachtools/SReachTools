@@ -1,3 +1,5 @@
+> :warning: This repository is **not actively maintained**. Please check the repository [sreachtools/SReachTools](https://github.com/sreachtools/SReachTools) or https://sreachtools.github.io for the maintained repository.
+
 # Stochastic reachability toolbox (SReachTools)
 
 SReachTools is a MATLAB toolbox to tackle various problems in stochastic
