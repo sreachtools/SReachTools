@@ -79,7 +79,7 @@ classdef SReachEllipsoidTests < matlab.unittest.TestCase
                         
             test_case.verifyLessThanOrEqual(...
                 abs(support_vals- diag(v'*[y1,y2])),...
-                1e-8, 'CVX and support function definition do not agree!');
+                1e-6, 'CVX and support function definition do not agree!');
         end
         
         function multiplyTest(test_case)

@@ -139,8 +139,10 @@ classdef SReachFwdTest < matlab.unittest.TestCase
                                                    covariance_disturbance));
             % Create a discrete-time LQR controller that regulates the deputy 
             % to the origin 
-            K = lqr(ss(sys_CWH.state_mat,sys_CWH.input_mat,[],[],-1), ...
-                0.01*eye(4),eye(2));
+%             K = lqr(ss(sys_CWH.state_mat,sys_CWH.input_mat,[],[],-1), ...
+%                 0.01*eye(4),eye(2));
+            K = [0.0779   -0.0062    6.8297    0.0680;
+                 0.0062    0.0771   -0.0657    6.8007];
             % Reuse the system definition in sys_CWH with appropriately defined 
             % state matrix
             closed_loop_state_mat = sys_CWH.state_mat - sys_CWH.input_mat*K;
@@ -233,8 +235,10 @@ classdef SReachFwdTest < matlab.unittest.TestCase
                                                    covariance_disturbance));
             % Create a discrete-time LQR controller that regulates the deputy 
             % to the origin 
-            K = lqr(ss(sys_CWH.state_mat,sys_CWH.input_mat,[],[],-1), ...
-                0.01*eye(4),eye(2));
+%             K = lqr(ss(sys_CWH.state_mat,sys_CWH.input_mat,[],[],-1), ...
+%                 0.01*eye(4),eye(2));
+            K = [0.0779   -0.0062    6.8297    0.0680;
+                 0.0062    0.0771   -0.0657    6.8007];
             % Reuse the system definition in sys_CWH with appropriately defined 
             % state matrix
             closed_loop_state_mat = sys_CWH.state_mat - sys_CWH.input_mat*K;

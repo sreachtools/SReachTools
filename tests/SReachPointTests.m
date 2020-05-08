@@ -31,13 +31,23 @@ classdef SReachPointTests < matlab.unittest.TestCase
             
             options_bad = SReachPointOptions('term','voronoi-open',...
                     'max_overapprox_err', 1e-3);
-            test_case.verifyError(@() SReachPoint('term','voronoi-open', sys,...
-                initial_state, safety_tube, options_bad),...
-                'SReachTools:invalidArgs');
+
+            % Requires Gurobi since we are solving a MILP
+            [~, solvers_cvx] = cvx_solver;
+            n_Gurobi_solver = nnz(contains(solvers_cvx,'Gurobi'));
+            if n_Gurobi_solver == 0
+                test_case.verifyWarning(@() SReachPoint('term', ...
+                    'voronoi-open', sys, initial_state, safety_tube, ...
+                    options_bad), 'SReachTools:runtime');
+            else
+                test_case.verifyError(@() SReachPoint('term','voronoi-open', ... 
+                    sys, initial_state, safety_tube, options_bad),...
+                    'SReachTools:invalidArgs');
             
-            % Working three option
-            [lb_stoch_prob, input_vec, extra_info] = SReachPoint('term', ...
-                'voronoi-open', sys,initial_state, safety_tube);            
+                % Working three option
+                [lb_stoch_prob, input_vec, extra_info] = SReachPoint('term', ...
+                    'voronoi-open', sys,initial_state, safety_tube);            
+            end
         end 
         
         function testPointChanceAffine(test_case)
