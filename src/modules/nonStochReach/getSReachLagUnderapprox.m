@@ -181,6 +181,10 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,dist_set, options)
                     case 'vfmethod'
                         switch options.vf_enum_method
                             case 'cdd'
+                                if options.verbose >= 2
+                                    fprintf(['Using CDD for one-step ', ...
+                                        'backward reach set computation\n'])
+                                end
                                 %% One-step backward reach set via MPT
                                 one_step_backward_reach_set = ...
                                     inverted_state_matrix * ...
@@ -191,10 +195,14 @@ function varargout = getSReachLagUnderapprox(sys, target_tube,dist_set, options)
                                     one_step_backward_reach_set, ...
                                     target_tube(itt));
                             case 'lrs'
+                                if options.verbose >= 2
+                                    fprintf(['Using LRS for one-step ', ...
+                                        'backward reach set computation\n'])
+                                end
                                 %% One-step backward reach set via LRS
                                 effective_target = lrsOneStepBackReachSet(...
-                                    itt - 1, sys, new_target, target_tube(itt), ...
-                                    options.verbose);
+                                    itt - 1, sys, new_target, ...
+                                    target_tube(itt), options.verbose);
                         end
                     otherwise
                         throwAsCaller(SrtInvalidArgsError(['Invalid ',...
@@ -389,9 +397,15 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
     end
     switch options.vf_enum_method
         case 'lrs' % LRS approach
+            if options.verbose >= 2
+                fprintf('Using LRS for vertex redundancy removal\n')
+            end
             one_step_back_reach_polytope_underapprox_V =...
                 vertexReduction(boundary_point_mat(1:sys.state_dim,:)');
         case 'cdd' % CDD approach (MPT3's native method)
+            if options.verbose >= 2
+                fprintf('Using CDD for vertex redundancy removal\n')
+            end
             % Construct a polyhedron
             one_step_back_reach_polytope_underapprox = ...
                 Polyhedron('V',boundary_point_mat(1:sys.state_dim,:)');
@@ -410,6 +424,9 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
     end
     switch options.vf_enum_method
         case 'lrs' % LRS approach
+            if options.verbose >= 2
+                fprintf('Using LRS for facet enumeration\n')
+            end
             [one_step_back_reach_polytope_underapprox_A_red, ...
                 one_step_back_reach_polytope_underapprox_b_red] = ...
                     facetEnumeration( ...
@@ -422,6 +439,9 @@ function one_step_back_reach_polytope_underapprox = safeOneStepBackReachSet( ...
                         one_step_back_reach_polytope_underapprox_A_red ,...
                         one_step_back_reach_polytope_underapprox_b_red);
         case 'cdd' % CDD approach (MPT3's native method)
+            if options.verbose >= 2
+                fprintf('Using CDD for facet enumeration\n')
+            end
             try
                 % Construct the irredundant half-space representation
                 one_step_back_reach_polytope_underapprox.minHRep();

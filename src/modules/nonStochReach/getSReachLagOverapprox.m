@@ -215,10 +215,16 @@ function [effective_target_set] = computeViaSupportFn(sys, target_tube,...
     end
     switch options.vf_enum_method
         case 'cdd'                                      % MPT/CDD approach
+            if options.verbose >= 2
+                fprintf('Using CDD for facet redundancy removal\n')
+            end
             effective_target_set = Polyhedron('H', [effective_target_set_A, ...
                 effective_target_set_b; target_tube(1).A, target_tube(1).b]);
             effective_target_set.minHRep();
         case 'lrs'                                      % LRS approach
+            if options.verbose >= 2
+                fprintf('Using LRS for facet redundancy removal\n')
+            end
             effective_target_set_A_red = [effective_target_set_A; 
                 target_tube(1).A];
             effective_target_set_b_red = [effective_target_set_b; 

@@ -166,15 +166,10 @@ function varargout = SReachSetGpO(method_str, sys, prob_thresh, safety_tube, ...
         options.verbose, 'set_of_dir_vecs', options.set_of_dir_vecs, ...
         'init_safe_set_affine', options.init_safe_set_affine, ...
         'compute_style', options.compute_style_ccc);
-    if nargout > 1
-        % Require extra_info
-        [polytope_cc_open, extra_info_cco] = SReachSet('term','chance-open', ...
-            sys, prob_thresh, safety_tube, cc_options);  
-    else
-        % Skip extra_info
-        polytope_cc_open = SReachSet('term','chance-open', sys, prob_thresh, ...
-            safety_tube, cc_options);  
-    end
+
+    % Require extra_info since it is used by computeXmaxViaPatternsearch
+    [polytope_cc_open, extra_info_cco] = SReachSet('term','chance-open', ...
+        sys, prob_thresh, safety_tube, cc_options);  
     
     % Construct the constrained initial safe set
     if options.init_safe_set_affine.isEmptySet()

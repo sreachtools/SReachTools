@@ -89,9 +89,13 @@ This will disable some of the features of SReachTools or hamper performance.
        download MPT3 and its dependencies.
 1. CVX v2.1 ([http://cvxr.com/cvx/](http://cvxr.com/cvx/)) --- for
        parsing convex and mixed-integer programs
-    1. Install the CVX (Standard bundle, including Gurobi and/or MOSEK)
-    1. Installation instructions are given in
+    1. Install the CVX 
+        - Use the standard bundle, including Gurobi and/or MOSEK even if you do
+          not plan to use Gurobi or MOSEK
+    1. Detailed installation instructions are given in
        [http://cvxr.com/cvx/download/](http://cvxr.com/cvx/download/).
+        - Extract the `cvx` folder and run `cvx_setup` in MATLAB's command
+          prompt.
     1. No license is required, if you do not plan on using Gurobi (see next step). See [http://web.cvxr.com/cvx/doc/intro.html#licensing](http://web.cvxr.com/cvx/doc/intro.html#licensing) for more details.
 1. (**Optional**) Gurobi --- recommended backend solver for the convex programs
    formulated by SReachTools and required for all particle-based approaches
@@ -107,43 +111,21 @@ This will disable some of the features of SReachTools or hamper performance.
         1. CVX provides free academic license, which can be requested at
            [http://cvxr.com/cvx/academic/](http://cvxr.com/cvx/academic/).
     1. MPT3 will automatically update its backend solver to Gurobi, when Gurobi
-       is installed as a standalone and the license is found.
+       is installed as a standalone and the license is found. You will have to
+       run `mpt_init` in MATLAB's command prompt again.
 1. (**Optional**) [GeoCalcLib](https://github.com/worc4021/GeoCalcLib) --- a
    MATLAB interface to Avis's [LRS vertex-facet enumeration
    library](http://cgm.cs.mcgill.ca/~avis/C/lrs.html), an alternative to MPT's
    preferred approach for vertex-facet enumeration,
    [CDD](https://www.inf.ethz.ch/personal/fukudak/cdd_home/index.html).
 
-   > :warning: GeoCalcLib currently works only in Unix and MAC OS.  SReachTools will gracefully switch back to CDD, if GeoCalcLib is installed incorrectly.
-    1. Install [GMP](https://gmplib.org/) ---  a free library for arbitrary precision arithmetic, operating on signed integers, rational numbers, and floating-point numbers.
-        1. Get the tar ball from [https://gmplib.org/#DOWNLOAD](https://gmplib.org/#DOWNLOAD)
-        1. Follow the installation instructions
-           [https://gmplib.org/manual/Installing-GMP.html#Installing-GMP](https://gmplib.org/manual/Installing-GMP.html#Installing-GMP)
-    1. Download the zip file from
-       [https://github.com/worc4021/GeoCalcLib/archive/master.zip](https://github.com/worc4021/GeoCalcLib/archive/master.zip).
-    1. Extract the contents of this zip file to a desired location, whose full path is referred to here as `/path/to/GeoCalcLib`
-    1. Open a terminal and change directory to GeoCalcLib by `$cd /path/to/GeoCalcLib`. We will refer to this location as the GeoCalcLib root folder.
-    1. Create a folder `mexfiles` in GeoCalcLib root folder. 
-    1. Create a file named `User.make` in GeoCalcLib root folder using your
-       favorite editor with the following contents, and save it. See
-       [https://www.mathworks.com/matlabcentral/answers/66570-what-is-the-default-installation-path-for-matlab-on-architecture-x#answer_78163](https://www.mathworks.com/matlabcentral/answers/66570-what-is-the-default-installation-path-for-matlab-on-architecture-x#answer_78163)
-       for hints on how to identify your matlab root folder for your OS.
-        ```
-        # Specify the absolute path to the root folder of your Matlab
-        # installation where <FULL-PATH-TO-YOUR-MATLAB-INSTALLATION>/bin/mex
-        # exists
-        MATLABROOT = <FULL-PATH-TO-YOUR-MATLAB-INSTALLATION>
-        
-        # Path to which everything should be installed
-        INSTALLDIR = ../mexfiles/
-        ```
-    1. In the command prompt in GeoCalcLib root folder, execute `$ make`.
-    1. Add `/path/to/GeoCalcLib/mexfiles` to MATLAB path. If you want to use
-       this across sessions, we recommend adding the following command to
-       your MATLAB startup.
-        ```
-        addpath('/path/to/GeoCalcLib/mexfiles');
-        ```
+   See https://github.com/sreachtools/GeoCalcLib for a fork of
+   [GeoCalcLib](https://github.com/worc4021/GeoCalcLib) with detailed
+   installation instructions.
+
+   > :warning: GeoCalcLib currently works only in Unix and MAC OS.  SReachTools
+   > will gracefully switch back to CDD, if GeoCalcLib is installed incorrectly.
+
 
 ### Installation
 
