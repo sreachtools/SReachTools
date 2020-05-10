@@ -71,10 +71,10 @@ Further, you can see SReachTools in action at Code Ocean. Check out
 
 ### Dependencies
 
-You can skip installing the dependencies marked **optional**.
-This will disable some of the features of SReachTools or hamper performance.
-You can skip installing the dependencies marked **optional**.
-This will disable some of the features of SReachTools or hamper performance.
+You can skip installing the dependencies marked **optional**. This will disable
+some of the features of SReachTools or hamper performance. 
+> We will denote MATLAB's command prompt by `>>>`, while the system command
+> prompt by `$ `.
 1. MATLAB (>2017a)
     1. Toolboxes
         1. MATLAB's Statistics and Machine Learning Toolbox
@@ -82,21 +82,42 @@ This will disable some of the features of SReachTools or hamper performance.
            `genzps-open` options in `SReachPoint` and `SReachSet`
         1. (**Optional**) MATLAB's Optimization Toolbox --- recommended
            installation for MATLAB's Global Optimization Toolbox
-1. MPT3 ([https://www.mpt3.org/](https://www.mpt3.org/)) --- for polytopic
-   computational geometry
+1. MPT3 (https://www.mpt3.org/) --- for polytopic computational geometry
     1. Copy the MATLAB script [install_mpt3.m](https://www.mpt3.org/Main/Installation?action=download&upname=install_mpt3.m)
-       provided by MPT3 from the browser, and run it in MATLAB to automatically
-       download MPT3 and its dependencies.
+       provided by MPT3 from the browser to your local computer.
+    1. Run in MATLAB's command prompt after changing
+       directory to the folder containing `install_mpt3.m`
+       ```
+       >>> install_mpt3
+       ```
+       This script will automatically download MPT3 and its dependencies.
+    1. Add the following two commands to your MATLAB `startup` script for the
+       MPT3 installation to persist across MATLAB runs
+       ```
+       cd <PATH-TO-TBXMANAGER>;
+       tbxmanager restorepath
+       ```
 1. CVX v2.1 ([http://cvxr.com/cvx/](http://cvxr.com/cvx/)) --- for
-       parsing convex and mixed-integer programs
-    1. Install the CVX 
-        - Use the standard bundle, including Gurobi and/or MOSEK even if you do
-          not plan to use Gurobi or MOSEK
-    1. Detailed installation instructions are given in
-       [http://cvxr.com/cvx/download/](http://cvxr.com/cvx/download/).
-        - Extract the `cvx` folder and run `cvx_setup` in MATLAB's command
-          prompt.
-    1. No license is required, if you do not plan on using Gurobi (see next step). See [http://web.cvxr.com/cvx/doc/intro.html#licensing](http://web.cvxr.com/cvx/doc/intro.html#licensing) for more details.
+       parsing convex and mixed-integer programs. Use the standard bundle,
+       including Gurobi and/or MOSEK even if you do not plan to use Gurobi or
+       MOSEK.
+    1. Detailed installation instructions are given in http://cvxr.com/cvx/download/.
+        1. Download the zip file from http://cvxr.com/cvx/download/.
+        1. Extract the `cvx` folder.
+        1. Change the current working directory of MATLAB to the `cvx` folder.
+        1. Run in MATLAB's command prompt
+           ```
+           >>> cvx_setup
+           ```
+        1. Add the following two commands to your MATLAB `startup` script for
+           the CVX installation to persist across MATLAB runs
+           ```
+           cd <PATH-TO-CVX>;
+           cvx_setup
+           ```
+    1. No license is required to use CVX, if you do not plan on using Gurobi
+       (see next step). See http://web.cvxr.com/cvx/doc/intro.html#licensing for
+       more details.
 1. (**Optional**) Gurobi --- recommended backend solver for the convex programs
    formulated by SReachTools and required for all particle-based approaches
    in `SReachPoint`. We also find both CVX and MPT3 perform much better with
@@ -107,19 +128,18 @@ This will disable some of the features of SReachTools or hamper performance.
        Gurobi). Both of these license are free for non-commercial academic
        research.
         1. Gurobi offers free academic license, which can be requested at
-           [http://www.gurobi.com/registration/download-reg](http://www.gurobi.com/registration/download-reg).
+           http://www.gurobi.com/registration/download-reg.
         1. CVX provides free academic license, which can be requested at
-           [http://cvxr.com/cvx/academic/](http://cvxr.com/cvx/academic/).
+           http://cvxr.com/cvx/academic/.
     1. MPT3 will automatically update its backend solver to Gurobi, when Gurobi
        is installed as a standalone and the license is found. You will have to
-       run `mpt_init` in MATLAB's command prompt again.
+       run `>>> mpt_init` in MATLAB's command prompt again.
 1. (**Optional**) [GeoCalcLib](https://github.com/worc4021/GeoCalcLib) --- a
    MATLAB interface to Avis's [LRS vertex-facet enumeration
    library](http://cgm.cs.mcgill.ca/~avis/C/lrs.html), an alternative to MPT's
    preferred approach for vertex-facet enumeration,
-   [CDD](https://www.inf.ethz.ch/personal/fukudak/cdd_home/index.html).
-
-   See https://github.com/sreachtools/GeoCalcLib for a fork of
+   [CDD](https://www.inf.ethz.ch/personal/fukudak/cdd_home/index.html).  See
+   https://github.com/sreachtools/GeoCalcLib for a fork of
    [GeoCalcLib](https://github.com/worc4021/GeoCalcLib) with detailed
    installation instructions.
 
@@ -132,13 +152,20 @@ This will disable some of the features of SReachTools or hamper performance.
 1. Install the necessary dependencies listed above
 1. Clone the SReachTools repository (or download the latest zip file from
    [Releases](https://github.com/sreachtools/SReachTools/releases))
+   ```
+   $ git clone https://github.com/sreachtools/SReachTools
+   ```
 1. Change the MATLAB current working directory to where SReachTools was
    downloaded. 
    > :warning: Please do not add the folder to the MATLAB path manually.
-1. Run `srtinit` in MATLAB to add the toolbox to the paths and ensure all
-   must-have dependencies are properly installed.
-   - You can add `cd <path_to_sreachtools_repo>;srtinit` to your MATLAB's
-     `startup.m` to automatically have this done in future.
+1. Run `>>> srtinit` in MATLAB command prompt to add the toolbox to the paths
+   and ensure all must-have dependencies are properly installed.
+   - You can add 
+     ```
+     cd <PATH-TO-SREACHTOOLS>;
+     srtinit
+     ``` 
+     to your MATLAB's `startup.m` to automatically have this done in future.
    - (**Optional**) Additional steps:
        - Run `srtinit -t` to run all the unit tests.
        - Run `srtinit -v` to visualize the steps the changes to the path and
