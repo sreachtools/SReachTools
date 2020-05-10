@@ -128,11 +128,14 @@ MATLAB's command prompt by `>>`, while the system command prompt by `$ `.
    > will gracefully switch back to CDD, if GeoCalcLib is installed incorrectly.
 1. (**Optional**) External solvers --- **GUROBI** and/or **MOSEK**.
     1. Do you need to install external solvers?
+        - External solvers are typically more numerically robust and
+          computationally faster than free solvers.
+        - Mixed-integer programming enabled by GUROBI or MOSEK is crucial for
+          particle-based approaches of `SReachPoint`, namely "voronoi-open" and
+          "particle-open".
         - **GUROBI**: MPT3 + GUROBI provides robust polyhedral computation. 
-          CVX + GUROBI is a robust numerical solver combination in contrast to
-          SDPT3 and MOSEK. In addition, the mixed-integer programming enabled by
-          GUROBI is crucial for particle-based approaches of `SReachPoint`,
-          namely "voronoi-open" and "particle-open".
+          CVX + GUROBI is a faster combination in contrast to SDPT3 and MOSEK.
+          In addition, 
 
           > :warning: CVX v2.2 does not play well with GUROBI v9.0.2, while v2.1
           > worked with GUROBI v7.5.2. 

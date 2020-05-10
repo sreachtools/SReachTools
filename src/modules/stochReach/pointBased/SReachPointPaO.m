@@ -54,8 +54,11 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
 % See also SReachPoint.
 %
 % Notes:
-% * This function requires CVX with Gurobi as the backend solver for optimizing
+% * This function requires CVX with Mosek as the backend solver for optimizing
 %   the resulting mixed-integer linear program.
+% * Gurobi has been abandoned due to issues arising with its interface with CVX.
+%   See http://ask.cvxr.com/t/cvx-with-gurobi-error-warning/7072 for more
+%   details.
 % * See @LtiSystem/getConcatMats for more information about the notation used.
 % 
 % ============================================================================
@@ -89,19 +92,28 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
     approx_stoch_reach = -1;
     opt_input_vec = nan(sys.input_dim * time_horizon,1);
 
-    % Requires Gurobi since we are solving a MILP
+    % Requires Mosek since we are solving a MILP
     [default_solver, solvers_cvx] = cvx_solver;
-    n_Gurobi_solver = nnz(contains(solvers_cvx,'Gurobi'));
-    if n_Gurobi_solver == 0
-        warning('SReachTools:runtime',['SReachPointVoO returns a trivial ', ...
-            'result since Gurobi (a MILP solver) was not setup.']);
+    % n_Gurobi_solver = nnz(contains(solvers_cvx,'Gurobi'));
+    % n_Gurobi_solver == 0 || 
+    n_Mosek_solver = nnz(contains(solvers_cvx,'Mosek'));
+    if n_Mosek_solver == 0
+        warning('SReachTools:runtime',['SReachPointPaO returns a trivial ', ...
+            'result since Mosek (a MILP solver) were not setup.']);
     else
-        if ~contains(default_solver, 'Gurobi') && n_Gurobi_solver >= 2
-            warning('SReachTools:runtime', sprintf(['SReachPointVoO ', ...
-                'requires a MILP solver. Found %d Gurobi solvers.\n', ...
-                'Choosing the Gurobi solver bundled with CVX.\nSet the ',...
-                'desired Gurobi solver, before calling this function.'], ...
-                n_Gurobi_solver));              
+        if ~contains(default_solver, 'Mosek')
+            warning('SReachTools:runtime', sprintf(['SReachPointPaO ', ...
+                'requires a MILP solver. Found %d Mosek solvers.\n', ...
+                'Choosing the Mosek solver bundled with CVX.\nSet the ',...
+                'desired Mosek solver, before calling this function.'], ...
+                n_Mosek_solver));              
+%        elseif n_Gurobi_solver >= 2
+%            warning('SReachTools:runtime', sprintf(['SReachPointPaO ', ...
+%                'requires a MILP solver. Found %d Gurobi solvers.\n', ...
+%                'Choosing the external non-CVX bundled Gurobi solver.\n'], ...
+%                n_Gurobi_solver));              
+%        else
+%            throw(SrtRuntimeError('CVXv2.2 + GUROBI is not working!'))
         end
         
         otherInputHandling(sys, options);
@@ -156,8 +168,10 @@ function [approx_stoch_reach, opt_input_vec] = SReachPointPaO(sys, ...
             else
                 cvx_quiet true
             end
-            if ~contains(default_solver,'Gurobi')
-                cvx_solver Gurobi;
+            if ~contains(default_solver,'Mosek')
+                cvx_solver Mosek;
+%            elseif n_Gurobi_solver >= 2
+%                cvx_solver Gurobi_2;
             end
             variable U_vector(sys.input_dim * time_horizon,1);
             variable mean_X(sys.state_dim * time_horizon,options.n_particles);

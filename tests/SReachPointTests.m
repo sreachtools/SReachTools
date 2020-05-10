@@ -34,8 +34,10 @@ classdef SReachPointTests < matlab.unittest.TestCase
 
             % Requires Gurobi since we are solving a MILP
             [~, solvers_cvx] = cvx_solver;
-            n_Gurobi_solver = nnz(contains(solvers_cvx,'Gurobi'));
-            if n_Gurobi_solver == 0
+            % n_Gurobi_solver = nnz(contains(solvers_cvx,'Gurobi'));
+            % n_Gurobi_solver == 0
+            n_Mosek_solver = nnz(contains(solvers_cvx,'Mosek'));
+            if n_Mosek_solver == 0
                 test_case.verifyWarning(@() SReachPoint('term', ...
                     'voronoi-open', sys, initial_state, safety_tube, ...
                     options_bad), 'SReachTools:runtime');
