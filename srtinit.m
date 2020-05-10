@@ -282,39 +282,19 @@ function check_recommended_dependencies()
             'SReachPoint() function in SReachTools requires MATLAB''s ', ...
             'Global Optimization Toolbox.']);
     end    
-
-    % Gather data about MPT3
+    
+    %% Check if GeoCalcLib is installed correctly
+    has_geocalclib = (exist('vertexEnumeration', 'file') == 3) && ...
+        (exist('facetEnumeration', 'file') == 3);
+    if ~has_geocalclib
+        warning('SReachTools:setup',['Install LRS using GeoCalcLib for a', ...
+            'more efficient implementation of the Lagrangian methods']);
+    end    
+    
+    %% MPT3 has GUROBI
     options_mpt = mptopt;
-
-    % Gather data about CVX
-    [default_solver, solvers_cvx] = cvx_solver;
-    n_Gurobi_solver = nnz(contains(solvers_cvx,'Gurobi'));
-
-    % Check for Gurobi and if not default, switch to it if found, and warn the
-    %user
-    if ~(contains(default_solver,'Gurobi') && ...
-        any(contains(options_mpt.solvers_list.MIQP,'GUROBI')))
-        
-        if n_Gurobi_solver >= 1
-            % There is at least one Gurobi solver
-            warn_str = ['Switching CVX solver to the Gurobi solver bundled ',...
-                'with CVX.'];
-
-            if n_Gurobi_solver > 1
-                % Prepend to the warning string the fact that multiple Gurobi
-                % solvers were found!
-                warn_str = strcat(['Multiple Gurobi solvers ',...
-                    'found. Set your preferred Gurobi solver in CVX, ',...
-                    'before calling srtinit.m\n'], warn_str);
-            end
-            % Give the warning if verbose srtinit
-            warning('SReachTools:setup', strcat(['Gurobi is the ', ...
-                'recommended backend solver for MPT3 and CVX when using ',...
-                'SReachTools.\n', warn_str]));
-
-            % Gurobi was found. So, switch it to default solver
-            cvx_solver Gurobi;
-        else
-        end
+    if ~any(contains(options_mpt.solvers_list.MIQP,'GUROBI'))
+        warning('SReachTools:setup',['MPT3 works more reliably when using', ...
+             'GUROBI.']);
     end
 end

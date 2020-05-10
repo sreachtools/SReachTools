@@ -64,7 +64,7 @@ easy-to-follow examples. These are also part of the repository (see
 `examples/*.m`). 
 
 Further, you can see SReachTools in action at Code Ocean. Check out
-[https://codeocean.com/explore/capsules/?query=SReachTools](https://codeocean.com/explore/capsules/?query=SReachTools).
+https://codeocean.com/explore/capsules/?query=SReachTools.
 
 
 ## Installation
@@ -72,9 +72,8 @@ Further, you can see SReachTools in action at Code Ocean. Check out
 ### Dependencies
 
 You can skip installing the dependencies marked **optional**. This will disable
-some of the features of SReachTools or hamper performance. 
-> We will denote MATLAB's command prompt by `>>>`, while the system command
-> prompt by `$ `.
+some of the features of SReachTools or hamper performance.  We will denote
+MATLAB's command prompt by `>>`, while the system command prompt by `$ `.
 1. MATLAB (>2017a)
     1. Toolboxes
         1. MATLAB's Statistics and Machine Learning Toolbox
@@ -82,58 +81,40 @@ some of the features of SReachTools or hamper performance.
            `genzps-open` options in `SReachPoint` and `SReachSet`
         1. (**Optional**) MATLAB's Optimization Toolbox --- recommended
            installation for MATLAB's Global Optimization Toolbox
-1. MPT3 (https://www.mpt3.org/) --- for polytopic computational geometry
+1. **MPT3** (https://www.mpt3.org/) --- for polytopic computational geometry
     1. Copy the MATLAB script [install_mpt3.m](https://www.mpt3.org/Main/Installation?action=download&upname=install_mpt3.m)
        provided by MPT3 from the browser to your local computer.
     1. Run in MATLAB's command prompt after changing
        directory to the folder containing `install_mpt3.m`
        ```
-       >>> install_mpt3
+       >> install_mpt3
        ```
        This script will automatically download MPT3 and its dependencies.
-    1. Add the following two commands to your MATLAB `startup` script for the
-       MPT3 installation to persist across MATLAB runs
-       ```
-       cd <PATH-TO-TBXMANAGER>;
-       tbxmanager restorepath
-       ```
-1. CVX v2.1 ([http://cvxr.com/cvx/](http://cvxr.com/cvx/)) --- for
-       parsing convex and mixed-integer programs. Use the standard bundle,
-       including Gurobi and/or MOSEK even if you do not plan to use Gurobi or
-       MOSEK.
-    1. Detailed installation instructions are given in http://cvxr.com/cvx/download/.
-        1. Download the zip file from http://cvxr.com/cvx/download/.
-        1. Extract the `cvx` folder.
-        1. Change the current working directory of MATLAB to the `cvx` folder.
-        1. Run in MATLAB's command prompt
-           ```
-           >>> cvx_setup
-           ```
-        1. Add the following two commands to your MATLAB `startup` script for
-           the CVX installation to persist across MATLAB runs
-           ```
-           cd <PATH-TO-CVX>;
-           cvx_setup
-           ```
-    1. No license is required to use CVX, if you do not plan on using Gurobi
-       (see next step). See http://web.cvxr.com/cvx/doc/intro.html#licensing for
-       more details.
-1. (**Optional**) Gurobi --- recommended backend solver for the convex programs
-   formulated by SReachTools and required for all particle-based approaches
-   in `SReachPoint`. We also find both CVX and MPT3 perform much better with
-   Gurobi.
-    1. CVX works best with Gurobi v7.5.2. See installation details:
-       http://web.cvxr.com/cvx/doc/gurobi.html#gurobi        
-    1. To use Gurobi with CVX, we requires two licenses (one for CVX and one for
-       Gurobi). Both of these license are free for non-commercial academic
-       research.
-        1. Gurobi offers free academic license, which can be requested at
-           http://www.gurobi.com/registration/download-reg.
-        1. CVX provides free academic license, which can be requested at
-           http://cvxr.com/cvx/academic/.
-    1. MPT3 will automatically update its backend solver to Gurobi, when Gurobi
-       is installed as a standalone and the license is found. You will have to
-       run `>>> mpt_init` in MATLAB's command prompt again.
+    1. Add `cd <PATH-TO-TBXMANAGER>;tbxmanager restorepath`
+       to your MATLAB `startup` script for the MPT3
+       installation to persist across MATLAB runs.
+1. **CVX** (http://cvxr.com/cvx/) --- for parsing convex and
+   mixed-integer programs. Use the **Standard bundles, including Gurobi and/or
+   MOSEK**,  even if you do not plan to use Gurobi or MOSEK. CVX does not
+   require any additional licenses to work with GUROBI or MOSEK in an academic
+   setting.
+   1. Download the zip file from http://cvxr.com/cvx/download/.
+   1. Extract the `cvx` folder.
+   1. Change the current working directory of MATLAB to the `cvx` folder.
+   1. Run in MATLAB's command prompt
+      ```
+      >> cvx_setup
+      ```
+   1. Add `cd <PATH-TO-CVX>;cvx_setup` to your MATLAB
+      `startup` script for the CVX installation to persist
+      across MATLAB runs.
+   1. Other notes:
+      - Detailed installation instructions are given in
+        http://cvxr.com/cvx/download/.
+      - SDPT3 (the default backend solver of CVX) performs reasonably well with
+        CVX, when compared to MOSEK, and significantly poorly when compared to
+        GUROBI in the tested examples and CVX v2.1 version. See Step 5 for
+        instructions in installing external solvers for SReachTools.
 1. (**Optional**) [GeoCalcLib](https://github.com/worc4021/GeoCalcLib) --- a
    MATLAB interface to Avis's [LRS vertex-facet enumeration
    library](http://cgm.cs.mcgill.ca/~avis/C/lrs.html), an alternative to MPT's
@@ -145,7 +126,57 @@ some of the features of SReachTools or hamper performance.
 
    > :warning: GeoCalcLib currently works only in Unix and MAC OS.  SReachTools
    > will gracefully switch back to CDD, if GeoCalcLib is installed incorrectly.
+1. (**Optional**) External solvers --- **GUROBI** and/or **MOSEK**.
+    1. Do you need to install external solvers?
+        - **GUROBI**: MPT3 + GUROBI provides robust polyhedral computation. 
+          CVX + GUROBI is a robust numerical solver combination in contrast to
+          SDPT3 and MOSEK. In addition, the mixed-integer programming enabled by
+          GUROBI is crucial for particle-based approaches of `SReachPoint`,
+          namely "voronoi-open" and "particle-open".
 
+          > :warning: CVX v2.2 does not play well with GUROBI v9.0.2, while v2.1
+          > worked with GUROBI v7.5.2. 
+          
+          See http://ask.cvxr.com/t/cvx-with-gurobi-error-warning/7072 for more
+          details. Until this issue is resolved, SReachTools can not perform
+          particle-based approaches in SReachPoint.
+        - **MOSEK** is an alternative to GUROBI as a backend solver for CVX. In
+          empirical tests, however the performance of SDPT3 and MOSEK have been
+          comparable.  Unfortunately, MPT3 does not support MOSEK. See
+          https://www.mpt3.org/Main/FAQ. 
+    1. **GUROBI** offers free academic license, which can be requested at
+       http://www.gurobi.com/registration/download-reg.
+        1. You will have to run 
+           ```
+           $ grbgetkey OUTPUT_OF_GUROBI_LICENSE_REQUEST
+           ```
+           to generate the license file. 
+        1. **MPT3 + GUROBI**: 
+            1. Add `GRB_LICENSE_FILE` environment variable that has the location
+               of the `gurobi.lic` file for MPT3 to detect GUROBI. 
+            1. To update MPT3 with GUROBI, run in MATLAB's command prompt 
+               ```
+               >> mpt_init
+               ```
+        1. **CVX + GUROBI**: Follow instructions in
+           http://cvxr.com/cvx/doc/gurobi.html to obtain GUROBI license.
+
+           To enable GUROBI bundled with CVX, run the following command in
+           MATLAB command prompt
+           ```
+           >> cvx_setup
+           ```
+    1. **MOSEK** offers free academic license, which can be requested at
+       https://www.mosek.com/license/request/ 
+        1. Save the license file obtained via email in your home folder in a
+           folder named `mosek`. See
+           https://docs.mosek.com/9.2/licensing/quickstart.html for more
+           details.
+        1. **CVX + MOSEK**: To enable MOSEK bundled with CVX, run the following command in MATLAB
+           command prompt
+           ```
+           >> cvx_setup
+           ```
 
 ### Installation
 
@@ -157,15 +188,12 @@ some of the features of SReachTools or hamper performance.
    ```
 1. Change the MATLAB current working directory to where SReachTools was
    downloaded. 
+
    > :warning: Please do not add the folder to the MATLAB path manually.
-1. Run `>>> srtinit` in MATLAB command prompt to add the toolbox to the paths
-   and ensure all must-have dependencies are properly installed.
-   - You can add 
-     ```
-     cd <PATH-TO-SREACHTOOLS>;
-     srtinit
-     ``` 
-     to your MATLAB's `startup.m` to automatically have this done in future.
+1. Run `>> srtinit` in MATLAB command prompt to add the toolbox to the paths and
+   ensure all must-have dependencies are properly installed.
+   - You can add `cd <PATH-TO-SREACHTOOLS>;srtinit` to your MATLAB's `startup.m`
+     to automatically have this done in future.
    - (**Optional**) Additional steps:
        - Run `srtinit -t` to run all the unit tests.
        - Run `srtinit -v` to visualize the steps the changes to the path and

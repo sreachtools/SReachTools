@@ -113,18 +113,19 @@ target_tube = Tube('reach-avoid',safe_set, target_set, time_horizon);
 slice_at_vx_vy = zeros(2,1);      
 init_safe_set_affine = Polyhedron('He',[zeros(2,2) eye(2,2) slice_at_vx_vy]);
 prob_thresh = 0.8;
-% Direction vectors for Fourier transform approach
-n_dir_vecs = 15;
-theta_vec = linspace(0, 2*pi, n_dir_vecs);
-set_of_dir_vecs_ft = [cos(theta_vec);
-                      sin(theta_vec);
-                      zeros(2,n_dir_vecs)];
 % Direction vectors for chance-constrained approach
-n_dir_vecs = 40;
+n_dir_vecs = 20;
 theta_vec = linspace(0, 2*pi, n_dir_vecs);
 set_of_dir_vecs_cc_open = [cos(theta_vec);
                            sin(theta_vec);
                            zeros(2,n_dir_vecs)];
+% Direction vectors for Fourier transform approach
+% n_dir_vecs = 20;
+% theta_vec = linspace(0, 2*pi, n_dir_vecs);
+% set_of_dir_vecs_ft = [cos(theta_vec);
+%                       sin(theta_vec);
+%                       zeros(2,n_dir_vecs)];
+set_of_dir_vecs_ft = set_of_dir_vecs_cc_open;
 % THIS SCRIPT ONLY --- Flags that enable running specific components
 ft_run = 1;
 cc_open_run = 1;
@@ -163,7 +164,7 @@ if cc_open_run
     cc_options = SReachSetOptions('term', 'chance-open', ...
         'set_of_dir_vecs', set_of_dir_vecs_cc_open, ...
         'init_safe_set_affine', init_safe_set_affine, ...
-        'verbose', 1);
+        'verbose', 1, 'compute_style', 'max_safe_init');
     timer_cc_open = tic;
     [polytope_cc_open, extra_info] = SReachSet('term','chance-open', sys, ...
         prob_thresh, target_tube, cc_options);  
@@ -174,9 +175,9 @@ end
 % Genz's algorithm + Patternsearch-based underapproximation
 if ft_run
     ft_options = SReachSetOptions('term', 'genzps-open', ...
-        'set_of_dir_vecs', set_of_dir_vecs_ft, ...
+        'set_of_dir_vecs', set_of_dir_vecs_ft, 'desired_accuracy', 5e-2, ...
         'init_safe_set_affine', init_safe_set_affine, 'verbose', 1, ...
-        'desired_accuracy', 5e-2);
+        'compute_style_ccc', cc_options.compute_style);
     timer_ft = tic;
     polytope_ft = SReachSet('term','genzps-open', sys, prob_thresh, ...
         target_tube, ft_options);  
@@ -264,11 +265,11 @@ end
 % Monte-Carlo simulation parameters
 n_mcarlo_sims = 1e5;
 n_sims_to_plot = 5;
-direction_index_to_plot = 30;
+direction_index_to_plot = 10;
 if ~isEmptySet(polytope_cc_open)
-    init_state = extra_info(2).vertices_underapprox_polytope(:,direction_index_to_plot);
-    input_vec = extra_info(2).opt_input_vec_at_vertices(:,direction_index_to_plot);
-    opt_reach_avoid = extra_info(2).opt_reach_prob_i(direction_index_to_plot);
+    init_state = extra_info(1).vertices_underapprox_polytope(:,direction_index_to_plot);
+    input_vec = extra_info(1).opt_input_vec_at_vertices(:,direction_index_to_plot);
+    opt_reach_avoid = extra_info(1).opt_reach_prob_i(direction_index_to_plot);
 
     concat_state_realization = generateMonteCarloSims(...
             n_mcarlo_sims, ...
