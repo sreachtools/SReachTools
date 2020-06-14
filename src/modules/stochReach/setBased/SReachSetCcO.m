@@ -295,20 +295,27 @@ function varargout = SReachSetCcO(method_str, sys, prob_thresh, safety_tube, ...
             mve_soln = computeMVE(sys, options, init_safe_set, ...
                            prob_thresh, safety_tube, mean_X_zizs, ...
                            scaled_sigma_vec);
-            % Step 3b-ii: Find the polytope                           
-            if options.verbose >= 1
-                disp('Computing the polytope via the MVE center');
-            end
-            if nargout > 1
-                [polytope_mve, extra_info_mve] = ...
-                    computePolytopeFromAnchor(mve_soln, sys, options, ...
-                        init_safe_set, prob_thresh, safety_tube, mean_X_zizs,...
-                        scaled_sigma_vec);
+            if isempty(mve_soln)
+                if options.verbose >= 1
+                    disp('MVE computation failed!');
+                end            
+                polytope_mve = Polyhedron.emptySet(init_safe_set.Dim);
             else
-                polytope_mve = computePolytopeFromAnchor(mve_soln, sys, ....
-                    options,init_safe_set, prob_thresh, safety_tube, ...
-                    mean_X_zizs, scaled_sigma_vec);
-            end
+                % Step 3b-ii: Find the polytope                           
+                if options.verbose >= 1
+                    disp('Computing the polytope via the MVE center');
+                end            
+                if nargout > 1
+                    [polytope_mve, extra_info_mve] = ...
+                        computePolytopeFromAnchor(mve_soln, sys, options, ...
+                            init_safe_set, prob_thresh, safety_tube, mean_X_zizs,...
+                            scaled_sigma_vec);
+                else
+                    polytope_mve = computePolytopeFromAnchor(mve_soln, sys, ....
+                        options,init_safe_set, prob_thresh, safety_tube, ...
+                        mean_X_zizs, scaled_sigma_vec);
+                end
+            end            
         end
 
         % Step 4: Convex hull of the vertices
@@ -826,6 +833,7 @@ function mve_soln = computeMVE(sys, options, init_safe_set, prob_thresh, ...
     %      delta_i <= 0.5
     %      1 - sum(delta_i) >= alpha
     % 
+    mve_soln = [];    
     
     %% Repeat of above lines --- get time_horizon, concat_XXX_A, concat_XXX_b, 
     %% n_lin_const, Z, H, invcdf_approx_{m,c}, lb_deltai

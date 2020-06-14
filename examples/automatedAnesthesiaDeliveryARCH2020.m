@@ -33,7 +33,8 @@
 % clock rate and 16 GB RAM. 
 
 % Prescript running: Initializing srtinit, if it already hasn't been initialized
-close all;clearvars;srtinit;
+% close all;
+clearvars;srtinit;
 
 %% Problem Formulation
 % We first define a |LtiSystem| object corresponding to the discrete-time 
@@ -93,7 +94,7 @@ x3_initial_state = 5;
 init_safe_set_affine = Polyhedron('He',[0, 0, 1, x3_initial_state]);
 % Definition of set of direction vectors
 % --------------------------------------
-no_of_dir_vecs = 32;
+no_of_dir_vecs = 8;
 theta_vec = linspace(0,2*pi, no_of_dir_vecs+1);
 theta_vec = theta_vec(1:end-1);
 set_of_dir_vecs = [cos(theta_vec);sin(theta_vec);zeros(1,no_of_dir_vecs)];
@@ -102,19 +103,21 @@ set_of_dir_vecs = [cos(theta_vec);sin(theta_vec);zeros(1,no_of_dir_vecs)];
 % Use Ctrl + F1 to get the hints                                             
 options = SReachSetOptions('term','chance-open', 'verbose', 1, ...
     'set_of_dir_vecs', set_of_dir_vecs, ...
-    'init_safe_set_affine', init_safe_set_affine);
+    'init_safe_set_affine', init_safe_set_affine, ...
+    'compute_style', 'cheby');
 timer_val = tic;
 [underapprox_stoch_viab_polytope, extra_info] = SReachSet('term', ...
     'chance-open', sys, prob_thresh, safety_tube, options); 
 elapsed_time = toc(timer_val);
 %% Plotting the stochastic viable set
 figure(1);
+clf;
 hold on;
 safe_set_2D = safe_set.intersect(init_safe_set_affine);
 plot(safe_set_2D, 'color', 'y');
 plot(underapprox_stoch_viab_polytope, 'color', 'm', 'alpha', 0.5);
 leg=legend({'Safe set','Underapproximative polytope'});
-set(leg,'Location','SouthEast');
+set(leg,'Location','best');
 xlabel('$x_1$','interpreter','latex')
 ylabel('$x_2$','interpreter','latex')
 box on;
@@ -125,70 +128,74 @@ title('Open-loop underapproximative stochastic viability set');
 % saveas(gcf, '../results/Anesthesia_StochasticViabilitySet.png');
 
 %% Validate the underapproximative set and the controller using Monte-Carlo
-% We will now check how the optimal policy computed for one of the corners
-% perform in Monte-Carlo simulations.
-%
-% Note that we fail to obtain tight bounding ellipsoids in the initial time
-% steps due to lack of spread in the trajectory.
-%
-n_mcarlo_sims = 1e5;            % How many Monte-Carlo simulations to use
-vertex_indx = 8;                % Index of the vertex corner of interest
-if ~isEmptySet(underapprox_stoch_viab_polytope)
-    % Obtain info about the vertices from extra_info struct given by SReachSet
-    % ------------------------------------------------------------------------
-    initial_state = extra_info(1).vertices_underapprox_polytope(:,vertex_indx);
-    opt_input_vec = extra_info(1).opt_input_vec_at_vertices(:,vertex_indx);
-    stoch_viab_prob_lb = extra_info(1).opt_reach_prob_i(vertex_indx);
-    % Optimal mean trajectory generation 
-    % ----------------------------------
-    [Z, H, G] = sys.getConcatMats(time_horizon);
-    W = sys.dist.concat(time_horizon);
-    optimal_X = (Z * initial_state + H * opt_input_vec) + G * W;
-    optimal_mean_X = reshape(optimal_X.mean(), sys.state_dim,[]);
-    % Monte-Carlo estimate of the safety probability
-    % ----------------------------------------------
-    concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, sys, ...
-        initial_state, time_horizon, opt_input_vec);
-    mcarlo_result = safety_tube.contains(concat_state_realization);
-    stoch_viab_prob_mc_estim = sum(mcarlo_result)/n_mcarlo_sims;
-    
-    % Plotting
-    % --------
-    figure(2);
-    hold on;
-    % Plot the safe set at the fixed x_3
-    plot(safe_set_2D.slice(3,x3_initial_state), 'color', 'y');
-    % Plot the underapproximation of the stochastic reach set at the fixed x_3
-    plot(underapprox_stoch_viab_polytope.slice(3,x3_initial_state), ...
-        'color','m','alpha',0.5);
-    % Plot the initial state (vertex) under test
-    scatter(initial_state(1),initial_state(2), 300,'k^','filled');
-    % Plot the optimal mean trajectory from the initial state (vertex) under
-    % test
-    scatter([initial_state(1), optimal_mean_X(1,:)], ...
-            [initial_state(2), optimal_mean_X(2,:)], ...
-          30, 'bo', 'filled');
-    legend_cell = {'Safe set', 'Underapproximation set', 'A vertex', ...
-        'Mean trajectory'};
-    leg = legend(legend_cell,'Location','EastOutside');
-    % Plot ellipsoids that tightly cover 100 randomly chosen realizations
-    ellipsoidsFromMonteCarloSims(concat_state_realization, sys.state_dim, ...
-        [1,2], {'b'});
-    title(sprintf(['Open-loop-based lower bound: %1.3f\n Monte-Carlo ', ...
-                   'simulation: %1.3f\nEllipsoids tightly fit 100\n',...
-                   'randomly chosen Monte-Carlo sims.'], stoch_viab_prob_lb, ...
-                    stoch_viab_prob_mc_estim));
-    box on;
-    grid on;
-    xlabel('$x_1$','interpreter','latex')
-    ylabel('$x_2$','interpreter','latex');   
+validate_using_MC = 0;
+if validate_using_MC
+    % We will now check how the optimal policy computed for one of the corners
+    % perform in Monte-Carlo simulations.
+    %
+    % Note that we fail to obtain tight bounding ellipsoids in the initial time
+    % steps due to lack of spread in the trajectory.
+    %
+    n_mcarlo_sims = 1e5;            % How many Monte-Carlo simulations to use
+    vertex_indx = 8;                % Index of the vertex corner of interest
+    if ~isEmptySet(underapprox_stoch_viab_polytope)
+        % Obtain info about the vertices from extra_info struct given by SReachSet
+        % ------------------------------------------------------------------------
+        initial_state = extra_info(1).vertices_underapprox_polytope(:,vertex_indx);
+        opt_input_vec = extra_info(1).opt_input_vec_at_vertices(:,vertex_indx);
+        stoch_viab_prob_lb = extra_info(1).opt_reach_prob_i(vertex_indx);
+        % Optimal mean trajectory generation 
+        % ----------------------------------
+        [Z, H, G] = sys.getConcatMats(time_horizon);
+        W = sys.dist.concat(time_horizon);
+        optimal_X = (Z * initial_state + H * opt_input_vec) + G * W;
+        optimal_mean_X = reshape(optimal_X.mean(), sys.state_dim,[]);
+        % Monte-Carlo estimate of the safety probability
+        % ----------------------------------------------
+        concat_state_realization = generateMonteCarloSims(n_mcarlo_sims, sys, ...
+            initial_state, time_horizon, opt_input_vec);
+        mcarlo_result = safety_tube.contains(concat_state_realization);
+        stoch_viab_prob_mc_estim = sum(mcarlo_result)/n_mcarlo_sims;
+
+        % Plotting
+        % --------
+        figure(2);
+        clf;
+        hold on;
+        % Plot the safe set at the fixed x_3
+        plot(safe_set_2D.slice(3,x3_initial_state), 'color', 'y');
+        % Plot the underapproximation of the stochastic reach set at the fixed x_3
+        plot(underapprox_stoch_viab_polytope.slice(3,x3_initial_state), ...
+            'color','m','alpha',0.5);
+        % Plot the initial state (vertex) under test
+        scatter(initial_state(1),initial_state(2), 300,'k^','filled');
+        % Plot the optimal mean trajectory from the initial state (vertex) under
+        % test
+        scatter([initial_state(1), optimal_mean_X(1,:)], ...
+                [initial_state(2), optimal_mean_X(2,:)], ...
+              30, 'bo', 'filled');
+        legend_cell = {'Safe set', 'Underapproximation set', 'A vertex', ...
+            'Mean trajectory'};
+        leg = legend(legend_cell,'Location','EastOutside');
+        % Plot ellipsoids that tightly cover 100 randomly chosen realizations
+        ellipsoidsFromMonteCarloSims(concat_state_realization, sys.state_dim, ...
+            [1,2], {'b'});
+        title(sprintf(['Open-loop-based lower bound: %1.3f\n Monte-Carlo ', ...
+                       'simulation: %1.3f\nEllipsoids tightly fit 100\n',...
+                       'randomly chosen Monte-Carlo sims.'], stoch_viab_prob_lb, ...
+                        stoch_viab_prob_mc_estim));
+        box on;
+        grid on;
+        xlabel('$x_1$','interpreter','latex')
+        ylabel('$x_2$','interpreter','latex');   
+    end
+    % If code ocean, save the results
+    % saveas(gcf, '../results/Anesthesia_StochasticViabControlDemo.png');
+    fprintf(['Open-loop-based lower bound and Monte-Carlo ', ...
+         'simulation (%1.0e particles): %1.3f, %1.3f\n\n\n'], ...
+        n_mcarlo_sims, stoch_viab_prob_lb, stoch_viab_prob_mc_estim);    
 end
-% If code ocean, save the results
-% saveas(gcf, '../results/Anesthesia_StochasticViabControlDemo.png');
 
 % Display the results
 % -------------------
-fprintf('\n\nTime taken for the reach set computation: %1.2f\n', elapsed_time)
-fprintf(['Open-loop-based lower bound and Monte-Carlo ', ...
-         'simulation (%1.0e particles): %1.3f, %1.3f\n\n\n'], ...
-        n_mcarlo_sims, stoch_viab_prob_lb, stoch_viab_prob_mc_estim);    
+fprintf('\n\nTime taken for the reach set computation: %1.2f\n', elapsed_time);
