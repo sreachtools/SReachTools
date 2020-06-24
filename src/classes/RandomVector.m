@@ -71,7 +71,9 @@ classdef RandomVector
 % Notes:
 % ------
 % * MATLAB DEPENDENCY: Uses MATLAB's Statistics and Machine Learning Toolbox.
-%
+% * For Gaussians, if minimum eigenvalue of the covariance matrix is below 
+%   -1e-15, then an error will be thrown. Otherwise, all eigenvalues below 1e-10 
+%   is sanitized for numerical accuracy, and set to zero.
 % 
 % =========================================================================
 % 
@@ -153,12 +155,6 @@ classdef RandomVector
         % 
         % 
 
-            % Tolerances
-            % Maximum elementwise error tolerance when making a matrix symmetric
-            max_elem_err_tol = 1e-10;           
-            % Saturation for minimum eigenvalues
-            min_eig_val_saturation = 1e-10;
-            
             % Check if the random vector type is a string 
             validatestring(rv_type, {'Gaussian', 'UserDefined'});
 
@@ -185,6 +181,9 @@ classdef RandomVector
                     obj.parameters.covariance = varargin{2};
                     
                     % Ensure that the covariance matrix is symmetric
+                    % Maximum elementwise error tolerance to force symmetric mat
+                    max_elem_err_tol = 1e-10;                       
+            
                     if ~issymmetric(obj.parameters.covariance)
                         % Compute the symmetric component of it
                         symm_cov_matrix = (obj.parameters.covariance +...
@@ -207,35 +206,58 @@ classdef RandomVector
                     
                     % Ensure that the covariance matrix has real
                     % nonnegative eigenvalues
+                    % Thresholds for saturation for minimum eigenvalues
+                    % 1e-10 chosen for Genz's algorithm in mind (TODO: Confirm)
+                    min_eig_val_saturation = 1e-10;
+                    % Tolerable negative eigenvalue
+                    min_negative_eig_val = -1e-15;                     
+                    
                     % For some reason, -eps alone is not enough?
                     % TODO: We can do better using eigs | However, there is a
                     %       compatibility issue for MATLAB earlier than 2017a
-                    % min_eig_val = eigs(obj.parameters.covariance,1,'smallestreal');
-                    min_eig_val = min(eig(obj.parameters.covariance));
-                    if min_eig_val <= -2*eps
+                    % min_eig_val = eigs(obj.parameters.covariance,1, ...
+                    %   'smallestreal');                    
+
+                    % Saturation via truncation of eigenvalues in
+                    % eigendecomposition
+                    [V, eig_vector] = eig(obj.parameters.covariance, 'vector');
+                    % Extract the vector of eigenvalues and the minimum eigval
+                    min_eig_val = min(eig_vector);                    
+                    % Skip sanitization if the matrix has either zero or 
+                    % positive large (>=min_eig_val_saturation) eigenvalues
+                    only_zero_and_strictly_non_small = all( ...
+                        (eig_vector == 0) ...
+                            | (eig_vector >= min_eig_val_saturation));
+                    if only_zero_and_strictly_non_small
+                        % Do nothing
+                    elseif min_eig_val <= min_negative_eig_val
+                        % Intolerable negative eigenvalue
                         throwAsCaller(SrtInvalidArgsError(['Covariance ',...
                             'matrix can not have negative eigenvalues']));
-                    elseif min_eig_val < 0
-                        warning('SReachTools:runtime', sprintf(['Sanitized ', ...
-                            'covariance matrix since negative eigenvalues ',...
-                            '> -2*eps and <0 found!\nNew covariance matrix ',...
-                            'has all the eigenvalues below %1.0e set to 0.'],...
-                            min_eig_val_saturation));
-                        [V, E] = eig(obj.parameters.covariance);
-                        eig_vector = diag(E);
+                    elseif min_eig_val < min_eig_val_saturation
+                        % Tolerable negative eigenvalue or positive
+                        % eigenvalue smaller than min_eig_val_saturation
+                        warning('SReachTools:runtime', ...
+                                sprintf(['Sanitized covariance matrix since',... 
+                                ' eigenvalues > %1.0e and <%1.0e found!\n',...
+                                'The lowest eigenvalue is %1.1e\n',...
+                                'New covariance matrix has all such ',...
+                                'eigenvalues set to 0.'],...
+                                min_negative_eig_val, min_eig_val_saturation,...
+                                min_eig_val));
+                        % Store only eigenvalues with |eigval|>=min_eig_val_sat
                         eig_vector_sanitized = zeros(size(eig_vector));
-                        nnz_eig_vector=(abs(eig_vector)>min_eig_val_saturation);
+                        nnz_eig_vector= ...
+                            abs(eig_vector) >= min_eig_val_saturation;
                         eig_vector_sanitized(nnz_eig_vector) = ...
                             eig_vector(nnz_eig_vector);
-                        E_sanitized = diag(eig_vector_sanitized);
+                        % Reconstruct the sanitized covariance matrix diagonal
+                        E_sanitized = diag(eig_vector_sanitized);                        
                         cov_temp = V * E_sanitized * V';                     
-                        % Sometimes symmetricity is lost. So just to be
-                        % sure.
+                        % Make sure that symmetry is not lost
                         obj.parameters.covariance = (cov_temp + cov_temp')/2;
                     end
                     
-                    
-
                     % Check if the mean and covariance are of correct dimensions
                     if size(obj.parameters.mean, 1) ~=...
                             size(obj.parameters.covariance, 1)
