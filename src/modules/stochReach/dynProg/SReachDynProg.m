@@ -278,7 +278,7 @@ function [prob_x, varargout] = SReachDynProg(prob_str, sys, x_inc, u_inc, ...
                     safety_tube(itt).contains(grid_x');
                 for ix = find(current_indicator_x==1)
                     mat_prob_x(itt,ix) = max(old_prob_x * ...
-                        transition_prob_with_delta{ix}');
+                        transition_prob_with_delta{ix});
                 end          
             end
     end
